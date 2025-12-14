@@ -112,10 +112,13 @@ export default function MobileFilter({ onSearch, onClose }: MobileFilterProps) {
     <div className={styles.overlay} onClick={handleOverlayClick}>
       <div className={styles.container} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <button onClick={onClose} className={styles.closeButton}>
-            &times;
+          <h2 className={styles.title}>Find Salons</h2>
+          <button onClick={onClose} className={styles.closeButton} aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
-          <h2 className={styles.title}>Search</h2>
         </div>
         <div className={styles.content}>
           <div className={styles.filterGroup}>
@@ -191,22 +194,9 @@ export default function MobileFilter({ onSearch, onClose }: MobileFilterProps) {
             onClick={handleNearMe}
             disabled={isGeoLoading}
             className={styles.nearMeButton}
-            style={{
-              marginBottom: '0.75rem',
-              backgroundColor: '#28a745',
-              color: 'white',
-              padding: '0.75rem',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              fontWeight: '600',
-              width: '100%',
-              cursor: isGeoLoading ? 'not-allowed' : 'pointer',
-              opacity: isGeoLoading ? 0.6 : 1,
-            }}
           >
             {isGeoLoading || isReverseGeocoding ? (
-              isReverseGeocoding ? 'Getting location...' : 'Finding...'
+              isReverseGeocoding ? '📍 Getting location...' : '📍 Finding...'
             ) : locationName?.city ? (
               `📍 Near ${locationName.city}`
             ) : (
@@ -214,7 +204,11 @@ export default function MobileFilter({ onSearch, onClose }: MobileFilterProps) {
             )}
           </button>
           <button type="button" onClick={handleSearch} className={styles.searchButton}>
-            Search
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            Search Salons
           </button>
         </div>
       </div>

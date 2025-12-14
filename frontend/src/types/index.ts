@@ -215,6 +215,10 @@ export interface Product {
   seller?: Partial<User>;
   category?: string;
   approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  // External purchase links (no internal payment system)
+  whatsappNumber?: string | null;
+  websiteUrl?: string | null;
+  purchaseNote?: string | null; // Optional note about how to purchase
 }
 
 export interface Promotion {

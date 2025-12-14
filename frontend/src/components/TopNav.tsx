@@ -348,7 +348,7 @@ export default function TopNav() {
                                     <DropdownMenuItem asChild>
                                         <Link href="/products" className={styles.dropdownItemLink}>
                                             <span className={styles.dropdownIcon}><FaBoxOpen /></span>
-                                            <span>Products</span>
+                                            <span>Marketplace</span>
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>

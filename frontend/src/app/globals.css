@@ -98,6 +98,37 @@
   animation: slideInRight 0.3s ease-out;
 }
 
+/* Mobile-responsive toast positioning */
+@media (max-width: 480px) {
+  .Toastify__toast-container {
+    width: calc(100% - 24px) !important;
+    left: 12px !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    top: auto !important;
+    padding: 0 !important;
+  }
+
+  .Toastify__toast-container--top-right,
+  .Toastify__toast-container--top-left,
+  .Toastify__toast-container--top-center {
+    top: 12px !important;
+    bottom: auto !important;
+  }
+
+  .Toastify__toast-container--bottom-right,
+  .Toastify__toast-container--bottom-left,
+  .Toastify__toast-container--bottom-center {
+    bottom: 12px !important;
+    top: auto !important;
+  }
+
+  .Toastify__toast {
+    margin-bottom: 8px !important;
+    border-radius: var(--radius-sm) !important;
+  }
+}
+
 .Toastify__toast {
   animation: slideInRight 0.3s ease-out;
 }
@@ -1052,6 +1083,13 @@ h3 {
   .main-content {
     padding: var(--space-md);
     padding-top: calc(var(--app-shell-top-gap) + var(--space-md));
+  }
+}
+
+/* Mobile bottom navigation spacing */
+@media (max-width: 768px) {
+  .main-content {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 }
 

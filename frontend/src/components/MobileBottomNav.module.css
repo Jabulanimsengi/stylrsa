@@ -1,3 +1,6 @@
+/* ===== MOBILE BOTTOM NAVIGATION WITH FAB ===== */
+/* Premium bottom navigation with central floating action button */
+
 .bottomNav {
   display: none;
 }
@@ -9,38 +12,130 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--nav-surface);
-    border-top: 1px solid var(--nav-border);
-    padding: 0.35rem 0.25rem;
-    justify-content: space-around;
-    align-items: center;
-    z-index: 50;
-    box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.06);
-    backdrop-filter: blur(8px);
+    z-index: 100;
+
+    justify-content: space-between;
+    align-items: flex-end;
+
+    height: 72px;
+    padding: 0 0.5rem;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.08);
+
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
   }
-  
+
+  .bottomNav.hidden {
+    transform: translateY(100%);
+  }
+
+  /* ===== NAV GROUPS ===== */
+  .navGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+  }
+
+  .navGroup:first-child {
+    justify-content: flex-start;
+    padding-left: 0.5rem;
+  }
+
+  .navGroup:last-child {
+    justify-content: flex-end;
+    padding-right: 0.5rem;
+  }
+
+  /* ===== NAV ITEMS ===== */
   .navItem {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.15rem;
-    padding: 0.35rem 0.5rem;
-    color: #1c1c1e;
+    justify-content: center;
+    gap: 0.2rem;
+
+    padding: 0.5rem 0.75rem;
+    min-width: 60px;
+    min-height: 52px;
+
     text-decoration: none;
-    font-size: 0.6rem;
-    font-weight: 600;
-    transition: all 0.2s ease-out;
-    min-width: 52px;
-    border-radius: 0.375rem;
+    color: var(--color-text-muted);
+    border-radius: var(--radius-lg);
+
     position: relative;
     overflow: hidden;
+
+    transition: all 0.25s ease;
   }
-  
-  /* Override visited link color - keep black instead of purple */
+
   .navItem:visited {
-    color: #1c1c1e;
+    color: var(--color-text-muted);
   }
-  
+
+  .navIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    transition: transform 0.2s ease;
+  }
+
+  .navIcon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .navLabel {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  /* Active state */
+  .navItem.active {
+    color: var(--color-primary);
+  }
+
+  .navItem.active:visited {
+    color: var(--color-primary);
+  }
+
+  .navItem.active .navIcon {
+    transform: scale(1.1);
+  }
+
+  /* Active indicator line */
+  .activeIndicator {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-primary), #ff6b8a);
+    border-radius: 0 0 3px 3px;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from {
+      width: 0;
+      opacity: 0;
+    }
+
+    to {
+      width: 24px;
+      opacity: 1;
+    }
+  }
+
   /* Ripple effect on tap */
   .navItem::before {
     content: '';
@@ -50,63 +145,331 @@
     width: 0;
     height: 0;
     border-radius: 50%;
-    background: rgba(245, 25, 87, 0.15);
+    background: rgba(245, 25, 87, 0.12);
     transform: translate(-50%, -50%);
     transition: width 0.4s ease, height 0.4s ease;
   }
-  
+
   .navItem:active::before {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
   }
-  
-  .navItem svg {
-    font-size: 1.1rem;
-    transition: transform 0.2s ease;
-    will-change: transform;
-  }
-  
-  .navItem.active {
-    color: var(--color-primary);
-    background: rgba(245, 25, 87, 0.08);
-  }
-  
-  /* Ensure active state remains pink even for visited links */
-  .navItem.active:visited {
-    color: var(--color-primary);
-  }
-  
-  .navItem.active svg {
-    transform: scale(1.05);
-  }
-  
+
+  /* Hover/focus states */
   .navItem:hover {
-    color: var(--color-primary-hover);
+    color: var(--color-primary);
   }
-  
-  /* Ensure hover state remains pink even for visited links */
-  .navItem:visited:hover {
-    color: var(--color-primary-hover);
+
+  .navItem:hover:visited {
+    color: var(--color-primary);
   }
-  
+
   .navItem:active {
+    transform: scale(0.92);
+  }
+
+  /* ===== CENTER FAB CONTAINER ===== */
+  .fabContainer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: calc(0rem + env(safe-area-inset-bottom, 0));
+    z-index: 1;
+  }
+
+  /* ===== FLOATING ACTION BUTTON ===== */
+  .fab {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+
+    width: 64px;
+    height: 64px;
+    margin-bottom: 12px;
+
+    background: linear-gradient(135deg, var(--color-primary) 0%, #ff6b8a 50%, #ffa07a 100%);
+    border: none;
+    border-radius: 50%;
+
+    color: white;
+    cursor: pointer;
+
+    box-shadow:
+      0 4px 16px rgba(245, 25, 87, 0.4),
+      0 8px 32px rgba(245, 25, 87, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+  }
+
+  .fab:hover {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow:
+      0 6px 24px rgba(245, 25, 87, 0.5),
+      0 12px 40px rgba(245, 25, 87, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .fab:active {
     transform: scale(0.95);
+    box-shadow:
+      0 2px 8px rgba(245, 25, 87, 0.4),
+      0 4px 16px rgba(245, 25, 87, 0.2);
+  }
+
+  .fabIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+  }
+
+  .fabIconWrapper svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .fabLabel {
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    margin-top: -2px;
+  }
+
+  /* Glow effect */
+  .fabGlow {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b8a);
+    opacity: 0;
+    z-index: -1;
+    filter: blur(12px);
+    transition: opacity 0.3s ease;
+  }
+
+  .fab:hover .fabGlow {
+    opacity: 0.5;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 0.5;
+      transform: scale(1.1);
+    }
+  }
+
+  /* FAB ring animation */
+  .fab::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .fab:hover::before {
+    opacity: 1;
+  }
+
+  /* FAB shimmer effect */
+  .fab::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent);
+    border-radius: 50%;
+    transition: left 0.6s ease;
+  }
+
+  .fab:hover::after {
+    left: 100%;
   }
 }
 
-@media (max-width: 400px) {
+/* ===== SMALLER MOBILE SCREENS ===== */
+@media (max-width: 480px) {
   .bottomNav {
-    padding: 0.25rem 0.15rem;
+    height: 68px;
+    padding: 0 0.25rem;
   }
-  
+
+  .navGroup:first-child {
+    padding-left: 0.25rem;
+  }
+
+  .navGroup:last-child {
+    padding-right: 0.25rem;
+  }
+
   .navItem {
-    padding: 0.3rem 0.35rem;
-    font-size: 0.55rem;
-    min-width: 44px;
-    gap: 0.1rem;
+    padding: 0.4rem 0.5rem;
+    min-width: 52px;
+    min-height: 48px;
   }
-  
-  .navItem svg {
-    font-size: 0.95rem;
+
+  .navIcon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .navLabel {
+    font-size: 0.6rem;
+  }
+
+  .fab {
+    width: 58px;
+    height: 58px;
+    margin-bottom: 10px;
+  }
+
+  .fabIconWrapper svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .fabLabel {
+    font-size: 0.5rem;
+  }
+}
+
+/* ===== VERY SMALL SCREENS ===== */
+@media (max-width: 360px) {
+  .bottomNav {
+    height: 64px;
+  }
+
+  .navItem {
+    padding: 0.35rem 0.4rem;
+    min-width: 48px;
+    min-height: 44px;
+    gap: 0.15rem;
+  }
+
+  .navIcon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .navLabel {
+    font-size: 0.55rem;
+  }
+
+  .fab {
+    width: 54px;
+    height: 54px;
+    margin-bottom: 8px;
+  }
+
+  .fabIconWrapper svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .fabLabel {
+    font-size: 0.45rem;
+  }
+
+  .activeIndicator {
+    width: 20px;
+    height: 2px;
+  }
+}
+
+/* ===== LANDSCAPE MODE ===== */
+@media (max-width: 768px) and (orientation: landscape) {
+  .bottomNav {
+    height: 56px;
+  }
+
+  .fab {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 6px;
+  }
+
+  .fabLabel {
+    display: none;
+  }
+
+  .navItem {
+    min-height: 44px;
+  }
+}
+
+/* ===== TOUCH DEVICE OPTIMIZATIONS ===== */
+@media (hover: none) and (pointer: coarse) {
+
+  .navItem,
+  .fab {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .navItem:active {
+    transform: scale(0.92);
+  }
+
+  .fab:active {
+    transform: scale(0.92);
+  }
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+
+  .bottomNav,
+  .navItem,
+  .fab,
+  .fabGlow,
+  .activeIndicator {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* ===== DARK MODE ADJUSTMENTS ===== */
+@media (prefers-color-scheme: dark) {
+  .bottomNav {
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .fab {
+    box-shadow:
+      0 4px 16px rgba(245, 25, 87, 0.5),
+      0 8px 32px rgba(245, 25, 87, 0.3);
+  }
+
+  .navItem::before {
+    background: rgba(245, 25, 87, 0.2);
+  }
+}
+
+/* ===== HIDE ON DESKTOP ===== */
+@media (min-width: 769px) {
+  .bottomNav {
+    display: none !important;
   }
 }

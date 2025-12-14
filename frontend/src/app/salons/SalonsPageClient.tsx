@@ -390,8 +390,8 @@ export default function SalonsPageClient() {
             <PageNav />
             <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
                 <h1 className={styles.title}>{pageTitle}</h1>
-                <p style={{ fontSize: '1rem', marginBottom: '1rem', color: '#666', textAlign: 'center' }}>
-                    <Link href="/salons/near-me" style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>
+                <p className={styles.subtitle}>
+                    <Link href="/salons/near-me">
                         Find salons near you →
                     </Link>
                 </p>

@@ -1,650 +1,420 @@
-/* Footer - Fresha-style Clean Design */
+/* ===== FOOTER - MODERN ORGANIZED DESIGN ===== */
+
 .footer {
-  background-color: #fafafa;
-  color: var(--fresha-dark, #1a1a1a);
-  padding: 3rem 1.5rem 1.5rem;
+  background: linear-gradient(180deg, var(--color-surface-subtle) 0%, var(--color-surface) 100%);
+  color: var(--color-text-strong);
   margin-top: auto;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-/* Dark mode footer adjustments */
-[data-theme='dark'] .footer {
-  background-color: var(--color-surface-subtle);
-  color: var(--color-text-strong);
-  border-top-color: var(--color-border);
-}
-
-[data-theme='dark'] .description {
-  color: var(--color-text-muted);
-}
-
-[data-theme='dark'] .sectionTitle {
-  color: var(--color-text-strong);
-}
-
-[data-theme='dark'] .links a {
-  color: var(--color-text-muted);
-}
-
-[data-theme='dark'] .links a:hover {
-  color: var(--color-primary, #F51957);
-}
-
-/* Removed dark mode styles for social links and newsletter */
-
-[data-theme='dark'] .mobileAppAnnouncement {
-  background: linear-gradient(135deg, rgba(0, 165, 150, 0.12) 0%, rgba(255, 127, 110, 0.12) 100%);
-  border-color: var(--color-border);
-}
-
-[data-theme='dark'] .mobileAppAnnouncement::before {
-  background: linear-gradient(135deg, rgba(0, 165, 150, 0.08) 0%, rgba(255, 127, 110, 0.08) 100%);
-}
-
-[data-theme='dark'] .announcementTitle {
-  color: var(--color-text-strong);
-}
-
-[data-theme='dark'] .announcementDescription {
-  color: var(--color-text-muted);
-}
-
-[data-theme='dark'] .footerBottom {
-  color: var(--color-text-muted);
-}
-
-[data-theme='dark'] .legalLinks a {
-  color: var(--color-text-muted);
-}
-
-[data-theme='dark'] .legalLinks a:hover {
-  color: var(--color-text-strong);
-}
-
-.seoFooterContent {
-  max-width: 1600px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: 1.25rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--color-border);
-}
-
-/* Trust badges styling */
-.trustBadges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 1rem 0;
-}
-
-.trustBadge {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  background: var(--color-surface-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  color: var(--color-text-muted);
-  font-weight: 500;
-}
-
-/* Featured articles bar */
-.featuredArticlesBar {
-  max-width: 1600px;
-  margin: 0 auto 2rem;
-  padding: 1.5rem 2rem;
-  background: var(--color-surface-elevated);
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-}
-
-.featuredTitle {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--color-text-strong);
-  margin: 0 0 1rem;
-  text-align: center;
-}
-
-.featuredLinks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: center;
-  align-items: center;
-}
-
-.featuredLink {
-  color: var(--color-text-muted);
-  text-decoration: none;
-  font-size: 0.875rem;
-  padding: 0.25rem 0.75rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  transition: all 0.2s ease;
-}
-
-.featuredLink:hover {
-  color: var(--color-primary, #F51957);
-  background: rgba(245, 25, 87, 0.06);
-  border-color: var(--color-primary, #F51957);
-}
-
-/* Contact and business info styling */
-.contactInfo {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
   border-top: 1px solid var(--color-border);
 }
 
-.contactDetail {
-  margin: 0 0 1rem;
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  line-height: 1.6;
+/* ===== MAIN CONTENT GRID ===== */
+.footerContent {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 3rem 2rem 2rem;
+  display: grid;
+  grid-template-columns: 280px 1fr 220px;
+  gap: 3rem;
 }
 
-.contactDetail strong {
-  display: block;
-  margin-bottom: 0.25rem;
-  color: var(--color-text-strong);
-}
-
-.contactLink {
-  color: var(--color-primary, #F51957);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.contactLink:hover {
-  color: var(--color-primary-hover, #ff2d6f);
-  text-decoration: underline;
-}
-
-/* Dark mode for trust badges and featured bar */
-[data-theme='dark'] .trustBadge {
-  background: var(--color-surface-elevated);
-  border-color: var(--color-border);
-  color: var(--color-text-muted);
-}
-
-[data-theme='dark'] .featuredArticlesBar {
-  background: var(--color-surface-elevated);
-  border-color: var(--color-border);
-}
-
-[data-theme='dark'] .featuredTitle {
-  color: var(--color-text-strong);
-}
-
-[data-theme='dark'] .featuredLink {
-  color: var(--color-text-muted);
-  background: var(--color-surface);
-  border-color: var(--color-border);
-}
-
-[data-theme='dark'] .featuredLink:hover {
-  color: var(--color-primary);
-  background: var(--color-surface-elevated);
-  border-color: var(--color-primary);
-}
-
-.footerSection {
+/* ===== BRAND SECTION ===== */
+.brandSection {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+}
+
+.logoLink {
+  display: inline-block;
+  transition: opacity 0.2s ease;
+}
+
+.logoLink:hover {
+  opacity: 0.8;
 }
 
 .logo {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin: 0 0 0.75rem 0;
+  height: 40px;
+  width: auto;
 }
 
-.description {
+.tagline {
+  font-size: 0.9rem;
   color: var(--color-text-muted);
   line-height: 1.5;
+  margin: 0;
+}
+
+/* ===== TRUST BADGES ===== */
+.trustBadges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.trustBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.8rem;
-  margin-bottom: 1rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
 }
 
-.sectionTitle {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin: 0 0 0.75rem 0;
+.trustBadge svg {
+  color: var(--color-secondary, #3ab7a5);
+  flex-shrink: 0;
+}
+
+/* ===== LINKS GRID ===== */
+.linksGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+
+.linkColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.columnTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--color-text-strong);
+  margin: 0 0 0.25rem 0;
 }
 
-.links {
+.linkList {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 
-.links a {
-  font-size: 0.8rem;
+.linkList li {
+  margin: 0;
 }
 
-.links a {
+.linkList a {
+  font-size: 0.875rem;
   color: var(--color-text-muted);
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color 0.2s ease;
+  display: inline-block;
 }
 
-.links a:hover {
-  color: var(--fresha-teal, #00A596);
+.linkList a:hover {
+  color: var(--color-primary);
 }
 
-/* Removed social links and newsletter form styles */
-
-.mobileAppAnnouncement {
-  max-width: 1280px;
-  margin: 1.5rem auto 0;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, rgba(0, 165, 150, 0.06) 0%, rgba(255, 127, 110, 0.06) 100%);
-  border: 1px solid rgba(0, 165, 150, 0.15);
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-}
-
-.mobileAppAnnouncement::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(58, 183, 165, 0.05) 0%, rgba(245, 25, 87, 0.05) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.mobileAppAnnouncement:hover::before {
-  opacity: 1;
-}
-
-.announcementContent {
+/* ===== CONTACT SECTION ===== */
+.contactSection {
   display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.contactItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.contactItem svg {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+a.contactItem:hover {
+  color: var(--color-primary);
+}
+
+/* ===== APP BANNER ===== */
+.appBanner {
+  background: linear-gradient(135deg, rgba(245, 25, 87, 0.06) 0%, rgba(58, 183, 165, 0.06) 100%);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.appBannerContent {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem;
+}
+
+.appIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.appText {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-strong);
+}
+
+.appText strong {
+  font-weight: 700;
+}
+
+.appText span {
+  color: var(--color-text-muted);
+}
+
+/* ===== BOTTOM BAR ===== */
+.bottomBar {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.25rem 2rem;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 1rem;
 }
 
-.announcementIcon {
-  font-size: 2.25rem;
-  line-height: 1;
-  flex-shrink: 0;
-  animation: pulse 2s ease-in-out infinite;
-  position: relative;
-  z-index: 1;
-}
-
-@keyframes pulse {
-
-  0%,
-  100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.08);
-  }
-}
-
-.announcementText {
-  flex: 1;
-  position: relative;
-  z-index: 1;
-}
-
-.announcementTitle {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--color-text-strong);
-  margin: 0 0 0.35rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.announcementDescription {
+.copyright {
   font-size: 0.8rem;
   color: var(--color-text-muted);
-  line-height: 1.45;
   margin: 0;
-}
-
-.footerBottom {
-  max-width: 1280px;
-  margin: 1.25rem auto 0;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--color-border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
 }
 
 .legalLinks {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .legalLinks a {
+  font-size: 0.8rem;
   color: var(--color-text-muted);
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 .legalLinks a:hover {
-  color: var(--color-primary, #F51957);
+  color: var(--color-primary);
 }
 
-@media (max-width: 1200px) {
-  .seoFooterContent {
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+/* ===== DARK MODE ===== */
+[data-theme='dark'] .footer {
+  background: linear-gradient(180deg, var(--color-surface-subtle) 0%, var(--color-surface) 100%);
+}
+
+[data-theme='dark'] .appBanner {
+  background: linear-gradient(135deg, rgba(245, 25, 87, 0.08) 0%, rgba(58, 183, 165, 0.08) 100%);
+}
+
+/* ===== TABLET RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .footerContent {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    padding: 2.5rem 1.5rem 2rem;
+  }
+
+  .brandSection {
+    grid-column: 1 / -1;
+    text-align: center;
+    align-items: center;
+  }
+
+  .trustBadges {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .linksGrid {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+
+  .contactSection {
+    grid-column: 1 / -1;
+    align-items: center;
+    text-align: center;
+  }
+
+  .contactItems {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 1.5rem;
   }
 }
 
-@media (max-width: 1024px) {
-  .seoFooterContent {
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-  }
-}
-
+/* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .footer {
-    padding: 1.75rem 0.75rem 1rem;
-  }
-
-  .seoFooterContent {
-    grid-template-columns: repeat(2, 1fr);
-    text-align: left;
-    gap: 1rem 0.75rem;
-    padding-bottom: 1rem;
-  }
-
-  .footerSection:first-child {
-    grid-column: 1 / -1;
-    text-align: center;
-  }
-
-  .featuredArticlesBar {
-    padding: 0.75rem 0.75rem 1rem;
-    margin: 0 auto 1rem;
-  }
-
-  .featuredLinks {
-    gap: 0.5rem;
-  }
-
-  .featuredLink {
-    font-size: 0.65rem;
-    padding: 0.2rem 0.4rem;
-  }
-
-  .trustBadges {
-    justify-content: center;
-    gap: 0.35rem;
-  }
-
-  .trustBadge {
-    font-size: 0.6rem;
-  }
-
-  .footerSection {
-    align-items: flex-start;
-  }
-
-  .footerSection:first-child {
-    align-items: center;
-  }
-
-  .logo {
-    font-size: 1.2rem;
-  }
-
-  .description {
-    font-size: 0.7rem;
-  }
-
-  .sectionTitle {
-    font-size: 0.85rem;
-  }
-
-  .mobileAppAnnouncement {
-    padding: 0.875rem 0.75rem;
-    margin: 1rem auto 0;
-  }
-
-  .announcementContent {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.625rem;
-  }
-
-  .announcementIcon {
-    font-size: 1.75rem;
-  }
-
-  .announcementTitle {
-    font-size: 0.9rem;
-    justify-content: center;
-  }
-
-  .announcementDescription {
-    font-size: 0.7rem;
-  }
-
-  .footerBottom {
-    flex-direction: column;
-    text-align: center;
-    font-size: 0.65rem;
-    margin-top: 1rem;
-    gap: 0.5rem;
-  }
-
-  .legalLinks {
-    gap: 0.75rem;
-  }
-}
-
-@media (max-width: 400px) {
-  .footer {
-    padding: 2rem 0.75rem 1.25rem;
-  }
-
   .footerContent {
-    gap: 1.25rem;
-    padding-bottom: 1.25rem;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 2rem 1rem 1.5rem;
   }
 
-  .logo {
-    font-size: 1.35rem;
+  .linksGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem 1rem;
   }
 
-  .description {
+  .columnTitle {
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .linkList {
+    gap: 0.5rem;
+  }
+
+  .linkList a {
     font-size: 0.8rem;
   }
 
-  .sectionTitle {
-    font-size: 0.9rem;
-  }
-
-  .links {
-    gap: 0.5rem;
-    font-size: 0.85rem;
-  }
-
-  .mobileAppAnnouncement {
-    padding: 1rem 0.75rem;
-    margin: 1.25rem auto 0;
-    border-radius: 8px;
-  }
-
-  .announcementContent {
+  .contactItems {
+    flex-direction: column;
     gap: 0.75rem;
   }
 
-  .announcementIcon {
-    font-size: 2rem;
+  .appBannerContent {
+    padding: 0.875rem 1rem;
   }
 
-  .announcementTitle {
-    font-size: 1rem;
+  .appText {
+    flex-direction: column;
+    gap: 0.25rem;
+    text-align: center;
+    font-size: 0.8rem;
   }
 
-  .announcementDescription {
-    font-size: 0.8125rem;
-    line-height: 1.4;
-  }
-
-  .footerBottom {
-    font-size: 0.75rem;
-    margin-top: 1.25rem;
-    gap: 0.625rem;
+  .bottomBar {
+    flex-direction: column;
+    text-align: center;
+    padding: 1rem;
+    gap: 0.75rem;
   }
 
   .legalLinks {
-    gap: 0.75rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .legalLinks a,
+  .copyright {
     font-size: 0.75rem;
   }
 }
 
-/* ===== 375px breakpoint for iPhone SE, iPhone 12 mini ===== */
-@media (max-width: 375px) {
-  .footer {
-    padding: 1.75rem 0.625rem 1.125rem;
-  }
-
+/* ===== SMALL MOBILE ===== */
+@media (max-width: 480px) {
   .footerContent {
-    gap: 1.125rem;
-    padding-bottom: 1.125rem;
+    padding: 1.5rem 0.75rem 1.25rem;
+    gap: 1.5rem;
   }
 
-  .logo {
+  .tagline {
+    font-size: 0.8rem;
+  }
+
+  .trustBadges {
+    gap: 0.75rem;
+  }
+
+  .trustBadge {
+    font-size: 0.7rem;
+  }
+
+  .trustBadge svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .linksGrid {
+    gap: 1.25rem 0.75rem;
+  }
+
+  .columnTitle {
+    font-size: 0.7rem;
+  }
+
+  .linkList a {
+    font-size: 0.75rem;
+  }
+
+  .contactItem {
+    font-size: 0.75rem;
+  }
+
+  .appIcon {
     font-size: 1.25rem;
   }
 
-  .description {
+  .appText {
     font-size: 0.75rem;
-    line-height: 1.5;
-  }
-
-  .sectionTitle {
-    font-size: 0.875rem;
-  }
-
-  .links {
-    gap: 0.4375rem;
-    font-size: 0.8125rem;
-  }
-
-  .mobileAppAnnouncement {
-    padding: 0.875rem 0.625rem;
-    margin: 1.125rem auto 0;
-    border-radius: 8px;
-  }
-
-  .announcementContent {
-    gap: 0.625rem;
-  }
-
-  .announcementIcon {
-    font-size: 1.875rem;
-  }
-
-  .announcementTitle {
-    font-size: 0.9375rem;
-  }
-
-  .announcementDescription {
-    font-size: 0.75rem;
-    line-height: 1.4;
-  }
-
-  .footerBottom {
-    font-size: 0.6875rem;
-    margin-top: 1.125rem;
-    gap: 0.5rem;
-  }
-
-  .legalLinks {
-    gap: 0.625rem;
-    font-size: 0.6875rem;
   }
 }
 
-/* ===== 320px breakpoint for very small devices ===== */
-@media (max-width: 320px) {
-  .footer {
-    padding: 1.5rem 0.5rem 1rem;
-  }
-
+/* ===== VERY SMALL MOBILE ===== */
+@media (max-width: 375px) {
   .footerContent {
-    gap: 1rem;
-    padding-bottom: 1rem;
+    padding: 1.25rem 0.625rem 1rem;
   }
 
   .logo {
-    font-size: 1.125rem;
+    height: 32px;
   }
 
-  .description {
-    font-size: 0.6875rem;
-    line-height: 1.45;
+  .linksGrid {
+    gap: 1rem 0.5rem;
   }
 
-  .sectionTitle {
-    font-size: 0.8125rem;
+  .columnTitle {
+    font-size: 0.65rem;
   }
 
-  .links {
-    gap: 0.375rem;
-    font-size: 0.75rem;
+  .linkList a {
+    font-size: 0.7rem;
   }
 
-  .mobileAppAnnouncement {
-    padding: 0.75rem 0.5rem;
-    margin: 1rem auto 0;
-    border-radius: 6px;
+  .linkList {
+    gap: 0.4rem;
   }
 
-  .announcementContent {
+  .appBannerContent {
     gap: 0.5rem;
   }
+}
 
-  .announcementIcon {
-    font-size: 1.75rem;
-  }
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
 
-  .announcementTitle {
-    font-size: 0.875rem;
-  }
-
-  .announcementDescription {
-    font-size: 0.6875rem;
-    line-height: 1.35;
-  }
-
-  .footerBottom {
-    font-size: 0.625rem;
-    margin-top: 1rem;
-    gap: 0.4375rem;
-  }
-
-  .legalLinks {
-    gap: 0.5rem;
-    font-size: 0.625rem;
+  .logoLink,
+  .linkList a,
+  .legalLinks a,
+  .contactItem {
+    transition: none;
   }
 }

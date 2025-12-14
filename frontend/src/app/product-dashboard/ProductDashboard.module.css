@@ -382,3 +382,254 @@
   border: 1px dashed var(--color-border);
   color: var(--color-text-muted);
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .container {
+    margin: 1rem auto;
+    padding: 0 1rem;
+  }
+
+  .title {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .tabBar {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    padding: 0.35rem;
+  }
+
+  .tabButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    flex: 1;
+    text-align: center;
+  }
+
+  .planSection {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .planHeader {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .planHeader h2 {
+    font-size: 1.15rem;
+  }
+
+  .planHeader p {
+    font-size: 0.875rem;
+  }
+
+  .planStatusBadge {
+    align-self: flex-start;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+  }
+
+  .planMeta {
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .planGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .planCard {
+    padding: 0.75rem;
+  }
+
+  .planName {
+    font-size: 0.875rem;
+  }
+
+  .planPrice {
+    font-size: 0.85rem;
+  }
+
+  .planFeatures {
+    font-size: 0.75rem;
+    padding-left: 0.9rem;
+  }
+
+  .planNotice {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .planWarning {
+    font-size: 0.875rem;
+  }
+
+  .planControls {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .planReferenceLabel {
+    font-size: 0.875rem;
+  }
+
+  .planReferenceInput {
+    min-width: auto;
+    width: 100%;
+    font-size: 0.875rem;
+  }
+
+  .copyButton {
+    width: 100%;
+    padding: 0.65rem;
+    font-size: 0.875rem;
+  }
+
+  .proofCheckbox {
+    font-size: 0.875rem;
+  }
+
+  .toolbar {
+    margin-bottom: 1rem;
+  }
+
+  .planGuard {
+    text-align: center;
+    font-size: 0.875rem;
+    margin: -0.5rem 0 1rem;
+  }
+
+  .productCard {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .productImageWrapper {
+    width: 100%;
+    height: 180px;
+    border-radius: 0.75rem;
+  }
+
+  .productInfo h2 {
+    font-size: 1.1rem;
+  }
+
+  .productInfo p {
+    font-size: 0.875rem;
+  }
+
+  .actions {
+    flex-direction: row;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .actions button {
+    flex: 1;
+  }
+
+  .orderCard {
+    padding: 1rem;
+  }
+
+  .orderSummary {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .orderImageWrapper {
+    width: 100%;
+    height: 160px;
+    border-radius: 0.75rem;
+  }
+
+  .orderDetails h3 {
+    font-size: 1rem;
+  }
+
+  .orderDetails p {
+    font-size: 0.875rem;
+  }
+
+  .statusRow {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .statusRow select {
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 0.875rem;
+  }
+
+  .orderNotes {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .tabButton {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .planSection {
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+  }
+
+  .planHeader h2 {
+    font-size: 1rem;
+  }
+
+  .planGrid {
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+  }
+
+  .planCard {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.625rem 0.75rem;
+  }
+
+  .planCard .planFeatures {
+    display: none;
+  }
+
+  .planCard .planName,
+  .planCard .planPrice {
+    margin: 0;
+  }
+
+  .planCard .planPrice {
+    margin-left: auto;
+  }
+
+  .productImageWrapper {
+    height: 150px;
+  }
+
+  .orderImageWrapper {
+    height: 140px;
+  }
+}

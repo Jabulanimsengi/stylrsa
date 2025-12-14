@@ -50,191 +50,151 @@ export default function Footer() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
 
-      <div className={styles.seoFooterContent}>
-        {/* Column 1: Brand & Trust */}
-        <div className={styles.footerSection}>
+      {/* Main Footer Content */}
+      <div className={styles.footerContent}>
+        {/* Brand Section */}
+        <div className={styles.brandSection}>
           <Link href="/" className={styles.logoLink}>
             <Image
               src="/logo-transparent.png"
               alt="Stylr SA Logo"
-              width={185}
-              height={45}
+              width={160}
+              height={40}
               className={styles.logo}
             />
           </Link>
-          <p className={styles.description}>
-            At Stylr SA, we believe beauty begins with trust. Your go-to platform for verified salons, barbers, and beauty experts across South Africa.
+          <p className={styles.tagline}>
+            South Africa's premier beauty & wellness platform
           </p>
           <div className={styles.trustBadges}>
-            <span className={styles.trustBadge}>✓ Verified Reviews Only</span>
-            <span className={styles.trustBadge}>✓ Local SA Businesses</span>
-            <span className={styles.trustBadge}>✓ Secure Booking</span>
-            <span className={styles.trustBadge}>✓ Free to Use</span>
-          </div>
-
-          {/* Business Address */}
-          <div className={styles.contactInfo}>
-            <p className={styles.contactDetail}>
-              <strong>📍 Address:</strong><br />
-              111 Commissioner Street<br />
-              Johannesburg, 2001<br />
-              South Africa
-            </p>
-            <p className={styles.contactDetail}>
-              <strong>🕒 Business Hours:</strong><br />
-              Monday - Sunday<br />
-              08:00 - 17:00
-            </p>
-            <p className={styles.contactDetail}>
-              <strong>📧 Email:</strong>
-              <a href="mailto:info@stylrsa.co.za" className={styles.contactLink}>info@stylrsa.co.za</a>
-            </p>
+            <span className={styles.trustBadge}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
+              </svg>
+              Verified Salons
+            </span>
+            <span className={styles.trustBadge}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+              </svg>
+              Free to Use
+            </span>
+            <span className={styles.trustBadge}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+              </svg>
+              Trusted Reviews
+            </span>
           </div>
         </div>
 
-        {/* Column 2: Beauty Services */}
-        <div className={styles.footerSection}>
-          <h3 className={styles.sectionTitle}>Beauty Services</h3>
-          <ul className={styles.links}>
-            <li><Link href="/services?category=braiding-weaving" title="Braids, knotless braids, weaves in South Africa">Hair Braiding & Extensions</Link></li>
-            <li><Link href="/services?category=haircuts-styling" title="Professional haircuts and styling services">Haircuts & Styling</Link></li>
-            <li><Link href="/services?category=nail-care" title="Gel nails, acrylic nails, nail art">Nail Services</Link></li>
-            <li><Link href="/services?category=makeup-beauty" title="Bridal makeup, event makeup, special occasions">Makeup Artist</Link></li>
-            <li><Link href="/services?category=massage-body-treatments" title="Swedish massage, deep tissue massage">Massage & Wellness</Link></li>
-            <li><Link href="/services?category=skin-care-facials" title="Facials, skincare treatments, beauty products">Skincare & Facials</Link></li>
-            <li><Link href="/services?category=mens-grooming" title="Barber services, fades, beard grooming">Men's Grooming</Link></li>
-            <li><Link href="/services?category=waxing-hair-removal" title="Waxing services and hair removal">Waxing & Hair Removal</Link></li>
-            <li><Link href="/services?category=bridal-services" title="Wedding preparation, bridal packages">Bridal & Events</Link></li>
-          </ul>
+        {/* Links Grid */}
+        <div className={styles.linksGrid}>
+          {/* Services */}
+          <div className={styles.linkColumn}>
+            <h3 className={styles.columnTitle}>Services</h3>
+            <ul className={styles.linkList}>
+              <li><Link href="/services?category=braiding-weaving">Hair Braiding</Link></li>
+              <li><Link href="/services?category=haircuts-styling">Haircuts & Styling</Link></li>
+              <li><Link href="/services?category=nail-care">Nail Services</Link></li>
+              <li><Link href="/services?category=makeup-beauty">Makeup</Link></li>
+              <li><Link href="/services?category=massage-body-treatments">Massage</Link></li>
+              <li><Link href="/services?category=mens-grooming">Men's Grooming</Link></li>
+            </ul>
+          </div>
+
+          {/* Locations */}
+          <div className={styles.linkColumn}>
+            <h3 className={styles.columnTitle}>Locations</h3>
+            <ul className={styles.linkList}>
+              <li><Link href="/salons/location/gauteng">Gauteng</Link></li>
+              <li><Link href="/salons/location/western-cape">Western Cape</Link></li>
+              <li><Link href="/salons/location/kwazulu-natal">KwaZulu-Natal</Link></li>
+              <li><Link href="/salons/location/eastern-cape">Eastern Cape</Link></li>
+              <li><Link href="/salons/location/free-state">Free State</Link></li>
+              <li><Link href="/salons/location/mpumalanga">Mpumalanga</Link></li>
+            </ul>
+          </div>
+
+          {/* Explore */}
+          <div className={styles.linkColumn}>
+            <h3 className={styles.columnTitle}>Explore</h3>
+            <ul className={styles.linkList}>
+              <li><Link href="/salons">Find Salons</Link></li>
+              <li><Link href="/services">Browse Services</Link></li>
+              <li><Link href="/products">Shop Products</Link></li>
+              <li><Link href="/promotions">View Deals</Link></li>
+              <li><Link href="/talent">Find Jobs</Link></li>
+              <li><Link href="/blog">Beauty Blog</Link></li>
+            </ul>
+          </div>
+
+          {/* Company */}
+          <div className={styles.linkColumn}>
+            <h3 className={styles.columnTitle}>Company</h3>
+            <ul className={styles.linkList}>
+              <li><Link href="/about">About Us</Link></li>
+              <li><Link href="/how-it-works">How It Works</Link></li>
+              <li><Link href="/prices">Pricing</Link></li>
+              <li><Link href="/careers">Careers</Link></li>
+              <li><Link href="/contact">Contact</Link></li>
+              <li><Link href="/advice">Help & Support</Link></li>
+            </ul>
+          </div>
         </div>
 
-        {/* Column 3: Popular Locations (South Africa) */}
-        <div className={styles.footerSection}>
-          <h3 className={styles.sectionTitle}>South Africa Locations</h3>
-          <ul className={styles.links}>
-            <li><Link href="/salons/location/gauteng" title="Braids, nails, makeup in Johannesburg and Pretoria">Gauteng</Link></li>
-            <li><Link href="/salons/location/western-cape" title="Cape Town beauty salons and services">Western Cape</Link></li>
-            <li><Link href="/salons/location/kwazulu-natal" title="Durban beauty experts and salons">KwaZulu-Natal</Link></li>
-            <li><Link href="/salons/location/eastern-cape" title="Port Elizabeth and Eastern Cape salons">Eastern Cape</Link></li>
-            <li><Link href="/salons/location/free-state" title="Bloemfontein beauty services">Free State</Link></li>
-            <li><Link href="/salons/location/mpumalanga" title="Nelspruit and Mpumalanga beauty professionals">Mpumalanga</Link></li>
-            <li><Link href="/salons/location/limpopo" title="Polokwane salons and beauty services">Limpopo</Link></li>
-            <li><Link href="/salons/location/northern-cape" title="Kimberley and Northern Cape salons">Northern Cape</Link></li>
-          </ul>
-        </div>
-
-        {/* Column 4: Top Searches & Keywords */}
-        <div className={styles.footerSection}>
-          <h3 className={styles.sectionTitle}>Top Searches</h3>
-          <ul className={styles.links}>
-            <li><Link href="/services/braiding-weaving/location/western-cape/cape-town" title="Best braiding services in Cape Town">Braids Cape Town</Link></li>
-            <li><Link href="/services/nail-care/location/gauteng/johannesburg" title="Professional nail artists in Johannesburg">Nail Artist Johannesburg</Link></li>
-            <li><Link href="/services/mens-grooming/location/kwazulu-natal/durban" title="Best barber shops in Durban">Barber Durban</Link></li>
-            <li><Link href="/services?category=makeup-beauty" title="Wedding and special event makeup artists">Wedding Makeup</Link></li>
-            <li><Link href="/services?category=massage-body-treatments" title="Relaxing and therapeutic massage services">Massage Therapy</Link></li>
-            <li><Link href="/services?category=braiding-weaving" title="Hair extension specialists and services">Hair Extensions</Link></li>
-            <li><Link href="/services?category=nail-care" title="Gel nails and acrylic nail services near me">Gel Nails Near Me</Link></li>
-            <li><Link href="/salons" title="Professional and verified salons in SA">Professional Salon</Link></li>
-            <li><Link href="/products" title="South African beauty products and supplies">Beauty Products SA</Link></li>
-          </ul>
-        </div>
-
-        {/* Column 5: Helpful Resources */}
-        <div className={styles.footerSection}>
-          <h3 className={styles.sectionTitle}>Resources</h3>
-          <ul className={styles.links}>
-            <li><Link href="/blog" title="Beauty tips, trends, and guides">Beauty Blog</Link></li>
-            <li><Link href="/blog/how-to-find-best-braider" title="Guide to finding professional braiding stylists">How to Find Best Braider</Link></li>
-            <li><Link href="/blog/wedding-makeup-checklist" title="Complete wedding makeup preparation guide">Wedding Makeup Checklist</Link></li>
-            <li><Link href="/blog/2024-hair-trends" title="Latest hair trends and styles">2024 Hair Trends</Link></li>
-            <li><Link href="/blog/matric-dance-prep" title="Matric dance beauty preparation">Matric Dance Prep</Link></li>
-            <li><Link href="/blog/seasonal-beauty-tips" title="Seasonal beauty and wellness tips">Seasonal Beauty</Link></li>
-            <li><Link href="/advice" title="Comprehensive FAQ for customers and salons">FAQ & Support</Link></li>
-            <li><Link href="/contact" title="Get in touch with Stylr SA team">Contact Us</Link></li>
-            <li><Link href="/careers" title="Join the Stylr SA team">Careers</Link></li>
-            <li><a href="https://www.allure.com" target="_blank" rel="noopener noreferrer" title="Beauty trends and tips">Allure Magazine</a></li>
-            <li><a href="https://www.vogue.co.uk/beauty" target="_blank" rel="noopener noreferrer" title="Beauty trends and inspiration">Vogue Beauty</a></li>
-          </ul>
-        </div>
-
-        {/* Column 6: Quick Links */}
-        <div className={styles.footerSection}>
-          <h3 className={styles.sectionTitle}>Quick Actions</h3>
-          <ul className={styles.links}>
-            <li><Link href="/salons" title="Find salons near you">Find a Salon</Link></li>
-            <li><Link href="/services" title="Browse all beauty services">Browse Services</Link></li>
-            <li><Link href="/promotions" title="Current deals and special offers">View Promotions</Link></li>
-            <li><Link href="/products" title="Shop beauty products">Shop Products</Link></li>
-            <li><Link href="/how-it-works" title="Learn how Stylr SA works">How It Works</Link></li>
-            <li><Link href="/register" title="Register your salon or join as customer">Join Stylr SA</Link></li>
-            <li><Link href="/prices" title="Pricing plans for salon owners">Salon Pricing</Link></li>
-            <li><Link href="/faq" title="Frequently asked questions">Help Center</Link></li>
-          </ul>
-        </div>
-
-        {/* Column 7: Resources */}
-        <div className={styles.footerSection}>
-          <h3 className={styles.sectionTitle}>More Resources</h3>
-          <ul className={styles.links}>
-            <li><Link href="/sitemap.xml" title="Full site structure and pages">XML Sitemap</Link></li>
-            <li><Link href="/press" title="Press releases and media">Press & Media</Link></li>
-            <li><Link href="/testimonials" title="Customer success stories">Testimonials</Link></li>
-            <li><Link href="/community" title="Join our community">Community</Link></li>
-            <li><Link href="/support" title="24/7 customer support">Customer Support</Link></li>
-          </ul>
-        </div>
-
-        {/* Column 8: Legal & Important */}
-        <div className={styles.footerSection}>
-          <h3 className={styles.sectionTitle}>Company Info</h3>
-          <ul className={styles.links}>
-            <li><Link href="/about" title="About Stylr SA mission and story">About Stylr SA</Link></li>
-            <li><Link href="/terms" title="Terms of service and usage">Terms of Service</Link></li>
-            <li><Link href="/privacy" title="Privacy policy and data protection">Privacy Policy</Link></li>
-            <li><Link href="/cookie-policy" title="Cookie usage and settings">Cookie Policy</Link></li>
-            <li><Link href="/partner-guidelines" title="Guidelines for salon partners">Partner Guidelines</Link></li>
-            <li><Link href="/safety-security" title="Safety and security information">Safety & Security</Link></li>
-            <li><Link href="/accessibility" title="Accessibility information">Accessibility</Link></li>
-            <li><Link href="/blog" title="Stylr SA blog with beauty tips and trends">Blog</Link></li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Featured Articles Bar */}
-      <div className={styles.featuredArticlesBar}>
-        <h4 className={styles.featuredTitle}>📰 Popular Articles</h4>
-        <div className={styles.featuredLinks}>
-          <Link href="/blog/protective-hairstyles-guide" className={styles.featuredLink} title="Complete protective hairstyles guide">Knotless Braids Guide</Link>
-          <Link href="/blog/cape-town-nail-trends" className={styles.featuredLink} title="Cape Town nail trends">Cape Town Nail Trends</Link>
-          <Link href="/blog/mens-grooming-durban" className={styles.featuredLink} title="Durban men's grooming">Durban Barber Guide</Link>
-          <Link href="/blog/wedding-makeup-artist" className={styles.featuredLink} title="Wedding makeup tips">Wedding Makeup Tips</Link>
-          <Link href="/blog/highveld-skincare-guide" className={styles.featuredLink} title="Highveld skincare guide">Highveld Skincare</Link>
-          <Link href="/blog/monthly-massage-benefits" className={styles.featuredLink} title="Massage benefits">Monthly Massage Benefits</Link>
-          <Link href="/blog/verified-reviews-importance" className={styles.featuredLink} title="Importance of verified reviews">Verified Reviews</Link>
-          <Link href="/blog/local-beauty-products" className={styles.featuredLink} title="Local SA beauty products">Local Beauty Products</Link>
-        </div>
-      </div>
-
-      <div className={styles.mobileAppAnnouncement}>
-        <div className={styles.announcementContent}>
-          <div className={styles.announcementIcon}>📱</div>
-          <div className={styles.announcementText}>
-            <h4 className={styles.announcementTitle}>Mobile Apps Coming Soon!</h4>
-            <p className={styles.announcementDescription}>
-              Android and iOS apps are coming in our next massive update. Stay tuned for an even better experience!
-            </p>
+        {/* Contact Info */}
+        <div className={styles.contactSection}>
+          <h3 className={styles.columnTitle}>Get in Touch</h3>
+          <div className={styles.contactItems}>
+            <a href="mailto:info@stylrsa.co.za" className={styles.contactItem}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              info@stylrsa.co.za
+            </a>
+            <div className={styles.contactItem}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              Johannesburg, South Africa
+            </div>
+            <div className={styles.contactItem}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              Mon - Sun: 08:00 - 17:00
+            </div>
           </div>
         </div>
       </div>
 
-      <div className={styles.footerBottom}>
-        <p>© {new Date().getFullYear()} Stylr SA. All rights reserved.</p>
+      {/* App Announcement */}
+      <div className={styles.appBanner}>
+        <div className={styles.appBannerContent}>
+          <span className={styles.appIcon}>📱</span>
+          <div className={styles.appText}>
+            <strong>Mobile Apps Coming Soon!</strong>
+            <span>Android and iOS apps are in development.</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Bar */}
+      <div className={styles.bottomBar}>
+        <p className={styles.copyright}>
+          © {new Date().getFullYear()} Stylr SA. All rights reserved.
+        </p>
         <div className={styles.legalLinks}>
-          <Link href="/terms">Terms of Service</Link>
-          <Link href="/privacy">Privacy Policy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/cookie-policy">Cookies</Link>
+          <Link href="/accessibility">Accessibility</Link>
         </div>
       </div>
     </footer>
   );
 }
-

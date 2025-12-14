@@ -356,7 +356,7 @@ export default function Navbar() {
       { href: '/salons', label: 'Salons', icon: FaCut },
       { href: '/salons?offersMobile=true', label: 'Mobile Salons', icon: FaBuilding },
       { href: '/services', label: 'Services', icon: FaMagic },
-      { href: '/products', label: 'Products', icon: FaBoxOpen },
+      { href: '/products', label: 'Marketplace', icon: FaBoxOpen },
       { href: '/candidates', label: 'Find Talent', icon: FaUser },
       { href: '/promotions', label: 'Promotions', icon: FaMagic },
     ],
