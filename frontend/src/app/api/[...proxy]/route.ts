@@ -85,7 +85,8 @@ async function proxyToBackend(request: NextRequest) {
       headers: headers,
       body: body,
       cache: 'no-store',
-    });
+      duplex: 'half',
+    } as RequestInit);
 
     // Build response headers
     const responseHeaders = new Headers();
