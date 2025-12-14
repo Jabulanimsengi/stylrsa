@@ -108,7 +108,7 @@ export class SalonsController {
    * Fire-and-forget to avoid blocking response when multiple impressions fire simultaneously
    * Must be defined BEFORE the generic :id route to ensure proper route matching
    */
-  @Post(':id([0-9a-fA-F-]{36})/impression')
+  @Post(':id/impression')
   @UseGuards(OptionalJwtAuthGuard)
   trackImpression(@Param('id') id: string, @GetUser() user?: any, @Req() req?: any) {
     const ipAddress = req?.ip || req?.headers?.['x-forwarded-for'] || req?.connection?.remoteAddress;

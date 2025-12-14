@@ -393,7 +393,7 @@ export default function CreateSalonPage() {
                   <button
                     type="button"
                     key={plan.code}
-                    onClick={() => setSelectedPlan(plan.code)}
+                    onClick={() => setSelectedPlan(plan.code as PlanCode)}
                     className={`${styles.planCard} ${isSelected ? styles.planCardSelected : ''}`}
                     aria-pressed={isSelected}
                   >

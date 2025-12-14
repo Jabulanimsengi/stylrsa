@@ -38,7 +38,7 @@ export default function CandidateDetailPage() {
     if (!candidate) return <div className="min-h-screen flex items-center justify-center">Candidate not found</div>;
 
     const { user, profession, province, city, yearsExperience, qualifications, specializations, questionnaireAnswers, portfolio } = candidate;
-    const displayProfession = profession.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    const displayProfession = profession.replace('_', ' ').toLowerCase().replace(/\b\w/g, (l: string) => l.toUpperCase());
 
     return (
         <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8">
