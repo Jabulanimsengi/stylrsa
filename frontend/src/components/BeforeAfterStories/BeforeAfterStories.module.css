@@ -202,30 +202,32 @@
 .dotsContainer {
     display: flex;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 0;
+    gap: 4px;
+    padding: 0.5rem 0;
     background: var(--color-surface-elevated, #fff);
 }
 
 .dot {
-    width: 8px;
-    height: 8px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     border: none;
-    background: #ccc;
+    background: var(--color-border-strong, #d4d4d4);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.25s ease;
     padding: 0;
+    min-width: 5px;
+    min-height: 5px;
 }
 
 .dot:hover {
-    background: #999;
+    background: var(--color-text-muted, #999);
 }
 
 .dotActive {
     background: var(--color-primary, #f51957);
-    width: 24px;
-    border-radius: 4px;
+    width: 16px;
+    border-radius: 3px;
 }
 
 .modalInfo {
