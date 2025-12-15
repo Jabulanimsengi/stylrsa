@@ -29,7 +29,7 @@ export class AdminController {
     private readonly adminService: AdminService,
     private readonly beforeAfterService: BeforeAfterService,
     private readonly videosService: VideosService,
-  ) {}
+  ) { }
 
   @Get('salons/all')
   getAllSalons() {
@@ -214,12 +214,12 @@ export class AdminController {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     return (this.adminService as any).prisma?.adminActionLog
       ? (this.adminService as any).prisma.adminActionLog.findMany({
-          orderBy: { createdAt: 'desc' },
-          take: 200,
-        })
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+      })
       : (this.adminService as any).prisma.$queryRawUnsafe(
-          'SELECT id, "adminId", action, "targetType", "targetId", reason, metadata, "createdAt" FROM "AdminActionLog" ORDER BY "createdAt" DESC LIMIT 200',
-        );
+        'SELECT id, "adminId", action, "targetType", "targetId", reason, metadata, "createdAt" FROM "AdminActionLog" ORDER BY "createdAt" DESC LIMIT 200',
+      );
   }
 
   @Get('metrics')
@@ -254,6 +254,16 @@ export class AdminController {
   @Post('sellers/deleted/:archiveId/restore')
   restoreSeller(@Param('archiveId') archiveId: string) {
     return this.adminService.restoreDeletedSeller(archiveId);
+  }
+
+  @Patch('sellers/:sellerId/approval')
+  updateSellerApprovalStatus(
+    @Param('sellerId') sellerId: string,
+    @Body() body: { status: 'PENDING' | 'APPROVED' | 'REJECTED' },
+    @Req() req: Request,
+  ) {
+    const adminId = (req as any)?.user?.id as string ?? 'unknown';
+    return this.adminService.updateSellerApprovalStatus(sellerId, body.status, adminId);
   }
 
   @Get('diagnostic/deleted-sellers-table')

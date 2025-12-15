@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsBoolean,
   IsArray,
+  IsUrl,
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -34,4 +35,29 @@ export class CreateProductDto {
   @IsNumber()
   @IsOptional()
   stock?: number;
+
+  @IsString()
+  @IsOptional()
+  category?: string;
+
+  // Purchase link options
+  @IsString()
+  @IsOptional()
+  whatsappNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  websiteUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  takealotUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  amazonUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  purchaseNote?: string;
 }

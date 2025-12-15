@@ -29,6 +29,8 @@ model User {
   twoFactorEnabled           Boolean           @default(false)
   twoFactorSecret            String?
   twoFactorBackupCodes       String[]          @default([])
+  profileImage               String?
+  // Seller plan fields
   sellerPlanCode             PlanCode?
   sellerVisibilityWeight     Int?              @default(1)
   sellerMaxListings          Int?              @default(2)
@@ -38,6 +40,26 @@ model User {
   sellerPlanPaymentReference String?
   sellerPlanProofSubmittedAt DateTime?
   sellerPlanVerifiedAt       DateTime?
+  // Seller profile fields (for product sellers)
+  sellerWhatsapp             String?           // Default WhatsApp number for orders
+  sellerWebsite              String?           // Seller's main website
+  sellerBankName             String?           // Bank name for payments
+  sellerBankAccountHolder    String?           // Account holder name
+  sellerBankAccountNumber    String?           // Account number
+  sellerBankBranchCode       String?           // Branch code
+  sellerBankAccountType      String?           // e.g., "Savings", "Cheque"
+  sellerPaymentNote          String?           // Note about payment/delivery
+  // Seller business profile fields (required for seller approval)
+  sellerBusinessName         String?           // Business/store name
+  sellerContactPerson        String?           // Contact person full name
+  sellerContactPhone         String?           // Contact phone number
+  sellerContactEmail         String?           // Contact email (can differ from login email)
+  sellerPhysicalAddress      String?           // Physical business address
+  sellerProvincesServed      String[]          @default([]) // SA provinces the seller serves
+  sellerApprovalStatus       ApprovalStatus    @default(PENDING) // Seller profile approval status
+  sellerProfileSubmittedAt   DateTime?         // When the profile was submitted for review
+  sellerApprovedAt           DateTime?         // When the profile was approved by admin
+  // Relations
   blogs                      Blog[]
   bookings                   Booking[]
   favorites                  Favorite[]
@@ -221,6 +243,7 @@ model Booking {
 model Product {
   id             String         @id @default(uuid())
   name           String
+  slug           String?        @unique // SEO-friendly URL slug
   description    String
   price          Float
   images         String[]
@@ -228,12 +251,21 @@ model Product {
   salePrice      Float?
   approvalStatus ApprovalStatus @default(PENDING)
   stock          Int            @default(0)
+  category       String?        // Product category
+  // Purchase options - per-product overrides
+  whatsappNumber String?        // WhatsApp number for this product
+  websiteUrl     String?        // Direct website/store link
+  takealotUrl    String?        // Takealot product link
+  amazonUrl      String?        // Amazon product link
+  purchaseNote   String?        // Custom message when user clicks to buy
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   sellerId       String
   seller         User           @relation(fields: [sellerId], references: [id])
   orders         ProductOrder[]
   promotions     Promotion[]
+
+  @@index([slug])
 }
 
 model Promotion {

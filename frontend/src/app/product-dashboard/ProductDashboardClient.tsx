@@ -38,12 +38,7 @@ const statusOptions: ProductOrderStatus[] = [
   'CANCELLED',
 ];
 
-const BANK_DETAILS = {
-  bank: 'Capitec Bank',
-  accountNumber: '1618097723',
-  accountHolder: 'J Msengi',
-  whatsapp: '0738021196',
-};
+
 
 const PLAN_PAYMENT_LABELS: Record<PlanPaymentStatus, string> = {
   PENDING_SELECTION: 'Package not selected',
@@ -75,7 +70,6 @@ export default function ProductDashboardClient() {
   const [sellerPlanVerifiedAt, setSellerPlanVerifiedAt] = useState<string | null>(null);
   const [sellerPlanPriceCents, setSellerPlanPriceCents] = useState<number | null>(null);
   const [hasSentProof, setHasSentProof] = useState(false);
-  const [isPlanUpdating, setIsPlanUpdating] = useState(false);
 
   // Seller profile state
   const [sellerWhatsapp, setSellerWhatsapp] = useState('');
@@ -251,55 +245,7 @@ export default function ProductDashboardClient() {
     }
   };
 
-  const handleCopyReference = async () => {
-    try {
-      if (typeof navigator === 'undefined' || !navigator.clipboard) {
-        throw new Error('Clipboard API unavailable');
-      }
-      await navigator.clipboard.writeText(effectiveReference);
-      toast.success('Reference copied');
-    } catch {
-      toast.error('Unable to copy reference automatically');
-    }
-  };
 
-  const handlePlanSubmit = async () => {
-    const paymentReference = effectiveReference;
-    setIsPlanUpdating(true);
-    try {
-      const res = await fetch('/api/users/me/seller-plan', {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planCode: sellerPlanCode,
-          hasSentProof,
-          paymentReference,
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to update plan');
-      const updated = await res.json();
-      const nextCode = (updated.sellerPlanCode ?? sellerPlanCode) as PlanCode;
-      const nextStatus = (updated.sellerPlanPaymentStatus ?? sellerPlanStatus) as PlanPaymentStatus;
-      setSellerPlanCode(nextCode);
-      setSellerPlanStatus(nextStatus);
-      setSellerPlanReference(updated.sellerPlanPaymentReference ?? paymentReference);
-      setSellerPlanProofAt(updated.sellerPlanProofSubmittedAt ?? null);
-      setSellerPlanVerifiedAt(updated.sellerPlanVerifiedAt ?? null);
-      setSellerPlanPriceCents(
-        typeof updated.sellerPlanPriceCents === 'number'
-          ? updated.sellerPlanPriceCents
-          : sellerPlanPriceCents,
-      );
-      setHasSentProof(nextStatus === 'PROOF_SUBMITTED' || nextStatus === 'VERIFIED');
-      toast.success('Seller package updated');
-    } catch (error) {
-      logger.error('Error in product dashboard:', error);
-      toast.error(toFriendlyMessage(error, 'Could not update your seller package.'));
-    } finally {
-      setIsPlanUpdating(false);
-    }
-  };
 
   const handleProfileSave = async () => {
     setIsProfileSaving(true);
@@ -410,84 +356,35 @@ export default function ProductDashboardClient() {
         ))}
       </div>
 
+      {/* Simplified Seller Package Status */}
       <section className={styles.planSection}>
         <header className={styles.planHeader}>
           <div>
-            <h2>Seller package</h2>
-            <p>Choose your package, send payment, and submit proof to unlock full marketplace visibility.</p>
+            <h2>Seller Package</h2>
+            <p>Your current package and payment status.</p>
           </div>
           <span className={`${styles.planStatusBadge} ${styles[`planStatus_${sellerPlanStatus.toLowerCase()}`]}`}>
             {PLAN_PAYMENT_LABELS[sellerPlanStatus]}
           </span>
         </header>
         <div className={styles.planMeta}>
-          <span><strong>Selected package:</strong> {planDetails.name}</span>
-          <span><strong>Amount due:</strong> {planAmountDisplay}</span>
-          {proofAtDisplay && <span>Proof submitted: {proofAtDisplay}</span>}
-          {verifiedAtDisplay && <span>Verified on: {verifiedAtDisplay}</span>}
+          <span><strong>Current package:</strong> {planDetails.name}</span>
+          <span><strong>Price:</strong> {planAmountDisplay}/month</span>
+          <span><strong>Max listings:</strong> {planDetails.maxListings}</span>
+          {proofAtDisplay && <span><strong>Proof submitted:</strong> {proofAtDisplay}</span>}
+          {verifiedAtDisplay && <span><strong>Verified:</strong> {verifiedAtDisplay}</span>}
         </div>
-        <div className={styles.planGrid}>
-          {APP_PLANS.map((plan) => {
-            const isSelected = plan.code === sellerPlanCode;
-            return (
-              <button
-                key={plan.code}
-                type="button"
-                className={`${styles.planCard} ${isSelected ? styles.selectedPlan : ''}`}
-                onClick={() => setSellerPlanCode(plan.code)}
-              >
-                <span className={styles.planName}>{plan.name}</span>
-                <span className={styles.planPrice}>{plan.price}</span>
-                <ul className={styles.planFeatures}>
-                  <li>Visibility weight: {plan.visibilityWeight}</li>
-                  <li>Max listings: {plan.maxListings}</li>
-                  {plan.features.slice(0, 2).map((feature) => (
-                    <li key={feature}>{feature}</li>
-                  ))}
-                </ul>
-              </button>
-            );
-          })}
-        </div>
-        <div className={styles.planNotice}>
-          {sellerPlanStatus !== 'VERIFIED' && (
+        {sellerPlanStatus !== 'VERIFIED' && (
+          <div className={styles.planNotice}>
             <p className={styles.planWarning}>
-              Your products remain hidden until payment is verified.
+              ⚠️ Your products remain hidden until payment is verified.
             </p>
-          )}
-          <p>
-            Pay <strong>{planAmountDisplay}</strong> to <strong>{BANK_DETAILS.bank}</strong> (Account holder: <strong>{BANK_DETAILS.accountHolder}</strong>, Account number: <strong>{BANK_DETAILS.accountNumber}</strong>). Please make an instant payment to allow us to track the payment fast. Use <strong>{effectiveReference}</strong> as your payment reference and WhatsApp the proof to <strong>{BANK_DETAILS.whatsapp}</strong>.
-          </p>
-          <div className={styles.planControls}>
-            <label className={styles.planReferenceLabel}>
-              Payment reference
-              <input
-                type="text"
-                value={sellerPlanReference}
-                placeholder={fallbackReference}
-                onChange={(e) => setSellerPlanReference(e.target.value)}
-                className={styles.planReferenceInput}
-              />
-            </label>
-            <button type="button" className={styles.copyButton} onClick={handleCopyReference}>Copy</button>
-            <label className={styles.proofCheckbox}>
-              <input
-                type="checkbox"
-                checked={hasSentProof}
-                onChange={(e) => setHasSentProof(e.target.checked)}
-                disabled={sellerPlanStatus === 'VERIFIED'}
-              />
-              I have sent proof via WhatsApp
-            </label>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handlePlanSubmit}
-              disabled={isPlanUpdating}
-            >
-              {isPlanUpdating ? 'Saving…' : 'Save package & status'}
-            </button>
           </div>
+        )}
+        <div style={{ marginTop: '1rem' }}>
+          <a href="/create-seller-profile" className="btn btn-secondary">
+            Manage Profile &amp; Package
+          </a>
         </div>
       </section>
 

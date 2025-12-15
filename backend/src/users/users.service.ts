@@ -14,14 +14,15 @@ type PlanPaymentStatus =
   | 'PROOF_SUBMITTED'
   | 'VERIFIED';
 
+// Aligned with main plan prices (promotional pricing)
 const PLAN_FALLBACKS: Record<
   PlanCode,
   { visibilityWeight: number; maxListings: number; priceCents: number }
 > = {
   FREE: { visibilityWeight: 0, maxListings: 1, priceCents: 0 },
-  STARTER: { visibilityWeight: 2, maxListings: 10, priceCents: 22900 },
-  PRO: { visibilityWeight: 3, maxListings: 25, priceCents: 32900 },
-  ELITE: { visibilityWeight: 5, maxListings: 9999, priceCents: 49900 },
+  STARTER: { visibilityWeight: 2, maxListings: 10, priceCents: 9900 },  // R99/month
+  PRO: { visibilityWeight: 3, maxListings: 25, priceCents: 19900 },     // R199/month
+  ELITE: { visibilityWeight: 5, maxListings: 9999, priceCents: 29900 }, // R299/month
   ESSENTIAL: { visibilityWeight: 2, maxListings: 7, priceCents: 9900 },
   GROWTH: { visibilityWeight: 3, maxListings: 15, priceCents: 19900 },
 };
@@ -57,6 +58,8 @@ export class UsersService {
         lastName: true,
         role: true,
         createdAt: true,
+        profileImage: true,
+        // Seller plan fields
         sellerPlanCode: true,
         sellerPlanPriceCents: true,
         sellerPlanPaymentStatus: true,
@@ -65,6 +68,25 @@ export class UsersService {
         sellerPlanVerifiedAt: true,
         sellerVisibilityWeight: true,
         sellerMaxListings: true,
+        // Seller profile fields
+        sellerWhatsapp: true,
+        sellerWebsite: true,
+        sellerBankName: true,
+        sellerBankAccountHolder: true,
+        sellerBankAccountNumber: true,
+        sellerBankBranchCode: true,
+        sellerBankAccountType: true,
+        sellerPaymentNote: true,
+        // Seller business profile fields
+        sellerBusinessName: true,
+        sellerContactPerson: true,
+        sellerContactPhone: true,
+        sellerContactEmail: true,
+        sellerPhysicalAddress: true,
+        sellerProvincesServed: true,
+        sellerApprovalStatus: true,
+        sellerProfileSubmittedAt: true,
+        sellerApprovedAt: true,
       },
     });
     return user;
@@ -177,6 +199,99 @@ export class UsersService {
       where: { id: userId },
       data,
     });
+    const { password, ...result } = updated;
+    return result;
+  }
+
+  async submitSellerProfile(userId: string) {
+    const seller = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        role: true,
+        sellerBusinessName: true,
+        sellerContactPerson: true,
+        sellerContactPhone: true,
+        sellerPhysicalAddress: true,
+        sellerProvincesServed: true,
+        sellerApprovalStatus: true,
+      },
+    });
+
+    if (!seller) {
+      throw new NotFoundException('User not found');
+    }
+    if (seller.role !== 'PRODUCT_SELLER') {
+      throw new ForbiddenException('Only product sellers can submit a seller profile');
+    }
+
+    // Validate required fields
+    if (!seller.sellerBusinessName?.trim()) {
+      throw new ForbiddenException('Business name is required');
+    }
+    if (!seller.sellerContactPerson?.trim()) {
+      throw new ForbiddenException('Contact person name is required');
+    }
+    if (!seller.sellerContactPhone?.trim()) {
+      throw new ForbiddenException('Contact phone is required');
+    }
+    if (!seller.sellerPhysicalAddress?.trim()) {
+      throw new ForbiddenException('Physical address is required');
+    }
+    if (!seller.sellerProvincesServed?.length) {
+      throw new ForbiddenException('Please select at least one province you serve');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        sellerApprovalStatus: 'PENDING',
+        sellerProfileSubmittedAt: new Date(),
+        sellerApprovedAt: null, // Reset if re-submitting
+      },
+    });
+
+    const { password, ...result } = updated;
+    return result;
+  }
+
+  async saveDraftSellerProfile(userId: string, dto: UpdateUserDto) {
+    const seller = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true },
+    });
+
+    if (!seller) {
+      throw new NotFoundException('User not found');
+    }
+    if (seller.role !== 'PRODUCT_SELLER') {
+      throw new ForbiddenException('Only product sellers can update seller profile');
+    }
+
+    // Only allow updating seller business profile fields (not approval status)
+    const allowedFields = [
+      'sellerBusinessName',
+      'sellerContactPerson',
+      'sellerContactPhone',
+      'sellerContactEmail',
+      'sellerPhysicalAddress',
+      'sellerProvincesServed',
+      'sellerWhatsapp',
+      'sellerWebsite',
+    ];
+
+    const updateData: any = {};
+    for (const field of allowedFields) {
+      if (dto[field] !== undefined) {
+        updateData[field] = dto[field];
+      }
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
     const { password, ...result } = updated;
     return result;
   }

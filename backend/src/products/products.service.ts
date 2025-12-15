@@ -18,13 +18,56 @@ interface ProductFilters {
   inStock?: string;
 }
 
+/**
+ * Generate a URL-friendly slug from a string
+ */
+function generateSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single
+    .substring(0, 60); // Limit length
+}
+
+/**
+ * Check if a string is a UUID
+ */
+function isUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
 @Injectable()
 export class ProductsService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
     private eventsGateway: EventsGateway,
-  ) {}
+  ) { }
+
+  /**
+   * Generate a unique slug for a product
+   */
+  private async generateUniqueSlug(name: string): Promise<string> {
+    const baseSlug = generateSlug(name);
+    let slug = baseSlug;
+    let counter = 1;
+
+    // Check for uniqueness and append counter if needed
+    while (await this.prisma.product.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+      if (counter > 100) {
+        // Fallback: append random string
+        slug = `${baseSlug}-${Date.now().toString(36)}`;
+        break;
+      }
+    }
+
+    return slug;
+  }
 
   async create(user: any, dto: CreateProductDto) {
     // Enforce plan-based listing cap for product seller
@@ -38,9 +81,13 @@ export class ProductsService {
       );
     }
 
+    // Generate unique slug from product name
+    const slug = await this.generateUniqueSlug(dto.name);
+
     const product = await this.prisma.product.create({
       data: {
         ...dto,
+        slug,
         sellerId: user.id,
       },
     });
@@ -142,6 +189,79 @@ export class ProductsService {
       if (sb !== 0) return sb;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
+  }
+
+  async findOne(idOrSlug: string) {
+    // Try to find by ID first (if it looks like a UUID), then by slug
+    let product;
+
+    if (isUUID(idOrSlug)) {
+      product = await this.prisma.product.findUnique({
+        where: { id: idOrSlug },
+        include: {
+          seller: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              profileImage: true,
+              // Seller profile fields for banking/payment info
+              sellerWhatsapp: true,
+              sellerWebsite: true,
+              sellerBankName: true,
+              sellerBankAccountHolder: true,
+              sellerBankAccountNumber: true,
+              sellerBankBranchCode: true,
+              sellerBankAccountType: true,
+              sellerPaymentNote: true,
+            },
+          },
+        },
+      });
+    }
+
+    // If not found by ID (or not a UUID), try by slug
+    if (!product) {
+      product = await this.prisma.product.findUnique({
+        where: { slug: idOrSlug },
+        include: {
+          seller: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              profileImage: true,
+              // Seller profile fields for banking/payment info
+              sellerWhatsapp: true,
+              sellerWebsite: true,
+              sellerBankName: true,
+              sellerBankAccountHolder: true,
+              sellerBankAccountNumber: true,
+              sellerBankBranchCode: true,
+              sellerBankAccountType: true,
+              sellerPaymentNote: true,
+            },
+          },
+        },
+      });
+    }
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    // Return different errors for different statuses to help frontend show appropriate messages
+    if (product.approvalStatus === 'PENDING') {
+      throw new ForbiddenException('This product is pending approval and will be available soon.');
+    }
+
+    if (product.approvalStatus === 'REJECTED') {
+      throw new NotFoundException('Product not found');
+    }
+
+    return product;
   }
 
   findMyProducts(user: any) {

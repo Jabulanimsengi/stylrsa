@@ -19,7 +19,7 @@ import { JwtGuard } from 'src/auth/guard/jwt.guard';
 
 @Controller('api/products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) { }
 
   @UseGuards(JwtGuard)
   @Post()
@@ -44,8 +44,9 @@ export class ProductsController {
     });
   }
 
+  // IMPORTANT: Specific routes must come BEFORE parameterized routes!
   @UseGuards(JwtGuard)
-  @Get('mine')
+  @Get('my-products')
   findMyProducts(@GetUser() user: any) {
     return this.productsService.findMyProducts(user);
   }
@@ -57,6 +58,12 @@ export class ProductsController {
     @Param('sellerId') sellerId: string,
   ) {
     return this.productsService.findProductsForSeller(user, sellerId);
+  }
+
+  // Parameterized route comes AFTER specific routes
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.productsService.findOne(id);
   }
 
   @UseGuards(JwtGuard)

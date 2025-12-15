@@ -22,7 +22,7 @@ export class AdminService {
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
     private eventsGateway: EventsGateway,
-  ) {}
+  ) { }
 
   private async logAction(params: {
     adminId: string;
@@ -305,7 +305,7 @@ export class AdminService {
   ) {
     const existing = await this.prisma.review.findUnique({
       where: { id: reviewId },
-      select: { 
+      select: {
         salonId: true,
         rating: true,
       },
@@ -314,18 +314,18 @@ export class AdminService {
       where: { id: reviewId },
       data: { approvalStatus: status },
       include: {
-        author: { 
-          select: { 
+        author: {
+          select: {
             id: true,
             firstName: true,
             lastName: true,
-          } 
+          }
         },
-        salon: { 
-          select: { 
+        salon: {
+          select: {
             name: true,
             ownerId: true,
-          } 
+          }
         },
       },
     });
@@ -362,13 +362,13 @@ export class AdminService {
       const authorName = `${updated.author.firstName} ${updated.author.lastName.charAt(0)}.`;
       const rating = existing?.rating ?? 0;
       const ownerMessage = `${authorName} left a ${rating}-star review for your salon. Tap to view and respond.`;
-      
+
       const ownerNotification = await this.notificationsService.create(
         updated.salon.ownerId,
         ownerMessage,
         { link: '/dashboard?tab=reviews' },
       );
-      
+
       this.eventsGateway.sendNotificationToUser(
         updated.salon.ownerId,
         'newNotification',
@@ -512,8 +512,8 @@ export class AdminService {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       plan = isValidPlan
         ? ((await (this.prisma as any).plan.findUnique({
-            where: { code: normalizedPlan },
-          })) as unknown as PlanPartial)
+          where: { code: normalizedPlan },
+        })) as unknown as PlanPartial)
         : null;
     } catch {
       // noop: Plan table may be absent in some environments; fallbacks cover values
@@ -602,8 +602,8 @@ export class AdminService {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       plan = isValidPlan
         ? ((await (this.prisma as any).plan.findUnique({
-            where: { code: normalizedPlan },
-          })) as unknown as SellerPlanPartial)
+          where: { code: normalizedPlan },
+        })) as unknown as SellerPlanPartial)
         : null;
     } catch {
       // noop: Plan table may be absent in some environments; fallbacks cover values
@@ -1167,6 +1167,16 @@ export class AdminService {
         sellerVisibilityWeight: true,
         sellerMaxListings: true,
         sellerFeaturedUntil: true,
+        // Business profile fields
+        sellerBusinessName: true,
+        sellerContactPerson: true,
+        sellerContactPhone: true,
+        sellerContactEmail: true,
+        sellerPhysicalAddress: true,
+        sellerProvincesServed: true,
+        sellerApprovalStatus: true,
+        sellerProfileSubmittedAt: true,
+        sellerApprovedAt: true,
         _count: {
           select: {
             products: true,
@@ -1189,9 +1199,79 @@ export class AdminService {
       sellerVisibilityWeight: seller.sellerVisibilityWeight,
       sellerMaxListings: seller.sellerMaxListings,
       sellerFeaturedUntil: seller.sellerFeaturedUntil,
+      // Business profile fields
+      sellerBusinessName: seller.sellerBusinessName,
+      sellerContactPerson: seller.sellerContactPerson,
+      sellerContactPhone: seller.sellerContactPhone,
+      sellerContactEmail: seller.sellerContactEmail,
+      sellerPhysicalAddress: seller.sellerPhysicalAddress,
+      sellerProvincesServed: seller.sellerProvincesServed,
+      sellerApprovalStatus: seller.sellerApprovalStatus,
+      sellerProfileSubmittedAt: seller.sellerProfileSubmittedAt,
+      sellerApprovedAt: seller.sellerApprovedAt,
       productsCount: seller._count.products,
       pendingProductsCount: 0, // Would need separate query for pending count
     }));
+  }
+
+  async updateSellerApprovalStatus(
+    sellerId: string,
+    status: 'PENDING' | 'APPROVED' | 'REJECTED',
+    adminId: string,
+  ) {
+    const seller = await this.prisma.user.findUnique({
+      where: { id: sellerId },
+      select: { id: true, role: true, sellerApprovalStatus: true },
+    });
+    if (!seller || seller.role !== 'PRODUCT_SELLER') {
+      throw new NotFoundException('Seller not found');
+    }
+
+    const data: any = { sellerApprovalStatus: status };
+    if (status === 'APPROVED') {
+      data.sellerApprovedAt = new Date();
+    } else {
+      data.sellerApprovedAt = null;
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: sellerId },
+      data,
+    });
+
+    // Log the action
+    void this.logAction({
+      adminId,
+      action: 'SELLER_APPROVAL_UPDATE',
+      targetType: 'SELLER',
+      targetId: sellerId,
+      metadata: { status },
+    });
+
+    // Notify the seller
+    try {
+      const message =
+        status === 'APPROVED'
+          ? '🎉 Congratulations! Your seller profile has been approved. You can now add products to your store.'
+          : status === 'REJECTED'
+            ? 'Your seller profile was not approved. Please update your information and resubmit.'
+            : 'Your seller profile status has been updated.';
+
+      const notification = await this.notificationsService.create(
+        sellerId,
+        message,
+        { link: '/product-dashboard' },
+      );
+      this.eventsGateway.sendNotificationToUser(
+        sellerId,
+        'newNotification',
+        notification,
+      );
+    } catch {
+      // noop: notification is best-effort
+    }
+
+    return updated;
   }
 
   async deleteSellerWithCascade(
@@ -1625,7 +1705,7 @@ export class AdminService {
 
   async getManageFeaturedSalons() {
     const now = new Date();
-    
+
     // Get currently featured salons
     const featured = await this.prisma.salon.findMany({
       where: {
