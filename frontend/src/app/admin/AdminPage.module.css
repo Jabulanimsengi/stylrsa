@@ -3,12 +3,14 @@
   margin: 0 auto;
   padding: 2rem;
 }
+
 .title {
   font-size: 2.25rem;
   font-weight: 700;
   color: var(--primary-plum);
   margin-bottom: 2rem;
 }
+
 .tabs {
   display: flex;
   gap: 0.5rem;
@@ -38,6 +40,7 @@
 .tabs::-webkit-scrollbar-thumb:hover {
   background: var(--primary-pink);
 }
+
 .tabButton {
   padding: 0.5rem 0.875rem;
   border: none;
@@ -76,11 +79,13 @@
   color: var(--primary-plum);
   background: rgba(245, 25, 87, 0.05);
 }
+
 .list {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
+
 .listItem {
   background-color: var(--color-surface-elevated);
   padding: 1.5rem;
@@ -93,16 +98,19 @@
   align-items: center;
   gap: 1rem;
 }
+
 .info h4 {
   font-size: 1.125rem;
   font-weight: 600;
   margin: 0;
   color: var(--primary-plum);
 }
+
 .info p {
   color: var(--color-text-muted);
   margin: 0.25rem 0 0 0;
 }
+
 .planInfo {
   margin-top: 0.75rem;
   display: grid;
@@ -112,6 +120,7 @@
   border-radius: 0.5rem;
   padding: 0.75rem;
 }
+
 .planInfoRow {
   display: flex;
   flex-wrap: wrap;
@@ -119,34 +128,41 @@
   font-size: 0.9rem;
   color: var(--color-text-strong);
 }
+
 .planBadge {
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
 }
+
 .planStatus_pending_selection {
   background-color: rgba(148, 163, 184, 0.2);
   color: var(--color-text-muted);
 }
+
 .planStatus_awaiting_proof {
   background-color: rgba(250, 204, 21, 0.2);
   color: #b45309;
 }
+
 .planStatus_proof_submitted {
   background-color: rgba(59, 130, 246, 0.2);
   color: #1d4ed8;
 }
+
 .planStatus_verified {
   background-color: rgba(34, 197, 94, 0.2);
   color: #047857;
 }
+
 .planReference {
   font-family: var(--font-mono, 'Roboto Mono', monospace);
   background-color: rgba(15, 23, 42, 0.08);
   padding: 0.15rem 0.4rem;
   border-radius: 0.35rem;
 }
+
 .copyButton {
   margin-left: 0.5rem;
   padding: 0.25rem 0.6rem;
@@ -157,19 +173,24 @@
   font-size: 0.8rem;
   color: var(--color-text-strong);
 }
+
 .copyButton:hover {
   background-color: var(--color-surface-elevated);
 }
+
 .planAdminActions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
 .actions {
   display: flex;
   gap: 0.75rem;
 }
-.approveButton, .rejectButton {
+
+.approveButton,
+.rejectButton {
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
   border: none;
@@ -178,12 +199,39 @@
   cursor: pointer;
   transition: opacity 0.2s;
 }
-.approveButton:hover, .rejectButton:hover {
+
+.approveButton:hover,
+.rejectButton:hover {
   opacity: 0.85;
 }
+
 .approveButton {
   background-color: var(--muted-teal);
 }
+
+.statusBadge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.pending {
+  background-color: rgba(250, 204, 21, 0.2);
+  color: #b45309;
+}
+
+.approved {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #047857;
+}
+
+.rejected {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #b91c1c;
+}
+
 .rejectButton {
   background-color: var(--primary-pink);
 }
@@ -193,12 +241,12 @@
   .container {
     padding: 0.75rem;
   }
-  
+
   .title {
     font-size: 1.5rem;
     margin-bottom: 1rem;
   }
-  
+
   .tabs {
     gap: 0.5rem;
     overflow-x: auto;
@@ -206,71 +254,72 @@
     -ms-overflow-style: none;
     padding-bottom: 0.25rem;
   }
-  
+
   .tabs::-webkit-scrollbar {
     display: none;
   }
-  
+
   .tabButton {
     padding: 0.5rem 0.75rem;
     font-size: 0.85rem;
     white-space: nowrap;
   }
-  
+
   .listItem {
     flex-direction: column;
     align-items: stretch;
     padding: 1rem;
     gap: 0.75rem;
   }
-  
+
   .info h4 {
     font-size: 1rem;
   }
-  
+
   .info p {
     font-size: 0.85rem;
   }
-  
+
   .planInfo {
     padding: 0.625rem;
   }
-  
+
   .planInfoRow {
     flex-direction: column;
     gap: 0.4rem;
     font-size: 0.85rem;
   }
-  
+
   .planBadge {
     font-size: 0.7rem;
     padding: 0.2rem 0.5rem;
   }
-  
+
   .planReference {
     font-size: 0.75rem;
     word-break: break-all;
   }
-  
+
   .copyButton {
     margin-left: 0;
     margin-top: 0.25rem;
     font-size: 0.75rem;
     padding: 0.35rem 0.5rem;
   }
-  
+
   .planAdminActions {
     width: 100%;
     gap: 0.5rem;
   }
-  
+
   .actions {
     width: 100%;
     flex-direction: column;
     gap: 0.5rem;
   }
-  
-  .approveButton, .rejectButton {
+
+  .approveButton,
+  .rejectButton {
     width: 100%;
     padding: 0.75rem;
     font-size: 0.875rem;
@@ -281,37 +330,37 @@
   .container {
     padding: 0.5rem;
   }
-  
+
   .title {
     font-size: 1.25rem;
     margin-bottom: 0.875rem;
   }
-  
+
   .tabs {
     gap: 0.375rem;
   }
-  
+
   .tabButton {
     padding: 0.45rem 0.625rem;
     font-size: 0.8rem;
   }
-  
+
   .listItem {
     padding: 0.75rem;
   }
-  
+
   .info h4 {
     font-size: 0.95rem;
   }
-  
+
   .info p {
     font-size: 0.8rem;
   }
-  
+
   .planInfo {
     padding: 0.5rem;
   }
-  
+
   .planInfoRow {
     font-size: 0.8rem;
   }
