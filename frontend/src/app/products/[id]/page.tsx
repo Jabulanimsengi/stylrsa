@@ -134,18 +134,18 @@ function generateBreadcrumbSchema(product: Product, canonicalUrl: string) {
     };
 }
 
-async function getProduct(idOrSlug: string): Promise<Product | null> {
+async function getProduct(idOrSlug: string): Promise<{ product: Product | null; isPending?: boolean }> {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BASE_PATH;
     const isBuildPhase = process.env.IS_BUILD_PHASE === 'true' || process.env.NEXT_PHASE === 'phase-production-build';
 
     // Skip fetching during build if API is localhost
     if (isBuildPhase && (!baseUrl || baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1'))) {
-        return null;
+        return { product: null };
     }
 
     if (!baseUrl) {
         console.error('ERROR: NEXT_PUBLIC_API_URL is not set.');
-        return null;
+        return { product: null };
     }
 
     const url = buildApiUrl(baseUrl, `/api/products/${idOrSlug}`);
@@ -156,23 +156,37 @@ async function getProduct(idOrSlug: string): Promise<Product | null> {
             next: { revalidate: 60 },
         });
 
+        if (res.status === 403) {
+            // Product exists but is pending approval
+            console.log(`[getProduct] Product is pending approval: ${idOrSlug}`);
+            return { product: null, isPending: true };
+        }
+
         if (!res.ok) {
             console.warn(`[getProduct] Response not OK: ${res.status}`);
-            return null;
+            return { product: null };
         }
 
         const product: Product = await res.json();
-        return product;
+        return { product };
     } catch (error: any) {
         console.warn(`[getProduct] Fetch error: ${error.message}`);
-        return null;
+        return { product: null };
     }
 }
 
 // Generate dynamic metadata for SEO
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const { id } = await params;
-    const product = await getProduct(id);
+    const { product, isPending } = await getProduct(id);
+
+    if (isPending) {
+        return {
+            title: 'Product Pending Approval | Stylr SA',
+            description: 'This product is currently being reviewed and will be available soon.',
+            robots: { index: false, follow: true },
+        };
+    }
 
     if (!product) {
         return {
@@ -224,7 +238,54 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const product = await getProduct(id);
+    const { product, isPending } = await getProduct(id);
+
+    // Show pending approval page
+    if (isPending) {
+        return (
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '60vh',
+                padding: '2rem',
+                textAlign: 'center',
+            }}>
+                <div style={{
+                    fontSize: '4rem',
+                    marginBottom: '1rem',
+                }}>⏳</div>
+                <h1 style={{
+                    fontSize: '1.75rem',
+                    fontWeight: 700,
+                    marginBottom: '0.5rem',
+                    color: 'var(--color-text-strong)',
+                }}>Product Pending Approval</h1>
+                <p style={{
+                    fontSize: '1rem',
+                    color: 'var(--color-text-muted)',
+                    maxWidth: '400px',
+                    marginBottom: '1.5rem',
+                }}>
+                    This product is currently being reviewed by our team and will be available soon. Please check back later!
+                </p>
+                <a
+                    href="/products"
+                    style={{
+                        padding: '0.75rem 1.5rem',
+                        background: 'var(--color-primary)',
+                        color: 'white',
+                        borderRadius: '0.5rem',
+                        textDecoration: 'none',
+                        fontWeight: 600,
+                    }}
+                >
+                    Browse Products
+                </a>
+            </div>
+        );
+    }
 
     if (!product) {
         notFound();

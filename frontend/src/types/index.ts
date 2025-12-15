@@ -44,6 +44,16 @@ export interface User {
   sellerBankBranchCode?: string | null;
   sellerBankAccountType?: string | null;
   sellerPaymentNote?: string | null;
+  // Seller business profile fields
+  sellerBusinessName?: string | null;
+  sellerContactPerson?: string | null;
+  sellerContactPhone?: string | null;
+  sellerContactEmail?: string | null;
+  sellerPhysicalAddress?: string | null;
+  sellerProvincesServed?: string[];
+  sellerApprovalStatus?: ApprovalStatus | null;
+  sellerProfileSubmittedAt?: string | null;
+  sellerApprovedAt?: string | null;
 }
 
 export interface Salon {
@@ -330,6 +340,16 @@ export interface SellerSummary {
   sellerVisibilityWeight?: number | null;
   sellerMaxListings?: number | null;
   sellerFeaturedUntil?: string | null;
+  // Business profile fields
+  sellerBusinessName?: string | null;
+  sellerContactPerson?: string | null;
+  sellerContactPhone?: string | null;
+  sellerContactEmail?: string | null;
+  sellerPhysicalAddress?: string | null;
+  sellerProvincesServed?: string[];
+  sellerApprovalStatus?: ApprovalStatus | null;
+  sellerProfileSubmittedAt?: string | null;
+  sellerApprovedAt?: string | null;
   productsCount: number;
   pendingProductsCount: number;
 }

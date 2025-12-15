@@ -805,3 +805,47 @@
     font-size: 1.1rem;
   }
 }
+
+/* ===== PROFILE ALERT ===== */
+.profileAlert {
+  background: linear-gradient(135deg, rgba(194, 34, 134, 0.08) 0%, rgba(147, 51, 234, 0.08) 100%);
+  border: 1px solid rgba(194, 34, 134, 0.25);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.profileAlert h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-strong);
+  margin: 0 0 0.5rem;
+}
+
+.profileAlert p {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  margin: 0 0 1rem;
+  max-width: 500px;
+  margin-inline: auto;
+}
+
+.profileAlert a {
+  display: inline-block;
+}
+
+@media (max-width: 768px) {
+  .profileAlert {
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .profileAlert h3 {
+    font-size: 1.1rem;
+  }
+
+  .profileAlert p {
+    font-size: 0.875rem;
+  }
+}

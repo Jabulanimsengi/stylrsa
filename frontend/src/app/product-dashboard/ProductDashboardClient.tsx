@@ -11,6 +11,7 @@ import {
   ProductOrderStatus,
   PlanCode,
   PlanPaymentStatus,
+  ApprovalStatus,
 } from '@/types';
 import ProductFormModal from '@/components/ProductFormModal';
 import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
@@ -87,6 +88,10 @@ export default function ProductDashboardClient() {
   const [sellerPaymentNote, setSellerPaymentNote] = useState('');
   const [isProfileSaving, setIsProfileSaving] = useState(false);
 
+  // Seller approval status
+  const [sellerApprovalStatus, setSellerApprovalStatus] = useState<ApprovalStatus | null>(null);
+  const [sellerBusinessName, setSellerBusinessName] = useState<string | null>(null);
+
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
@@ -152,6 +157,9 @@ export default function ProductDashboardClient() {
       setSellerBankBranchCode(data.sellerBankBranchCode ?? '');
       setSellerBankAccountType(data.sellerBankAccountType ?? '');
       setSellerPaymentNote(data.sellerPaymentNote ?? '');
+      // Seller approval status
+      setSellerApprovalStatus(data.sellerApprovalStatus ?? null);
+      setSellerBusinessName(data.sellerBusinessName ?? null);
     } catch (error) {
       logger.error('Error in product dashboard:', error);
       toast.error(toFriendlyMessage(error, 'Unable to load your seller package details.'));
@@ -485,17 +493,54 @@ export default function ProductDashboardClient() {
 
       {activeTab === 'products' && (
         <>
+          {/* Seller Profile Approval Check */}
+          {sellerApprovalStatus !== 'APPROVED' && (
+            <div className={styles.profileAlert}>
+              {!sellerBusinessName ? (
+                <>
+                  <h3>📋 Complete Your Seller Profile</h3>
+                  <p>Before you can add products, you need to set up your seller profile with your business details.</p>
+                  <a href="/create-seller-profile" className="btn btn-primary">
+                    Set Up Profile
+                  </a>
+                </>
+              ) : sellerApprovalStatus === 'PENDING' ? (
+                <>
+                  <h3>⏳ Profile Under Review</h3>
+                  <p>Your seller profile is currently being reviewed by our team. You&apos;ll be able to add products once approved.</p>
+                  <a href="/create-seller-profile" className="btn btn-secondary">
+                    Edit Profile
+                  </a>
+                </>
+              ) : sellerApprovalStatus === 'REJECTED' ? (
+                <>
+                  <h3>❌ Profile Needs Updates</h3>
+                  <p>Your seller profile was not approved. Please update your information and resubmit.</p>
+                  <a href="/create-seller-profile" className="btn btn-primary">
+                    Update Profile
+                  </a>
+                </>
+              ) : null}
+            </div>
+          )}
+
           <div className={styles.toolbar}>
             <button
               onClick={() => setIsModalOpen(true)}
               className="btn btn-primary"
-              disabled={sellerPlanStatus === 'PENDING_SELECTION'}
-              title={sellerPlanStatus === 'PENDING_SELECTION' ? 'Select a package and submit proof before adding products.' : undefined}
+              disabled={sellerApprovalStatus !== 'APPROVED' || sellerPlanStatus === 'PENDING_SELECTION'}
+              title={
+                sellerApprovalStatus !== 'APPROVED'
+                  ? 'Your seller profile must be approved before adding products.'
+                  : sellerPlanStatus === 'PENDING_SELECTION'
+                    ? 'Select a package and submit proof before adding products.'
+                    : undefined
+              }
             >
               Add New Product
             </button>
           </div>
-          {sellerPlanStatus === 'PENDING_SELECTION' && (
+          {sellerApprovalStatus === 'APPROVED' && sellerPlanStatus === 'PENDING_SELECTION' && (
             <p className={styles.planGuard}>Select a seller package and submit payment proof to unlock product uploads.</p>
           )}
           <div className={styles.productList}>
