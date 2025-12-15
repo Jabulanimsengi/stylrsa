@@ -190,24 +190,24 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Structured Data */}
+      {/* Structured Data - beforeInteractive ensures Google sees this immediately */}
       <Script
         id="organization-schema"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
       />
       <Script
         id="website-schema"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
       />
       <Script
         id="breadcrumb-schema"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
       />
 
       {/* Client Component with server-rendered initial data */}

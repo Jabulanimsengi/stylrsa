@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Product } from '@/types';
 import styles from './ProductsPage.module.css';
 import ProductCard from '@/components/ProductCard';
+import CompactProductCard from '@/components/CompactProductCard';
 import ImageLightbox from '@/components/ImageLightbox';
 import { SkeletonGroup, SkeletonCard } from '@/components/Skeleton/Skeleton';
 import ProductFilter, { type ProductFilterValues } from '@/components/ProductFilter/ProductFilter';
@@ -255,7 +256,7 @@ export default function ProductsPage() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [filters, setFilters] = useState<ProductFilterValues>(DEFAULT_FILTERS);
   const [sortBy, setSortBy] = useState('newest');
-  const [viewMode, setViewMode] = useState<'marketplace' | 'classic'>('marketplace');
+  const [viewMode, setViewMode] = useState<'compact' | 'marketplace' | 'classic'>('compact');
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
 
@@ -391,6 +392,25 @@ export default function ProductsPage() {
           <div className={styles.viewToggle}>
             <button
               type="button"
+              className={`${styles.viewButton} ${viewMode === 'compact' ? styles.viewButtonActive : ''}`}
+              onClick={() => setViewMode('compact')}
+              aria-label="Compact grid view"
+              title="Compact Grid"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="5" height="5" />
+                <rect x="10" y="3" width="5" height="5" />
+                <rect x="17" y="3" width="5" height="5" />
+                <rect x="3" y="10" width="5" height="5" />
+                <rect x="10" y="10" width="5" height="5" />
+                <rect x="17" y="10" width="5" height="5" />
+                <rect x="3" y="17" width="5" height="5" />
+                <rect x="10" y="17" width="5" height="5" />
+                <rect x="17" y="17" width="5" height="5" />
+              </svg>
+            </button>
+            <button
+              type="button"
               className={`${styles.viewButton} ${viewMode === 'marketplace' ? styles.viewButtonActive : ''}`}
               onClick={() => setViewMode('marketplace')}
               aria-label="Marketplace view"
@@ -436,23 +456,38 @@ export default function ProductsPage() {
             description="We couldn't find any products matching your filters. Try adjusting your search or check back later."
             action={
               hasActiveFilters
-                ? {
-                  label: 'Clear Filters',
-                  onClick: () => setFilters(DEFAULT_FILTERS),
-                }
+                ? (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setFilters(DEFAULT_FILTERS)}
+                  >
+                    Clear Filters
+                  </button>
+                )
                 : undefined
             }
           />
         </div>
+      ) : viewMode === 'compact' ? (
+        <div className={styles.compactGrid}>
+          {products.map((product) => (
+            <CompactProductCard
+              key={product.id}
+              product={product}
+            />
+          ))}
+        </div>
       ) : viewMode === 'marketplace' ? (
         <div className={styles.marketplaceGrid}>
           {products.map((product) => (
-            <MarketplaceProductCard
-              key={product.id}
-              product={product}
-              onOpenLightbox={handleOpenLightbox}
-              onOrderSuccess={fetchProducts}
-            />
+            <Link key={product.id} href={`/products/${product.slug || product.id}`} className={styles.marketplaceCardLink}>
+              <MarketplaceProductCard
+                product={product}
+                onOpenLightbox={handleOpenLightbox}
+                onOrderSuccess={fetchProducts}
+              />
+            </Link>
           ))}
         </div>
       ) : (

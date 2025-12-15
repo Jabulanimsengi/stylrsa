@@ -31,6 +31,13 @@ export default function ProductFormModal({ onClose, onProductAdded, initialData,
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Purchase link fields
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [takealotUrl, setTakealotUrl] = useState('');
+  const [amazonUrl, setAmazonUrl] = useState('');
+  const [purchaseNote, setPurchaseNote] = useState('');
+
   const isEditMode = !!initialData;
 
   useEffect(() => {
@@ -40,6 +47,12 @@ export default function ProductFormModal({ onClose, onProductAdded, initialData,
       setPrice(String(initialData.price));
       setStock(String(initialData.stock ?? 0));
       setExistingImages(initialData.images);
+      // Load purchase link fields
+      setWhatsappNumber(initialData.whatsappNumber || '');
+      setWebsiteUrl(initialData.websiteUrl || '');
+      setTakealotUrl(initialData.takealotUrl || '');
+      setAmazonUrl(initialData.amazonUrl || '');
+      setPurchaseNote(initialData.purchaseNote || '');
     }
   }, [isEditMode, initialData]);
 
@@ -88,7 +101,7 @@ export default function ProductFormModal({ onClose, onProductAdded, initialData,
       if (imageUrls.length === 0) {
         throw new Error('Please upload at least one image.');
       }
-      
+
       const apiEndpoint = isEditMode ? `/api/products/${initialData?.id}` : '/api/products';
       const method = isEditMode ? 'PATCH' : 'POST';
       const body = JSON.stringify({
@@ -97,11 +110,17 @@ export default function ProductFormModal({ onClose, onProductAdded, initialData,
         price: parseFloat(price),
         stock: parseInt(stock || '0', 10),
         images: imageUrls,
+        // Purchase link fields
+        whatsappNumber: whatsappNumber || null,
+        websiteUrl: websiteUrl || null,
+        takealotUrl: takealotUrl || null,
+        amazonUrl: amazonUrl || null,
+        purchaseNote: purchaseNote || null,
         ...(salonId ? { salonId } : {}),
       });
 
       const savedProduct = await apiJson(apiEndpoint, { method, headers: { 'Content-Type': 'application/json' }, body });
-      
+
       // Enhanced toast notification with clear messaging
       if (isEditMode) {
         toast.success(
@@ -114,7 +133,7 @@ export default function ProductFormModal({ onClose, onProductAdded, initialData,
           { autoClose: 5000 }
         );
       }
-      
+
       onProductAdded(savedProduct); // FIX: Use correct prop name
       filePreviews.forEach((preview) => URL.revokeObjectURL(preview));
       setFilePreviews([]);
@@ -144,8 +163,8 @@ export default function ProductFormModal({ onClose, onProductAdded, initialData,
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
         <div className={styles.header}>
-            <h2 className={styles.title}>{isEditMode ? 'Edit Product' : 'Add a New Product'}</h2>
-            <button onClick={onClose} className={styles.closeButton}><FaTimes /></button>
+          <h2 className={styles.title}>{isEditMode ? 'Edit Product' : 'Add a New Product'}</h2>
+          <button onClick={onClose} className={styles.closeButton}><FaTimes /></button>
         </div>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formGroup}>
@@ -158,12 +177,12 @@ export default function ProductFormModal({ onClose, onProductAdded, initialData,
           </div>
           <div className={styles.formGrid}>
             <div className={styles.formGroup}>
-                <label className={styles.label}>Price (R)</label>
-                <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} required className={styles.input} min="0" step="0.01" />
+              <label className={styles.label}>Price (R)</label>
+              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} required className={styles.input} min="0" step="0.01" />
             </div>
             <div className={styles.formGroup}>
-                <label className={styles.label}>Stock Quantity</label>
-                <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} required className={styles.input} min="0" step="1" />
+              <label className={styles.label}>Stock Quantity</label>
+              <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} required className={styles.input} min="0" step="1" />
             </div>
           </div>
           <div className={styles.formGroup}>
@@ -172,18 +191,18 @@ export default function ProductFormModal({ onClose, onProductAdded, initialData,
               <label htmlFor="file-upload" className={styles.fileInputLabel}>
                 <FaUpload /> Choose Files
               </label>
-              <input 
-                id="file-upload" 
-                type="file" 
-                multiple 
-                accept="image/*" 
-                onChange={handleFileChange} 
-                className={styles.fileInput} 
+              <input
+                id="file-upload"
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileChange}
+                className={styles.fileInput}
               />
               {files.length > 0 && <span className={styles.fileName}>{files.length} new file(s) selected</span>}
             </div>
           </div>
-          
+
           <div className={styles.imagePreviewContainer}>
             {existingImages.map(url => (
               <div key={url} className={styles.imageWrapper}>
@@ -212,6 +231,88 @@ export default function ProductFormModal({ onClose, onProductAdded, initialData,
                 <button type="button" onClick={() => handleRemoveNewFile(index)} className={styles.removeImageButton}>&times;</button>
               </div>
             ))}
+          </div>
+
+          {/* Purchase Links Section */}
+          <div className={styles.sectionDivider}>
+            <h3 className={styles.sectionTitle}>Purchase Options</h3>
+            <p className={styles.sectionDescription}>
+              Add links where customers can purchase this product. At least one contact method is recommended.
+            </p>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              <span className={styles.labelIcon}>📱</span>
+              WhatsApp Number
+            </label>
+            <input
+              type="tel"
+              value={whatsappNumber}
+              onChange={(e) => setWhatsappNumber(e.target.value)}
+              placeholder="e.g., +27 82 123 4567"
+              className={styles.input}
+            />
+            <span className={styles.fieldHint}>Customers can message you directly on WhatsApp</span>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              <span className={styles.labelIcon}>🌐</span>
+              Your Website/Store Link
+            </label>
+            <input
+              type="url"
+              value={websiteUrl}
+              onChange={(e) => setWebsiteUrl(e.target.value)}
+              placeholder="https://yourstore.com/product"
+              className={styles.input}
+            />
+            <span className={styles.fieldHint}>Direct link to your online store or product page</span>
+          </div>
+
+          <div className={styles.formGrid}>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>
+                <span className={styles.labelIcon}>🛒</span>
+                Takealot Link
+              </label>
+              <input
+                type="url"
+                value={takealotUrl}
+                onChange={(e) => setTakealotUrl(e.target.value)}
+                placeholder="https://takealot.com/..."
+                className={styles.input}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>
+                <span className={styles.labelIcon}>📦</span>
+                Amazon Link
+              </label>
+              <input
+                type="url"
+                value={amazonUrl}
+                onChange={(e) => setAmazonUrl(e.target.value)}
+                placeholder="https://amazon.com/..."
+                className={styles.input}
+              />
+            </div>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              <span className={styles.labelIcon}>💬</span>
+              Purchase Note (Optional)
+            </label>
+            <textarea
+              value={purchaseNote}
+              onChange={(e) => setPurchaseNote(e.target.value)}
+              placeholder="Any special instructions for buyers, e.g., 'Free delivery in Johannesburg' or 'Contact for bulk pricing'"
+              className={styles.textarea}
+              rows={2}
+            />
+            <span className={styles.fieldHint}>This message will show when customers view the product</span>
           </div>
 
           {error && <p className={styles.errorMessage}>{error}</p>}

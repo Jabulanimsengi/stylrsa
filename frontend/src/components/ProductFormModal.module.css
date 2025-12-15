@@ -179,6 +179,42 @@
   padding-top: 1.5rem;
 }
 
+/* ===== SECTION DIVIDER ===== */
+.sectionDivider {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-strong);
+  margin: 0 0 0.5rem;
+}
+
+.sectionDescription {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ===== LABEL ICON ===== */
+.labelIcon {
+  margin-right: 0.35rem;
+}
+
+/* ===== FIELD HINT ===== */
+.fieldHint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+
 /* ===== MOBILE RESPONSIVE STYLES ===== */
 @media (max-width: 768px) {
   .modalOverlay {

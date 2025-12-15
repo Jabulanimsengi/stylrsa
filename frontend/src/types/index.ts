@@ -26,6 +26,7 @@ export interface User {
   profileImage?: string;
   emailVerified?: boolean;
   salonId?: string | null;
+  // Seller plan fields
   sellerPlanCode?: PlanCode | null;
   sellerPlanPriceCents?: number | null;
   sellerPlanPaymentStatus?: PlanPaymentStatus | null;
@@ -34,6 +35,15 @@ export interface User {
   sellerPlanVerifiedAt?: string | null;
   sellerVisibilityWeight?: number | null;
   sellerMaxListings?: number | null;
+  // Seller profile fields (for product sellers)
+  sellerWhatsapp?: string | null;
+  sellerWebsite?: string | null;
+  sellerBankName?: string | null;
+  sellerBankAccountHolder?: string | null;
+  sellerBankAccountNumber?: string | null;
+  sellerBankBranchCode?: string | null;
+  sellerBankAccountType?: string | null;
+  sellerPaymentNote?: string | null;
 }
 
 export interface Salon {
@@ -203,6 +213,7 @@ export interface GalleryImage {
 export interface Product {
   id: string;
   name: string;
+  slug?: string | null; // SEO-friendly URL slug
   description: string;
   price: number;
   images: string[];
@@ -218,6 +229,8 @@ export interface Product {
   // External purchase links (no internal payment system)
   whatsappNumber?: string | null;
   websiteUrl?: string | null;
+  takealotUrl?: string | null;
+  amazonUrl?: string | null;
   purchaseNote?: string | null; // Optional note about how to purchase
 }
 

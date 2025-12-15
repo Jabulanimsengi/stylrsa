@@ -2,8 +2,8 @@
 /* Modern e-commerce design for product showcase */
 
 .container {
-  --page-max-width: 1400px;
-  --page-padding: clamp(1rem, 4vw, 2.5rem);
+  --page-max-width: 1100px;
+  --page-padding: clamp(1rem, 4vw, 2rem);
   max-width: var(--page-max-width);
   margin: 0 auto;
   padding: var(--page-padding);
@@ -15,9 +15,9 @@
 .heroSection {
   position: relative;
   background: linear-gradient(135deg, var(--color-primary) 0%, #ff6b8a 50%, #ffa07a 100%);
-  border-radius: var(--radius-xl);
-  padding: 2.5rem 2rem;
-  margin-bottom: 2rem;
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 1.5rem;
+  margin-bottom: 1.5rem;
   overflow: hidden;
   color: white;
 }
@@ -180,15 +180,28 @@
 /* ===== PRODUCTS GRID (Classic view) ===== */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
 }
 
 /* ===== MARKETPLACE GRID (New view) ===== */
 .marketplaceGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.marketplaceCardLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+/* ===== COMPACT GRID (Takealot/Amazon style) ===== */
+.compactGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
 }
 
 /* ===== PRODUCT CARD (Marketplace) ===== */
@@ -534,9 +547,16 @@
 
 /* ===== RESPONSIVE ADJUSTMENTS ===== */
 @media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .marketplaceGrid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .compactGrid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
@@ -578,7 +598,8 @@
   }
 
   .grid,
-  .marketplaceGrid {
+  .marketplaceGrid,
+  .compactGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
   }
@@ -654,7 +675,8 @@
   }
 
   .grid,
-  .marketplaceGrid {
+  .marketplaceGrid,
+  .compactGrid {
     gap: 0.625rem;
   }
 }
@@ -713,7 +735,8 @@
   }
 
   .grid,
-  .marketplaceGrid {
+  .marketplaceGrid,
+  .compactGrid {
     gap: 0.5rem;
   }
 
@@ -728,7 +751,8 @@
   }
 
   .grid,
-  .marketplaceGrid {
+  .marketplaceGrid,
+  .compactGrid {
     gap: 0.4375rem;
   }
 }
@@ -739,7 +763,8 @@
   }
 
   .grid,
-  .marketplaceGrid {
+  .marketplaceGrid,
+  .compactGrid {
     gap: 0.375rem;
   }
 }

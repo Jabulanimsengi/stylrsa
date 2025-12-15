@@ -22,10 +22,11 @@ import { logger } from '@/lib/logger';
 import { useSocket } from '@/context/SocketContext';
 import { getImageWithFallback } from '@/lib/placeholders';
 
-type TabKey = 'products' | 'orders';
-const tabs: { key: TabKey; label: string }[] = [
-  { key: 'products', label: 'My Products' },
-  { key: 'orders', label: 'Orders' },
+type TabKey = 'products' | 'orders' | 'settings';
+const tabs: { key: TabKey; label: string; icon: string }[] = [
+  { key: 'products', label: 'Products', icon: '📦' },
+  { key: 'orders', label: 'Orders', icon: '🛒' },
+  { key: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
 const statusOptions: ProductOrderStatus[] = [
@@ -74,6 +75,17 @@ export default function ProductDashboardClient() {
   const [sellerPlanPriceCents, setSellerPlanPriceCents] = useState<number | null>(null);
   const [hasSentProof, setHasSentProof] = useState(false);
   const [isPlanUpdating, setIsPlanUpdating] = useState(false);
+
+  // Seller profile state
+  const [sellerWhatsapp, setSellerWhatsapp] = useState('');
+  const [sellerWebsite, setSellerWebsite] = useState('');
+  const [sellerBankName, setSellerBankName] = useState('');
+  const [sellerBankAccountHolder, setSellerBankAccountHolder] = useState('');
+  const [sellerBankAccountNumber, setSellerBankAccountNumber] = useState('');
+  const [sellerBankBranchCode, setSellerBankBranchCode] = useState('');
+  const [sellerBankAccountType, setSellerBankAccountType] = useState('');
+  const [sellerPaymentNote, setSellerPaymentNote] = useState('');
+  const [isProfileSaving, setIsProfileSaving] = useState(false);
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -131,6 +143,15 @@ export default function ProductDashboardClient() {
         typeof data.sellerPlanPriceCents === 'number' ? data.sellerPlanPriceCents : null,
       );
       setHasSentProof(status === 'PROOF_SUBMITTED' || status === 'VERIFIED');
+      // Load seller profile fields
+      setSellerWhatsapp(data.sellerWhatsapp ?? '');
+      setSellerWebsite(data.sellerWebsite ?? '');
+      setSellerBankName(data.sellerBankName ?? '');
+      setSellerBankAccountHolder(data.sellerBankAccountHolder ?? '');
+      setSellerBankAccountNumber(data.sellerBankAccountNumber ?? '');
+      setSellerBankBranchCode(data.sellerBankBranchCode ?? '');
+      setSellerBankAccountType(data.sellerBankAccountType ?? '');
+      setSellerPaymentNote(data.sellerPaymentNote ?? '');
     } catch (error) {
       logger.error('Error in product dashboard:', error);
       toast.error(toFriendlyMessage(error, 'Unable to load your seller package details.'));
@@ -272,6 +293,34 @@ export default function ProductDashboardClient() {
     }
   };
 
+  const handleProfileSave = async () => {
+    setIsProfileSaving(true);
+    try {
+      const res = await fetch('/api/users/me', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sellerWhatsapp: sellerWhatsapp || null,
+          sellerWebsite: sellerWebsite || null,
+          sellerBankName: sellerBankName || null,
+          sellerBankAccountHolder: sellerBankAccountHolder || null,
+          sellerBankAccountNumber: sellerBankAccountNumber || null,
+          sellerBankBranchCode: sellerBankBranchCode || null,
+          sellerBankAccountType: sellerBankAccountType || null,
+          sellerPaymentNote: sellerPaymentNote || null,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to update profile');
+      toast.success('Seller profile updated successfully!');
+    } catch (error) {
+      logger.error('Error updating seller profile:', error);
+      toast.error(toFriendlyMessage(error, 'Could not save your profile.'));
+    } finally {
+      setIsProfileSaving(false);
+    }
+  };
+
   const handleOrderStatusChange = async (orderId: string, status: ProductOrderStatus) => {
     setUpdatingOrderId(orderId);
     try {
@@ -347,6 +396,7 @@ export default function ProductDashboardClient() {
             className={`${styles.tabButton} ${activeTab === tab.key ? styles.activeTab : ''}`}
             onClick={() => handleTabChange(tab.key)}
           >
+            <span className={styles.tabIcon}>{tab.icon}</span>
             {tab.label}
           </button>
         ))}
@@ -554,6 +604,140 @@ export default function ProductDashboardClient() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'settings' && (
+        <div className={styles.settingsSection}>
+          <div className={styles.settingsCard}>
+            <h2 className={styles.settingsCardTitle}>
+              <span>📱</span>
+              Contact Information
+            </h2>
+            <p className={styles.settingsCardDesc}>
+              Default contact details for your products. These can be overridden per product.
+            </p>
+            <div className={styles.settingsGrid}>
+              <div className={styles.settingsField}>
+                <label className={styles.settingsLabel}>WhatsApp Number</label>
+                <input
+                  type="tel"
+                  value={sellerWhatsapp}
+                  onChange={(e) => setSellerWhatsapp(e.target.value)}
+                  placeholder="+27 82 123 4567"
+                  className={styles.settingsInput}
+                />
+                <span className={styles.settingsHint}>Customers can message you directly</span>
+              </div>
+              <div className={styles.settingsField}>
+                <label className={styles.settingsLabel}>Website / Store URL</label>
+                <input
+                  type="url"
+                  value={sellerWebsite}
+                  onChange={(e) => setSellerWebsite(e.target.value)}
+                  placeholder="https://mystore.com"
+                  className={styles.settingsInput}
+                />
+                <span className={styles.settingsHint}>Your online store or personal website</span>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.settingsCard}>
+            <h2 className={styles.settingsCardTitle}>
+              <span>🏦</span>
+              Banking Details
+            </h2>
+            <p className={styles.settingsCardDesc}>
+              Your banking details will be displayed on product pages so customers know where to pay.
+            </p>
+            <div className={styles.settingsGrid}>
+              <div className={styles.settingsField}>
+                <label className={styles.settingsLabel}>Bank Name</label>
+                <input
+                  type="text"
+                  value={sellerBankName}
+                  onChange={(e) => setSellerBankName(e.target.value)}
+                  placeholder="e.g., FNB, Capitec, Standard Bank"
+                  className={styles.settingsInput}
+                />
+              </div>
+              <div className={styles.settingsField}>
+                <label className={styles.settingsLabel}>Account Holder Name</label>
+                <input
+                  type="text"
+                  value={sellerBankAccountHolder}
+                  onChange={(e) => setSellerBankAccountHolder(e.target.value)}
+                  placeholder="Full name as on bank account"
+                  className={styles.settingsInput}
+                />
+              </div>
+              <div className={styles.settingsField}>
+                <label className={styles.settingsLabel}>Account Number</label>
+                <input
+                  type="text"
+                  value={sellerBankAccountNumber}
+                  onChange={(e) => setSellerBankAccountNumber(e.target.value)}
+                  placeholder="1234567890"
+                  className={styles.settingsInput}
+                />
+              </div>
+              <div className={styles.settingsField}>
+                <label className={styles.settingsLabel}>Branch Code</label>
+                <input
+                  type="text"
+                  value={sellerBankBranchCode}
+                  onChange={(e) => setSellerBankBranchCode(e.target.value)}
+                  placeholder="e.g., 250655"
+                  className={styles.settingsInput}
+                />
+              </div>
+              <div className={styles.settingsField}>
+                <label className={styles.settingsLabel}>Account Type</label>
+                <select
+                  value={sellerBankAccountType}
+                  onChange={(e) => setSellerBankAccountType(e.target.value)}
+                  className={styles.settingsInput}
+                >
+                  <option value="">Select account type</option>
+                  <option value="Savings">Savings</option>
+                  <option value="Cheque">Cheque / Current</option>
+                  <option value="Business">Business</option>
+                  <option value="Transmission">Transmission</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.settingsCard}>
+            <h2 className={styles.settingsCardTitle}>
+              <span>💬</span>
+              Payment Note
+            </h2>
+            <p className={styles.settingsCardDesc}>
+              Add delivery info, special instructions, or any message for your customers.
+            </p>
+            <div className={styles.settingsField}>
+              <textarea
+                value={sellerPaymentNote}
+                onChange={(e) => setSellerPaymentNote(e.target.value)}
+                placeholder="e.g., Free delivery in Johannesburg. COD available for orders over R500. Please use your name as payment reference."
+                className={styles.settingsTextarea}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <div className={styles.settingsActions}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleProfileSave}
+              disabled={isProfileSaving}
+            >
+              {isProfileSaving ? 'Saving...' : 'Save Profile Settings'}
+            </button>
+          </div>
         </div>
       )}
 
