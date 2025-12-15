@@ -4,9 +4,10 @@
   background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   z-index: 50;
   padding: 1rem;
+  overflow-y: auto;
 }
 
 .modalContent {
@@ -15,8 +16,11 @@
   padding: 2rem;
   width: 100%;
   max-width: 36rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
   color: var(--text-charcoal);
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  margin: auto 0;
 }
 
 .header {
@@ -218,23 +222,30 @@
 /* ===== MOBILE RESPONSIVE STYLES ===== */
 @media (max-width: 768px) {
   .modalOverlay {
-    padding: 0.5rem;
+    padding: 0;
     align-items: flex-start;
-    padding-top: 2rem;
   }
 
   .modalContent {
-    padding: 1.5rem;
-    max-height: 90vh;
-    overflow-y: auto;
+    padding: 1.25rem;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: 0;
+    margin: 0;
   }
 
   .header {
-    margin-bottom: 1rem;
+    position: sticky;
+    top: 0;
+    background: var(--color-surface-elevated);
+    margin: -1.25rem -1.25rem 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    z-index: 10;
   }
 
   .title {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
   }
 
   .closeButton {
@@ -247,6 +258,7 @@
 
   .form {
     gap: 1rem;
+    padding-bottom: 1rem;
   }
 
   .formGrid {
@@ -261,47 +273,17 @@
     padding: 0.65rem;
   }
 
+  .textarea {
+    min-height: 80px;
+  }
+
   .fileInputLabel {
-    padding: 0.875rem 1rem;
-    min-height: 48px;
+    padding: 0.75rem 1rem;
+    min-height: 44px;
   }
 
-  .imageWrapper {
-    width: 5rem;
-    height: 5rem;
-  }
-
-  .buttonContainer {
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-top: 1rem;
-    padding-top: 1rem;
-  }
-
-  .buttonContainer button {
-    width: 100%;
-    min-height: 48px;
-  }
-}
-
-@media (max-width: 480px) {
-  .modalOverlay {
-    padding: 0.25rem;
-    padding-top: 1rem;
-  }
-
-  .modalContent {
-    padding: 1rem;
-    max-height: 95vh;
-    border-radius: 10px;
-  }
-
-  .title {
-    font-size: 1.125rem;
-  }
-
-  .label {
-    font-size: 0.85rem;
+  .imagePreviewContainer {
+    gap: 0.5rem;
   }
 
   .imageWrapper {
@@ -309,10 +291,70 @@
     height: 4.5rem;
   }
 
+  .sectionDivider {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+
+  .sectionTitle {
+    font-size: 0.9rem;
+  }
+
+  .sectionDescription {
+    font-size: 0.8rem;
+  }
+
+  .buttonContainer {
+    position: sticky;
+    bottom: 0;
+    background: var(--color-surface-elevated);
+    margin: 1rem -1.25rem -1.25rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--color-border);
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+
+  .buttonContainer button {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalContent {
+    padding: 1rem;
+  }
+
+  .header {
+    margin: -1rem -1rem 1rem;
+    padding: 0.875rem 1rem;
+  }
+
+  .title {
+    font-size: 1rem;
+  }
+
+  .label {
+    font-size: 0.85rem;
+  }
+
+  .imageWrapper {
+    width: 4rem;
+    height: 4rem;
+  }
+
   .removeImageButton {
-    width: 22px;
-    height: 22px;
-    font-size: 12px;
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+    top: -6px;
+    right: -6px;
+  }
+
+  .buttonContainer {
+    margin: 1rem -1rem -1rem;
+    padding: 0.875rem 1rem;
   }
 }
 
@@ -321,12 +363,22 @@
     padding: 0.875rem;
   }
 
+  .header {
+    margin: -0.875rem -0.875rem 0.875rem;
+    padding: 0.75rem 0.875rem;
+  }
+
   .title {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .imageWrapper {
-    width: 4rem;
-    height: 4rem;
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .buttonContainer {
+    margin: 0.875rem -0.875rem -0.875rem;
+    padding: 0.75rem 0.875rem;
   }
 }
