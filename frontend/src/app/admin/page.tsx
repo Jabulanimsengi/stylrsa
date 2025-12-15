@@ -265,10 +265,59 @@ export default function AdminPage() {
             : product,
         ),
       );
+      // Also update allSellers list
+      setAllSellers((prev) =>
+        prev.map((seller) =>
+          seller.id === sellerId
+            ? {
+              ...seller,
+              sellerPlanPaymentStatus: updated.sellerPlanPaymentStatus ?? status,
+              sellerPlanPaymentReference: updated.sellerPlanPaymentReference ?? seller.sellerPlanPaymentReference,
+              sellerPlanProofSubmittedAt: updated.sellerPlanProofSubmittedAt ?? seller.sellerPlanProofSubmittedAt,
+              sellerPlanVerifiedAt: updated.sellerPlanVerifiedAt ?? seller.sellerPlanVerifiedAt,
+            }
+            : seller
+        )
+      );
     } catch (error) {
       toast.error('Failed to update seller payment status');
     } finally {
       setUpdatingSellerPlanId(null);
+    }
+  };
+
+  const updateSellerApprovalStatus = async (
+    sellerId: string,
+    status: ApprovalStatus,
+  ) => {
+    const authHeaders: Record<string, string> = session?.backendJwt
+      ? { Authorization: `Bearer ${session.backendJwt}` }
+      : {};
+    try {
+      const res = await fetch(`/api/admin/sellers/${sellerId}/approval`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        credentials: 'include',
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        throw new Error('Failed to update approval status');
+      }
+      const updated = await res.json();
+      toast.success(`Seller profile ${status.toLowerCase()}`);
+      setAllSellers((prev) =>
+        prev.map((seller) =>
+          seller.id === sellerId
+            ? {
+              ...seller,
+              sellerApprovalStatus: updated.sellerApprovalStatus ?? status,
+              sellerApprovedAt: updated.sellerApprovedAt ?? (status === 'APPROVED' ? new Date().toISOString() : null),
+            }
+            : seller
+        )
+      );
+    } catch (error) {
+      toast.error('Failed to update approval status');
     }
   };
 
@@ -1270,18 +1319,61 @@ export default function AdminPage() {
               : null;
             const reference = seller.sellerPlanPaymentReference ?? seller.email;
             const isUpdating = updatingSellerPlanId === seller.id;
+
+            const approvalStatus = (seller.sellerApprovalStatus ?? 'PENDING') as ApprovalStatus;
+            const businessName = seller.sellerBusinessName || 'Not set up';
+            const profileSubmittedAt = seller.sellerProfileSubmittedAt
+              ? new Date(seller.sellerProfileSubmittedAt).toLocaleString('en-ZA')
+              : null;
+
             return (
               <div key={seller.id} className={styles.listItem}>
                 <div className={styles.info}>
-                  <h4>{seller.firstName} {seller.lastName}</h4>
-                  <p>Email: {seller.email}</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                    <div>
+                      <h4>{seller.firstName} {seller.lastName}</h4>
+                      <p>Email: {seller.email}</p>
+                    </div>
+                    {(approvalStatus === 'PENDING' || approvalStatus === 'REJECTED') && (
+                      <span className={`${styles.statusBadge} ${styles[approvalStatus.toLowerCase()]}`}>
+                        Profile: {approvalStatus}
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ background: '#f5f5f5', padding: '0.75rem', borderRadius: '8px', marginBottom: '0.75rem', fontSize: '0.9rem' }}>
+                    <p><strong>Business:</strong> {businessName}</p>
+                    <p><strong>Contact:</strong> {seller.sellerContactPerson} | {seller.sellerContactPhone}</p>
+                    <p><strong>Address:</strong> {seller.sellerPhysicalAddress}</p>
+                    <p><strong>Service Areas:</strong> {seller.sellerProvincesServed?.join(', ') || 'None'}</p>
+                    {profileSubmittedAt && <p style={{ marginTop: '0.25rem', color: '#666' }}>Updated: {profileSubmittedAt}</p>}
+
+                    {approvalStatus === 'PENDING' && (
+                      <div className={styles.actions} style={{ marginTop: '0.5rem' }}>
+                        <button
+                          className={styles.approveButton}
+                          onClick={() => updateSellerApprovalStatus(seller.id, 'APPROVED')}
+                        >
+                          Approve Profile
+                        </button>
+                        <button
+                          className={styles.rejectButton}
+                          onClick={() => updateSellerApprovalStatus(seller.id, 'REJECTED')}
+                        >
+                          Reject Profile
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <p>Products: {seller.productsCount ?? 0} (Pending: {seller.pendingProductsCount ?? 0})</p>
+
                   <div className={styles.planInfo}>
                     <div className={styles.planInfoRow}>
                       <span><strong>Package:</strong> {plan.name}</span>
                       <span><strong>Amount due:</strong> {amountDue}</span>
                       <span>
-                        <strong>Status:</strong>{' '}
+                        <strong>Payment:</strong>{' '}
                         <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`}>
                           {PLAN_PAYMENT_LABELS[paymentStatus]}
                         </span>
@@ -1309,7 +1401,7 @@ export default function AdminPage() {
                         onClick={() => updateSellerPaymentStatus(seller.id, 'VERIFIED')}
                         disabled={isUpdating || paymentStatus === 'VERIFIED'}
                       >
-                        {isUpdating && paymentStatus !== 'VERIFIED' ? 'Saving…' : 'Mark verified'}
+                        {isUpdating && paymentStatus !== 'VERIFIED' ? 'Saving…' : 'Mark Payment Verified'}
                       </button>
                       <button
                         type="button"
@@ -1317,7 +1409,7 @@ export default function AdminPage() {
                         onClick={() => updateSellerPaymentStatus(seller.id, 'PROOF_SUBMITTED')}
                         disabled={isUpdating || paymentStatus === 'PROOF_SUBMITTED'}
                       >
-                        {isUpdating && paymentStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof received'}
+                        {isUpdating && paymentStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof Received'}
                       </button>
                       <button
                         type="button"
@@ -1325,7 +1417,7 @@ export default function AdminPage() {
                         onClick={() => updateSellerPaymentStatus(seller.id, 'AWAITING_PROOF')}
                         disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
                       >
-                        {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Awaiting proof'}
+                        {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Unverify Payment'}
                       </button>
                     </div>
                   </div>

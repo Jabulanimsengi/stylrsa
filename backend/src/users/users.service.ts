@@ -6,6 +6,8 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateSellerPlanDto } from './dto/update-seller-plan.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { EventsGateway } from '../events/events.gateway';
 
 type PlanCode = 'FREE' | 'STARTER' | 'ESSENTIAL' | 'GROWTH' | 'PRO' | 'ELITE';
 type PlanPaymentStatus =
@@ -29,7 +31,11 @@ const PLAN_FALLBACKS: Record<
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+    private eventsGateway: EventsGateway,
+  ) { }
 
   private async resolvePlanMeta(planCode: PlanCode) {
     try {
@@ -250,6 +256,33 @@ export class UsersService {
         sellerApprovedAt: null, // Reset if re-submitting
       },
     });
+
+    // Notify all admins about the new seller profile submission
+    try {
+      const admins = await this.prisma.user.findMany({
+        where: { role: 'ADMIN' },
+        select: { id: true },
+      });
+
+      const businessName = seller.sellerBusinessName || 'Unknown Business';
+      const message = `📋 New seller profile submitted: "${businessName}" is waiting for approval.`;
+
+      for (const admin of admins) {
+        const notification = await this.notificationsService.create(
+          admin.id,
+          message,
+          { link: '/admin?tab=sellers' },
+        );
+        this.eventsGateway.sendNotificationToUser(
+          admin.id,
+          'newNotification',
+          notification,
+        );
+      }
+    } catch (error) {
+      // Notification is best-effort, don't fail the submission
+      console.error('Failed to notify admins about seller profile:', error);
+    }
 
     const { password, ...result } = updated;
     return result;
