@@ -1,8 +1,6 @@
 // frontend/src/app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import Script from 'next/script';
-import dynamic from 'next/dynamic';
 import './globals.css';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -26,18 +24,8 @@ import { Suspense } from 'react';
 import SkipToContent from '@/components/SkipToContent/SkipToContent';
 import BackendStatus from '@/components/DevTools/BackendStatus';
 import EmailVerificationBannerWrapper from '@/components/EmailVerificationBannerWrapper';
-
-// Lazy load non-critical client components for better initial load performance
-const CookieBanner = dynamic(() => import('@/components/CookieBanner'), { ssr: false });
-const Analytics = dynamic(() => import('@/components/Analytics'), { ssr: false });
-const ToasterClient = dynamic(() => import('@/components/ToasterClient'), { ssr: false });
-const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), { ssr: false });
-const ZoomHandler = dynamic(() => import('@/components/ZoomHandler'), { ssr: false });
-const RequestTop10Button = dynamic(() => import('@/components/RequestTop10/RequestTop10Button'), { ssr: false });
-// DevTools only in development
-const DevTools = process.env.NODE_ENV === 'development'
-  ? dynamic(() => import('@/components/DevTools/DevTools'), { ssr: false })
-  : () => null;
+// Client-only components with ssr: false must be in a Client Component (Next.js 15 requirement)
+import ClientComponents from '@/components/ClientComponents';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -170,18 +158,7 @@ export default function RootLayout({
                         </div>
                         <MobileBottomNav />
                       </div>
-                      <Suspense fallback={null}>
-                        <ToasterClient />
-                      </Suspense>
-                      <CookieBanner />
-                      <ZoomHandler />
-                      <Suspense fallback={null}>
-                        <Analytics />
-                      </Suspense>
-                      {/* Vercel analytics removed - using Cloudflare Pages */}
-                      <PWAInstallPrompt />
-                      <RequestTop10Button variant="floating" />
-                      <DevTools />
+                      <ClientComponents />
                     </NavigationLoadingProvider>
                   </AuthModalProvider>
                 </SocketProvider>
