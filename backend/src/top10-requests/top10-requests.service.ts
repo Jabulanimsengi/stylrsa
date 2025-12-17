@@ -26,7 +26,7 @@ export class Top10RequestsService {
       this.logger.warn('[URGENT REQUEST] SENDGRID_API_KEY not configured. Email notifications disabled.');
     }
     this.fromEmail = this.config.get<string>('FROM_EMAIL') || 'noreply@stylrsa.co.za';
-    this.adminEmail = this.config.get<string>('ADMIN_EMAIL') || 'admin@stylrsa.co.za';
+    this.adminEmail = this.config.get<string>('ADMIN_EMAIL') || 'jbmsengi@gmail.com';
   }
 
   async createRequest(dto: CreateTop10RequestDto) {

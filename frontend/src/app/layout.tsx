@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Script from 'next/script';
+import dynamic from 'next/dynamic';
 import './globals.css';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -17,21 +18,26 @@ import MobileBottomNav from '@/components/MobileBottomNav';
 import MobileNavIcons from '@/components/MobileNavIcons';
 
 import AuthSessionProvider from '@/components/AuthSessionProvider';
-import CookieBanner from '@/components/CookieBanner';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import Analytics from '@/components/Analytics';
-import ToasterClient from '@/components/ToasterClient';
-import PWAInstallPrompt from '@/components/PWAInstallPrompt';
-import ZoomHandler from '@/components/ZoomHandler';
 import AuthModalHandler from '@/components/AuthModalHandler';
 import ClientInit from '@/components/ClientInit';
 import { Suspense } from 'react';
 // Vercel analytics removed - using Cloudflare Pages
 import SkipToContent from '@/components/SkipToContent/SkipToContent';
-import DevTools from '@/components/DevTools/DevTools';
 import BackendStatus from '@/components/DevTools/BackendStatus';
-import RequestTop10Button from '@/components/RequestTop10/RequestTop10Button';
 import EmailVerificationBannerWrapper from '@/components/EmailVerificationBannerWrapper';
+
+// Lazy load non-critical client components for better initial load performance
+const CookieBanner = dynamic(() => import('@/components/CookieBanner'), { ssr: false });
+const Analytics = dynamic(() => import('@/components/Analytics'), { ssr: false });
+const ToasterClient = dynamic(() => import('@/components/ToasterClient'), { ssr: false });
+const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), { ssr: false });
+const ZoomHandler = dynamic(() => import('@/components/ZoomHandler'), { ssr: false });
+const RequestTop10Button = dynamic(() => import('@/components/RequestTop10/RequestTop10Button'), { ssr: false });
+// DevTools only in development
+const DevTools = process.env.NODE_ENV === 'development'
+  ? dynamic(() => import('@/components/DevTools/DevTools'), { ssr: false })
+  : () => null;
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -129,9 +135,12 @@ export default function RootLayout({
           href="/image_01.jpg"
           fetchPriority="high"
         />
-        {/* Preconnect to external domains */}
+        {/* Preconnect to external domains for faster resource loading */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        {/* Google Fonts preconnect */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
       </head>
       <body className={inter.className} suppressHydrationWarning>

@@ -740,39 +740,56 @@ export class SalonsService {
     if (sortBy === 'rating' || sortBy === 'top_rated')
       orderBy = { avgRating: 'desc' };
 
-    // Fetch base list with review aggregation
+    // Fetch base list with optimized select (use pre-computed avgRating)
     let salons = await this.prisma.salon.findMany({
       where,
       orderBy,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        backgroundImage: true,
+        logo: true,
+        heroImages: true,
+        province: true,
+        city: true,
+        town: true,
+        address: true,
+        latitude: true,
+        longitude: true,
+        contactEmail: true,
+        phoneNumber: true,
+        whatsapp: true,
+        website: true,
+        bookingType: true,
+        offersMobile: true,
+        mobileFee: true,
+        operatingHours: true,
+        operatingDays: true,
+        isVerified: true,
+        avgRating: true,        // Pre-computed - no need to calculate!
+        viewCount: true,
+        visibilityWeight: true,
+        featuredUntil: true,
+        createdAt: true,
         _count: {
           select: {
             reviews: {
               where: { approvalStatus: 'APPROVED' }
             }
           }
-        },
-        reviews: {
-          where: { approvalStatus: 'APPROVED' },
-          select: { rating: true }
         }
       }
     });
 
-    // Calculate average rating and review count for each salon
+    // Map to consistent response format with reviewCount from _count
     salons = salons.map((s: any) => {
-      const approvedReviews = s.reviews || [];
-      const reviewCount = approvedReviews.length;
-      const avgRating = reviewCount > 0
-        ? approvedReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount
-        : 0;
-
-      // Remove the reviews array to keep response lean, keep only aggregated data
-      const { reviews, _count, ...salon } = s;
+      const { _count, ...salon } = s;
       return {
         ...salon,
-        avgRating: Number(avgRating.toFixed(1)),
-        reviewCount,
+        avgRating: Number((salon.avgRating || 0).toFixed(1)),
+        reviewCount: _count?.reviews || 0,
         viewCount: salon.viewCount || 0
       };
     });

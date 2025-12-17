@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false, // Remove X-Powered-By header for security
   env: {
     IS_BUILD_PHASE: process.env.npm_lifecycle_event === 'build' ? 'true' : 'false',
   },
@@ -21,6 +22,12 @@ const nextConfig: NextConfig = {
       'socket.io-client',
       'daisyui',
       'isomorphic-dompurify',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-popover',
     ],
   },
   compiler: {

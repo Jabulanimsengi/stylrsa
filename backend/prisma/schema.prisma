@@ -136,6 +136,9 @@ model Salon {
   @@index([approvalStatus])
   @@index([city])
   @@index([province])
+  @@index([approvalStatus, city])           // Composite for filtered city searches
+  @@index([approvalStatus, visibilityWeight]) // For sorted approved salons listing
+  @@index([offersMobile])                   // For mobile salon filtering
 }
 
 model ServiceCategory {
@@ -192,6 +195,8 @@ model Service {
   @@index([approvalStatus])
   @@index([isPopular])
   @@index([isFeatured])
+  @@index([salonId, approvalStatus])   // Composite for approved services per salon
+  @@index([categoryId, approvalStatus]) // For category filtering with approval
 }
 
 model Review {
@@ -266,6 +271,9 @@ model Product {
   promotions     Promotion[]
 
   @@index([slug])
+  @@index([approvalStatus])              // For approved products listing
+  @@index([sellerId, approvalStatus])    // For seller's approved products
+  @@index([category])                    // For category filtering
 }
 
 model Promotion {
