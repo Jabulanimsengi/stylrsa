@@ -1,0 +1,97 @@
+.mapContainer {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.mapContainer canvas {
+    outline: none;
+}
+
+/* Custom marker styling */
+.customMarker {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.customMarker:hover {
+    transform: scale(1.1);
+}
+
+/* Pulsing animation ring */
+.customMarker::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: inherit;
+    opacity: 0.3;
+    transform: translate(-50%, -50%);
+    animation: pulse 2s ease-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.3;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(2.5);
+        opacity: 0;
+    }
+}
+
+/* Popup styling */
+.popupContent {
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    color: var(--color-text-strong, #1a1a1a);
+    font-family: var(--font-primary, system-ui, sans-serif);
+    max-width: 200px;
+    text-align: center;
+}
+
+/* Override Mapbox popup styles - nested under mapContainer for CSS modules compatibility */
+.mapContainer :global(.mapboxgl-popup-content) {
+    padding: 0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.mapContainer :global(.mapboxgl-popup-tip) {
+    border-top-color: white !important;
+}
+
+/* Loading state */
+.mapContainer::after {
+    content: 'Loading map...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.875rem;
+    color: var(--color-text-muted, #666);
+    z-index: -1;
+}
+
+/* Navigation controls styling - nested under mapContainer for CSS modules compatibility */
+.mapContainer :global(.mapboxgl-ctrl-group) {
+    border-radius: 8px !important;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.mapContainer :global(.mapboxgl-ctrl-group button) {
+    width: 36px !important;
+    height: 36px !important;
+}

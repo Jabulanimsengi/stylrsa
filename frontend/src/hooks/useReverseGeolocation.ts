@@ -1,5 +1,6 @@
-// Reverse Geolocation Hook - Get city/address from coordinates
+// Reverse Geolocation Hook - Get city/address from coordinates using Mapbox
 import { useState, useCallback } from 'react';
+import { reverseGeocode as mapboxReverseGeocode, ReverseGeocodingResult } from '@/lib/mapbox';
 
 export interface ReverseGeolocationResult {
   city?: string;
@@ -33,19 +34,19 @@ export function useReverseGeolocation() {
 
   const getCachedResult = useCallback((lat: number, lon: number): ReverseGeolocationResult | null => {
     if (typeof window === 'undefined') return null;
-    
+
     try {
       const cached = localStorage.getItem(CACHE_KEY);
       if (!cached) return null;
-      
+
       const cachedResults: CachedResult[] = JSON.parse(cached);
       const coordKey = `${lat.toFixed(4)},${lon.toFixed(4)}`;
-      
+
       const match = cachedResults.find(item => {
         const age = Date.now() - item.timestamp;
         return item.coordinates === coordKey && age < CACHE_EXPIRY;
       });
-      
+
       return match?.result || null;
     } catch {
       return null;
@@ -54,29 +55,29 @@ export function useReverseGeolocation() {
 
   const setCachedResult = useCallback((lat: number, lon: number, result: ReverseGeolocationResult) => {
     if (typeof window === 'undefined') return;
-    
+
     try {
       const coordKey = `${lat.toFixed(4)},${lon.toFixed(4)}`;
       const cached = localStorage.getItem(CACHE_KEY);
       let cachedResults: CachedResult[] = cached ? JSON.parse(cached) : [];
-      
+
       // Remove old entries and add new one
       cachedResults = cachedResults.filter(item => {
         const age = Date.now() - item.timestamp;
         return age < CACHE_EXPIRY && item.coordinates !== coordKey;
       });
-      
+
       cachedResults.push({
         coordinates: coordKey,
         result,
         timestamp: Date.now()
       });
-      
+
       // Keep only last 10 results
       if (cachedResults.length > 10) {
         cachedResults = cachedResults.slice(-10);
       }
-      
+
       localStorage.setItem(CACHE_KEY, JSON.stringify(cachedResults));
     } catch (error) {
       console.warn('Failed to cache reverse geocoding result:', error);
@@ -98,38 +99,19 @@ export function useReverseGeolocation() {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // Using Nominatim (OpenStreetMap) for free reverse geocoding
-      // Alternative: Google Maps API (requires API key but more accurate)
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
-        {
-          headers: {
-            'User-Agent': 'Stylr-SA-App/1.0 (salon booking platform)'
-          }
-        }
-      );
+      // Using Mapbox Geocoding API for fast reverse geocoding
+      const mapboxResult = await mapboxReverseGeocode(longitude, latitude);
 
-      if (!response.ok) {
-        throw new Error(`Geocoding service unavailable (${response.status})`);
-      }
-
-      const data = await response.json();
-      
-      if (!data || data.error) {
+      if (!mapboxResult) {
         throw new Error('Location not found');
       }
 
       const result: ReverseGeolocationResult = {
-        city: data.address?.city || 
-              data.address?.town || 
-              data.address?.municipality || 
-              data.address?.suburb,
-        province: data.address?.state || 
-                 data.address?.province ||
-                 data.address?.region,
-        country: data.address?.country,
-        formattedAddress: data.display_name,
-        neighborhood: data.address?.neighbourhood || data.address?.suburb
+        city: mapboxResult.city,
+        province: mapboxResult.province,
+        country: mapboxResult.country,
+        formattedAddress: mapboxResult.formattedAddress,
+        neighborhood: mapboxResult.neighborhood
       };
 
       // Cache the result

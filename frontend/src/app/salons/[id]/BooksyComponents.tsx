@@ -27,6 +27,7 @@ import { Salon, GalleryImage, Review } from '@/types';
 import { transformCloudinary } from '@/utils/cloudinary';
 import styles from './BooksyLayout.module.css';
 import VerificationBadge from '@/components/VerificationBadge/VerificationBadge';
+import MapboxMap from '@/components/MapboxMap';
 
 // Helper to check if salon is currently open
 function getOpenStatus(hoursRecord: Record<string, string> | null, todayLabel: string): { isOpen: boolean; statusText: string } {
@@ -119,7 +120,8 @@ interface BooksySidebarProps {
     galleryImages: GalleryImage[];
     onShowAllPhotos: () => void;
     onOpenLightbox: (images: string[], index: number) => void;
-    mapSrc: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     mapsHref: string;
     hoursRecord: Record<string, string> | null;
     todayLabel: string;
@@ -135,7 +137,8 @@ export default function BooksySidebar({
     galleryImages,
     onShowAllPhotos,
     onOpenLightbox,
-    mapSrc,
+    latitude,
+    longitude,
     mapsHref,
     hoursRecord,
     todayLabel,
@@ -155,27 +158,6 @@ export default function BooksySidebar({
         <div className={styles.booksySidebar}>
             {/* Salon Info Card */}
             <div className={styles.sidebarInfoCard}>
-                <h2 className={styles.sidebarSalonName}>{salon.name}</h2>
-
-                {/* Rating Row */}
-                <div className={styles.sidebarRatingRow}>
-                    {salon.avgRating && salon.avgRating > 0 && (
-                        <>
-                            <span className={styles.sidebarRating}>
-                                {salon.avgRating.toFixed(1)}
-                            </span>
-                            <div className={styles.sidebarStars}>
-                                {[1, 2, 3, 4, 5].map(star => (
-                                    <FaStar
-                                        key={star}
-                                        className={star <= Math.round(salon.avgRating || 0) ? styles.starFilled : styles.starEmpty}
-                                    />
-                                ))}
-                            </div>
-                        </>
-                    )}
-                </div>
-
                 {/* Badges */}
                 <div className={styles.sidebarBadges}>
                     {salon.isFeatured && (
@@ -250,13 +232,16 @@ export default function BooksySidebar({
             </div>
 
             {/* Map Card */}
-            {mapSrc && (
+            {latitude && longitude && (
                 <div className={styles.sidebarCard}>
                     <div className={styles.sidebarMap}>
-                        <iframe
-                            src={mapSrc}
-                            loading="lazy"
-                            title={`Map of ${salon.name}`}
+                        <MapboxMap
+                            latitude={latitude}
+                            longitude={longitude}
+                            height={180}
+                            zoom={15}
+                            style="streets"
+                            markerColor="#F51957"
                         />
                         <a
                             href={mapsHref}
@@ -518,14 +503,16 @@ export function SalonInfoHeader({
 // About Section Component
 export function AboutSection({
     salon,
-    mapSrc,
+    latitude,
+    longitude,
     mapsHref,
     hoursRecord,
     todayLabel,
     orderedOperatingDays,
 }: {
     salon: Salon;
-    mapSrc: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     mapsHref: string;
     hoursRecord: Record<string, string> | null;
     todayLabel: string;
@@ -567,12 +554,15 @@ export function AboutSection({
                             {showCopied ? <FaCheck /> : <FaCopy />}
                         </button>
                     </div>
-                    {mapSrc && (
+                    {latitude && longitude && (
                         <div className={styles.aboutMapWrapper}>
-                            <iframe
-                                src={mapSrc}
-                                loading="lazy"
-                                title={`Map of ${salon.name}`}
+                            <MapboxMap
+                                latitude={latitude}
+                                longitude={longitude}
+                                height={200}
+                                zoom={15}
+                                style="streets"
+                                markerColor="#F51957"
                             />
                             <a
                                 href={mapsHref}

@@ -585,14 +585,6 @@ export default function SalonProfileClient({ initialSalon, salonId, breadcrumbIt
       }
     }
   };
-  const mapSrc = (() => {
-    if (!salon.latitude || !salon.longitude) return '';
-    const lat = salon.latitude;
-    const lon = salon.longitude;
-    const d = 0.01;
-    const bbox = `${lon - d},${lat - d},${lon + d},${lat + d}`;
-    return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
-  })();
   const daysNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const todayLabel = daysNames[new Date().getDay()];
 
@@ -656,7 +648,8 @@ export default function SalonProfileClient({ initialSalon, salonId, breadcrumbIt
         hoursRecord={hoursRecord}
         todayLabel={todayLabel}
         orderedOperatingDays={orderedOperatingDays}
-        mapSrc={mapSrc}
+        latitude={salon.latitude}
+        longitude={salon.longitude}
         mapsHref={mapsHref}
         onOpenLightbox={openLightbox}
         onBookService={handleBookClick}
@@ -845,7 +838,8 @@ export default function SalonProfileClient({ initialSalon, salonId, breadcrumbIt
               {/* About Section */}
               <AboutSection
                 salon={salon}
-                mapSrc={mapSrc}
+                latitude={salon.latitude}
+                longitude={salon.longitude}
                 mapsHref={mapsHref}
                 hoursRecord={hoursRecord}
                 todayLabel={todayLabel}
@@ -859,7 +853,8 @@ export default function SalonProfileClient({ initialSalon, salonId, breadcrumbIt
               galleryImages={galleryImages}
               onShowAllPhotos={() => openLightbox(galleryImageUrls, 0)}
               onOpenLightbox={openLightbox}
-              mapSrc={mapSrc}
+              latitude={salon.latitude}
+              longitude={salon.longitude}
               mapsHref={mapsHref}
               hoursRecord={hoursRecord}
               todayLabel={todayLabel}

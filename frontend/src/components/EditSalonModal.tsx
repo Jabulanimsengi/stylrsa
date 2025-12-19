@@ -18,6 +18,8 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui';
+import MapboxMap from '@/components/MapboxMap';
+import { forwardGeocode, GeocodingResult } from '@/lib/mapbox';
 
 interface EditSalonModalProps {
   salon: Salon;
@@ -652,15 +654,18 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                   id="addrQuery"
                   type="text"
                   value={addrQuery}
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const v = e.target.value;
                     setAddrQuery(v);
                     if (v.trim().length > 2) {
-                      const q = encodeURIComponent(v);
-                      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&addressdetails=1&limit=5`)
-                        .then((r) => (r.ok ? r.json() : []))
-                        .then((data) => { setAddrSuggestions(data); setShowAddrSuggestions(true); })
-                        .catch(() => { });
+                      try {
+                        const results = await forwardGeocode(v, { country: 'za', limit: 5 });
+                        setAddrSuggestions(results);
+                        setShowAddrSuggestions(true);
+                      } catch {
+                        setAddrSuggestions([]);
+                        setShowAddrSuggestions(false);
+                      }
                     } else {
                       setAddrSuggestions([]);
                       setShowAddrSuggestions(false);
@@ -673,7 +678,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                   <ul
                     ref={suggestionsRef}
                     style={{ position: 'absolute', zIndex: 10, background: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)', borderRadius: 6, marginTop: 4, width: 'min(520px, 95vw)', listStyle: 'none', padding: 0, maxHeight: '300px', overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-                    {addrSuggestions.map((s: any) => (
+                    {addrSuggestions.map((s: GeocodingResult) => (
                       <li key={s.place_id} style={{ padding: '8px 10px', cursor: 'pointer' }}
                         onClick={() => {
                           setFormData((prev: any) => ({ ...prev, address: s.display_name, latitude: s.lat, longitude: s.lon }));
@@ -686,7 +691,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                             const SA_PROVINCES = Object.keys(locationsData);
 
                             // Extract province/state
-                            const provinceValue = addr.state || addr.province || '';
+                            const provinceValue = addr.state || '';
                             if (provinceValue) {
                               // Try to match with SA provinces
                               const matchedProvince = SA_PROVINCES.find(p =>
@@ -699,9 +704,9 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                             }
 
                             // Extract city
-                            const cityValue = addr.city || addr.town || addr.municipality || addr.county || '';
+                            const cityValue = addr.city || addr.town || '';
                             // Extract town/suburb - fallback to city if not available
-                            const townValue = addr.suburb || addr.neighbourhood || addr.village || cityValue || '';
+                            const townValue = addr.suburb || cityValue || '';
                             if (cityValue || townValue) {
                               setFormData((prev: any) => ({
                                 ...prev,
@@ -732,12 +737,13 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
               {(formData as any).latitude && (formData as any).longitude && (
                 <div className={styles.fullWidth}>
                   <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
-                    <iframe
-                      width="100%"
-                      height="220"
-                      style={{ border: 0 }}
-                      loading="lazy"
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${Number((formData as any).longitude) - 0.01},${Number((formData as any).latitude) - 0.01},${Number((formData as any).longitude) + 0.01},${Number((formData as any).latitude) + 0.01}&layer=mapnik&marker=${(formData as any).latitude},${(formData as any).longitude}`}
+                    <MapboxMap
+                      latitude={Number((formData as any).latitude)}
+                      longitude={Number((formData as any).longitude)}
+                      height={220}
+                      zoom={15}
+                      style="streets"
+                      markerColor="#F51957"
                     />
                   </div>
                 </div>

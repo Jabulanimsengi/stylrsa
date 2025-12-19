@@ -10,6 +10,8 @@ import PageNav from '@/components/PageNav';
 import { APP_PLANS, PLAN_BY_CODE, PlanCode } from '@/constants/plans';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
+import MapboxMap from '@/components/MapboxMap';
+import { forwardGeocode, GeocodingResult } from '@/lib/mapbox';
 
 const DRAFT_STORAGE_KEY = 'salon-draft';
 
@@ -469,23 +471,18 @@ export default function CreateSalonPage() {
               id="addrQuery"
               type="text"
               value={addrQuery}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const v = e.target.value;
                 setAddrQuery(v);
                 if (v.trim().length > 2) {
-                  const q = encodeURIComponent(v);
-                  fetch(`https://nominatim.openstreetmap.org/search?q=${q}, South Africa&format=json&limit=5&addressdetails=1`, {
-                    headers: { 'User-Agent': 'HairProsDirectory' }
-                  })
-                    .then(r => r.json())
-                    .then(data => {
-                      setAddrSuggestions(data || []);
-                      setShowAddrSuggestions(true);
-                    })
-                    .catch(() => {
-                      setAddrSuggestions([]);
-                      setShowAddrSuggestions(false);
-                    });
+                  try {
+                    const results = await forwardGeocode(v, { country: 'za', limit: 5 });
+                    setAddrSuggestions(results);
+                    setShowAddrSuggestions(true);
+                  } catch {
+                    setAddrSuggestions([]);
+                    setShowAddrSuggestions(false);
+                  }
                 } else {
                   setAddrSuggestions([]);
                   setShowAddrSuggestions(false);
@@ -511,7 +508,7 @@ export default function CreateSalonPage() {
                   width: '100%',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                 }}>
-                {addrSuggestions.map((s) => (
+                {addrSuggestions.map((s: GeocodingResult) => (
                   <li
                     key={s.place_id}
                     style={{
@@ -533,7 +530,7 @@ export default function CreateSalonPage() {
                         const addr = s.address;
 
                         // Extract province/state
-                        const provinceValue = addr.state || addr.province || '';
+                        const provinceValue = addr.state || '';
                         if (provinceValue) {
                           // Try to match with SA provinces
                           const matchedProvince = SA_PROVINCES.find(p =>
@@ -546,13 +543,13 @@ export default function CreateSalonPage() {
                         }
 
                         // Extract city
-                        const cityValue = addr.city || addr.town || addr.municipality || addr.county || '';
+                        const cityValue = addr.city || addr.town || '';
                         if (cityValue) {
                           setCity(cityValue);
                         }
 
                         // Extract town/suburb - fallback to city if not available
-                        const townValue = addr.suburb || addr.neighbourhood || addr.village || addr.city || addr.town || addr.municipality || '';
+                        const townValue = addr.suburb || addr.city || addr.town || '';
                         if (townValue) {
                           setTown(townValue);
                         }
@@ -671,14 +668,14 @@ export default function CreateSalonPage() {
           {latitude && longitude && (
             <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
               <label>Map Preview</label>
-              <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden', height: 300 }}>
-                <iframe
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${longitude - 0.01},${latitude - 0.01},${longitude + 0.01},${latitude + 0.01}&layer=mapnik&marker=${latitude},${longitude}`}
-                  title="Salon Location Map"
+              <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
+                <MapboxMap
+                  latitude={latitude}
+                  longitude={longitude}
+                  height={300}
+                  zoom={15}
+                  interactive={false}
+                  style="streets"
                 />
               </div>
               <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginTop: 8 }}>

@@ -28,6 +28,7 @@ import { Salon, Service, GalleryImage, Review } from '@/types';
 import { transformCloudinary } from '@/utils/cloudinary';
 import VerificationBadge from '@/components/VerificationBadge/VerificationBadge';
 import { SERVICE_CATEGORIES } from '@/constants/categories';
+import MapboxMap from '@/components/MapboxMap';
 import styles from './MobileSalonProfile.module.css';
 
 type TabType = 'photos' | 'services' | 'details' | 'reviews';
@@ -40,7 +41,8 @@ interface MobileSalonProfileProps {
     hoursRecord: Record<string, string> | null;
     todayLabel: string;
     orderedOperatingDays: string[];
-    mapSrc: string;
+    latitude?: number | null;
+    longitude?: number | null;
     mapsHref: string;
     onOpenLightbox: (images: string[], index: number) => void;
     onBookService: (service: Service) => void;
@@ -142,7 +144,8 @@ export default function MobileSalonProfile({
     hoursRecord,
     todayLabel,
     orderedOperatingDays,
-    mapSrc,
+    latitude,
+    longitude,
     mapsHref,
     onOpenLightbox,
     onBookService,
@@ -646,12 +649,15 @@ export default function MobileSalonProfile({
                                             {showCopied ? <FaCheck /> : <FaCopy />}
                                         </button>
                                     </div>
-                                    {mapSrc && (
+                                    {latitude && longitude && (
                                         <div className={styles.mapWrapper}>
-                                            <iframe
-                                                src={mapSrc}
-                                                loading="lazy"
-                                                title={`Map of ${salon.name}`}
+                                            <MapboxMap
+                                                latitude={latitude}
+                                                longitude={longitude}
+                                                height={200}
+                                                zoom={15}
+                                                style="streets"
+                                                markerColor="#F51957"
                                             />
                                             <a
                                                 href={mapsHref}

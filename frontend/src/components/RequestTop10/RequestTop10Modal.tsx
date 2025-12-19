@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
 import { FaCloudUploadAlt, FaTrash, FaSpinner } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { forwardGeocode, GeocodingResult } from '@/lib/mapbox';
 
 const SERVICE_CATEGORIES = [
   { id: 'hair-salon', name: 'Hair Salon', icon: '💇' },
@@ -18,19 +19,8 @@ const SERVICE_CATEGORIES = [
   { id: 'beauty', name: 'Beauty Services', icon: '✨' },
 ];
 
-interface LocationSuggestion {
-  place_id: number;
-  display_name: string;
-  lat: string;
-  lon: string;
-  address?: {
-    suburb?: string;
-    city?: string;
-    town?: string;
-    state?: string;
-    country?: string;
-  };
-}
+// Use GeocodingResult from mapbox lib for type safety
+type LocationSuggestion = GeocodingResult;
 
 interface RequestTop10ModalProps {
   isOpen: boolean;
@@ -107,7 +97,7 @@ export default function RequestTop10Modal({ isOpen, onClose }: RequestTop10Modal
     setImages([]);
   };
 
-  // Location autocomplete using OpenStreetMap Nominatim (free)
+  // Location autocomplete using Mapbox Geocoding API (fast)
   const handleLocationChange = async (value: string) => {
     setLocation(value);
     setLocationCoords(null);
@@ -119,18 +109,13 @@ export default function RequestTop10Modal({ isOpen, onClose }: RequestTop10Modal
     }
 
     try {
-      const q = encodeURIComponent(value);
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${q}, South Africa&format=json&limit=5&addressdetails=1`,
-        { headers: { 'User-Agent': 'StylRSA' } }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setLocationSuggestions(data || []);
-        setShowSuggestions(true);
-      }
+      const results = await forwardGeocode(value, { country: 'za', limit: 5 });
+      setLocationSuggestions(results as LocationSuggestion[]);
+      setShowSuggestions(true);
     } catch {
       // Silently fail - user can still type manually
+      setLocationSuggestions([]);
+      setShowSuggestions(false);
     }
   };
 
@@ -146,7 +131,7 @@ export default function RequestTop10Modal({ isOpen, onClose }: RequestTop10Modal
     setLocation(displayName);
     setShowSuggestions(false);
 
-    // Set coordinates directly from Nominatim response
+    // Set coordinates from Mapbox response
     if (suggestion.lat && suggestion.lon) {
       setLocationCoords({
         lat: parseFloat(suggestion.lat),
