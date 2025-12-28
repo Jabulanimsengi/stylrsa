@@ -164,19 +164,20 @@ export default function HomePageClient({
           fill
           priority
           fetchPriority="high"
-          sizes="100vw"
-          quality={isMobile ? 70 : 80}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1920px"
+          quality={isMobile ? 60 : 70}
           placeholder="blur"
           blurDataURL={HERO_IMAGE.blurDataURL}
           loading="eager"
+          decoding="async"
         />
         <div className={styles.heroGradient} />
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle} id="hero-title">
-            Book local beauty & wellness
+            Find and book top-rated beauty & wellness near you
           </h1>
           <p className={styles.heroSubtitle}>
-            Discover and book top-rated salons, spas & beauty professionals near you
+            Enjoy 5% cashback with StylrSA
           </p>
 
           <div className={styles.heroSearchContainer}>

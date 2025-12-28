@@ -7,7 +7,7 @@
 }
 
 .title {
-    font-size: 2.25rem;
+    font-size: 1.75rem;
     font-weight: 700;
     color: var(--color-text-strong);
     margin: 0 0 1rem 0;
@@ -36,7 +36,7 @@
 }
 
 .provinceTitle {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--color-text-strong);
     margin: 0;
@@ -156,7 +156,7 @@
     }
 
     .title {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
     }
 
     .provinceGroupsContainer {
@@ -169,7 +169,7 @@
     }
 
     .provinceTitle {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 
     .serviceCount {
@@ -218,11 +218,11 @@
     }
 
     .title {
-        font-size: 1.25rem;
+        font-size: 1.15rem;
     }
 
     .provinceTitle {
-        font-size: 1rem;
+        font-size: 0.95rem;
     }
 
     .serviceCardWrapper {

@@ -511,8 +511,40 @@
   }
 }
 
+/* Filter Bar */
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 1rem;
+  background: var(--color-surface-elevated);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--color-border);
+}
 
+.filterInput {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  min-width: 220px;
+  max-width: 320px;
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+}
 
+.filterInput:focus {
+  outline: none;
+  border-color: var(--primary-plum);
+}
 
-
-
+.filterCount {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  padding: 0.4rem 0.75rem;
+  background: var(--color-surface);
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}

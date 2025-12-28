@@ -11,6 +11,7 @@ const ToasterClient = dynamic(() => import('@/components/ToasterClient'), { ssr:
 const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), { ssr: false });
 const ZoomHandler = dynamic(() => import('@/components/ZoomHandler'), { ssr: false });
 const RequestTop10Button = dynamic(() => import('@/components/RequestTop10/RequestTop10Button'), { ssr: false });
+const SalonMapButton = dynamic(() => import('@/components/SalonMapView/SalonMapButton'), { ssr: false });
 // DevTools only in development
 const DevTools = process.env.NODE_ENV === 'development'
     ? dynamic(() => import('@/components/DevTools/DevTools'), { ssr: false })
@@ -33,6 +34,7 @@ export default function ClientComponents() {
             </Suspense>
             <PWAInstallPrompt />
             <RequestTop10Button variant="floating" />
+            <SalonMapButton variant="floating" />
             <DevTools />
         </>
     );

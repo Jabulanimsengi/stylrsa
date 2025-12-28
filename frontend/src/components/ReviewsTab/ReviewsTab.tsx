@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import styles from './ReviewsTab.module.css';
 import { Review } from '@/types';
+import { Button, EmptyState, StarRating, Alert, Spinner } from '@/components/ui';
+import StatusBadge from '@/components/StatusBadge';
 
 interface ReviewsData {
   pending: Review[];
@@ -26,7 +28,7 @@ export default function ReviewsTab() {
       const res = await fetch('/api/reviews/my-salon-reviews', {
         credentials: 'include',
       });
-      
+
       if (!res.ok) {
         if (res.status === 404) {
           // No salon found - salon owner hasn't created salon yet
@@ -35,7 +37,7 @@ export default function ReviewsTab() {
         }
         throw new Error('Failed to fetch reviews');
       }
-      
+
       const data = await res.json();
       // Ensure data has the correct structure
       setReviews({
@@ -86,7 +88,7 @@ export default function ReviewsTab() {
     return (
       <div className={styles.container}>
         <div className={styles.loading}>
-          <div className={styles.spinner}></div>
+          <Spinner size="lg" />
           <p>Loading reviews...</p>
         </div>
       </div>
@@ -96,13 +98,12 @@ export default function ReviewsTab() {
   if (error) {
     return (
       <div className={styles.container}>
-        <div className={styles.error}>
-          <h3>⚠️ Error Loading Reviews</h3>
-          <p>{error}</p>
-          <button onClick={fetchReviews} className={styles.retryButton}>
+        <Alert variant="error" title="Error Loading Reviews">
+          <p className="mb-3">{error}</p>
+          <Button variant="outline" size="sm" onClick={fetchReviews}>
             Retry
-          </button>
-        </div>
+          </Button>
+        </Alert>
       </div>
     );
   }
@@ -110,14 +111,11 @@ export default function ReviewsTab() {
   if (!reviews || (reviews.pending.length === 0 && reviews.approved.length === 0 && reviews.needsResponse.length === 0)) {
     return (
       <div className={styles.container}>
-        <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>📝</div>
-          <h3>No Reviews Yet</h3>
-          <p>You haven't received any reviews for your salon yet.</p>
-          <p className={styles.emptyHint}>
-            Reviews will appear here once customers complete their bookings and leave feedback.
-          </p>
-        </div>
+        <EmptyState
+          icon="inbox"
+          title="No Reviews Yet"
+          description="Reviews will appear here once customers complete their bookings and leave feedback."
+        />
       </div>
     );
   }
@@ -183,10 +181,7 @@ export default function ReviewsTab() {
                     </span>
                   )}
                 </div>
-                <div className={styles.rating}>
-                  {'★'.repeat(review.rating)}
-                  {'☆'.repeat(5 - review.rating)}
-                </div>
+                <StarRating value={review.rating} size="sm" />
               </div>
 
               <p className={styles.comment}>{review.comment}</p>
@@ -214,27 +209,29 @@ export default function ReviewsTab() {
                         rows={4}
                       />
                       <div className={styles.responseActions}>
-                        <button
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => setRespondingTo(null)}
-                          className={styles.cancelButton}
                         >
                           Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          size="sm"
                           onClick={() => handleRespond(review.id)}
-                          className={styles.submitButton}
                         >
                           Submit Response
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ) : (
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setRespondingTo(review.id)}
-                      className={styles.respondButton}
                     >
                       Respond to this review
-                    </button>
+                    </Button>
                   )}
                 </>
               )}
@@ -244,9 +241,7 @@ export default function ReviewsTab() {
                   {new Date(review.createdAt).toLocaleDateString()}
                 </span>
                 {review.approvalStatus && (
-                  <span className={`${styles.status} ${styles[review.approvalStatus.toLowerCase()]}`}>
-                    {review.approvalStatus}
-                  </span>
+                  <StatusBadge status={review.approvalStatus} size="sm" />
                 )}
               </div>
             </div>

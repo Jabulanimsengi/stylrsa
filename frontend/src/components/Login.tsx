@@ -9,6 +9,7 @@ import { User } from '@/types';
 import { apiJson, apiFetch } from '@/lib/api';
 import { toFriendlyMessage } from '@/lib/errors';
 import { FaGoogle } from 'react-icons/fa';
+import { Alert, LoadingButton } from '@/components/ui';
 
 // Define the props that this component will accept
 interface LoginProps {
@@ -87,15 +88,20 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             </button>
           </div>
         </div>
-        {error && <p className={styles.errorMessage}>{error}</p>}
+        {error && (
+          <Alert variant="error" className="mb-4">
+            {error}
+          </Alert>
+        )}
         <div>
-          <button
+          <LoadingButton
             type="submit"
-            disabled={isLoading}
-            className="btn btn-primary"
+            loading={isLoading}
+            loadingText="Signing in..."
+            className="w-full"
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
-          </button>
+            Sign In
+          </LoadingButton>
         </div>
       </form>
       <div className={styles.oauthSection}>

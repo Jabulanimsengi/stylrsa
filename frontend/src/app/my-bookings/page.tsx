@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { Booking, Salon, Service, Review as ReviewType } from '@/types'; // Import all needed types
+import { Booking, Salon, Service, Review as ReviewType } from '@/types';
 import styles from './MyBookingsPage.module.css';
 import ReviewModal from '@/components/ReviewModal';
 import { useSocket } from '@/context/SocketContext';
 import { toast } from 'react-toastify';
 import { Skeleton, SkeletonGroup } from '@/components/Skeleton/Skeleton';
 import PageNav from '@/components/PageNav';
+import { Button, EmptyState, StarRating } from '@/components/ui';
+import StatusBadge from '@/components/StatusBadge';
 
 // FIX 1: Create a more detailed Booking type that matches the actual API response data
 // This includes the full salon and service objects, and optional review/totalCost fields.
@@ -170,12 +172,17 @@ export default function MyBookingsPage() {
         </div>
 
         {bookingsToShow.length === 0 ? (
-          <p>You have no {activeTab} bookings.</p>
+          <EmptyState
+            title={`No ${activeTab} bookings`}
+            description={activeTab === 'upcoming' ? 'Book a service to see your upcoming appointments here.' : 'Your past bookings will appear here once completed.'}
+            icon="inbox"
+            action={activeTab === 'upcoming' ? { label: 'Browse Salons', onClick: () => router.push('/salons') } : undefined}
+          />
         ) : (
           <div className={styles.list}>
             {bookingsToShow.map(booking => (
               <div key={booking.id} className={styles.card}>
-                <span className={`${styles.statusBadge} ${getStatusClass(booking.status)}`}>{booking.status}</span>
+                <StatusBadge status={booking.status} size="sm" />
                 {/* FIX 5: Access properties from the full objects */}
                 <h4>{booking.service.title}</h4>
                 <p>at <strong>{booking.salon.name}</strong></p>
@@ -185,9 +192,7 @@ export default function MyBookingsPage() {
                 {booking.review ? (
                   <div className={styles.reviewSection}>
                     <div className={styles.reviewHeader}>
-                      <span className={styles.reviewStars}>
-                        {'★'.repeat(booking.review.rating)}{'☆'.repeat(5 - booking.review.rating)}
-                      </span>
+                      <StarRating value={booking.review.rating} size="sm" />
                       {booking.review.approvalStatus === 'PENDING' && (
                         <span className={styles.reviewPendingBadge}>Pending Approval</span>
                       )}
@@ -198,35 +203,33 @@ export default function MyBookingsPage() {
                     <p className={styles.reviewComment}>"{booking.review.comment}"</p>
                     {booking.review.approvalStatus === 'PENDING' && (
                       <div className={styles.reviewActions}>
-                        <button
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           onClick={() => handleEditReview(booking.review!, booking.id)}
-                          className="btn btn-secondary"
                         >
                           Edit Review
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </div>
                 ) : booking.status === 'COMPLETED' ? (
                   <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <button onClick={() => setReviewingBookingId(booking.id)} className="btn btn-secondary">
+                    <Button variant="secondary" onClick={() => setReviewingBookingId(booking.id)}>
                       Leave a Review
-                    </button>
-                    <button
-                      onClick={() => router.push(`/salons/${booking.salon.slug || booking.salonId}?serviceId=${booking.serviceId}`)}
-                      className="btn btn-primary"
-                    >
+                    </Button>
+                    <Button onClick={() => router.push(`/salons/${booking.salon.slug || booking.salonId}?serviceId=${booking.serviceId}`)}>
                       Book Again
-                    </button>
+                    </Button>
                   </div>
                 ) : booking.status === 'DECLINED' ? (
                   <div style={{ marginTop: '1rem' }}>
-                    <button
+                    <Button
+                      variant="secondary"
                       onClick={() => router.push(`/salons/${booking.salon.slug || booking.salonId}`)}
-                      className="btn btn-secondary"
                     >
                       Try Another Time
-                    </button>
+                    </Button>
                   </div>
                 ) : null}
               </div>

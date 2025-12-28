@@ -1,23 +1,21 @@
-export type PlanCode = 'STARTER' | 'PRO' | 'ELITE';
+export type PlanCode = 'FREE';
 
 // Legacy plan codes for existing users (not available for new signups)
-export type LegacyPlanCode = 'FREE' | 'ESSENTIAL' | 'GROWTH';
+export type LegacyPlanCode = 'FREE' | 'ESSENTIAL' | 'GROWTH' | 'STARTER' | 'PRO' | 'ELITE';
 export type AllPlanCodes = PlanCode | LegacyPlanCode;
 
 export interface PlanFeature {
   name: string;
-  starter: string | boolean;
-  pro: string | boolean;
-  elite: string | boolean;
+  free: string | boolean;
 }
 
 export interface AppPlan {
   code: PlanCode | LegacyPlanCode;
   name: string;
   price: string;
-  originalPrice?: string; // Original price before special
-  specialPrice?: string; // Special promotional price
-  specialEnds?: string; // When the special ends (ISO date string)
+  originalPrice?: string;
+  specialPrice?: string;
+  specialEnds?: string;
   priceCents: number;
   maxListings: number | 'Unlimited';
   visibilityWeight: number;
@@ -27,105 +25,87 @@ export interface AppPlan {
   isLegacy?: boolean;
 }
 
+// Commission breakdown (32% total)
+export const COMMISSION_RATES = {
+  TOTAL: 0.32,        // 32% total commission
+  PLATFORM: 0.25,     // 25% platform fee
+  CASHBACK: 0.05,     // 5% client cashback
+  PAYMENT: 0.02,      // 2% payment processing
+};
+
 // Feature comparison for pricing table
 export const PLAN_FEATURES: PlanFeature[] = [
-  { name: 'Guaranteed Monthly Leads', starter: '5–10', pro: '10–25', elite: '30+' },
-  { name: 'Service Listings', starter: '10', pro: '25', elite: 'Unlimited' },
-  { name: 'Gallery Images', starter: '20', pro: '60', elite: 'Unlimited' },
-  { name: 'Short Video Uploads', starter: false, pro: true, elite: true },
-  { name: 'Before & After Gallery', starter: false, pro: true, elite: true },
-  { name: 'Analytics Dashboard', starter: 'Basic', pro: 'Advanced', elite: 'Premium' },
-  { name: 'Search Placement', starter: 'Standard', pro: 'Priority', elite: 'Premium' },
-  { name: 'Team Member Profiles', starter: false, pro: '5', elite: 'Unlimited' },
-  { name: 'Job Posting Board', starter: false, pro: false, elite: true },
-  { name: 'Support', starter: 'Email', pro: 'Priority', elite: 'Dedicated Manager' },
-  { name: 'Featured Salon Priority', starter: false, pro: true, elite: true },
-  { name: 'Early Access to Features', starter: false, pro: false, elite: true },
+  { name: 'Listing Fee', free: 'FREE' },
+  { name: 'Service Listings', free: 'Unlimited' },
+  { name: 'Gallery Images', free: 'Unlimited' },
+  { name: 'Short Video Uploads', free: true },
+  { name: 'Before & After Gallery', free: true },
+  { name: 'Analytics Dashboard', free: 'Full Access' },
+  { name: 'Search Visibility', free: 'Equal for all' },
+  { name: 'Team Member Profiles', free: 'Unlimited' },
+  { name: 'Job Posting Board', free: true },
+  { name: 'Support', free: 'Email & Chat' },
+  { name: 'Commission on Bookings', free: '32%' },
 ];
 
-// Active plans available for new signups
+// Active plans available for new signups - now just FREE
 export const APP_PLANS: AppPlan[] = [
   {
-    code: 'STARTER',
-    name: 'Starter',
-    price: 'R99/month',
-    originalPrice: 'R229/month',
-    specialPrice: 'R99/month',
-    specialEnds: '2025-06-13',
-    priceCents: 9900,
-    maxListings: 10,
-    visibilityWeight: 2,
-    description: 'Perfect for small salons or solo stylists getting started.',
-    features: [
-      '5–10 guaranteed leads/month',
-      'Up to 10 service listings',
-      'Gallery up to 20 images',
-      'Basic analytics dashboard',
-      'Email support',
-    ],
-  },
-  {
-    code: 'PRO',
-    name: 'Pro',
-    price: 'R199/month',
-    originalPrice: 'R329/month',
-    specialPrice: 'R199/month',
-    specialEnds: '2025-06-13',
-    priceCents: 19900,
-    maxListings: 25,
-    visibilityWeight: 3,
-    description: 'For growing salons ready for more clients and higher visibility.',
-    features: [
-      '10–25 guaranteed leads/month',
-      'Up to 25 service listings',
-      'Gallery up to 60 images',
-      'Short video uploads',
-      'Before & after gallery',
-      'Priority search placement',
-      'Analytics + performance insights',
-      'Up to 5 team member profiles',
-      'Priority support',
-    ],
-    popular: true,
-  },
-  {
-    code: 'ELITE',
-    name: 'Elite',
-    price: 'R299/month',
-    originalPrice: 'R499/month',
-    specialPrice: 'R299/month',
-    specialEnds: '2025-06-13',
-    priceCents: 29900,
+    code: 'FREE',
+    name: 'Free Forever',
+    price: 'R0',
+    priceCents: 0,
     maxListings: 'Unlimited',
     visibilityWeight: 5,
-    description: 'For established salons, franchises, and premium brands.',
+    description: 'List your services for free. We only earn when you earn through completed bookings.',
     features: [
-      '30+ guaranteed leads/month',
+      '100% FREE to list',
       'Unlimited service listings',
       'Unlimited gallery images',
-      'Short video uploads',
-      'Before & after gallery',
-      'Premium search placement',
-      'Featured salon priority',
-      'Unlimited team member profiles',
-      'Job posting board access',
-      'Dedicated account manager',
-      'Early access to new features',
+      'Video uploads & before/after gallery',
+      'Full analytics dashboard',
+      'Equal search visibility',
+      'Unlimited team profiles',
+      'Job posting access',
+      '32% commission ONLY on completed bookings',
     ],
+    popular: true,
   },
 ];
 
 // Legacy plans for existing users only (grandfathered)
 export const LEGACY_PLANS: AppPlan[] = [
   {
-    code: 'FREE',
-    name: 'Free (Legacy)',
-    price: 'R0',
-    priceCents: 0,
-    maxListings: 1,
-    visibilityWeight: 0,
-    description: 'Legacy free tier',
-    features: ['1 service listing', 'Gallery up to 5 images', 'Community support'],
+    code: 'STARTER',
+    name: 'Starter (Legacy)',
+    price: 'R99/month',
+    priceCents: 9900,
+    maxListings: 10,
+    visibilityWeight: 2,
+    description: 'Legacy starter plan',
+    features: ['10 service listings', 'Gallery up to 20 images', 'Email support'],
+    isLegacy: true,
+  },
+  {
+    code: 'PRO',
+    name: 'Pro (Legacy)',
+    price: 'R199/month',
+    priceCents: 19900,
+    maxListings: 25,
+    visibilityWeight: 3,
+    description: 'Legacy pro plan',
+    features: ['25 listings', 'Priority visibility', 'Priority support'],
+    isLegacy: true,
+  },
+  {
+    code: 'ELITE',
+    name: 'Elite (Legacy)',
+    price: 'R299/month',
+    priceCents: 29900,
+    maxListings: 'Unlimited',
+    visibilityWeight: 5,
+    description: 'Legacy elite plan',
+    features: ['Unlimited listings', 'Premium visibility', 'Dedicated support'],
     isLegacy: true,
   },
   {
@@ -153,7 +133,7 @@ export const LEGACY_PLANS: AppPlan[] = [
 ];
 
 // All plans including legacy (for displaying existing user's plan)
-export const ALL_PLANS: AppPlan[] = [...LEGACY_PLANS, ...APP_PLANS];
+export const ALL_PLANS: AppPlan[] = [...APP_PLANS, ...LEGACY_PLANS];
 
 // Lookup by code (includes legacy plans for existing users)
 export const PLAN_BY_CODE: Record<AllPlanCodes, AppPlan> = ALL_PLANS.reduce(
@@ -165,4 +145,4 @@ export const PLAN_BY_CODE: Record<AllPlanCodes, AppPlan> = ALL_PLANS.reduce(
 );
 
 // Default plan for new signups
-export const DEFAULT_PLAN: PlanCode = 'STARTER';
+export const DEFAULT_PLAN: PlanCode = 'FREE';

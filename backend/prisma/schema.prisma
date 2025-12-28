@@ -30,6 +30,10 @@ model User {
   twoFactorSecret            String?
   twoFactorBackupCodes       String[]          @default([])
   profileImage               String?
+  cashbackBalance            Float             @default(0)
+  stripeCustomerId           String?
+  addresses                  UserAddress[]
+  cashbackHistory            CashbackTransaction[]
   // Seller plan fields
   sellerPlanCode             PlanCode?
   sellerVisibilityWeight     Int?              @default(1)
@@ -99,6 +103,9 @@ model Salon {
   offersMobile         Boolean                       @default(false)
   mobileFee            Float?
   isAvailableNow       Boolean                       @default(false)
+  commissionRate       Float                         @default(0.32)
+  materials            SalonMaterial[]
+  videoShorts          VideoShort[]
   operatingHours       Json?
   operatingDays        String[]
   bookingMessage       String?
@@ -203,6 +210,7 @@ model Review {
   id                    String         @id @default(uuid())
   rating                Int
   comment               String
+  images                String[]       @default([]) // Review photos uploaded by user
   salonOwnerResponse    String?
   salonOwnerRespondedAt DateTime?
   approvalStatus        ApprovalStatus @default(PENDING)
@@ -223,6 +231,13 @@ model Booking {
   bookingTime    DateTime
   isMobile       Boolean
   totalCost      Float
+  depositPaid    Boolean       @default(false)
+  commissionAmount Float?
+  platformFee    Float?
+  cashbackAmount Float?
+  paymentFee     Float?
+  materialSelection String?    // e.g., "HAVE_OWN", "BUY_SALON", "BUY_PLATFORM"
+  colorSelection    String?
   status         BookingStatus @default(PENDING)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -257,6 +272,9 @@ model Product {
   approvalStatus ApprovalStatus @default(PENDING)
   stock          Int            @default(0)
   category       String?        // Product category
+  transportFee   Float?
+  transportConditions Json?
+  conditions     Json?
   // Purchase options - per-product overrides
   whatsappNumber String?        // WhatsApp number for this product
   websiteUrl     String?        // Direct website/store link
@@ -921,4 +939,70 @@ model Top10Request {
   @@index([category])
   @@index([createdAt])
   @@index([userId])
+}
+
+model UserAddress {
+  id          String   @id @default(uuid())
+  userId      String
+  label       String   @default("HOME") // HOME, WORK, OTHER
+  address     String
+  latitude    Float?
+  longitude   Float?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model SalonMaterial {
+  id          String   @id @default(uuid())
+  salonId     String
+  name        String
+  description String?
+  imageUrl    String?
+  isUsed      Boolean  @default(true)  // Material the salon USES
+  isSold      Boolean  @default(false) // Material the salon SELLS/HAS
+  price       Float?   // Price if sold
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  salon       Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+
+  @@index([salonId])
+}
+
+model VideoShort {
+  id           String   @id @default(uuid())
+  salonId      String
+  videoUrl     String
+  thumbnailUrl String?
+  caption      String?
+  views        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  salon        Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+
+  @@index([salonId])
+  @@index([createdAt])
+}
+
+model CashbackTransaction {
+  id          String       @id @default(uuid())
+  userId      String
+  amount      Float
+  type        CashbackType
+  referenceId String?      // BookingID or OrderID
+  description String?
+  createdAt   DateTime     @default(now())
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum CashbackType {
+  EARNED
+  SPENT
+  ADJUSTMENT
 }

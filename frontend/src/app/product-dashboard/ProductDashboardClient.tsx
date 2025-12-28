@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, ReactNode } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
@@ -22,12 +22,32 @@ import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { useSocket } from '@/context/SocketContext';
 import { getImageWithFallback } from '@/lib/placeholders';
+import SellerStats from '@/components/SellerStats/SellerStats';
+import { FaChartLine, FaBox, FaShoppingCart, FaCog, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import {
+  Alert,
+  Button,
+  Card,
+  CardHeader,
+  CardContent,
+  CardTitle,
+  CardDescription,
+  Badge,
+  Input,
+  Textarea,
+  FormField,
+  LoadingButton,
+  EmptyState,
+  AlertDialog,
+} from '@/components/ui';
+import StatusBadge from '@/components/StatusBadge';
 
-type TabKey = 'products' | 'orders' | 'settings';
-const tabs: { key: TabKey; label: string; icon: string }[] = [
-  { key: 'products', label: 'Products', icon: '📦' },
-  { key: 'orders', label: 'Orders', icon: '🛒' },
-  { key: 'settings', label: 'Settings', icon: '⚙️' },
+type TabKey = 'stats' | 'products' | 'orders' | 'settings';
+const tabs: { key: TabKey; label: string; icon: ReactNode }[] = [
+  { key: 'stats', label: 'Overview', icon: <FaChartLine /> },
+  { key: 'products', label: 'Products', icon: <FaBox /> },
+  { key: 'orders', label: 'Orders', icon: <FaShoppingCart /> },
+  { key: 'settings', label: 'Settings', icon: <FaCog /> },
 ];
 
 const statusOptions: ProductOrderStatus[] = [
@@ -63,7 +83,7 @@ export default function ProductDashboardClient() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
-  const [sellerPlanCode, setSellerPlanCode] = useState<PlanCode>('STARTER');
+  const [sellerPlanCode, setSellerPlanCode] = useState<PlanCode>('FREE');
   const [sellerPlanStatus, setSellerPlanStatus] = useState<PlanPaymentStatus>('PENDING_SELECTION');
   const [sellerPlanReference, setSellerPlanReference] = useState('');
   const [sellerPlanProofAt, setSellerPlanProofAt] = useState<string | null>(null);
@@ -129,7 +149,7 @@ export default function ProductDashboardClient() {
       });
       if (!res.ok) throw new Error('Failed to load profile');
       const data = await res.json();
-      const code = (data.sellerPlanCode ?? 'STARTER') as PlanCode;
+      const code = (data.sellerPlanCode ?? 'FREE') as PlanCode;
       const status = (data.sellerPlanPaymentStatus ?? 'PENDING_SELECTION') as PlanPaymentStatus;
       setSellerPlanCode(code);
       setSellerPlanStatus(status);
@@ -388,43 +408,46 @@ export default function ProductDashboardClient() {
         </div>
       </section>
 
+      {/* Stats Tab - Overview */}
+      {activeTab === 'stats' && (
+        <div className={styles.statsSection}>
+          <SellerStats />
+        </div>
+      )}
+
       {activeTab === 'products' && (
         <>
           {/* Seller Profile Approval Check */}
           {sellerApprovalStatus !== 'APPROVED' && (
-            <div className={styles.profileAlert}>
+            <div className="mb-6">
               {!sellerBusinessName ? (
-                <>
-                  <h3>📋 Complete Your Seller Profile</h3>
-                  <p>Before you can add products, you need to set up your seller profile with your business details.</p>
-                  <a href="/create-seller-profile" className="btn btn-primary">
-                    Set Up Profile
-                  </a>
-                </>
+                <Alert variant="info" title="Complete Your Seller Profile">
+                  <p className="mb-3">Before you can add products, you need to set up your seller profile with your business details.</p>
+                  <Button asChild>
+                    <a href="/create-seller-profile">Set Up Profile</a>
+                  </Button>
+                </Alert>
               ) : sellerApprovalStatus === 'PENDING' ? (
-                <>
-                  <h3>⏳ Profile Under Review</h3>
-                  <p>Your seller profile is currently being reviewed by our team. You&apos;ll be able to add products once approved.</p>
-                  <a href="/create-seller-profile" className="btn btn-secondary">
-                    Edit Profile
-                  </a>
-                </>
+                <Alert variant="warning" title="Profile Under Review">
+                  <p className="mb-3">Your seller profile is currently being reviewed by our team. You&apos;ll be able to add products once approved.</p>
+                  <Button variant="outline" asChild>
+                    <a href="/create-seller-profile">Edit Profile</a>
+                  </Button>
+                </Alert>
               ) : sellerApprovalStatus === 'REJECTED' ? (
-                <>
-                  <h3>❌ Profile Needs Updates</h3>
-                  <p>Your seller profile was not approved. Please update your information and resubmit.</p>
-                  <a href="/create-seller-profile" className="btn btn-primary">
-                    Update Profile
-                  </a>
-                </>
+                <Alert variant="error" title="Profile Needs Updates">
+                  <p className="mb-3">Your seller profile was not approved. Please update your information and resubmit.</p>
+                  <Button asChild>
+                    <a href="/create-seller-profile">Update Profile</a>
+                  </Button>
+                </Alert>
               ) : null}
             </div>
           )}
 
           <div className={styles.toolbar}>
-            <button
+            <Button
               onClick={() => setIsModalOpen(true)}
-              className="btn btn-primary"
               disabled={sellerApprovalStatus !== 'APPROVED' || sellerPlanStatus === 'PENDING_SELECTION'}
               title={
                 sellerApprovalStatus !== 'APPROVED'
@@ -434,8 +457,9 @@ export default function ProductDashboardClient() {
                     : undefined
               }
             >
+              <FaPlus className="mr-2 h-4 w-4" />
               Add New Product
-            </button>
+            </Button>
           </div>
           {sellerApprovalStatus === 'APPROVED' && sellerPlanStatus === 'PENDING_SELECTION' && (
             <p className={styles.planGuard}>Select a seller package and submit payment proof to unlock product uploads.</p>
@@ -457,20 +481,17 @@ export default function ProductDashboardClient() {
                   <p>Price: R{product.price.toFixed(2)}</p>
                   <p>Stock: {product.stock ?? 0}</p>
                   {product.approvalStatus && (
-                    <p>
-                      Status:{' '}
-                      <span className={`${styles.status} ${styles[product.approvalStatus.toLowerCase()]}`}>
-                        {product.approvalStatus}
-                      </span>
+                    <p className="flex items-center gap-2">
+                      Status: <StatusBadge status={product.approvalStatus} size="sm" />
                     </p>
                   )}
                   <div className={styles.actions}>
-                    <button onClick={() => { setEditingProduct(product); setIsModalOpen(true); }} className="btn btn-secondary">
-                      Edit
-                    </button>
-                    <button onClick={() => setDeletingProduct(product)} className="btn btn-danger">
-                      Delete
-                    </button>
+                    <Button variant="outline" size="sm" onClick={() => { setEditingProduct(product); setIsModalOpen(true); }}>
+                      <FaEdit className="mr-1 h-3 w-3" /> Edit
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => setDeletingProduct(product)}>
+                      <FaTrash className="mr-1 h-3 w-3" /> Delete
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -504,7 +525,11 @@ export default function ProductDashboardClient() {
               )}
             </SkeletonGroup>
           ) : orders.length === 0 ? (
-            <div className={styles.emptyState}>No orders yet.</div>
+            <EmptyState
+              title="No orders yet"
+              description="When customers purchase your products, orders will appear here."
+              icon="inbox"
+            />
           ) : (
             <div className={styles.orderList}>
               {orders.map((order) => (
@@ -671,14 +696,13 @@ export default function ProductDashboardClient() {
           </div>
 
           <div className={styles.settingsActions}>
-            <button
-              type="button"
-              className="btn btn-primary"
+            <LoadingButton
+              loading={isProfileSaving}
+              loadingText="Saving..."
               onClick={handleProfileSave}
-              disabled={isProfileSaving}
             >
-              {isProfileSaving ? 'Saving...' : 'Save Profile Settings'}
-            </button>
+              Save Profile Settings
+            </LoadingButton>
           </div>
         </div>
       )}

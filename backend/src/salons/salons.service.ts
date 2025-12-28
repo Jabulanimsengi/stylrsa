@@ -719,13 +719,20 @@ export class SalonsService {
       } as any;
     }
     if (category) {
-      servicesFilter.OR = [
-        {
-          category: {
-            name: { contains: String(category), mode: 'insensitive' } as any,
-          },
-        },
-      ];
+      // Convert slug format to searchable terms
+      // e.g., "makeup-beauty" → search for "makeup" AND "beauty" in category name
+      // This matches slugs like "makeup-beauty" to names like "Makeup & Beauty"
+      const searchTerms = String(category).split('-').filter(term => term.length > 0);
+      if (searchTerms.length > 0) {
+        servicesFilter.AND = [
+          ...(servicesFilter.AND || []),
+          ...searchTerms.map(term => ({
+            category: {
+              name: { contains: term, mode: 'insensitive' } as any,
+            },
+          })),
+        ];
+      }
     }
     if (priceMin || priceMax) {
       servicesFilter.price = {};
@@ -777,6 +784,22 @@ export class SalonsService {
           select: {
             reviews: {
               where: { approvalStatus: 'APPROVED' }
+            }
+          }
+        },
+        // Include top 5 services for map display
+        services: {
+          where: { approvalStatus: 'APPROVED' },
+          take: 5,
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            title: true,
+            price: true,
+            category: {
+              select: {
+                name: true
+              }
             }
           }
         }

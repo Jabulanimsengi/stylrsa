@@ -106,6 +106,7 @@ export interface Salon {
   distance?: number | null; // Distance in km from user (when sorted by proximity)
   bookingMessage?: string | null; // Optional booking message from salon owner
   cancellationPolicy?: string | null; // Salon's cancellation policy text
+  isFeatured?: boolean; // Whether salon is currently featured
 }
 
 export interface Service {
@@ -148,6 +149,7 @@ export interface Review {
   id: string;
   rating: number;
   comment: string;
+  images?: string[]; // Review photos uploaded by user
   salonOwnerResponse?: string | null;
   salonOwnerRespondedAt?: string | null;
   approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';

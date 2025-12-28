@@ -1,7 +1,11 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FaMapMarkerAlt, FaBriefcase, FaClock } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaArrowRight } from 'react-icons/fa';
+import { Card, CardContent, Badge } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 interface CandidateCardProps {
     candidate: {
@@ -28,62 +32,62 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
 
     return (
         <Link href={`/candidates/${candidate.id}`} className="block group">
-            <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 h-full flex flex-col">
-                {/* Portfolio Preview (if available) */}
-                <div className="h-48 bg-gray-100 relative overflow-hidden">
+            <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col">
+                {/* Portfolio Preview */}
+                <div className="h-48 relative overflow-hidden bg-muted">
                     {portfolio && portfolio.length > 0 ? (
                         <Image
                             src={portfolio[0]}
                             alt={`${user.firstName}'s work`}
                             fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                     ) : (
-                        <div className="flex items-center justify-center h-full text-gray-400">
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
                             <span className="text-sm">No portfolio images</span>
                         </div>
                     )}
-                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium text-gray-700">
+                    <Badge className="absolute top-3 right-3 bg-white/90 text-foreground hover:bg-white">
                         {yearsExperience} {yearsExperience === 1 ? 'Year' : 'Years'} Exp.
-                    </div>
+                    </Badge>
                 </div>
 
-                <div className="p-4 flex-1 flex flex-col">
+                <CardContent className="p-4 flex-1 flex flex-col">
                     <div className="flex justify-between items-start mb-2">
                         <div>
-                            <h3 className="font-semibold text-lg text-gray-900 group-hover:text-primary transition-colors">
+                            <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
                                 {user.firstName} {user.lastName}
                             </h3>
                             <p className="text-primary font-medium text-sm">{displayProfession}</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center text-gray-500 text-sm mb-3">
-                        <FaMapMarkerAlt className="mr-1.5 text-gray-400" />
+                    <div className="flex items-center text-muted-foreground text-sm mb-3">
+                        <FaMapMarkerAlt className="mr-1.5" />
                         <span>{city}, {province}</span>
                     </div>
 
                     <div className="mt-auto">
                         <div className="flex flex-wrap gap-1.5 mb-3">
                             {specializations.slice(0, 3).map((spec, index) => (
-                                <span key={index} className="inline-block bg-gray-50 text-gray-600 text-xs px-2 py-1 rounded-full border border-gray-100">
+                                <Badge key={index} variant="secondary" className="text-xs">
                                     {spec}
-                                </span>
+                                </Badge>
                             ))}
                             {specializations.length > 3 && (
-                                <span className="inline-block bg-gray-50 text-gray-500 text-xs px-2 py-1 rounded-full border border-gray-100">
+                                <Badge variant="secondary" className="text-xs">
                                     +{specializations.length - 3} more
-                                </span>
+                                </Badge>
                             )}
                         </div>
 
-                        <div className="pt-3 border-t border-gray-50 flex justify-between items-center">
-                            <span className="text-xs text-gray-500">View full profile</span>
-                            <span className="text-primary text-sm font-medium group-hover:translate-x-1 transition-transform">→</span>
+                        <div className="pt-3 border-t flex justify-between items-center">
+                            <span className="text-xs text-muted-foreground">View full profile</span>
+                            <FaArrowRight className="text-primary text-sm group-hover:translate-x-1 transition-transform" />
                         </div>
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
         </Link>
     );
 }

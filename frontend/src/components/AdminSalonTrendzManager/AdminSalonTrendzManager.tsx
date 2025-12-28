@@ -38,6 +38,16 @@ export default function AdminSalonTrendzManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [filterQuery, setFilterQuery] = useState('');
+
+  // Filter salons based on search query
+  const filteredSalons = filterQuery.trim()
+    ? salons.filter(s =>
+      s.name.toLowerCase().includes(filterQuery.toLowerCase()) ||
+      s.city.toLowerCase().includes(filterQuery.toLowerCase()) ||
+      s.province.toLowerCase().includes(filterQuery.toLowerCase())
+    )
+    : salons;
 
   useEffect(() => {
     fetchSalons();
@@ -173,6 +183,20 @@ export default function AdminSalonTrendzManager() {
         <p>Control which salons appear in trend recommendations</p>
       </div>
 
+      {/* Filter Bar */}
+      <div className={styles.filterBar}>
+        <input
+          type="text"
+          value={filterQuery}
+          onChange={(e) => setFilterQuery(e.target.value)}
+          placeholder="Filter by salon name, city, province..."
+          className={styles.filterInput}
+        />
+        <span className={styles.filterCount}>
+          Showing {filteredSalons.length} of {salons.length}
+        </span>
+      </div>
+
       <div className={styles.stats}>
         <div className={styles.statCard}>
           <span className={styles.statValue}>{salons.filter(s => s.trendzProfile.isEnabled).length}</span>
@@ -188,27 +212,27 @@ export default function AdminSalonTrendzManager() {
         </div>
       </div>
 
-      {salons.length === 0 ? (
+      {filteredSalons.length === 0 ? (
         <div className={styles.emptyState}>
-          <p>No salons found</p>
+          <p>{salons.length === 0 ? 'No salons found' : 'No salons match your filter'}</p>
         </div>
       ) : (
         <div className={styles.salonsList}>
-          {salons.map((salon) => (
+          {filteredSalons.map((salon) => (
             <div key={salon.id} className={styles.listItem}>
               <div className={styles.info}>
                 <h4>{salon.name}</h4>
                 <p>{salon.city}, {salon.province}</p>
                 {salon.trendzProfile.impressions > 0 && (
                   <p className={styles.analytics}>
-                    👁️ {salon.trendzProfile.impressions.toLocaleString()} impressions • 
+                    👁️ {salon.trendzProfile.impressions.toLocaleString()} impressions •
                     🖱️ {salon.trendzProfile.clicks.toLocaleString()} clicks
                     {salon.trendzProfile.clicks > 0 && (
                       <> • 📊 {((salon.trendzProfile.clicks / salon.trendzProfile.impressions) * 100).toFixed(1)}% CTR</>
                     )}
                   </p>
                 )}
-                
+
                 {editingId === salon.id ? (
                   <div className={styles.categoryEditor}>
                     <p><strong>Select Categories:</strong></p>
@@ -217,9 +241,8 @@ export default function AdminSalonTrendzManager() {
                         <button
                           key={cat.value}
                           onClick={() => toggleCategory(cat.value)}
-                          className={`${styles.categoryChip} ${
-                            selectedCategories.includes(cat.value) ? styles.selected : ''
-                          }`}
+                          className={`${styles.categoryChip} ${selectedCategories.includes(cat.value) ? styles.selected : ''
+                            }`}
                         >
                           {cat.label}
                         </button>
@@ -247,7 +270,7 @@ export default function AdminSalonTrendzManager() {
                   </div>
                 )}
               </div>
-              
+
               <div className={styles.actions}>
                 {salon.trendzProfile.isEnabled ? (
                   <>

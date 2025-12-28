@@ -55,6 +55,20 @@ export default function AdminMediaReview() {
   const [isLoading, setIsLoading] = useState(true);
   const [rejectionReason, setRejectionReason] = useState<string>('');
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [filterQuery, setFilterQuery] = useState('');
+
+  const toggleExpanded = (id: string) => {
+    setExpandedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     fetchPendingMedia();
@@ -173,7 +187,21 @@ export default function AdminMediaReview() {
   }
 
   const currentItems = mediaType === 'photos' ? photos : videos;
-  const isEmpty = currentItems.length === 0;
+  const q = filterQuery.trim().toLowerCase();
+  const filteredPhotos = q ? photos.filter(p =>
+    p.salon.name.toLowerCase().includes(q) ||
+    p.salon.city.toLowerCase().includes(q) ||
+    (p.service?.title?.toLowerCase().includes(q) ?? false) ||
+    (p.caption?.toLowerCase().includes(q) ?? false)
+  ) : photos;
+  const filteredVideos = q ? videos.filter(v =>
+    v.salon.name.toLowerCase().includes(q) ||
+    v.salon.city.toLowerCase().includes(q) ||
+    (v.service?.title?.toLowerCase().includes(q) ?? false) ||
+    (v.caption?.toLowerCase().includes(q) ?? false)
+  ) : videos;
+  const displayItems = mediaType === 'photos' ? filteredPhotos : filteredVideos;
+  const isEmpty = displayItems.length === 0;
 
   return (
     <div className={styles.container}>
@@ -195,13 +223,27 @@ export default function AdminMediaReview() {
         </div>
       </div>
 
+      {/* Filter Bar */}
+      <div className={styles.filterBar}>
+        <input
+          type="text"
+          value={filterQuery}
+          onChange={(e) => setFilterQuery(e.target.value)}
+          placeholder="Filter by salon name, city, service..."
+          className={styles.filterInput}
+        />
+        <span className={styles.filterCount}>
+          Showing {displayItems.length} of {currentItems.length}
+        </span>
+      </div>
+
       {isEmpty ? (
         <div className={styles.empty}>
           <p>No pending {mediaType} to review</p>
         </div>
       ) : (
         <div className={styles.grid}>
-          {mediaType === 'photos' && photos.map((photo) => (
+          {mediaType === 'photos' && filteredPhotos.map((photo) => (
             <div key={photo.id} className={styles.card}>
               <div className={styles.imageGrid}>
                 <div className={styles.imageWrapper}>
@@ -267,7 +309,7 @@ export default function AdminMediaReview() {
             </div>
           ))}
 
-          {mediaType === 'videos' && videos.map((video) => {
+          {mediaType === 'videos' && filteredVideos.map((video) => {
             return (
               <div key={video.id} className={styles.card}>
                 <div className={styles.videoWrapper}>

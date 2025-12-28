@@ -1,7 +1,7 @@
 // frontend/src/app/salons/page.tsx
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import { SalonsPageSkeleton } from '@/components/Skeleton/ServicesPageSkeleton';
 import SalonsPageClient from './SalonsPageClient';
 import { generateCategoryMetadata } from '@/lib/categoryMetadataHelper';
 
@@ -32,7 +32,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 export default function SalonsPage() {
   return (
-    <Suspense fallback={<LoadingSpinner />}>
+    <Suspense fallback={<SalonsPageSkeleton />}>
       <SalonsPageClient />
     </Suspense>
   );

@@ -5,6 +5,9 @@ import {
   Min,
   Max,
   MaxLength,
+  IsArray,
+  IsOptional,
+  ArrayMaxSize,
 } from 'class-validator';
 
 export class CreateReviewDto {
@@ -21,4 +24,10 @@ export class CreateReviewDto {
   @IsString()
   @IsNotEmpty()
   bookingId: string;
+
+  @IsArray()
+  @IsOptional()
+  @IsString({ each: true })
+  @ArrayMaxSize(5)
+  images?: string[];
 }

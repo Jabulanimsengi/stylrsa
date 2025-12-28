@@ -49,7 +49,8 @@
 .stickyTabNav {
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 40;
+    /* Lower than modals (z-index: 50) */
     background: var(--color-surface, #fff);
     border-bottom: 1px solid var(--color-border, #eee);
     margin: 0 calc(-1 * var(--page-inline-padding, 1.5rem));

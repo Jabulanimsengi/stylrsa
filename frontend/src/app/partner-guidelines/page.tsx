@@ -18,7 +18,7 @@ export default function PartnerGuidelinesPage() {
   return (
     <div className={styles.container}>
       <PageNav />
-      
+
       <section className={styles.section}>
         <h1 className={styles.pageTitle}>Partner Guidelines</h1>
         <p className={styles.paragraph}>
@@ -47,7 +47,7 @@ export default function PartnerGuidelinesPage() {
         </p>
 
         <h2 className={styles.sectionTitle}>2. Getting Started</h2>
-        
+
         <h3 className={styles.blockTitle}>2.1 Registration Requirements</h3>
         <p className={styles.paragraph}>
           To register as a partner, you'll need:
@@ -74,7 +74,7 @@ export default function PartnerGuidelinesPage() {
         </ul>
 
         <h2 className={styles.sectionTitle}>3. Quality Standards</h2>
-        
+
         <h3 className={styles.blockTitle}>3.1 Service Excellence</h3>
         <p className={styles.paragraph}>
           We expect all partners to:
@@ -111,7 +111,7 @@ export default function PartnerGuidelinesPage() {
         <p className={styles.paragraph}>
           Your portfolio is one of your most powerful marketing tools. Here's how to make it stand out:
         </p>
-        
+
         <h3 className={styles.blockTitle}>4.1 Photo Guidelines</h3>
         <ul className={styles.list}>
           <li><strong>High quality:</strong> Use good lighting, clear focus, high resolution</li>
@@ -131,7 +131,7 @@ export default function PartnerGuidelinesPage() {
         </ul>
 
         <h2 className={styles.sectionTitle}>5. Pricing & Payments</h2>
-        
+
         <h3 className={styles.blockTitle}>5.1 Setting Your Prices</h3>
         <ul className={styles.list}>
           <li>Price competitively based on your market, experience, and location</li>
@@ -142,13 +142,21 @@ export default function PartnerGuidelinesPage() {
 
         <h3 className={styles.blockTitle}>5.2 Platform Fees</h3>
         <p className={styles.paragraph}>
-          Stylr SA charges a small commission on completed bookings to maintain and improve the platform. Fee details:
+          Stylr SA operates on a commission-based model. Your listing is 100% FREE — we only charge when you get paid. Fee details:
         </p>
         <ul className={styles.list}>
-          <li>Standard commission: 15% of the booking value</li>
-          <li>Payments are processed within 5-7 business days</li>
+          <li><strong>Listing fee:</strong> FREE (no monthly subscriptions)</li>
+          <li><strong>Commission:</strong> 32% of completed booking value, broken down as:
+            <ul className={styles.list}>
+              <li>25% — Platform fee (marketing, technology, support)</li>
+              <li>5% — Client cashback (keeps customers coming back to you)</li>
+              <li>2% — Payment processing (secure transactions)</li>
+            </ul>
+          </li>
+          <li>Payouts are processed every Friday directly to your bank account</li>
           <li>All fees are clearly disclosed before you accept a booking</li>
         </ul>
+
 
         <h3 className={styles.blockTitle}>5.3 Cancellation & Refund Policy</h3>
         <ul className={styles.list}>
@@ -171,7 +179,7 @@ export default function PartnerGuidelinesPage() {
         </ul>
 
         <h2 className={styles.sectionTitle}>7. Marketing & Promotions</h2>
-        
+
         <h3 className={styles.blockTitle}>7.1 Running Promotions</h3>
         <p className={styles.paragraph}>
           Use our promotion tools to attract new clients:
@@ -217,7 +225,7 @@ export default function PartnerGuidelinesPage() {
         </ul>
 
         <h2 className={styles.sectionTitle}>10. Success Tips</h2>
-        
+
         <div className={styles.infoBlock}>
           <h3 className={styles.blockTitle}>🌟 Top Tips from Successful Partners</h3>
           <ul className={styles.list}>

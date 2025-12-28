@@ -9,8 +9,6 @@ import {
     FaWhatsapp,
     FaDirections,
     FaBolt,
-    FaChevronRight,
-    FaChevronLeft,
     FaCheck,
     FaPlus,
     FaClock,
@@ -23,13 +21,24 @@ import {
     FaRegClock,
     FaAward,
     FaTimes,
+    FaChevronRight,
+    FaChevronLeft,
 } from 'react-icons/fa';
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    type CarouselApi,
+} from "@/components/ui/carousel"
 import { Salon, Service, GalleryImage, Review } from '@/types';
 import { transformCloudinary } from '@/utils/cloudinary';
 import VerificationBadge from '@/components/VerificationBadge/VerificationBadge';
 import { SERVICE_CATEGORIES } from '@/constants/categories';
 import MapboxMap from '@/components/MapboxMap';
 import styles from './MobileSalonProfile.module.css';
+import VideoShortsRow from '@/components/VideoShortsRow/VideoShortsRow';
+import MaterialsShowcase from '@/components/MaterialsShowcase/MaterialsShowcase';
+import { toast } from 'react-toastify';
 
 type TabType = 'photos' | 'services' | 'details' | 'reviews';
 
@@ -160,6 +169,23 @@ export default function MobileSalonProfile({
     const tabsRef = useRef<HTMLDivElement>(null);
     const carouselRef = useRef<HTMLDivElement>(null);
     const categoryScrollRef = useRef<HTMLDivElement>(null);
+
+    // Carousel API state for tracking current slide
+    const [api, setApi] = useState<CarouselApi>();
+    const [current, setCurrent] = useState(0);
+    const [count, setCount] = useState(0);
+
+    // Carousel API effect to sync current slide
+    useEffect(() => {
+        if (!api) return;
+
+        setCount(api.scrollSnapList().length);
+        setCurrent(api.selectedScrollSnap() + 1);
+
+        api.on('select', () => {
+            setCurrent(api.selectedScrollSnap() + 1);
+        });
+    }, [api]);
 
     // Get open status
     const { isOpen, statusText } = getOpenStatus(hoursRecord, todayLabel);
@@ -343,59 +369,49 @@ export default function MobileSalonProfile({
     return (
         <>
             <div className={styles.mobileProfile}>
-                {/* Hero Carousel Section */}
-                <div
-                    className={styles.heroCarousel}
-                    ref={carouselRef}
-                    onTouchStart={handleTouchStart}
-                    onTouchEnd={handleTouchEnd}
-                >
+                {/* Hero Carousel Section - Shadcn UI */}
+                <div className={styles.heroCarousel}>
                     {allImages.length > 0 ? (
-                        <>
-                            <div
-                                className={styles.carouselTrack}
-                                style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
-                            >
+                        <Carousel
+                            setApi={setApi}
+                            opts={{
+                                align: 'start',
+                                loop: true,
+                            }}
+                            orientation="horizontal"
+                            style={{ width: '100%', height: '100%' }}
+                        >
+                            <CarouselContent style={{ marginLeft: 0, height: '300px' }}>
                                 {allImages.map((img, idx) => (
-                                    <div
+                                    <CarouselItem
                                         key={idx}
-                                        className={styles.carouselSlide}
+                                        style={{
+                                            paddingLeft: 0,
+                                            minWidth: '100%',
+                                            height: '300px',
+                                            position: 'relative'
+                                        }}
                                         onClick={() => onOpenLightbox(allImages, idx)}
                                     >
-                                        <Image
-                                            src={transformCloudinary(img, { width: 800, quality: 'auto', format: 'auto', crop: 'fill' })}
-                                            alt={`${salon.name} photo ${idx + 1}`}
-                                            fill
-                                            sizes="100vw"
-                                            priority={idx === 0}
-                                            className={styles.heroImage}
-                                        />
-                                    </div>
+                                        <div style={{ position: 'relative', width: '100%', height: '300px' }}>
+                                            <Image
+                                                src={transformCloudinary(img, { width: 800, quality: 'auto', format: 'auto', crop: 'fill' })}
+                                                alt={`${salon.name} photo ${idx + 1}`}
+                                                fill
+                                                sizes="100vw"
+                                                priority={idx === 0}
+                                                style={{ objectFit: 'cover' }}
+                                            />
+                                        </div>
+                                    </CarouselItem>
                                 ))}
-                            </div>
-
-                            {/* Carousel Indicators */}
-                            {allImages.length > 1 && (
-                                <div className={styles.carouselIndicators}>
-                                    {allImages.map((_, idx) => (
-                                        <button
-                                            key={idx}
-                                            className={`${styles.indicator} ${idx === currentImageIndex ? styles.active : ''}`}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setCurrentImageIndex(idx);
-                                            }}
-                                            aria-label={`Go to photo ${idx + 1}`}
-                                        />
-                                    ))}
-                                </div>
-                            )}
+                            </CarouselContent>
 
                             {/* Photo count badge */}
                             <div className={styles.photoCountBadge}>
-                                <FaImages /> {currentImageIndex + 1}/{allImages.length}
+                                <FaImages /> {current}/{count}
                             </div>
-                        </>
+                        </Carousel>
                     ) : (
                         <div className={styles.noImage}>
                             <span>{salon.name.charAt(0)}</span>
@@ -425,7 +441,7 @@ export default function MobileSalonProfile({
 
                     {/* Rating Row */}
                     <div className={styles.ratingRow}>
-                        {salon.avgRating && salon.avgRating > 0 && (
+                        {salon.avgRating != null && salon.avgRating > 0 && (
                             <button
                                 className={styles.ratingPill}
                                 onClick={() => setActiveTab('reviews')}
@@ -619,6 +635,26 @@ export default function MobileSalonProfile({
                                     <p>No services available yet</p>
                                 </div>
                             )}
+
+                            {/* Video Shorts Row */}
+                            <VideoShortsRow
+                                salonId={salon.id}
+                                onVideoClick={(video) => {
+                                    // Handle video click - could open lightbox
+                                    const videoImages = video.thumbnailUrl ? [video.thumbnailUrl] : [];
+                                    if (videoImages.length > 0) {
+                                        onOpenLightbox(videoImages, 0);
+                                    }
+                                }}
+                            />
+
+                            {/* Materials Showcase */}
+                            <MaterialsShowcase
+                                salonId={salon.id}
+                                onMaterialClick={(material) => {
+                                    toast.info(`${material.name} - ${material.isSold ? `R${material.price?.toFixed(2)}` : 'Used by this salon'}`);
+                                }}
+                            />
                         </div>
                     )}
 

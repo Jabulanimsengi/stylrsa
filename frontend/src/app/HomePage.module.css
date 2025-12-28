@@ -23,7 +23,10 @@
   position: relative;
   width: calc(100% + 2 * var(--space-lg));
   margin: 0 calc(-1 * var(--space-lg)) clamp(1rem, 3vw, 1.5rem) calc(-1 * var(--space-lg));
-  min-height: clamp(280px, 38vh, 380px);
+  /* Stable aspect-ratio prevents CLS - no more min-height variability */
+  aspect-ratio: 21 / 9;
+  min-height: 280px;
+  max-height: 420px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -31,6 +34,8 @@
   border-radius: 0;
   color: var(--hero-text-color);
   isolation: isolate;
+  /* Contain paint to prevent reflows */
+  contain: layout paint;
 }
 
 @media (min-width: 1024px) {
@@ -38,7 +43,9 @@
     width: calc(100% + 2 * var(--space-xl));
     margin-left: calc(-1 * var(--space-xl));
     margin-right: calc(-1 * var(--space-xl));
-    min-height: clamp(320px, 42vh, 420px);
+    aspect-ratio: 21 / 9;
+    min-height: 320px;
+    max-height: 420px;
   }
 }
 
@@ -48,8 +55,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  content-visibility: auto;
-  contain-intrinsic-size: 100vw 380px;
+  /* Optimized for LCP - remove content-visibility which can delay paint */
+  /* Reserve space to prevent CLS */
+  contain-intrinsic-size: auto 350px;
 }
 
 /* Enhanced gradient overlay for better text readability */
@@ -78,7 +86,7 @@
 
 /* Hero Title - Fresha style: clean, bold */
 .heroTitle {
-  font-size: clamp(1.75rem, 5vw, 3rem);
+  font-size: clamp(1.5rem, 4vw, 2.3rem);
   font-weight: 800;
   line-height: 1.1;
   margin: 0;
@@ -90,13 +98,52 @@
 
 /* Hero Subtitle - Fresha style */
 .heroSubtitle {
-  font-size: clamp(0.9rem, 2vw, 1.1rem);
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(0.9rem, 2vw, 1.05rem);
+  font-weight: 600;
+  color: #fff;
+  background-color: #10b981;
+  /* Emerald green */
+  padding: 0.5rem 1.25rem;
+  border-radius: 50px;
   text-align: center;
   margin: 0.25rem 0 0 0;
-  max-width: 480px;
+  max-width: fit-content;
   line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+/* Cashback Banner - Eye-catching promo badge */
+.heroCashbackBanner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.95) 0%, rgba(255, 193, 7, 0.95) 100%);
+  border-radius: 50px;
+  color: #1a1a1a;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(255, 193, 7, 0.4);
+  animation: cashbackPulse 2s ease-in-out infinite;
+}
+
+.heroCashbackBanner::before {
+  content: '💰';
+  font-size: 1rem;
+}
+
+@keyframes cashbackPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 16px rgba(255, 193, 7, 0.4);
+  }
+
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 6px 24px rgba(255, 193, 7, 0.6);
+  }
 }
 
 /* Hero Search Container */
@@ -352,7 +399,7 @@
 
 /* Section Title - Enhanced */
 .sectionTitle {
-  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-size: clamp(1.15rem, 2.5vw, 1.5rem);
   font-weight: 700;
   margin-bottom: clamp(1rem, 2.5vw, 1.5rem);
   color: var(--color-text-strong);
@@ -424,7 +471,10 @@
 
   .hero {
     margin-top: 62px;
-    min-height: clamp(240px, 38vh, 300px);
+    /* Adjusted aspect ratio to show more content */
+    aspect-ratio: 4 / 3;
+    min-height: 240px;
+    max-height: 340px;
     width: 100%;
     margin-left: 0;
     margin-right: 0;
@@ -436,7 +486,7 @@
   }
 
   .heroTitle {
-    font-size: clamp(1.4rem, 5vw, 1.75rem);
+    font-size: clamp(1.2rem, 4vw, 1.5rem);
   }
 
   .heroSubtitle {
@@ -539,7 +589,9 @@
   }
 
   .hero {
-    min-height: clamp(200px, 35vh, 260px);
+    aspect-ratio: 4 / 3;
+    min-height: 220px;
+    max-height: 320px;
     margin-top: 58px;
     margin-bottom: clamp(0.75rem, 2vw, 1rem);
     width: 100%;
@@ -599,7 +651,9 @@
   }
 
   .hero {
-    min-height: clamp(180px, 32vh, 220px);
+    aspect-ratio: 4 / 3;
+    min-height: 200px;
+    max-height: 280px;
     margin-top: 56px;
     margin-bottom: 0.75rem;
     width: 100%;

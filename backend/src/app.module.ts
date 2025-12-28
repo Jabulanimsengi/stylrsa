@@ -39,6 +39,10 @@ import { JobPostingsModule } from './job-postings/job-postings.module';
 import { Top10RequestsModule } from './top10-requests/top10-requests.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TasksModule } from './tasks/tasks.module';
+import { UserAddressesModule } from './user-addresses/user-addresses.module';
+import { SalonMaterialsModule } from './salon-materials/salon-materials.module';
+import { VideoShortsModule } from './video-shorts/video-shorts.module';
+import { CashbackModule } from './cashback/cashback.module';
 
 @Module({
   imports: [
@@ -96,6 +100,10 @@ import { TasksModule } from './tasks/tasks.module';
     Top10RequestsModule,
     ScheduleModule.forRoot(),
     TasksModule,
+    UserAddressesModule,
+    SalonMaterialsModule,
+    VideoShortsModule,
+    CashbackModule,
   ],
   controllers: [AppController],
   providers: [

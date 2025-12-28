@@ -1,0 +1,218 @@
+.container {
+    padding: 1rem;
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--text-primary);
+}
+
+.subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+/* Section */
+.section {
+    margin-bottom: 1.5rem;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.sectionIcon {
+    color: var(--primary);
+}
+
+.sectionDesc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+/* Color Input */
+.colorInput {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    transition: border-color 0.2s;
+}
+
+.colorInput:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.colorInput::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* Options Grid */
+.optionsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.optionCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.optionCard:hover {
+    border-color: var(--primary);
+    background: rgba(245, 25, 87, 0.05);
+}
+
+.optionCard.selected {
+    border-color: var(--primary);
+    background: rgba(245, 25, 87, 0.1);
+}
+
+.optionIcon {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.optionCard.selected .optionIcon {
+    color: var(--primary);
+}
+
+.optionTitle {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.optionDesc {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Platform Note */
+.platformNote {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    color: var(--info);
+}
+
+.platformNote svg {
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+/* Materials Preview */
+.materialsPreview {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+.previewTitle {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.materialsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.materialItem {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+}
+
+.materialItem span {
+    color: var(--text-primary);
+}
+
+.materialItem strong {
+    color: var(--primary);
+}
+
+.moreCount {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 2rem;
+}
+
+.backButton {
+    flex: 1;
+    padding: 0.875rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.backButton:hover {
+    background: var(--bg-tertiary);
+}
+
+.continueButton {
+    flex: 2;
+    padding: 0.875rem;
+    background: var(--primary);
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.continueButton:hover:not(:disabled) {
+    background: var(--primary-dark);
+}
+
+.continueButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

@@ -28,6 +28,19 @@ import AdminMediaReview from '@/components/AdminMediaReview';
 import AdminTrendsManager from '@/components/AdminTrendsManager/AdminTrendsManager';
 import AdminSalonTrendzManager from '@/components/AdminSalonTrendzManager/AdminSalonTrendzManager';
 import AdminBlogManager from '@/components/AdminBlogManager/AdminBlogManager';
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardTitle,
+  Badge,
+  Button,
+  Alert,
+  Input,
+  LoadingButton,
+  EmptyState,
+} from '@/components/ui';
+import StatusBadge from '@/components/StatusBadge';
 
 const ensureArray = <T,>(value: unknown): T[] =>
   Array.isArray(value) ? (value as T[]) : [];
@@ -132,6 +145,79 @@ export default function AdminPage() {
   const [selProducts, setSelProducts] = useState<Set<string>>(new Set());
   const [updatingSalonPlanId, setUpdatingSalonPlanId] = useState<string | null>(null);
   const [updatingSellerPlanId, setUpdatingSellerPlanId] = useState<string | null>(null);
+  // Collapsible items - track which items are expanded
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (id: string) => {
+    setExpandedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  // Filters for pending items
+  const [salonFilter, setSalonFilter] = useState('');
+  const [serviceFilter, setServiceFilter] = useState('');
+  const [reviewFilter, setReviewFilter] = useState('');
+  const [productFilter, setProductFilter] = useState('');
+  const [sellerFilter, setSellerFilter] = useState('');
+
+  // Filtered pending items
+  const filteredPendingSalons = useMemo(() => {
+    const q = salonFilter.trim().toLowerCase();
+    if (!q) return pendingSalons;
+    return pendingSalons.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      s.owner.email.toLowerCase().includes(q) ||
+      s.city?.toLowerCase().includes(q) ||
+      s.province?.toLowerCase().includes(q)
+    );
+  }, [pendingSalons, salonFilter]);
+
+  const filteredPendingServices = useMemo(() => {
+    const q = serviceFilter.trim().toLowerCase();
+    if (!q) return pendingServices;
+    return pendingServices.filter(s =>
+      s.title?.toLowerCase().includes(q) ||
+      s.salon?.name?.toLowerCase().includes(q)
+    );
+  }, [pendingServices, serviceFilter]);
+
+  const filteredPendingReviews = useMemo(() => {
+    const q = reviewFilter.trim().toLowerCase();
+    if (!q) return pendingReviews;
+    return pendingReviews.filter(r =>
+      r.comment?.toLowerCase().includes(q) ||
+      r.author?.firstName?.toLowerCase().includes(q) ||
+      r.salon?.name?.toLowerCase().includes(q)
+    );
+  }, [pendingReviews, reviewFilter]);
+
+  const filteredPendingProducts = useMemo(() => {
+    const q = productFilter.trim().toLowerCase();
+    if (!q) return pendingProducts;
+    return pendingProducts.filter(p =>
+      p.name?.toLowerCase().includes(q) ||
+      p.seller?.firstName?.toLowerCase().includes(q) ||
+      p.seller?.lastName?.toLowerCase().includes(q)
+    );
+  }, [pendingProducts, productFilter]);
+
+  const filteredAllSellers = useMemo(() => {
+    const q = sellerFilter.trim().toLowerCase();
+    if (!q) return allSellers;
+    return allSellers.filter(s =>
+      s.firstName?.toLowerCase().includes(q) ||
+      s.lastName?.toLowerCase().includes(q) ||
+      s.email?.toLowerCase().includes(q) ||
+      s.sellerBusinessName?.toLowerCase().includes(q)
+    );
+  }, [allSellers, sellerFilter]);
 
   const clearSelections = () => { setSelSalons(new Set()); setSelServices(new Set()); setSelReviews(new Set()); setSelProducts(new Set()); };
 
@@ -813,10 +899,56 @@ export default function AdminPage() {
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Admin Dashboard</h1>
-      {metrics && (
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-          <span>Pending: Salons {metrics.salonsPending}, Services {metrics.servicesPending}, Reviews {metrics.reviewsPending}, Products {metrics.productsPending}</span>
-          <span style={{ opacity: 0.8 }}>Oldest: {['salon', 'service', 'review', 'product'].map(k => metrics.oldest?.[k] ? `${k}: ${new Date(metrics.oldest[k]).toLocaleDateString()}` : null).filter(Boolean).join(' | ')}</span>
+      {metrics ? (
+        <div className={styles.metricsGrid}>
+          <div className={styles.metricCard} onClick={() => setView('salons')}>
+            <div className={`${styles.metricIcon} ${styles.salons}`}>📋</div>
+            <div className={styles.metricContent}>
+              <span className={styles.metricLabel}>Pending Salons</span>
+              <span className={styles.metricValue}>{metrics.salonsPending}</span>
+            </div>
+          </div>
+          <div className={styles.metricCard} onClick={() => setView('services')}>
+            <div className={`${styles.metricIcon} ${styles.services}`}>✂️</div>
+            <div className={styles.metricContent}>
+              <span className={styles.metricLabel}>Pending Services</span>
+              <span className={styles.metricValue}>{metrics.servicesPending}</span>
+            </div>
+          </div>
+          <div className={styles.metricCard} onClick={() => setView('reviews')}>
+            <div className={`${styles.metricIcon} ${styles.reviews}`}>⭐</div>
+            <div className={styles.metricContent}>
+              <span className={styles.metricLabel}>Pending Reviews</span>
+              <span className={styles.metricValue}>{metrics.reviewsPending}</span>
+            </div>
+          </div>
+          <div className={styles.metricCard} onClick={() => setView('products')}>
+            <div className={`${styles.metricIcon} ${styles.products}`}>📦</div>
+            <div className={styles.metricContent}>
+              <span className={styles.metricLabel}>Pending Products</span>
+              <span className={styles.metricValue}>{metrics.productsPending}</span>
+            </div>
+          </div>
+          <div className={styles.metricCard} onClick={() => setView('all-sellers')}>
+            <div className={`${styles.metricIcon} ${styles.sellers}`}>👥</div>
+            <div className={styles.metricContent}>
+              <span className={styles.metricLabel}>Total Sellers</span>
+              <span className={styles.metricValue}>{allSellers.length}</span>
+            </div>
+          </div>
+          <div className={styles.metricCard} onClick={() => setView('media')}>
+            <div className={`${styles.metricIcon} ${styles.media}`}>🖼️</div>
+            <div className={styles.metricContent}>
+              <span className={styles.metricLabel}>Media Review</span>
+              <span className={styles.metricValue}>—</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className={styles.metricsGrid}>
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className={`${styles.loadingSkeleton} ${styles.skeletonMetric}`} />
+          ))}
         </div>
       )}
       <div className={styles.tabs}>
@@ -941,16 +1073,27 @@ export default function AdminPage() {
       <div className={styles.list}>
         {view === 'salons' && (
           <>
-            {pendingSalons.length > 0 && (
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <input type="checkbox" checked={selSalons.size === pendingSalons.length} onChange={e => setSelSalons(e.target.checked ? new Set(pendingSalons.map(s => s.id)) : new Set())} />
-                <span>Select all</span>
-                <button className={styles.approveButton} disabled={selSalons.size === 0} onClick={() => bulkUpdate('salon', Array.from(selSalons), 'APPROVED')}>Approve selected</button>
-                <button className={styles.rejectButton} disabled={selSalons.size === 0} onClick={() => bulkUpdate('salon', Array.from(selSalons), 'REJECTED')}>Reject selected</button>
-              </div>
-            )}
-            {pendingSalons.length > 0 ? pendingSalons.map((salon) => {
-              const planCode = (salon.planCode ?? 'STARTER') as PlanCode;
+            {/* Filter and bulk actions bar */}
+            <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                value={salonFilter}
+                onChange={e => setSalonFilter(e.target.value)}
+                placeholder="Filter by name, email, city..."
+                className={styles.searchInput}
+                style={{ minWidth: '200px', maxWidth: '300px' }}
+              />
+              {pendingSalons.length > 0 && (
+                <>
+                  <input type="checkbox" checked={selSalons.size === filteredPendingSalons.length && filteredPendingSalons.length > 0} onChange={e => setSelSalons(e.target.checked ? new Set(filteredPendingSalons.map(s => s.id)) : new Set())} />
+                  <span>Select all ({filteredPendingSalons.length})</span>
+                  <button className={styles.approveButton} disabled={selSalons.size === 0} onClick={() => bulkUpdate('salon', Array.from(selSalons), 'APPROVED')}>Approve selected</button>
+                  <button className={styles.rejectButton} disabled={selSalons.size === 0} onClick={() => bulkUpdate('salon', Array.from(selSalons), 'REJECTED')}>Reject selected</button>
+                </>
+              )}
+            </div>
+            {filteredPendingSalons.length > 0 ? filteredPendingSalons.map((salon) => {
+              const planCode = (salon.planCode ?? 'FREE') as PlanCode;
               const plan = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
               const amountDue =
                 typeof salon.planPriceCents === 'number'
@@ -967,88 +1110,115 @@ export default function AdminPage() {
                 : null;
               const isUpdating = updatingSalonPlanId === salon.id;
               const reference = salon.planPaymentReference ?? salon.name;
+              const isExpanded = expandedItems.has(salon.id);
+              const location = [salon.city, salon.province].filter(Boolean).join(', ') || 'Location not set';
+
               return (
-                <div key={salon.id} className={styles.listItem}>
-                  <div className={styles.info}>
-                    <input
-                      type="checkbox"
-                      checked={selSalons.has(salon.id)}
-                      onChange={(e) => {
-                        const ns = new Set(selSalons);
-                        if (e.target.checked) ns.add(salon.id);
-                        else ns.delete(salon.id);
-                        setSelSalons(ns);
-                      }}
-                    />
-                    <h4>{salon.name}</h4>
-                    <p>Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email})</p>
-                    <div className={styles.planInfo}>
-                      <div className={styles.planInfoRow}>
-                        <span><strong>Package:</strong> {plan.name}</span>
-                        <span><strong>Amount due:</strong> {isFree ? 'R0' : amountDue}</span>
-                        <span>
-                          <strong>Status:</strong>{' '}
-                          {isFree ? (
-                            <span className={`${styles.planBadge} ${styles[`planStatus_verified`]}`}>No payment required</span>
-                          ) : (
-                            <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`}>
-                              {PLAN_PAYMENT_LABELS[paymentStatus]}
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                      {!isFree && (
-                        <>
-                          <div className={styles.planInfoRow}>
-                            <span>
-                              <strong>Reference:</strong>{' '}
-                              <code className={styles.planReference}>{reference}</code>
-                              <button
-                                type="button"
-                                className={styles.copyButton}
-                                onClick={() => copyToClipboard(reference, 'Reference copied')}
-                              >
-                                Copy
-                              </button>
-                            </span>
-                            {proofSubmittedAt && <span>Proof submitted: {proofSubmittedAt}</span>}
-                            {verifiedAt && <span>Verified on: {verifiedAt}</span>}
-                          </div>
-                          <div className={styles.planAdminActions}>
-                            <button
-                              type="button"
-                              className={styles.approveButton}
-                              onClick={() => updateSalonPaymentStatus(salon.id, 'VERIFIED')}
-                              disabled={isUpdating || paymentStatus === 'VERIFIED'}
-                            >
-                              {isUpdating && paymentStatus !== 'VERIFIED' ? 'Saving…' : 'Mark verified'}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.approveButton}
-                              onClick={() => updateSalonPaymentStatus(salon.id, 'PROOF_SUBMITTED')}
-                              disabled={isUpdating || paymentStatus === 'PROOF_SUBMITTED'}
-                            >
-                              {isUpdating && paymentStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof received'}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.rejectButton}
-                              onClick={() => updateSalonPaymentStatus(salon.id, 'AWAITING_PROOF')}
-                              disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
-                            >
-                              {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Awaiting proof'}
-                            </button>
-                          </div>
-                        </>
-                      )}
+                <div key={salon.id} className={styles.collapsibleItem}>
+                  {/* Collapsible Header - always visible */}
+                  <div
+                    className={styles.collapsibleHeader}
+                    onClick={() => toggleExpanded(salon.id)}
+                  >
+                    <div className={styles.collapsibleHeaderLeft}>
+                      <input
+                        type="checkbox"
+                        className={styles.collapsibleCheckbox}
+                        checked={selSalons.has(salon.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const ns = new Set(selSalons);
+                          if (e.target.checked) ns.add(salon.id);
+                          else ns.delete(salon.id);
+                          setSelSalons(ns);
+                        }}
+                      />
+                      <span className={styles.collapsibleName} title={salon.name}>{salon.name}</span>
+                      <span className={styles.collapsibleLocation} title={location}>{location}</span>
+                    </div>
+                    <div className={styles.collapsibleHeaderRight}>
+                      <span className={`${styles.collapsibleStatus} ${isFree ? styles.free : styles.pending}`}>
+                        {isFree ? 'FREE' : 'Pending'}
+                      </span>
+                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
                     </div>
                   </div>
-                  <div className={styles.actions}>
-                    <Link href={`/dashboard?ownerId=${salon.owner.id}`} className="btn btn-secondary">View Dashboard</Link>
-                    <button onClick={() => handleUpdateStatus('salon', salon.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
-                    <button onClick={() => handleUpdateStatus('salon', salon.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
-                  </div>
+
+                  {/* Collapsible Content - shown when expanded */}
+                  {isExpanded && (
+                    <div className={styles.collapsibleContent}>
+                      <div className={styles.info}>
+                        <h4>{salon.name}</h4>
+                        <p>Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email})</p>
+                        <div className={styles.planInfo}>
+                          <div className={styles.planInfoRow}>
+                            <span><strong>Package:</strong> {plan.name}</span>
+                            <span><strong>Amount due:</strong> {isFree ? 'R0' : amountDue}</span>
+                            <span>
+                              <strong>Status:</strong>{' '}
+                              {isFree ? (
+                                <span className={`${styles.planBadge} ${styles[`planStatus_verified`]}`}>No payment required</span>
+                              ) : (
+                                <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`}>
+                                  {PLAN_PAYMENT_LABELS[paymentStatus]}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          {!isFree && (
+                            <>
+                              <div className={styles.planInfoRow}>
+                                <span>
+                                  <strong>Reference:</strong>{' '}
+                                  <code className={styles.planReference}>{reference}</code>
+                                  <button
+                                    type="button"
+                                    className={styles.copyButton}
+                                    onClick={() => copyToClipboard(reference, 'Reference copied')}
+                                  >
+                                    Copy
+                                  </button>
+                                </span>
+                                {proofSubmittedAt && <span>Proof submitted: {proofSubmittedAt}</span>}
+                                {verifiedAt && <span>Verified on: {verifiedAt}</span>}
+                              </div>
+                              <div className={styles.planAdminActions}>
+                                <button
+                                  type="button"
+                                  className={styles.approveButton}
+                                  onClick={() => updateSalonPaymentStatus(salon.id, 'VERIFIED')}
+                                  disabled={isUpdating || paymentStatus === 'VERIFIED'}
+                                >
+                                  {isUpdating && paymentStatus !== 'VERIFIED' ? 'Saving…' : 'Mark verified'}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.approveButton}
+                                  onClick={() => updateSalonPaymentStatus(salon.id, 'PROOF_SUBMITTED')}
+                                  disabled={isUpdating || paymentStatus === 'PROOF_SUBMITTED'}
+                                >
+                                  {isUpdating && paymentStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof received'}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.rejectButton}
+                                  onClick={() => updateSalonPaymentStatus(salon.id, 'AWAITING_PROOF')}
+                                  disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
+                                >
+                                  {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Awaiting proof'}
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className={styles.actions}>
+                        <Link href={`/dashboard?ownerId=${salon.owner.id}`} className="btn btn-secondary">View Dashboard</Link>
+                        <button onClick={() => handleUpdateStatus('salon', salon.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
+                        <button onClick={() => handleUpdateStatus('salon', salon.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             }) : <p>No pending salons.</p>}
@@ -1303,203 +1473,329 @@ export default function AdminPage() {
           )) : <p>No deleted profiles.</p>
         )}
         {view === 'all-sellers' && (
-          allSellers.length > 0 ? allSellers.map((seller) => {
-            const planCode = (seller.sellerPlanCode ?? 'STARTER') as PlanCode;
-            const plan = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
-            const amountDue =
-              typeof seller.sellerPlanPriceCents === 'number'
-                ? formatRand(seller.sellerPlanPriceCents)
-                : plan.price;
-            const paymentStatus = (seller.sellerPlanPaymentStatus ?? 'PENDING_SELECTION') as PlanPaymentStatus;
-            const proofSubmittedAt = seller.sellerPlanProofSubmittedAt
-              ? new Date(seller.sellerPlanProofSubmittedAt).toLocaleString('en-ZA')
-              : null;
-            const verifiedAt = seller.sellerPlanVerifiedAt
-              ? new Date(seller.sellerPlanVerifiedAt).toLocaleString('en-ZA')
-              : null;
-            const reference = seller.sellerPlanPaymentReference ?? seller.email;
-            const isUpdating = updatingSellerPlanId === seller.id;
+          <>
+            {/* Filter bar for sellers */}
+            <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                value={sellerFilter}
+                onChange={e => setSellerFilter(e.target.value)}
+                placeholder="Filter by name, email, business..."
+                className={styles.searchInput}
+                style={{ minWidth: '200px', maxWidth: '300px' }}
+              />
+              <span style={{ color: '#666', fontSize: '0.85rem' }}>Showing {filteredAllSellers.length} of {allSellers.length}</span>
+            </div>
+            {filteredAllSellers.length > 0 ? filteredAllSellers.map((seller) => {
+              const planCode = (seller.sellerPlanCode ?? 'FREE') as PlanCode;
+              const plan = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
+              const amountDue =
+                typeof seller.sellerPlanPriceCents === 'number'
+                  ? formatRand(seller.sellerPlanPriceCents)
+                  : plan.price;
+              const paymentStatus = (seller.sellerPlanPaymentStatus ?? 'PENDING_SELECTION') as PlanPaymentStatus;
+              const proofSubmittedAt = seller.sellerPlanProofSubmittedAt
+                ? new Date(seller.sellerPlanProofSubmittedAt).toLocaleString('en-ZA')
+                : null;
+              const verifiedAt = seller.sellerPlanVerifiedAt
+                ? new Date(seller.sellerPlanVerifiedAt).toLocaleString('en-ZA')
+                : null;
+              const reference = seller.sellerPlanPaymentReference ?? seller.email;
+              const isUpdating = updatingSellerPlanId === seller.id;
+              const approvalStatus = (seller.sellerApprovalStatus ?? 'PENDING') as ApprovalStatus;
+              const businessName = seller.sellerBusinessName || 'Not set up';
+              const profileSubmittedAt = seller.sellerProfileSubmittedAt
+                ? new Date(seller.sellerProfileSubmittedAt).toLocaleString('en-ZA')
+                : null;
+              const isExpanded = expandedItems.has(`seller-${seller.id}`);
+              const sellerName = `${seller.firstName || ''} ${seller.lastName || ''}`.trim() || seller.email;
+              const isFree = planCode === 'FREE';
 
-            const approvalStatus = (seller.sellerApprovalStatus ?? 'PENDING') as ApprovalStatus;
-            const businessName = seller.sellerBusinessName || 'Not set up';
-            const profileSubmittedAt = seller.sellerProfileSubmittedAt
-              ? new Date(seller.sellerProfileSubmittedAt).toLocaleString('en-ZA')
-              : null;
-
-            return (
-              <div key={seller.id} className={styles.listItem}>
-                <div className={styles.info}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                    <div>
-                      <h4>{seller.firstName} {seller.lastName}</h4>
-                      <p>Email: {seller.email}</p>
+              return (
+                <div key={seller.id} className={styles.collapsibleItem}>
+                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`seller-${seller.id}`)}>
+                    <div className={styles.collapsibleHeaderLeft}>
+                      <span className={styles.collapsibleName} title={sellerName}>{sellerName}</span>
+                      <span className={styles.collapsibleLocation} title={businessName}>{businessName}</span>
                     </div>
-                    {(approvalStatus === 'PENDING' || approvalStatus === 'REJECTED') && (
-                      <span className={`${styles.statusBadge} ${styles[approvalStatus.toLowerCase()]}`}>
-                        Profile: {approvalStatus}
+                    <div className={styles.collapsibleHeaderRight}>
+                      <span className={`${styles.collapsibleStatus} ${styles[approvalStatus.toLowerCase()]}`}>
+                        {approvalStatus}
                       </span>
-                    )}
+                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                    </div>
                   </div>
+                  {isExpanded && (
+                    <div className={styles.collapsibleContent}>
+                      <div className={styles.info}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                          <div>
+                            <h4>{seller.firstName} {seller.lastName}</h4>
+                            <p>Email: {seller.email}</p>
+                          </div>
+                          {(approvalStatus === 'PENDING' || approvalStatus === 'REJECTED') && (
+                            <span className={`${styles.statusBadge} ${styles[approvalStatus.toLowerCase()]}`}>
+                              Profile: {approvalStatus}
+                            </span>
+                          )}
+                        </div>
 
-                  <div style={{ background: '#f5f5f5', padding: '0.75rem', borderRadius: '8px', marginBottom: '0.75rem', fontSize: '0.9rem' }}>
-                    <p><strong>Business:</strong> {businessName}</p>
-                    <p><strong>Contact:</strong> {seller.sellerContactPerson} | {seller.sellerContactPhone}</p>
-                    <p><strong>Address:</strong> {seller.sellerPhysicalAddress}</p>
-                    <p><strong>Service Areas:</strong> {seller.sellerProvincesServed?.join(', ') || 'None'}</p>
-                    {profileSubmittedAt && <p style={{ marginTop: '0.25rem', color: '#666' }}>Updated: {profileSubmittedAt}</p>}
+                        <div style={{ background: '#f5f5f5', padding: '0.75rem', borderRadius: '8px', marginBottom: '0.75rem', fontSize: '0.9rem' }}>
+                          <p><strong>Business:</strong> {businessName}</p>
+                          <p><strong>Contact:</strong> {seller.sellerContactPerson} | {seller.sellerContactPhone}</p>
+                          <p><strong>Address:</strong> {seller.sellerPhysicalAddress}</p>
+                          <p><strong>Service Areas:</strong> {seller.sellerProvincesServed?.join(', ') || 'None'}</p>
+                          {profileSubmittedAt && <p style={{ marginTop: '0.25rem', color: '#666' }}>Updated: {profileSubmittedAt}</p>}
 
-                    {approvalStatus === 'PENDING' && (
-                      <div className={styles.actions} style={{ marginTop: '0.5rem' }}>
+                          {approvalStatus === 'PENDING' && (
+                            <div className={styles.actions} style={{ marginTop: '0.5rem' }}>
+                              <button
+                                className={styles.approveButton}
+                                onClick={() => updateSellerApprovalStatus(seller.id, 'APPROVED')}
+                              >
+                                Approve Profile
+                              </button>
+                              <button
+                                className={styles.rejectButton}
+                                onClick={() => updateSellerApprovalStatus(seller.id, 'REJECTED')}
+                              >
+                                Reject Profile
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <p>Products: {seller.productsCount ?? 0} (Pending: {seller.pendingProductsCount ?? 0})</p>
+
+                        <div className={styles.planInfo}>
+                          <div className={styles.planInfoRow}>
+                            <span><strong>Package:</strong> {plan.name}</span>
+                            <span><strong>Amount due:</strong> {amountDue}</span>
+                            <span>
+                              <strong>Payment:</strong>{' '}
+                              <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`}>
+                                {PLAN_PAYMENT_LABELS[paymentStatus]}
+                              </span>
+                            </span>
+                          </div>
+                          <div className={styles.planInfoRow}>
+                            <span>
+                              <strong>Reference:</strong>{' '}
+                              <code className={styles.planReference}>{reference}</code>
+                              <button
+                                type="button"
+                                className={styles.copyButton}
+                                onClick={() => copyToClipboard(reference, 'Reference copied')}
+                              >
+                                Copy
+                              </button>
+                            </span>
+                            {proofSubmittedAt && <span>Proof submitted: {proofSubmittedAt}</span>}
+                            {verifiedAt && <span>Verified on: {verifiedAt}</span>}
+                          </div>
+                          <div className={styles.planAdminActions}>
+                            <button
+                              type="button"
+                              className={styles.approveButton}
+                              onClick={() => updateSellerPaymentStatus(seller.id, 'VERIFIED')}
+                              disabled={isUpdating || paymentStatus === 'VERIFIED'}
+                            >
+                              {isUpdating && paymentStatus !== 'VERIFIED' ? 'Saving…' : 'Mark Payment Verified'}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.approveButton}
+                              onClick={() => updateSellerPaymentStatus(seller.id, 'PROOF_SUBMITTED')}
+                              disabled={isUpdating || paymentStatus === 'PROOF_SUBMITTED'}
+                            >
+                              {isUpdating && paymentStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof Received'}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.rejectButton}
+                              onClick={() => updateSellerPaymentStatus(seller.id, 'AWAITING_PROOF')}
+                              disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
+                            >
+                              {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Unverify Payment'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div className={styles.actions}>
                         <button
-                          className={styles.approveButton}
-                          onClick={() => updateSellerApprovalStatus(seller.id, 'APPROVED')}
-                        >
-                          Approve Profile
-                        </button>
-                        <button
+                          onClick={() => openDeleteSellerModal(seller.id, `${seller.firstName} ${seller.lastName}`.trim() || seller.email)}
                           className={styles.rejectButton}
-                          onClick={() => updateSellerApprovalStatus(seller.id, 'REJECTED')}
+                          title="Delete seller"
                         >
-                          Reject Profile
+                          Delete Seller
                         </button>
                       </div>
-                    )}
-                  </div>
-
-                  <p>Products: {seller.productsCount ?? 0} (Pending: {seller.pendingProductsCount ?? 0})</p>
-
-                  <div className={styles.planInfo}>
-                    <div className={styles.planInfoRow}>
-                      <span><strong>Package:</strong> {plan.name}</span>
-                      <span><strong>Amount due:</strong> {amountDue}</span>
-                      <span>
-                        <strong>Payment:</strong>{' '}
-                        <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`}>
-                          {PLAN_PAYMENT_LABELS[paymentStatus]}
-                        </span>
-                      </span>
                     </div>
-                    <div className={styles.planInfoRow}>
-                      <span>
-                        <strong>Reference:</strong>{' '}
-                        <code className={styles.planReference}>{reference}</code>
-                        <button
-                          type="button"
-                          className={styles.copyButton}
-                          onClick={() => copyToClipboard(reference, 'Reference copied')}
-                        >
-                          Copy
-                        </button>
-                      </span>
-                      {proofSubmittedAt && <span>Proof submitted: {proofSubmittedAt}</span>}
-                      {verifiedAt && <span>Verified on: {verifiedAt}</span>}
-                    </div>
-                    <div className={styles.planAdminActions}>
-                      <button
-                        type="button"
-                        className={styles.approveButton}
-                        onClick={() => updateSellerPaymentStatus(seller.id, 'VERIFIED')}
-                        disabled={isUpdating || paymentStatus === 'VERIFIED'}
-                      >
-                        {isUpdating && paymentStatus !== 'VERIFIED' ? 'Saving…' : 'Mark Payment Verified'}
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.approveButton}
-                        onClick={() => updateSellerPaymentStatus(seller.id, 'PROOF_SUBMITTED')}
-                        disabled={isUpdating || paymentStatus === 'PROOF_SUBMITTED'}
-                      >
-                        {isUpdating && paymentStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof Received'}
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.rejectButton}
-                        onClick={() => updateSellerPaymentStatus(seller.id, 'AWAITING_PROOF')}
-                        disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
-                      >
-                        {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Unverify Payment'}
-                      </button>
-                    </div>
-                  </div>
+                  )}
                 </div>
-                <div className={styles.actions}>
-                  <button
-                    onClick={() => openDeleteSellerModal(seller.id, `${seller.firstName} ${seller.lastName}`.trim() || seller.email)}
-                    className={styles.rejectButton}
-                    title="Delete seller"
-                  >
-                    Delete Seller
-                  </button>
-                </div>
-              </div>
-            );
-          }) : <p>No sellers found.</p>
+              );
+            }) : <p>No sellers found.</p>}
+          </>
         )}
 
         {view === 'services' && (
           <>
-            {pendingServices.length > 0 && (
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <input type="checkbox" checked={selServices.size === pendingServices.length} onChange={e => setSelServices(e.target.checked ? new Set(pendingServices.map(s => s.id)) : new Set())} />
-                <span>Select all</span>
-                <button className={styles.approveButton} disabled={selServices.size === 0} onClick={() => bulkUpdate('service', Array.from(selServices), 'APPROVED')}>Approve selected</button>
-                <button className={styles.rejectButton} disabled={selServices.size === 0} onClick={() => bulkUpdate('service', Array.from(selServices), 'REJECTED')}>Reject selected</button>
-              </div>
-            )}
-            {pendingServices.length > 0 ? pendingServices.map(service => (
-              <div key={service.id} className={styles.listItem}>
-                <div className={styles.info}>
-                  <input type="checkbox" checked={selServices.has(service.id)} onChange={e => { const ns = new Set(selServices); if (e.target.checked) ns.add(service.id); else ns.delete(service.id); setSelServices(ns); }} />
-                  <h4>{service.title}</h4>
-                  <p>Salon: {service.salon.name}</p>
+            {/* Filter and bulk actions bar */}
+            <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                value={serviceFilter}
+                onChange={e => setServiceFilter(e.target.value)}
+                placeholder="Filter by service title or salon..."
+                className={styles.searchInput}
+                style={{ minWidth: '200px', maxWidth: '300px' }}
+              />
+              {pendingServices.length > 0 && (
+                <>
+                  <input type="checkbox" checked={selServices.size === filteredPendingServices.length && filteredPendingServices.length > 0} onChange={e => setSelServices(e.target.checked ? new Set(filteredPendingServices.map(s => s.id)) : new Set())} />
+                  <span>Select all ({filteredPendingServices.length})</span>
+                  <button className={styles.approveButton} disabled={selServices.size === 0} onClick={() => bulkUpdate('service', Array.from(selServices), 'APPROVED')}>Approve selected</button>
+                  <button className={styles.rejectButton} disabled={selServices.size === 0} onClick={() => bulkUpdate('service', Array.from(selServices), 'REJECTED')}>Reject selected</button>
+                </>
+              )}
+            </div>
+            {filteredPendingServices.length > 0 ? filteredPendingServices.map(service => {
+              const isExpanded = expandedItems.has(service.id);
+              return (
+                <div key={service.id} className={styles.collapsibleItem}>
+                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(service.id)}>
+                    <div className={styles.collapsibleHeaderLeft}>
+                      <input
+                        type="checkbox"
+                        className={styles.collapsibleCheckbox}
+                        checked={selServices.has(service.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const ns = new Set(selServices);
+                          if (e.target.checked) ns.add(service.id);
+                          else ns.delete(service.id);
+                          setSelServices(ns);
+                        }}
+                      />
+                      <span className={styles.collapsibleName} title={service.title}>{service.title}</span>
+                      <span className={styles.collapsibleLocation}>{service.salon?.name || 'Unknown Salon'}</span>
+                    </div>
+                    <div className={styles.collapsibleHeaderRight}>
+                      <span className={`${styles.collapsibleStatus} ${styles.pending}`}>Pending</span>
+                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                    </div>
+                  </div>
+                  {isExpanded && (
+                    <div className={styles.collapsibleContent}>
+                      <div className={styles.info}>
+                        <h4>{service.title}</h4>
+                        <p>Salon: {service.salon?.name || 'Unknown'}</p>
+                        {service.description && <p style={{ color: '#666', fontSize: '0.9rem' }}>{service.description}</p>}
+                        {service.price != null && <p><strong>Price:</strong> R{service.price.toFixed(2)}</p>}
+                        {service.duration != null && <p><strong>Duration:</strong> {service.duration} min</p>}
+                      </div>
+                      <div className={styles.actions}>
+                        <button onClick={() => handleUpdateStatus('service', service.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
+                        <button onClick={() => handleUpdateStatus('service', service.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className={styles.actions}>
-                  <button onClick={() => handleUpdateStatus('service', service.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
-                  <button onClick={() => handleUpdateStatus('service', service.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
-                </div>
-              </div>
-            )) : <p>No pending services.</p>}
+              );
+            }) : <p>No pending services.</p>}
           </>
         )}
 
         {view === 'reviews' && (
           <>
-            {pendingReviews.length > 0 && (
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <input type="checkbox" checked={selReviews.size === pendingReviews.length} onChange={e => setSelReviews(e.target.checked ? new Set(pendingReviews.map(s => s.id)) : new Set())} />
-                <span>Select all</span>
-                <button className={styles.approveButton} disabled={selReviews.size === 0} onClick={() => bulkUpdate('review', Array.from(selReviews), 'APPROVED')}>Approve selected</button>
-                <button className={styles.rejectButton} disabled={selReviews.size === 0} onClick={() => bulkUpdate('review', Array.from(selReviews), 'REJECTED')}>Reject selected</button>
-              </div>
-            )}
-            {pendingReviews.length > 0 ? pendingReviews.map(review => (
-              <div key={review.id} className={styles.listItem}>
-                <div className={styles.info}>
-                  <input type="checkbox" checked={selReviews.has(review.id)} onChange={e => { const ns = new Set(selReviews); if (e.target.checked) ns.add(review.id); else ns.delete(review.id); setSelReviews(ns); }} />
-                  <h4>"{review.comment}" ({review.rating} ★)</h4>
-                  <p>By: {review.author.firstName} | For Salon: {review.salon.name}</p>
+            {/* Filter and bulk actions bar */}
+            <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                value={reviewFilter}
+                onChange={e => setReviewFilter(e.target.value)}
+                placeholder="Filter by reviewer, salon, comment..."
+                className={styles.searchInput}
+                style={{ minWidth: '200px', maxWidth: '300px' }}
+              />
+              {pendingReviews.length > 0 && (
+                <>
+                  <input type="checkbox" checked={selReviews.size === filteredPendingReviews.length && filteredPendingReviews.length > 0} onChange={e => setSelReviews(e.target.checked ? new Set(filteredPendingReviews.map(s => s.id)) : new Set())} />
+                  <span>Select all ({filteredPendingReviews.length})</span>
+                  <button className={styles.approveButton} disabled={selReviews.size === 0} onClick={() => bulkUpdate('review', Array.from(selReviews), 'APPROVED')}>Approve selected</button>
+                  <button className={styles.rejectButton} disabled={selReviews.size === 0} onClick={() => bulkUpdate('review', Array.from(selReviews), 'REJECTED')}>Reject selected</button>
+                </>
+              )}
+            </div>
+            {filteredPendingReviews.length > 0 ? filteredPendingReviews.map(review => {
+              const isExpanded = expandedItems.has(review.id);
+              const truncatedComment = review.comment?.length > 40 ? `${review.comment.slice(0, 40)}...` : review.comment;
+              return (
+                <div key={review.id} className={styles.collapsibleItem}>
+                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(review.id)}>
+                    <div className={styles.collapsibleHeaderLeft}>
+                      <input
+                        type="checkbox"
+                        className={styles.collapsibleCheckbox}
+                        checked={selReviews.has(review.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const ns = new Set(selReviews);
+                          if (e.target.checked) ns.add(review.id);
+                          else ns.delete(review.id);
+                          setSelReviews(ns);
+                        }}
+                      />
+                      <span className={styles.collapsibleName} title={review.author?.firstName}>{review.author?.firstName || 'Anonymous'} ({review.rating}★)</span>
+                      <span className={styles.collapsibleLocation} title={review.salon?.name}>{review.salon?.name || 'Unknown Salon'}</span>
+                    </div>
+                    <div className={styles.collapsibleHeaderRight}>
+                      <span className={`${styles.collapsibleStatus} ${styles.pending}`}>Pending</span>
+                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                    </div>
+                  </div>
+                  {isExpanded && (
+                    <div className={styles.collapsibleContent}>
+                      <div className={styles.info}>
+                        <h4>"{review.comment}" ({review.rating} ★)</h4>
+                        <p>By: {review.author?.firstName || 'Anonymous'} | For Salon: {review.salon?.name || 'Unknown'}</p>
+                        {review.createdAt && <p style={{ color: '#666', fontSize: '0.85rem' }}>Submitted: {new Date(review.createdAt).toLocaleString()}</p>}
+                      </div>
+                      <div className={styles.actions}>
+                        <button onClick={() => handleUpdateStatus('review', review.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
+                        <button onClick={() => handleUpdateStatus('review', review.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className={styles.actions}>
-                  <button onClick={() => handleUpdateStatus('review', review.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
-                  <button onClick={() => handleUpdateStatus('review', review.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
-                </div>
-              </div>
-            )) : <p>No pending reviews.</p>}
+              );
+            }) : <p>No pending reviews.</p>}
           </>
         )}
 
         {view === 'products' && (
           <>
-            {pendingProducts.length > 0 && (
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <input type="checkbox" checked={selProducts.size === pendingProducts.length} onChange={e => setSelProducts(e.target.checked ? new Set(pendingProducts.map(s => s.id)) : new Set())} />
-                <span>Select all</span>
-                <button className={styles.approveButton} disabled={selProducts.size === 0} onClick={() => bulkUpdate('product', Array.from(selProducts), 'APPROVED')}>Approve selected</button>
-                <button className={styles.rejectButton} disabled={selProducts.size === 0} onClick={() => bulkUpdate('product', Array.from(selProducts), 'REJECTED')}>Reject selected</button>
-              </div>
-            )}
-            {pendingProducts.length > 0 ? pendingProducts.map((product) => {
-              const sellerPlanCode = (product.seller.sellerPlanCode ?? 'STARTER') as PlanCode;
+            {/* Filter and bulk actions bar */}
+            <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                value={productFilter}
+                onChange={e => setProductFilter(e.target.value)}
+                placeholder="Filter by product name or seller..."
+                className={styles.searchInput}
+                style={{ minWidth: '200px', maxWidth: '300px' }}
+              />
+              {pendingProducts.length > 0 && (
+                <>
+                  <input type="checkbox" checked={selProducts.size === filteredPendingProducts.length && filteredPendingProducts.length > 0} onChange={e => setSelProducts(e.target.checked ? new Set(filteredPendingProducts.map(s => s.id)) : new Set())} />
+                  <span>Select all ({filteredPendingProducts.length})</span>
+                  <button className={styles.approveButton} disabled={selProducts.size === 0} onClick={() => bulkUpdate('product', Array.from(selProducts), 'APPROVED')}>Approve selected</button>
+                  <button className={styles.rejectButton} disabled={selProducts.size === 0} onClick={() => bulkUpdate('product', Array.from(selProducts), 'REJECTED')}>Reject selected</button>
+                </>
+              )}
+            </div>
+            {filteredPendingProducts.length > 0 ? filteredPendingProducts.map((product) => {
+              const sellerPlanCode = (product.seller.sellerPlanCode ?? 'FREE') as PlanCode;
               const plan = PLAN_BY_CODE[sellerPlanCode] ?? APP_PLANS[0];
               const planAmount =
                 typeof product.seller.sellerPlanPriceCents === 'number'
@@ -1517,80 +1813,101 @@ export default function AdminPage() {
               const sellerReference =
                 product.seller.sellerPlanPaymentReference ??
                 `${product.seller.firstName} ${product.seller.lastName}`.trim();
+              const isExpanded = expandedItems.has(product.id);
+              const isFree = sellerPlanCode === 'FREE';
+              const sellerName = `${product.seller.firstName || ''} ${product.seller.lastName || ''}`.trim() || 'Unknown Seller';
               return (
-                <div key={product.id} className={styles.listItem}>
-                  <div className={styles.info}>
-                    <input
-                      type="checkbox"
-                      checked={selProducts.has(product.id)}
-                      onChange={(e) => {
-                        const ns = new Set(selProducts);
-                        if (e.target.checked) ns.add(product.id);
-                        else ns.delete(product.id);
-                        setSelProducts(ns);
-                      }}
-                    />
-                    <h4>{product.name}</h4>
-                    <p>Seller: {product.seller.firstName} {product.seller.lastName}</p>
-                    <div className={styles.planInfo}>
-                      <div className={styles.planInfoRow}>
-                        <span><strong>Package:</strong> {plan.name}</span>
-                        <span><strong>Amount due:</strong> {planAmount}</span>
-                        <span>
-                          <strong>Status:</strong>{' '}
-                          <span className={`${styles.planBadge} ${styles[`planStatus_${sellerStatus.toLowerCase()}`]}`}>
-                            {PLAN_PAYMENT_LABELS[sellerStatus]}
-                          </span>
-                        </span>
-                      </div>
-                      <div className={styles.planInfoRow}>
-                        <span>
-                          <strong>Reference:</strong>{' '}
-                          <code className={styles.planReference}>{sellerReference}</code>
-                          <button
-                            type="button"
-                            className={styles.copyButton}
-                            onClick={() => copyToClipboard(sellerReference, 'Reference copied')}
-                          >
-                            Copy
-                          </button>
-                        </span>
-                        {proofSubmittedAt && <span>Proof submitted: {proofSubmittedAt}</span>}
-                        {sellerVerifiedAt && <span>Verified on: {sellerVerifiedAt}</span>}
-                      </div>
-                      <div className={styles.planAdminActions}>
-                        <button
-                          type="button"
-                          className={styles.approveButton}
-                          onClick={() => updateSellerPaymentStatus(product.seller.id, 'VERIFIED')}
-                          disabled={isSellerUpdating || sellerStatus === 'VERIFIED'}
-                        >
-                          {isSellerUpdating && sellerStatus !== 'VERIFIED' ? 'Saving…' : 'Mark verified'}
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.approveButton}
-                          onClick={() => updateSellerPaymentStatus(product.seller.id, 'PROOF_SUBMITTED')}
-                          disabled={isSellerUpdating || sellerStatus === 'PROOF_SUBMITTED'}
-                        >
-                          {isSellerUpdating && sellerStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof received'}
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.rejectButton}
-                          onClick={() => updateSellerPaymentStatus(product.seller.id, 'AWAITING_PROOF')}
-                          disabled={isSellerUpdating || sellerStatus === 'AWAITING_PROOF'}
-                        >
-                          {isSellerUpdating && sellerStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Awaiting proof'}
-                        </button>
-                      </div>
+                <div key={product.id} className={styles.collapsibleItem}>
+                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(product.id)}>
+                    <div className={styles.collapsibleHeaderLeft}>
+                      <input
+                        type="checkbox"
+                        className={styles.collapsibleCheckbox}
+                        checked={selProducts.has(product.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const ns = new Set(selProducts);
+                          if (e.target.checked) ns.add(product.id);
+                          else ns.delete(product.id);
+                          setSelProducts(ns);
+                        }}
+                      />
+                      <span className={styles.collapsibleName} title={product.name}>{product.name}</span>
+                      <span className={styles.collapsibleLocation} title={sellerName}>{sellerName}</span>
+                    </div>
+                    <div className={styles.collapsibleHeaderRight}>
+                      <span className={`${styles.collapsibleStatus} ${isFree ? styles.free : styles.pending}`}>
+                        {isFree ? 'FREE' : 'Pending'}
+                      </span>
+                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
                     </div>
                   </div>
-                  <div className={styles.actions}>
-                    <button onClick={() => handleUpdateStatus('product', product.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
-                    <button onClick={() => handleUpdateStatus('product', product.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
-                    <button onClick={() => openDeleteSellerModal(product.seller.id, `${product.seller.firstName} ${product.seller.lastName}`.trim() || product.seller.id)} className={styles.rejectButton} title="Delete seller">Delete Seller</button>
-                  </div>
+                  {isExpanded && (
+                    <div className={styles.collapsibleContent}>
+                      <div className={styles.info}>
+                        <h4>{product.name}</h4>
+                        <p>Seller: {sellerName}</p>
+                        <div className={styles.planInfo}>
+                          <div className={styles.planInfoRow}>
+                            <span><strong>Package:</strong> {plan.name}</span>
+                            <span><strong>Amount due:</strong> {planAmount}</span>
+                            <span>
+                              <strong>Status:</strong>{' '}
+                              <span className={`${styles.planBadge} ${styles[`planStatus_${sellerStatus.toLowerCase()}`]}`}>
+                                {PLAN_PAYMENT_LABELS[sellerStatus]}
+                              </span>
+                            </span>
+                          </div>
+                          <div className={styles.planInfoRow}>
+                            <span>
+                              <strong>Reference:</strong>{' '}
+                              <code className={styles.planReference}>{sellerReference}</code>
+                              <button
+                                type="button"
+                                className={styles.copyButton}
+                                onClick={() => copyToClipboard(sellerReference, 'Reference copied')}
+                              >
+                                Copy
+                              </button>
+                            </span>
+                            {proofSubmittedAt && <span>Proof submitted: {proofSubmittedAt}</span>}
+                            {sellerVerifiedAt && <span>Verified on: {sellerVerifiedAt}</span>}
+                          </div>
+                          <div className={styles.planAdminActions}>
+                            <button
+                              type="button"
+                              className={styles.approveButton}
+                              onClick={() => updateSellerPaymentStatus(product.seller.id, 'VERIFIED')}
+                              disabled={isSellerUpdating || sellerStatus === 'VERIFIED'}
+                            >
+                              {isSellerUpdating && sellerStatus !== 'VERIFIED' ? 'Saving…' : 'Mark verified'}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.approveButton}
+                              onClick={() => updateSellerPaymentStatus(product.seller.id, 'PROOF_SUBMITTED')}
+                              disabled={isSellerUpdating || sellerStatus === 'PROOF_SUBMITTED'}
+                            >
+                              {isSellerUpdating && sellerStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof received'}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.rejectButton}
+                              onClick={() => updateSellerPaymentStatus(product.seller.id, 'AWAITING_PROOF')}
+                              disabled={isSellerUpdating || sellerStatus === 'AWAITING_PROOF'}
+                            >
+                              {isSellerUpdating && sellerStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Awaiting proof'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div className={styles.actions}>
+                        <button onClick={() => handleUpdateStatus('product', product.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
+                        <button onClick={() => handleUpdateStatus('product', product.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
+                        <button onClick={() => openDeleteSellerModal(product.seller.id, sellerName || product.seller.id)} className={styles.rejectButton} title="Delete seller">Delete Seller</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             }) : <p>No pending products.</p>}
@@ -1677,134 +1994,189 @@ export default function AdminPage() {
         )}
 
         {view === 'top10-requests' && (
-          top10Requests.length > 0 ? top10Requests.map((req: any) => (
-            <div key={req.id} className={styles.listItem}>
-              <div className={styles.info}>
-                <h4>{req.fullName} - {req.category}</h4>
-                <p><strong>Service:</strong> {req.serviceNeeded}</p>
-                <p><strong>Budget:</strong> R{req.budget} | <strong>Type:</strong> {req.serviceType === 'onsite' ? 'Mobile' : 'Visit Salon'}</p>
-                <p><strong>Location:</strong> {req.location}</p>
-                <p><strong>Date:</strong> {req.preferredDate ? new Date(req.preferredDate).toLocaleDateString() : 'Not specified'} {req.preferredTime ? `at ${req.preferredTime}` : ''}</p>
-                <p><strong>Phone:</strong> <a href={`tel:${req.phone}`}>{req.phone}</a> {req.whatsapp && <> | <strong>WhatsApp:</strong> <a href={`https://wa.me/${req.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">{req.whatsapp}</a></>}</p>
-                {req.email && <p><strong>Email:</strong> <a href={`mailto:${req.email}`}>{req.email}</a></p>}
-                {req.styleOrLook && <p><strong>Style:</strong> {req.styleOrLook}</p>}
-                <p style={{ opacity: 0.7, fontSize: '0.85rem' }}>Submitted: {new Date(req.createdAt).toLocaleString()}</p>
-                <p><strong>Status:</strong> <span style={{ color: req.status === 'PENDING' ? '#f59e0b' : req.status === 'CONTACTED' ? '#3b82f6' : req.status === 'MATCHED' ? '#10b981' : '#6b7280' }}>{req.status}</span></p>
+          top10Requests.length > 0 ? top10Requests.map((req: any) => {
+            const isExpanded = expandedItems.has(`req-${req.id}`);
+            const statusColor = req.status === 'PENDING' ? '#f59e0b' : req.status === 'CONTACTED' ? '#3b82f6' : req.status === 'MATCHED' ? '#10b981' : '#6b7280';
+            return (
+              <div key={req.id} className={styles.collapsibleItem}>
+                <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`req-${req.id}`)}>
+                  <div className={styles.collapsibleHeaderLeft}>
+                    <span className={styles.collapsibleName} title={req.fullName}>{req.fullName}</span>
+                    <span className={styles.collapsibleLocation} title={req.location}>{req.location}</span>
+                  </div>
+                  <div className={styles.collapsibleHeaderRight}>
+                    <span className={styles.collapsibleStatus} style={{ backgroundColor: `${statusColor}20`, color: statusColor }}>{req.status}</span>
+                    <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                  </div>
+                </div>
+                {isExpanded && (
+                  <div className={styles.collapsibleContent}>
+                    <div className={styles.info}>
+                      <h4>{req.fullName} - {req.category}</h4>
+                      <p><strong>Service:</strong> {req.serviceNeeded}</p>
+                      <p><strong>Budget:</strong> R{req.budget} | <strong>Type:</strong> {req.serviceType === 'onsite' ? 'Mobile' : 'Visit Salon'}</p>
+                      <p><strong>Location:</strong> {req.location}</p>
+                      <p><strong>Date:</strong> {req.preferredDate ? new Date(req.preferredDate).toLocaleDateString() : 'Not specified'} {req.preferredTime ? `at ${req.preferredTime}` : ''}</p>
+                      <p><strong>Phone:</strong> <a href={`tel:${req.phone}`}>{req.phone}</a> {req.whatsapp && <> | <strong>WhatsApp:</strong> <a href={`https://wa.me/${req.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">{req.whatsapp}</a></>}</p>
+                      {req.email && <p><strong>Email:</strong> <a href={`mailto:${req.email}`}>{req.email}</a></p>}
+                      {req.styleOrLook && <p><strong>Style:</strong> {req.styleOrLook}</p>}
+                      <p style={{ opacity: 0.7, fontSize: '0.85rem' }}>Submitted: {new Date(req.createdAt).toLocaleString()}</p>
+                    </div>
+                    <div className={styles.actions}>
+                      <select
+                        value={req.status}
+                        onChange={async (e) => {
+                          const newStatus = e.target.value;
+                          const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
+                          try {
+                            const res = await fetch(`/api/admin/top10-requests/${req.id}/status`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json', ...authHeaders },
+                              credentials: 'include',
+                              body: JSON.stringify({ status: newStatus }),
+                            });
+                            if (res.ok) {
+                              setTop10Requests(prev => prev.map(r => r.id === req.id ? { ...r, status: newStatus } : r));
+                              toast.success('Status updated');
+                            } else {
+                              toast.error('Failed to update status');
+                            }
+                          } catch {
+                            toast.error('Failed to update status');
+                          }
+                        }}
+                        style={{ padding: '0.5rem', borderRadius: 4 }}
+                      >
+                        <option value="PENDING">Pending</option>
+                        <option value="CONTACTED">Contacted</option>
+                        <option value="MATCHED">Matched</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="CANCELLED">Cancelled</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className={styles.actions}>
-                <select
-                  value={req.status}
-                  onChange={async (e) => {
-                    const newStatus = e.target.value;
-                    const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
-                    try {
-                      const res = await fetch(`/api/admin/top10-requests/${req.id}/status`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json', ...authHeaders },
-                        credentials: 'include',
-                        body: JSON.stringify({ status: newStatus }),
-                      });
-                      if (res.ok) {
-                        setTop10Requests(prev => prev.map(r => r.id === req.id ? { ...r, status: newStatus } : r));
-                        toast.success('Status updated');
-                      } else {
-                        toast.error('Failed to update status');
-                      }
-                    } catch {
-                      toast.error('Failed to update status');
-                    }
-                  }}
-                  style={{ padding: '0.5rem', borderRadius: 4 }}
-                >
-                  <option value="PENDING">Pending</option>
-                  <option value="CONTACTED">Contacted</option>
-                  <option value="MATCHED">Matched</option>
-                  <option value="COMPLETED">Completed</option>
-                  <option value="CANCELLED">Cancelled</option>
-                </select>
-              </div>
-            </div>
-          )) : <p>No Top 10 requests yet.</p>
+            );
+          }) : <p>No Top 10 requests yet.</p>
         )}
 
         {view === 'deleted-sellers' && (
-          deletedSellers.length > 0 ? deletedSellers.map((row: any) => (
-            <div key={row.id} className={styles.listItem}>
-              <div className={styles.info}>
-                <h4>{row.seller?.firstName ? `${row.seller.firstName} ${row.seller.lastName ?? ''}`.trim() : 'Unknown seller'}</h4>
-                <p>Deleted at: {row.deletedAt ? new Date(row.deletedAt).toLocaleString() : ''} {row.reason ? `| Reason: ${row.reason}` : ''}</p>
+          deletedSellers.length > 0 ? deletedSellers.map((row: any) => {
+            const isExpanded = expandedItems.has(`delseller-${row.id}`);
+            const sellerName = row.seller?.firstName ? `${row.seller.firstName} ${row.seller.lastName ?? ''}`.trim() : 'Unknown seller';
+            return (
+              <div key={row.id} className={styles.collapsibleItem}>
+                <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`delseller-${row.id}`)}>
+                  <div className={styles.collapsibleHeaderLeft}>
+                    <span className={styles.collapsibleName} title={sellerName}>{sellerName}</span>
+                    <span className={styles.collapsibleLocation}>{row.deletedAt ? new Date(row.deletedAt).toLocaleDateString() : ''}</span>
+                  </div>
+                  <div className={styles.collapsibleHeaderRight}>
+                    <span className={`${styles.collapsibleStatus} ${styles.rejected}`}>Deleted</span>
+                    <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                  </div>
+                </div>
+                {isExpanded && (
+                  <div className={styles.collapsibleContent}>
+                    <div className={styles.info}>
+                      <h4>{sellerName}</h4>
+                      <p>Deleted at: {row.deletedAt ? new Date(row.deletedAt).toLocaleString() : ''}</p>
+                      {row.reason && <p><strong>Reason:</strong> {row.reason}</p>}
+                    </div>
+                    <div className={styles.actions}>
+                      <button className={styles.approveButton} onClick={() => restoreDeletedSeller(row.id)}>Restore</button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className={styles.actions}>
-                <button className={styles.approveButton} onClick={() => restoreDeletedSeller(row.id)}>Restore</button>
-              </div>
-            </div>
-          )) : <p>No deleted sellers.</p>
+            );
+          }) : <p>No deleted sellers.</p>
         )}
 
         {view === 'audit' && (
-          auditLogs.length > 0 ? auditLogs.map((log: any) => (
-            <div key={log.id} className={styles.listItem}>
-              <div className={styles.info}>
-                <h4>{log.action}</h4>
-                <p>Target: {log.targetType} {log.targetId}</p>
-                <p>{log.reason ? `Reason: ${log.reason}` : ''}</p>
+          auditLogs.length > 0 ? auditLogs.map((log: any) => {
+            const isExpanded = expandedItems.has(`audit-${log.id}`);
+            return (
+              <div key={log.id} className={styles.collapsibleItem}>
+                <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`audit-${log.id}`)}>
+                  <div className={styles.collapsibleHeaderLeft}>
+                    <span className={styles.collapsibleName} title={log.action}>{log.action}</span>
+                    <span className={styles.collapsibleLocation}>{log.targetType}</span>
+                  </div>
+                  <div className={styles.collapsibleHeaderRight}>
+                    <span style={{ color: '#666', fontSize: '0.8rem' }}>{new Date(log.createdAt).toLocaleDateString()}</span>
+                    <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                  </div>
+                </div>
+                {isExpanded && (
+                  <div className={styles.collapsibleContent}>
+                    <div className={styles.info}>
+                      <h4>{log.action}</h4>
+                      <p><strong>Target:</strong> {log.targetType} {log.targetId}</p>
+                      {log.reason && <p><strong>Reason:</strong> {log.reason}</p>}
+                      <p style={{ color: '#666', fontSize: '0.85rem' }}>Timestamp: {new Date(log.createdAt).toLocaleString()}</p>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className={styles.actions}>
-                <span>{new Date(log.createdAt).toLocaleString()}</span>
-              </div>
-            </div>
-          )) : <p>No recent admin activity.</p>
+            );
+          }) : <p>No recent admin activity.</p>
         )}
       </div>
-      {showDeleteModal && deleteMode === 'salon' && deletingSalon && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', color: '#000', padding: '1rem', borderRadius: 8, maxWidth: 560, width: '96%', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
-            <h3 style={{ marginTop: 0 }}>Delete Provider Profile</h3>
-            <p style={{ color: '#a00', fontWeight: 600 }}>Caution: This will remove the provider profile and all their listings from the platform. You can later restore it from Deleted Profiles.</p>
-            <p><strong>Provider:</strong> {deletingSalon.name}</p>
-            <label style={{ display: 'block', margin: '0.5rem 0' }}>Reason (required)</label>
-            <textarea value={deleteReason} onChange={e => setDeleteReason(e.target.value)} rows={4} style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 6 }} placeholder="Enter reason for deletion" />
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
-              <button className={styles.approveButton} onClick={confirmDeleteSalon} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Confirm Delete'}</button>
-              <button className={styles.rejectButton} onClick={() => { setShowDeleteModal(false); setDeletingSalon(null); }}>Cancel</button>
+      {
+        showDeleteModal && deleteMode === 'salon' && deletingSalon && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 1000 }}>
+            <div style={{ background: '#fff', color: '#000', padding: '1rem', borderRadius: 8, maxWidth: 560, width: '96%', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
+              <h3 style={{ marginTop: 0 }}>Delete Provider Profile</h3>
+              <p style={{ color: '#a00', fontWeight: 600 }}>Caution: This will remove the provider profile and all their listings from the platform. You can later restore it from Deleted Profiles.</p>
+              <p><strong>Provider:</strong> {deletingSalon.name}</p>
+              <label style={{ display: 'block', margin: '0.5rem 0' }}>Reason (required)</label>
+              <textarea value={deleteReason} onChange={e => setDeleteReason(e.target.value)} rows={4} style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 6 }} placeholder="Enter reason for deletion" />
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+                <button className={styles.approveButton} onClick={confirmDeleteSalon} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Confirm Delete'}</button>
+                <button className={styles.rejectButton} onClick={() => { setShowDeleteModal(false); setDeletingSalon(null); }}>Cancel</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {showDeleteModal && deleteMode === 'seller' && deletingSeller && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', color: '#000', padding: '1rem', borderRadius: 8, maxWidth: 560, width: '96%', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
-            <h3 style={{ marginTop: 0 }}>Delete Seller Profile</h3>
-            <p style={{ color: '#a00', fontWeight: 600 }}>Caution: This will remove the seller account and all their products from the platform. You can restore it from Deleted Sellers.</p>
-            <p style={{ color: '#a00', fontWeight: 600 }}>Are you sure you want to proceed with deleting this product seller?</p>
-            <p><strong>Seller:</strong> {deletingSeller.name}</p>
-            <label style={{ display: 'block', margin: '0.5rem 0' }}>Reason (required)</label>
-            <textarea
-              value={deleteReason}
-              onChange={(event) => setDeleteReason(event.target.value)}
-              rows={4}
-              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 6 }}
-              placeholder="Enter reason for deletion"
-            />
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
-              <button type="button" className={styles.approveButton} onClick={confirmDeleteSeller} disabled={isDeleting}>
-                {isDeleting ? 'Deleting...' : 'Confirm Delete'}
-              </button>
-              <button
-                type="button"
-                className={styles.rejectButton}
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setDeletingSeller(null);
-                }}
-              >
-                Cancel
-              </button>
+      {
+        showDeleteModal && deleteMode === 'seller' && deletingSeller && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 1000 }}>
+            <div style={{ background: '#fff', color: '#000', padding: '1rem', borderRadius: 8, maxWidth: 560, width: '96%', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
+              <h3 style={{ marginTop: 0 }}>Delete Seller Profile</h3>
+              <p style={{ color: '#a00', fontWeight: 600 }}>Caution: This will remove the seller account and all their products from the platform. You can restore it from Deleted Sellers.</p>
+              <p style={{ color: '#a00', fontWeight: 600 }}>Are you sure you want to proceed with deleting this product seller?</p>
+              <p><strong>Seller:</strong> {deletingSeller.name}</p>
+              <label style={{ display: 'block', margin: '0.5rem 0' }}>Reason (required)</label>
+              <textarea
+                value={deleteReason}
+                onChange={(event) => setDeleteReason(event.target.value)}
+                rows={4}
+                style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 6 }}
+                placeholder="Enter reason for deletion"
+              />
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+                <button type="button" className={styles.approveButton} onClick={confirmDeleteSeller} disabled={isDeleting}>
+                  {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.rejectButton}
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeletingSeller(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
     </div>
   );
 }

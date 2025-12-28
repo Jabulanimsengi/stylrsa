@@ -455,7 +455,7 @@ export function SalonInfoHeader({
 
             {/* Rating & Reviews */}
             <div className={styles.salonRatingRow}>
-                {salon.avgRating && salon.avgRating > 0 && (
+                {salon.avgRating != null && salon.avgRating > 0 && (
                     <div className={styles.ratingDisplay}>
                         <span className={styles.ratingValue}>{salon.avgRating.toFixed(1)}</span>
                         <div className={styles.ratingStars}>

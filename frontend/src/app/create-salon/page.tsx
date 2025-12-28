@@ -7,7 +7,7 @@ import styles from './CreateSalon.module.css';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
 import PageNav from '@/components/PageNav';
-import { APP_PLANS, PLAN_BY_CODE, PlanCode } from '@/constants/plans';
+import { COMMISSION_RATES } from '@/constants/plans';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import MapboxMap from '@/components/MapboxMap';
@@ -28,9 +28,6 @@ interface SalonDraft {
   description: string;
   bookingType: 'ONSITE' | 'MOBILE' | 'BOTH';
   mobileFee: string;
-  selectedPlan: PlanCode;
-  hasSentProof: boolean;
-  paymentReference: string;
   latitude: number | null;
   longitude: number | null;
   addrQuery: string;
@@ -52,9 +49,6 @@ export default function CreateSalonPage() {
   const [description, setDescription] = useState('');
   const [bookingType, setBookingType] = useState<'ONSITE' | 'MOBILE' | 'BOTH'>('ONSITE');
   const [mobileFee, setMobileFee] = useState('');
-  const [selectedPlan, setSelectedPlan] = useState<PlanCode>('STARTER');
-  const [hasSentProof, setHasSentProof] = useState(false);
-  const [paymentReference, setPaymentReference] = useState('');
   const [locationsData, setLocationsData] = useState<Record<string, string[]>>({});
   const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -75,14 +69,6 @@ export default function CreateSalonPage() {
   const { authStatus, user } = useAuth();
   const router = useRouter();
 
-  const selectedPlanDetails = PLAN_BY_CODE[selectedPlan];
-  const BANK_DETAILS = {
-    bank: 'Capitec Bank',
-    accountNumber: '1618097723',
-    accountHolder: 'J Msengi',
-    whatsapp: '0738021196',
-  };
-
   // Save draft to localStorage
   const saveDraft = useCallback(() => {
     setIsSaving(true);
@@ -100,9 +86,6 @@ export default function CreateSalonPage() {
         description,
         bookingType,
         mobileFee,
-        selectedPlan,
-        hasSentProof,
-        paymentReference,
         latitude,
         longitude,
         addrQuery,
@@ -120,7 +103,7 @@ export default function CreateSalonPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [name, address, city, province, town, postalCode, phone, email, website, description, bookingType, mobileFee, selectedPlan, hasSentProof, paymentReference, latitude, longitude, addrQuery, fieldsLocked, hours]);
+  }, [name, address, city, province, town, postalCode, phone, email, website, description, bookingType, mobileFee, latitude, longitude, addrQuery, fieldsLocked, hours]);
 
   // Load draft from localStorage
   const loadDraft = useCallback((draft: SalonDraft) => {
@@ -139,9 +122,6 @@ export default function CreateSalonPage() {
     setDescription(draft.description || '');
     setBookingType(draft.bookingType || 'ONSITE');
     setMobileFee(draft.mobileFee || '');
-    setSelectedPlan(draft.selectedPlan || 'STARTER');
-    setHasSentProof(draft.hasSentProof || false);
-    setPaymentReference(draft.paymentReference || '');
     setLatitude(draft.latitude);
     setLongitude(draft.longitude);
     setAddrQuery(draft.addrQuery || '');
@@ -299,6 +279,7 @@ export default function CreateSalonPage() {
         offersMobile: bookingType !== 'ONSITE',
         latitude,
         longitude,
+        planCode: 'FREE', // Always FREE plan now
       };
       if (website && website.trim().length > 0 && isValidUrl(website.trim())) {
         payload.website = website.trim();
@@ -317,12 +298,6 @@ export default function CreateSalonPage() {
         }));
       payload.operatingHours = hoursArray;
       payload.operatingDays = hoursArray.map((entry) => entry.day);
-      payload.planCode = selectedPlan;
-      payload.hasSentProof = hasSentProof;
-      const effectiveReference = paymentReference.trim().length > 0 ? paymentReference.trim() : name.trim();
-      if (effectiveReference.length > 0) {
-        payload.paymentReference = effectiveReference;
-      }
 
       console.log('Sending payload:', payload);
       const response = await fetch(`/api/salons`, {
@@ -343,6 +318,9 @@ export default function CreateSalonPage() {
         error.userMessage = errorData.userMessage; // Pass through user-friendly message if available
         throw error;
       }
+
+      // Clear draft on success
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
 
       // Enhanced success message
       toast.success('🎉 Salon profile created successfully!', {
@@ -377,72 +355,26 @@ export default function CreateSalonPage() {
   return (
     <div className={styles.container}>
       <PageNav />
-      <h1 className={styles.title}>Create Your Salon</h1>
+      <h1 className={styles.title}>Create Your Salon Profile</h1>
 
       <div className={styles.card}>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.planSection}>
-            <div>
-              <h2 className={styles.sectionTitle}>Select your package</h2>
-              <p className={styles.sectionHint}>
-                Choose the plan that matches your growth goals. These packages apply to both salon owners and product sellers.
-              </p>
-            </div>
-            <div className={styles.planGrid}>
-              {APP_PLANS.map((plan) => {
-                const isSelected = plan.code === selectedPlan;
-                return (
-                  <button
-                    type="button"
-                    key={plan.code}
-                    onClick={() => setSelectedPlan(plan.code as PlanCode)}
-                    className={`${styles.planCard} ${isSelected ? styles.planCardSelected : ''}`}
-                    aria-pressed={isSelected}
-                  >
-                    <div className={styles.planCardHeader}>
-                      <span className={styles.planName}>{plan.name}</span>
-                      <span className={styles.planPrice}>{plan.price}<span className={styles.planPerMonth}>/mo</span></span>
-                    </div>
-                    <div className={styles.planDetails}>
-                      <span>Max listings: <strong>{plan.maxListings}</strong></span>
-                      <span>Visibility weight: <strong>{plan.visibilityWeight}</strong></span>
-                    </div>
-                    <ul className={styles.planFeatures}>
-                      {plan.features.map((feature) => (
-                        <li key={feature}>{feature}</li>
-                      ))}
-                    </ul>
-                  </button>
-                );
-              })}
-            </div>
-            <div className={styles.paymentNotice}>
-              <p>
-                Send the package amount of <strong>{selectedPlanDetails.price}</strong> to <strong>{BANK_DETAILS.bank}</strong>, account <strong>{BANK_DETAILS.accountNumber}</strong> (Account holder: <strong>{BANK_DETAILS.accountHolder}</strong>). Please make an instant payment to allow us to track the payment fast. Use <strong>{(paymentReference.trim() || name || 'your salon name')}</strong> as the payment reference and WhatsApp the proof to <strong>{BANK_DETAILS.whatsapp}</strong> immediately after payment.
-              </p>
-            </div>
-            <div className={styles.planControls}>
-              <div className={styles.inputGroup}>
-                <label htmlFor="paymentReference">Payment reference</label>
-                <input
-                  id="paymentReference"
-                  type="text"
-                  value={paymentReference}
-                  onChange={(e) => setPaymentReference(e.target.value)}
-                  placeholder={name || 'Salon name'}
-                  className={styles.input}
-                />
-              </div>
-              <label className={styles.proofCheckbox}>
-                <input
-                  type="checkbox"
-                  checked={hasSentProof}
-                  onChange={(e) => setHasSentProof(e.target.checked)}
-                />
-                <span>I have sent the proof of payment via WhatsApp</span>
-              </label>
-            </div>
+        {/* Commission Model Info Banner */}
+        <div className={styles.commissionBanner}>
+          <div className={styles.bannerIcon}>🎉</div>
+          <div className={styles.bannerContent}>
+            <h3>100% FREE to List!</h3>
+            <p>
+              List your salon and services completely free. We only earn when you earn —
+              a {Math.round(COMMISSION_RATES.TOTAL * 100)}% commission on completed bookings
+              ({Math.round(COMMISSION_RATES.PLATFORM * 100)}% platform + {Math.round(COMMISSION_RATES.CASHBACK * 100)}% client cashback + {Math.round(COMMISSION_RATES.PAYMENT * 100)}% payment processing).
+            </p>
+            <p className={styles.bannerHighlight}>
+              <strong>Unlike competitors charging R399-R1,500/month</strong> — you pay nothing unless you get clients!
+            </p>
           </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className={styles.form}>
           <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
             <label htmlFor="name">Salon Name</label>
             <input
@@ -797,7 +729,7 @@ export default function CreateSalonPage() {
               )}
             </div>
             <button type="submit" disabled={isSubmitting} className="btn btn-primary">
-              {isSubmitting ? 'Creating...' : 'Create Salon'}
+              {isSubmitting ? 'Creating...' : 'Create Salon — FREE'}
             </button>
           </div>
         </form>

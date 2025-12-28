@@ -1,23 +1,39 @@
-// frontend/srcs/components/PromotionModal.tsx
-
 'use client';
 
 import { useState, FormEvent } from 'react';
-import styles from './PromotionModal.module.css';
 import { toast } from 'react-toastify';
-import { Promotion } from '@/types'; // Import the Promotion type
+import { Promotion } from '@/types';
 import { apiJson } from '@/lib/api';
 import { toFriendlyMessage } from '@/lib/errors';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  Button,
+  Input,
+  Label,
+} from '@/components/ui';
 
 interface PromotionModalProps {
+  isOpen?: boolean;
   onClose: () => void;
-  onPromotionAdded: (promotion: Promotion) => void; // FIX: Changed prop name and added type
-  salonId: string; // FIX: Added salonId to props
+  onPromotionAdded: (promotion: Promotion) => void;
+  salonId: string;
   serviceId?: string;
   productId?: string;
 }
 
-export default function PromotionModal({ onClose, onPromotionAdded, salonId, serviceId, productId }: PromotionModalProps) {
+export default function PromotionModal({
+  isOpen = true,
+  onClose,
+  onPromotionAdded,
+  salonId,
+  serviceId,
+  productId
+}: PromotionModalProps) {
   const [description, setDescription] = useState('');
   const [discountPercentage, setDiscountPercentage] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -27,7 +43,7 @@ export default function PromotionModal({ onClose, onPromotionAdded, salonId, ser
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       const data = await apiJson('/api/promotions', {
         method: 'POST',
@@ -52,37 +68,83 @@ export default function PromotionModal({ onClose, onPromotionAdded, salonId, ser
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose();
+    }
+  };
+
   return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
-        <h2>Create Promotion</h2>
-        <form onSubmit={handleSubmit}>
-          <div className={styles.inputGroup}>
-            <label>Description</label>
-            <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} required />
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Create Promotion</DialogTitle>
+          <DialogDescription>
+            Set up a discount for your services or products
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Input
+              id="description"
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g., Summer Sale - 20% off all services"
+              required
+            />
           </div>
-          <div className={styles.inputGroup}>
-            <label>Discount (%)</label>
-            <input type="number" value={discountPercentage} onChange={(e) => setDiscountPercentage(e.target.value)} required min="1" max="100" />
+
+          <div className="space-y-2">
+            <Label htmlFor="discountPercentage">Discount (%)</Label>
+            <Input
+              id="discountPercentage"
+              type="number"
+              value={discountPercentage}
+              onChange={(e) => setDiscountPercentage(e.target.value)}
+              placeholder="10"
+              required
+              min={1}
+              max={100}
+            />
           </div>
-          <div className={styles.inputGroup}>
-            <label>Start Date</label>
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Start Date</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endDate">End Date</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                required
+              />
+            </div>
           </div>
-          <div className={styles.inputGroup}>
-            <label>End Date</label>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} required />
-          </div>
-          <div className={styles.buttonGroup}>
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancel
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={isLoading}>
-              {isLoading ? 'Saving...' : 'Save'}
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Saving...' : 'Create Promotion'}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

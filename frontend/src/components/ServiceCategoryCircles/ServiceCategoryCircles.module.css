@@ -35,7 +35,7 @@
 .scrollArrow {
     display: none;
     position: absolute;
-    z-index: 100;
+    z-index: 10;
     width: 44px;
     height: 44px;
     border-radius: 50%;

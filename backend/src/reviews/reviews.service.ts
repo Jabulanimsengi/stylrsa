@@ -15,7 +15,7 @@ export class ReviewsService {
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
     private eventsGateway: EventsGateway,
-  ) {}
+  ) { }
 
   async create(userId: string, dto: CreateReviewDto) {
     const booking = await this.prisma.booking.findUnique({
@@ -29,7 +29,7 @@ export class ReviewsService {
     if (booking.userId !== userId) {
       throw new ForbiddenException('You can only review your own bookings.');
     }
-    
+
     // Check if review already exists for this booking
     const existingReview = await this.prisma.review.findFirst({
       where: { bookingId: dto.bookingId },
@@ -43,6 +43,7 @@ export class ReviewsService {
       data: {
         rating: dto.rating,
         comment: dto.comment,
+        images: dto.images || [],
         author: {
           connect: { id: userId },
         },
@@ -108,6 +109,7 @@ export class ReviewsService {
       data: {
         rating: dto.rating,
         comment: dto.comment,
+        images: dto.images || [],
       },
       include: {
         author: { select: { firstName: true, lastName: true } },

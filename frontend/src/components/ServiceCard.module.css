@@ -21,6 +21,13 @@
   flex-direction: column;
 }
 
+/* Card Link Wrapper */
+.cardLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
 .card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 16px rgba(245, 25, 87, 0.1),
@@ -228,6 +235,77 @@
 
   50% {
     transform: scale(1.1);
+  }
+}
+
+/* =============================================================================
+   Wishlist Button - for ProductCard (positioned on left unlike favorite)
+   ============================================================================= */
+.wishlistButton {
+  position: absolute;
+  top: clamp(0.45rem, 1.5vw, 0.65rem);
+  right: clamp(0.55rem, 2.5vw, 0.85rem);
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+  color: #9ca3af;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 0;
+}
+
+.wishlistButton svg {
+  width: 18px;
+  height: 18px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wishlistButton:hover {
+  transform: scale(1.1);
+  background-color: #fff;
+  color: #f51957;
+}
+
+.wishlistButton.wishlisted {
+  color: #f51957;
+  background-color: #fff;
+}
+
+.wishlistButton.wishlisted svg {
+  animation: heartBeat 0.3s ease-in-out;
+}
+
+@media (max-width: 768px) {
+  .wishlistButton {
+    width: 32px;
+    height: 32px;
+    top: 0.35rem;
+    right: 0.35rem;
+  }
+
+  .wishlistButton svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .wishlistButton {
+    width: 28px;
+    height: 28px;
+  }
+
+  .wishlistButton svg {
+    width: 14px;
+    height: 14px;
   }
 }
 

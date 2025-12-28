@@ -36,6 +36,7 @@ import { useSocket } from '@/context/SocketContext';
 import { Notification, PaginatedNotifications } from '@/types';
 import { createPortal } from 'react-dom';
 import RequestTop10Button from './RequestTop10/RequestTop10Button';
+import { SalonMapButton } from './SalonMapView';
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -389,15 +390,11 @@ export default function TopNav() {
                                 Contact
                             </Link>
                         </li>
-                        <li className={styles.navItem}>
-                            <Link href="/salons?offersMobile=true" className={styles.navButton}>
-                                Mobile Salons
-                            </Link>
-                        </li>
                     </ul>
                 </div>
 
                 <div className={styles.rightSection}>
+                    <SalonMapButton variant="desktop" />
                     <RequestTop10Button variant="desktop" />
                     <ThemeToggle />
 

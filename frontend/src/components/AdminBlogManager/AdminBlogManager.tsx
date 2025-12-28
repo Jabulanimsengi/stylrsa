@@ -81,6 +81,17 @@ export default function AdminBlogManager() {
   const [viewingBlog, setViewingBlog] = useState<Blog | null>(null);
   const [formData, setFormData] = useState<BlogFormData>(INITIAL_FORM_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filterQuery, setFilterQuery] = useState('');
+
+  // Filter blogs based on search query
+  const filteredBlogs = filterQuery.trim()
+    ? blogs.filter(b =>
+      b.title.toLowerCase().includes(filterQuery.toLowerCase()) ||
+      b.description.toLowerCase().includes(filterQuery.toLowerCase()) ||
+      b.category.toLowerCase().includes(filterQuery.toLowerCase()) ||
+      `${b.author.firstName} ${b.author.lastName}`.toLowerCase().includes(filterQuery.toLowerCase())
+    )
+    : blogs;
 
   useEffect(() => {
     fetchBlogs();
@@ -281,13 +292,29 @@ export default function AdminBlogManager() {
         </button>
       </div>
 
-      {blogs.length === 0 ? (
+      {/* Filter Bar */}
+      <div className={styles.filterBar}>
+        <input
+          type="text"
+          value={filterQuery}
+          onChange={(e) => setFilterQuery(e.target.value)}
+          placeholder="Filter by title, category, author..."
+          className={styles.filterInput}
+        />
+        <span className={styles.filterCount}>
+          Showing {filteredBlogs.length} of {blogs.length}
+        </span>
+      </div>
+
+      {filteredBlogs.length === 0 ? (
         <div className={styles.emptyState}>
-          No blogs found. Create your first blog to get started.
+          {blogs.length === 0
+            ? 'No blogs found. Create your first blog to get started.'
+            : 'No blogs match your filter.'}
         </div>
       ) : (
         <div className={styles.blogsList}>
-          {blogs.map((blog) => (
+          {filteredBlogs.map((blog) => (
             <div key={blog.id} className={styles.blogCard}>
               <div className={styles.blogInfo}>
                 <div className={styles.blogHeader}>

@@ -119,19 +119,22 @@
     transform: translateX(-50%);
     width: 24px;
     height: 3px;
-    background: linear-gradient(90deg, var(--color-primary), #ff6b8a);
+    background: var(--color-primary);
     border-radius: 0 0 3px 3px;
-    animation: slideIn 0.3s ease;
+    /* Use GPU-composited animation to prevent CLS */
+    animation: slideInIndicator 0.3s ease forwards;
+    will-change: transform, opacity;
   }
 
-  @keyframes slideIn {
+  /* GPU-composited animation using transform instead of width */
+  @keyframes slideInIndicator {
     from {
-      width: 0;
+      transform: translateX(-50%) scaleX(0);
       opacity: 0;
     }
 
     to {
-      width: 24px;
+      transform: translateX(-50%) scaleX(1);
       opacity: 1;
     }
   }
@@ -190,7 +193,7 @@
     height: 64px;
     margin-bottom: 12px;
 
-    background: linear-gradient(135deg, var(--color-primary) 0%, #ff6b8a 50%, #ffa07a 100%);
+    background: var(--color-primary);
     border: none;
     border-radius: 50%;
 
@@ -248,7 +251,7 @@
     position: absolute;
     inset: -4px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-primary), #ff6b8a);
+    background: var(--color-primary);
     opacity: 0;
     z-index: -1;
     filter: blur(12px);

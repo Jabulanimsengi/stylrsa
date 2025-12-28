@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { apiFetch } from '@/lib/api';
 import { toFriendlyMessage } from '@/lib/errors';
 import { FaGoogle } from 'react-icons/fa';
+import { Alert, LoadingButton, Button } from '@/components/ui';
 
 // Define the props that this component will accept
 interface RegisterProps {
@@ -157,12 +158,21 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
           </div>
         </div>
 
-        {error && <p className={styles.errorMessage}>{error}</p>}
+        {error && (
+          <Alert variant="error" className="mb-4">
+            {error}
+          </Alert>
+        )}
 
         <div>
-          <button type="submit" disabled={isLoading} className="btn btn-primary">
-            {isLoading ? 'Creating Account...' : 'Sign Up'}
-          </button>
+          <LoadingButton
+            type="submit"
+            loading={isLoading}
+            loadingText="Creating Account..."
+            className="w-full"
+          >
+            Sign Up
+          </LoadingButton>
         </div>
       </form>
       <div className={styles.oauthSection}>
@@ -195,36 +205,15 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
               This cannot be changed after signup. Please make sure you selected the correct account type above.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
+              <Button
+                variant="outline"
                 onClick={() => setShowGoogleConfirm(false)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  background: 'white',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                }}
               >
                 Go Back
-              </button>
-              <button
-                type="button"
-                onClick={confirmGoogleSignIn}
-                style={{
-                  padding: '0.5rem 1rem',
-                  border: 'none',
-                  borderRadius: '6px',
-                  background: 'var(--color-primary)',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                }}
-              >
+              </Button>
+              <Button onClick={confirmGoogleSignIn}>
                 Confirm & Continue
-              </button>
+              </Button>
             </div>
           </div>
         </div>

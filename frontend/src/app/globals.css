@@ -476,6 +476,28 @@
     --space-section-lg: 3.5rem;
     --space-content: 1rem;
     --space-card-gap: 0.875rem;
+
+    /* shadcn/ui semantic variables (HSL values without hsl() wrapper) */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 15%;
+    --primary: 343 91% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 168 48% 46%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 10% 15%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 343 91% 53%;
+    --radius: 0.5rem;
   }
 
   [data-theme='dark'] {
@@ -539,6 +561,27 @@
     --nav-icon-bg: rgba(40, 35, 50, 0.6);
     --nav-icon-hover-bg: rgba(60, 50, 70, 0.8);
     --nav-badge-text: #FFFFFF;
+
+    /* shadcn/ui dark mode semantic variables */
+    --background: 240 10% 9%;
+    --foreground: 0 0% 95%;
+    --card: 240 10% 11%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 10% 11%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 343 91% 65%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 168 48% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 4% 18%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 4% 18%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 4% 20%;
+    --input: 240 4% 20%;
+    --ring: 343 91% 65%;
   }
 
   /* Root element sizing - prevent horizontal overflow */
@@ -1120,4 +1163,270 @@ h3 {
 /* Ensure visited links don't change color */
 a:visited {
   color: var(--color-text-strong);
+}
+
+/* ===== MICRO-INTERACTIONS & ANIMATIONS ===== */
+
+/* Button press effect */
+.btn-interactive:active,
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Card hover lift effect */
+.card-interactive {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Skeleton shimmer animation */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg,
+      var(--color-surface-subtle) 25%,
+      var(--color-surface-elevated) 50%,
+      var(--color-surface-subtle) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Fade in up animation */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out;
+}
+
+/* Scale in animation */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+/* Slide in from right */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* Slide in from bottom */
+@keyframes slide-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-bottom {
+  animation: slide-in-bottom 0.3s ease-out;
+}
+
+/* Bounce animation for notifications */
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  70% {
+    transform: scale(0.9);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.4s ease-out;
+}
+
+/* Pulse animation for attention */
+@keyframes pulse-attention {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-attention {
+  animation: pulse-attention 2s ease-in-out infinite;
+}
+
+/* Ripple effect for buttons */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.ripple:active::after {
+  width: 200%;
+  height: 200%;
+}
+
+/* Stagger animation for lists */
+.stagger-item {
+  opacity: 0;
+  animation: fade-in-up 0.3s ease-out forwards;
+}
+
+.stagger-item:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.stagger-item:nth-child(2) {
+  animation-delay: 50ms;
+}
+
+.stagger-item:nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.stagger-item:nth-child(4) {
+  animation-delay: 150ms;
+}
+
+.stagger-item:nth-child(5) {
+  animation-delay: 200ms;
+}
+
+.stagger-item:nth-child(6) {
+  animation-delay: 250ms;
+}
+
+.stagger-item:nth-child(7) {
+  animation-delay: 300ms;
+}
+
+.stagger-item:nth-child(8) {
+  animation-delay: 350ms;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Subtle scrollbar styling for dialogs and modals */
+[data-radix-dialog-content],
+[role="dialog"] {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+[data-radix-dialog-content]::-webkit-scrollbar,
+[role="dialog"]::-webkit-scrollbar {
+  width: 6px;
+}
+
+[data-radix-dialog-content]::-webkit-scrollbar-track,
+[role="dialog"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-radix-dialog-content]::-webkit-scrollbar-thumb,
+[role="dialog"]::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+[data-radix-dialog-content]:hover::-webkit-scrollbar-thumb,
+[role="dialog"]:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
 }

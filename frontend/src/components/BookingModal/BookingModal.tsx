@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo, FormEvent, useTransition } from 'react';
-import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { Salon, Service, Booking, TeamMember } from '@/types';
 import styles from './BookingModal.module.css';
@@ -25,6 +24,15 @@ import { useAuthModal } from '@/context/AuthModalContext';
 import { useSocket } from '@/context/SocketContext';
 import { apiJson } from '@/lib/api';
 import { toFriendlyMessage } from '@/lib/errors';
+import BookingPreferencesStep, { BookingPreferences } from './BookingPreferencesStep';
+import BookingPaymentStep, { PaymentDetails } from './BookingPaymentStep';
+import UpsellPopup from '../UpsellPopup/UpsellPopup';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Progress,
+} from '@/components/ui';
 
 interface BookingModalProps {
   salon: Salon;
@@ -40,15 +48,17 @@ interface TimeSlot {
   status: 'available' | 'busy' | 'unavailable';
 }
 
-type Step = 'service' | 'professional' | 'date' | 'time' | 'details' | 'confirm';
+type Step = 'service' | 'professional' | 'date' | 'time' | 'details' | 'preferences' | 'payment' | 'confirm';
 
-const STEPS: Step[] = ['service', 'professional', 'date', 'time', 'details', 'confirm'];
+const STEPS: Step[] = ['service', 'professional', 'date', 'time', 'details', 'preferences', 'payment', 'confirm'];
 const STEP_LABELS: Record<Step, string> = {
   service: 'Services',
   professional: 'Professional',
   date: 'Date',
   time: 'Time',
   details: 'Details',
+  preferences: 'Preferences',
+  payment: 'Payment',
   confirm: 'Confirm',
 };
 
@@ -75,6 +85,11 @@ export default function BookingModal({
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
+
+  // New booking flow state
+  const [bookingPreferences, setBookingPreferences] = useState<BookingPreferences | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
+  const [showUpsell, setShowUpsell] = useState(false);
 
   const { authStatus, user } = useAuth();
   const { openModal } = useAuthModal();
@@ -194,8 +209,14 @@ export default function BookingModal({
           isMobile,
           teamMemberId: useAnyProfessional ? null : selectedProfessional?.id,
           clientNotes: clientNotes.trim() || null,
+          // New booking fields
+          colorSelection: bookingPreferences?.colorSelection || null,
+          materialSelection: bookingPreferences?.materialSelection || null,
+          depositPaid: paymentDetails?.amountToPay === 0 || (paymentDetails?.amountToPay && paymentDetails.amountToPay > 0),
+          useCashback: paymentDetails?.useCashback || false,
+          cashbackUsed: paymentDetails?.cashbackUsed || 0,
         }),
-      });
+      }) as Booking;
 
       if (socket) {
         socket.emit('newBooking', {
@@ -206,6 +227,13 @@ export default function BookingModal({
       }
 
       toast.success('Booking request sent successfully!');
+
+      // Check if service is braiding-related for upsell popup
+      const serviceName = (selectedService.title || selectedService.name || '').toLowerCase();
+      const isBraidingService = ['braid', 'cornrow', 'twist', 'loc', 'extension', 'weave'].some(
+        (term) => serviceName.includes(term)
+      );
+      setShowUpsell(isBraidingService);
 
       // Generate ICS file
       try {
@@ -270,6 +298,12 @@ export default function BookingModal({
         return !!selectedSlot;
       case 'details':
         return clientPhone.length >= 10;
+      case 'preferences':
+        return true; // Preferences are optional - user can skip
+      case 'payment':
+        return !!paymentDetails; // Ensure payment step is acknowledged
+      case 'confirm':
+        return true;
       default:
         return true;
     }
@@ -359,411 +393,481 @@ export default function BookingModal({
     </div>
   );
 
-  const modalContent = (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className={styles.header}>
-          <button className={styles.backButton} onClick={goBack} aria-label="Go back">
-            <FaChevronLeft />
-          </button>
-          <div className={styles.headerContent}>
-            <h2>Book Appointment</h2>
-            <span className={styles.salonName}>{salon.name}</span>
-          </div>
-          <button className={styles.closeButton} onClick={onClose} aria-label="Close">
-            <FaTimes />
-          </button>
-        </div>
+  // Use Shadcn Dialog instead of createPortal
+  return (
+    <>
+      <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-[500px] md:max-w-[600px] max-h-[90vh] overflow-hidden p-0 gap-0">
+          {/* Visually hidden title for accessibility */}
+          <DialogTitle className="sr-only">Book Appointment at {salon.name}</DialogTitle>
 
-        {/* Breadcrumbs */}
-        {renderBreadcrumbs()}
-
-        {/* Progress indicator */}
-        <div className={styles.progress}>
-          <div className={styles.progressBar}>
-            <div
-              className={styles.progressFill}
-              style={{ width: `${((stepNumber) / totalSteps) * 100}%` }}
-            />
-          </div>
-          <span className={styles.progressText}>
-            Step {stepNumber} of {totalSteps}
-          </span>
-        </div>
-
-        {/* Content */}
-        <div className={styles.content}>
-          {/* Step 1: Select Service */}
-          {currentStep === 'service' && (
-            <div className={styles.stepContent}>
-              <h3 className={styles.stepTitle}>Select a Service</h3>
-              <div className={styles.serviceList}>
-                {services.map((svc) => (
-                  <button
-                    key={svc.id}
-                    className={`${styles.serviceCard} ${selectedService?.id === svc.id ? styles.selected : ''}`}
-                    onClick={() => setSelectedService(svc)}
-                  >
-                    <div className={styles.serviceInfo}>
-                      <span className={styles.serviceName}>{svc.title || svc.name}</span>
-                      <span className={styles.serviceDuration}>
-                        <FaClock /> {formatDuration(svc.duration, (svc as any).durationMin, (svc as any).durationMax)}
-                      </span>
-                    </div>
-                    <span className={styles.servicePrice}>R{svc.price}</span>
-                    {selectedService?.id === svc.id && (
-                      <span className={styles.checkmark}>
-                        <FaCheck />
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
+          {/* Header */}
+          <div className={styles.header}>
+            <button className={styles.backButton} onClick={goBack} aria-label="Go back">
+              <FaChevronLeft />
+            </button>
+            <div className={styles.headerContent}>
+              <h2>Book Appointment</h2>
+              <span className={styles.salonName}>{salon.name}</span>
             </div>
-          )}
+            {/* Close button handled by Dialog, but we keep for styling consistency */}
+          </div>
 
-          {/* Step 2: Select Professional */}
-          {currentStep === 'professional' && (
-            <div className={styles.stepContent}>
-              <h3 className={styles.stepTitle}>
-                <FaUsers /> Choose a Professional
-                <span className={styles.optionalBadge}>Optional</span>
-              </h3>
+          {/* Breadcrumbs */}
+          {renderBreadcrumbs()}
 
-              <div className={styles.professionalList}>
-                {/* "Any Professional" option */}
-                <button
-                  className={`${styles.anyProfessionalCard} ${useAnyProfessional ? styles.selected : ''}`}
-                  onClick={() => {
-                    setUseAnyProfessional(true);
-                    setSelectedProfessional(null);
-                  }}
-                >
-                  <div className={styles.anyProfessionalIcon}>
-                    <FaUsers />
-                  </div>
-                  <div className={styles.anyProfessionalInfo}>
-                    <h4>Any Professional</h4>
-                    <p>We'll assign the best available stylist</p>
-                  </div>
-                  {useAnyProfessional && (
-                    <span className={styles.checkmark}>
-                      <FaCheck />
-                    </span>
-                  )}
-                </button>
+          {/* Progress indicator */}
+          <div className="px-4 py-2">
+            <Progress value={(stepNumber / totalSteps) * 100} className="h-2" />
+            <span className="text-xs text-muted-foreground mt-1 block text-center">
+              Step {stepNumber} of {totalSteps}
+            </span>
+          </div>
 
-                {/* Team Members */}
-                {loadingTeam ? (
-                  <div className={styles.loadingSlots}>
-                    <div className={styles.spinner} />
-                    <span>Loading team...</span>
-                  </div>
-                ) : (
-                  teamMembers.map((member) => (
+          {/* Content */}
+          <div className={styles.content}>
+            {/* Step 1: Select Service */}
+            {currentStep === 'service' && (
+              <div className={styles.stepContent}>
+                <h3 className={styles.stepTitle}>Select a Service</h3>
+                <div className={styles.serviceList}>
+                  {services.map((svc) => (
                     <button
-                      key={member.id}
-                      className={`${styles.professionalCard} ${!useAnyProfessional && selectedProfessional?.id === member.id ? styles.selected : ''}`}
-                      onClick={() => {
-                        setUseAnyProfessional(false);
-                        setSelectedProfessional(member);
-                      }}
+                      key={svc.id}
+                      className={`${styles.serviceCard} ${selectedService?.id === svc.id ? styles.selected : ''}`}
+                      onClick={() => setSelectedService(svc)}
                     >
-                      <div className={styles.professionalAvatar}>
-                        {member.image ? (
-                          <Image
-                            src={member.image}
-                            alt={member.name}
-                            fill
-                            style={{ objectFit: 'cover' }}
-                          />
-                        ) : (
-                          <FaUser />
-                        )}
+                      <div className={styles.serviceInfo}>
+                        <span className={styles.serviceName}>{svc.title || svc.name}</span>
+                        <span className={styles.serviceDuration}>
+                          <FaClock /> {formatDuration(svc.duration, (svc as any).durationMin, (svc as any).durationMax)}
+                        </span>
                       </div>
-                      <div className={styles.professionalInfo}>
-                        <h4 className={styles.professionalName}>{member.name}</h4>
-                        <p className={styles.professionalRole}>{member.role}</p>
-                        {member.specialties && member.specialties.length > 0 && (
-                          <div className={styles.professionalSpecialties}>
-                            {member.specialties.slice(0, 3).map((s, i) => (
-                              <span key={i} className={styles.specialtyTag}>{s}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      {!useAnyProfessional && selectedProfessional?.id === member.id && (
+                      <span className={styles.servicePrice}>R{svc.price}</span>
+                      {selectedService?.id === svc.id && (
                         <span className={styles.checkmark}>
                           <FaCheck />
                         </span>
                       )}
                     </button>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Select Date */}
-          {currentStep === 'date' && (
-            <div className={styles.stepContent}>
-              <h3 className={styles.stepTitle}>
-                <FaCalendarAlt /> Pick a Date
-              </h3>
-              <div className={styles.calendar}>
-                <div className={styles.calendarHeader}>
-                  <button
-                    onClick={() =>
-                      setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1))
-                    }
-                    className={styles.navButton}
-                  >
-                    <FaChevronLeft />
-                  </button>
-                  <span className={styles.monthYear}>
-                    {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                  </span>
-                  <button
-                    onClick={() =>
-                      setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1))
-                    }
-                    className={styles.navButton}
-                  >
-                    <FaChevronRight />
-                  </button>
-                </div>
-                <div className={styles.weekDays}>
-                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                    <span key={i} className={styles.weekDay}>
-                      {day}
-                    </span>
                   ))}
                 </div>
-                <div className={styles.daysGrid}>
-                  {daysInMonth.map((date, index) => {
-                    const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          setSelectedDate(date);
-                          setSelectedSlot(null);
-                        }}
-                        disabled={isPast(date)}
-                        className={`
-                          ${styles.day}
-                          ${!isCurrentMonth ? styles.otherMonth : ''}
-                          ${isPast(date) ? styles.past : ''}
-                          ${isSelected(date) ? styles.selectedDay : ''}
-                          ${isToday(date) ? styles.today : ''}
-                        `}
-                      >
-                        {date.getDate()}
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Step 4: Select Time */}
-          {currentStep === 'time' && (
-            <div className={styles.stepContent}>
-              <h3 className={styles.stepTitle}>
-                <FaClock /> Choose a Time
-              </h3>
-              {selectedDate && (
-                <p className={styles.selectedDateLabel}>
-                  {selectedDate.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </p>
-              )}
-              {loadingSlots ? (
-                <div className={styles.loadingSlots}>
-                  <div className={styles.spinner} />
-                  <span>Loading available times...</span>
-                </div>
-              ) : availableSlots.length > 0 ? (
-                <div className={styles.timeGrid}>
-                  {availableSlots.map((slot) => (
-                    <button
-                      key={slot.time}
-                      className={`${styles.timeSlot} ${selectedSlot === slot.time ? styles.selectedSlot : ''}`}
-                      onClick={() => setSelectedSlot(slot.time)}
-                    >
-                      {formatTime(slot.time)}
-                      {selectedSlot === slot.time && <FaCheck className={styles.slotCheck} />}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className={styles.noSlots}>
-                  <p>No available times for this date.</p>
-                  <button className={styles.linkButton} onClick={() => goToStep('date')}>
-                    Choose another date
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+            {/* Step 2: Select Professional */}
+            {currentStep === 'professional' && (
+              <div className={styles.stepContent}>
+                <h3 className={styles.stepTitle}>
+                  <FaUsers /> Choose a Professional
+                  <span className={styles.optionalBadge}>Optional</span>
+                </h3>
 
-          {/* Step 5: Your Details */}
-          {currentStep === 'details' && (
-            <div className={styles.stepContent}>
-              <h3 className={styles.stepTitle}>
-                <FaUser /> Your Details
-              </h3>
-              <div className={styles.formGroup}>
-                <label htmlFor="phone">Contact Number</label>
-                <input
-                  type="tel"
-                  id="phone"
-                  value={clientPhone}
-                  onChange={(e) => setClientPhone(e.target.value)}
-                  placeholder="e.g., 082 123 4567"
-                  className={styles.input}
-                  required
-                />
-                <span className={styles.hint}>We'll send booking confirmation to this number</span>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label htmlFor="notes">Notes for your appointment (optional)</label>
-                <textarea
-                  id="notes"
-                  value={clientNotes}
-                  onChange={(e) => setClientNotes(e.target.value)}
-                  placeholder="Any specific requests or preferences..."
-                  className={styles.textarea}
-                  rows={3}
-                />
-              </div>
-
-              {salon.bookingType !== 'ONSITE' && (
-                <div className={styles.mobileOption}>
-                  <label className={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
-                      checked={isMobile}
-                      onChange={(e) => setIsMobile(e.target.checked)}
-                      disabled={salon.bookingType === 'MOBILE'}
-                    />
-                    <FaMobile />
-                    <span>Request mobile service</span>
-                    {salon.mobileFee && (
-                      <span className={styles.mobileFee}>+R{salon.mobileFee.toFixed(2)}</span>
+                <div className={styles.professionalList}>
+                  {/* "Any Professional" option */}
+                  <button
+                    className={`${styles.anyProfessionalCard} ${useAnyProfessional ? styles.selected : ''}`}
+                    onClick={() => {
+                      setUseAnyProfessional(true);
+                      setSelectedProfessional(null);
+                    }}
+                  >
+                    <div className={styles.anyProfessionalIcon}>
+                      <FaUsers />
+                    </div>
+                    <div className={styles.anyProfessionalInfo}>
+                      <h4>Any Professional</h4>
+                      <p>We'll assign the best available stylist</p>
+                    </div>
+                    {useAnyProfessional && (
+                      <span className={styles.checkmark}>
+                        <FaCheck />
+                      </span>
                     )}
-                  </label>
-                </div>
-              )}
-            </div>
-          )}
+                  </button>
 
-          {/* Step 6: Confirm */}
-          {currentStep === 'confirm' && selectedService && (
-            <div className={styles.stepContent}>
-              <h3 className={styles.stepTitle}>
-                <FaCheck /> Confirm Booking
-              </h3>
-              <div className={styles.summary}>
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>Service</span>
-                  <span className={styles.summaryValue}>{selectedService.title || selectedService.name}</span>
+                  {/* Team Members */}
+                  {loadingTeam ? (
+                    <div className={styles.loadingSlots}>
+                      <div className={styles.spinner} />
+                      <span>Loading team...</span>
+                    </div>
+                  ) : (
+                    teamMembers.map((member) => (
+                      <button
+                        key={member.id}
+                        className={`${styles.professionalCard} ${!useAnyProfessional && selectedProfessional?.id === member.id ? styles.selected : ''}`}
+                        onClick={() => {
+                          setUseAnyProfessional(false);
+                          setSelectedProfessional(member);
+                        }}
+                      >
+                        <div className={styles.professionalAvatar}>
+                          {member.image ? (
+                            <Image
+                              src={member.image}
+                              alt={member.name}
+                              fill
+                              style={{ objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <FaUser />
+                          )}
+                        </div>
+                        <div className={styles.professionalInfo}>
+                          <h4 className={styles.professionalName}>{member.name}</h4>
+                          <p className={styles.professionalRole}>{member.role}</p>
+                          {member.specialties && member.specialties.length > 0 && (
+                            <div className={styles.professionalSpecialties}>
+                              {member.specialties.slice(0, 3).map((s, i) => (
+                                <span key={i} className={styles.specialtyTag}>{s}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {!useAnyProfessional && selectedProfessional?.id === member.id && (
+                          <span className={styles.checkmark}>
+                            <FaCheck />
+                          </span>
+                        )}
+                      </button>
+                    ))
+                  )}
                 </div>
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>Professional</span>
-                  <span className={styles.summaryValue}>
-                    {useAnyProfessional ? 'Any available' : selectedProfessional?.name}
-                  </span>
+              </div>
+            )}
+
+            {/* Step 3: Select Date */}
+            {currentStep === 'date' && (
+              <div className={styles.stepContent}>
+                <h3 className={styles.stepTitle}>
+                  <FaCalendarAlt /> Pick a Date
+                </h3>
+                <div className={styles.calendar}>
+                  <div className={styles.calendarHeader}>
+                    <button
+                      onClick={() =>
+                        setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1))
+                      }
+                      className={styles.navButton}
+                    >
+                      <FaChevronLeft />
+                    </button>
+                    <span className={styles.monthYear}>
+                      {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </span>
+                    <button
+                      onClick={() =>
+                        setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1))
+                      }
+                      className={styles.navButton}
+                    >
+                      <FaChevronRight />
+                    </button>
+                  </div>
+                  <div className={styles.weekDays}>
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                      <span key={i} className={styles.weekDay}>
+                        {day}
+                      </span>
+                    ))}
+                  </div>
+                  <div className={styles.daysGrid}>
+                    {daysInMonth.map((date, index) => {
+                      const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setSelectedDate(date);
+                            setSelectedSlot(null);
+                          }}
+                          disabled={isPast(date)}
+                          className={`
+                            ${styles.day}
+                            ${!isCurrentMonth ? styles.otherMonth : ''}
+                            ${isPast(date) ? styles.past : ''}
+                            ${isSelected(date) ? styles.selectedDay : ''}
+                            ${isToday(date) ? styles.today : ''}
+                          `}
+                        >
+                          {date.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>Date</span>
-                  <span className={styles.summaryValue}>
-                    {selectedDate?.toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      month: 'short',
+              </div>
+            )}
+
+            {/* Step 4: Select Time */}
+            {currentStep === 'time' && (
+              <div className={styles.stepContent}>
+                <h3 className={styles.stepTitle}>
+                  <FaClock /> Choose a Time
+                </h3>
+                {selectedDate && (
+                  <p className={styles.selectedDateLabel}>
+                    {selectedDate.toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      month: 'long',
                       day: 'numeric',
                     })}
-                  </span>
-                </div>
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>Time</span>
-                  <span className={styles.summaryValue}>{selectedSlot && formatTime(selectedSlot)}</span>
-                </div>
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>Duration</span>
-                  <span className={styles.summaryValue}>
-                    {formatDuration(selectedService.duration, (selectedService as any).durationMin, (selectedService as any).durationMax)}
-                  </span>
-                </div>
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>Location</span>
-                  <span className={styles.summaryValue}>
-                    <FaMapMarkerAlt /> {isMobile ? 'Mobile visit' : salon.address || `${salon.city}, ${salon.province}`}
-                  </span>
-                </div>
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>Contact</span>
-                  <span className={styles.summaryValue}>{clientPhone}</span>
-                </div>
-                {clientNotes && (
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryLabel}>Notes</span>
-                    <span className={styles.summaryValue}>{clientNotes}</span>
+                  </p>
+                )}
+                {loadingSlots ? (
+                  <div className={styles.loadingSlots}>
+                    <div className={styles.spinner} />
+                    <span>Loading available times...</span>
+                  </div>
+                ) : availableSlots.length > 0 ? (
+                  <div className={styles.timeGrid}>
+                    {availableSlots.map((slot) => (
+                      <button
+                        key={slot.time}
+                        className={`${styles.timeSlot} ${selectedSlot === slot.time ? styles.selectedSlot : ''}`}
+                        onClick={() => setSelectedSlot(slot.time)}
+                      >
+                        {formatTime(slot.time)}
+                        {selectedSlot === slot.time && <FaCheck className={styles.slotCheck} />}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={styles.noSlots}>
+                    <p>No available times for this date.</p>
+                    <button className={styles.linkButton} onClick={() => goToStep('date')}>
+                      Choose another date
+                    </button>
                   </div>
                 )}
-                <div className={styles.summaryDivider} />
-                <div className={styles.summaryTotal}>
-                  <span>Total</span>
-                  <span className={styles.totalPrice}>R{totalCost.toFixed(2)}</span>
-                </div>
               </div>
+            )}
 
-              {/* Cancellation Policy */}
-              {(salon as any).cancellationPolicy && (
-                <div className={styles.cancellationPolicy}>
-                  <div className={styles.cancellationPolicyHeader}>
-                    <FaExclamationTriangle /> Cancellation Policy
-                  </div>
-                  <p className={styles.cancellationPolicyText}>
-                    {(salon as any).cancellationPolicy}
-                  </p>
+            {/* Step 5: Your Details */}
+            {currentStep === 'details' && (
+              <div className={styles.stepContent}>
+                <h3 className={styles.stepTitle}>
+                  <FaUser /> Your Details
+                </h3>
+                <div className={styles.formGroup}>
+                  <label htmlFor="phone">Contact Number</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    value={clientPhone}
+                    onChange={(e) => setClientPhone(e.target.value)}
+                    placeholder="e.g., 082 123 4567"
+                    className={styles.input}
+                    required
+                  />
+                  <span className={styles.hint}>We'll send booking confirmation to this number</span>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
 
-        {/* Footer */}
-        <div className={styles.footer}>
-          {currentStep === 'confirm' ? (
-            <button
-              className={styles.primaryButton}
-              onClick={() => handleSubmit()}
-              disabled={isLoading || isPending}
-            >
-              {isLoading ? 'Sending...' : isPending ? 'Finalising...' : 'Confirm Booking'}
-            </button>
-          ) : (
-            <button
-              className={styles.primaryButton}
-              onClick={goNext}
-              disabled={!canProceed()}
-            >
-              Continue <FaChevronRight />
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="notes">Notes for your appointment (optional)</label>
+                  <textarea
+                    id="notes"
+                    value={clientNotes}
+                    onChange={(e) => setClientNotes(e.target.value)}
+                    placeholder="Any specific requests or preferences..."
+                    className={styles.textarea}
+                    rows={3}
+                  />
+                </div>
+
+                {salon.bookingType !== 'ONSITE' && (
+                  <div className={styles.mobileOption}>
+                    <label className={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        checked={isMobile}
+                        onChange={(e) => setIsMobile(e.target.checked)}
+                        disabled={salon.bookingType === 'MOBILE'}
+                      />
+                      <FaMobile />
+                      <span>Request mobile service</span>
+                      {salon.mobileFee && (
+                        <span className={styles.mobileFee}>+R{salon.mobileFee.toFixed(2)}</span>
+                      )}
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 6: Preferences (Color/Material) */}
+            {currentStep === 'preferences' && selectedService && (
+              <BookingPreferencesStep
+                serviceName={selectedService.title || selectedService.name || 'Service'}
+                serviceCategory={(selectedService as any).category?.name || (selectedService as any).category?.slug}
+                salonId={salon.id}
+                onContinue={(preferences) => {
+                  setBookingPreferences(preferences);
+                  goNext();
+                }}
+                onBack={goBack}
+              />
+            )}
+
+            {/* Step 7: Payment */}
+            {currentStep === 'payment' && selectedService && (
+              <BookingPaymentStep
+                servicePrice={selectedService.price + (isMobile && salon.mobileFee ? salon.mobileFee : 0)}
+                serviceName={selectedService.title || selectedService.name || 'Service'}
+                salonName={salon.name}
+                onConfirm={(details) => {
+                  setPaymentDetails(details);
+                  goNext();
+                }}
+                onBack={goBack}
+                isLoading={isLoading}
+              />
+            )}
+
+            {/* Step 8: Confirm */}
+            {currentStep === 'confirm' && selectedService && (
+              <div className={styles.stepContent}>
+                <h3 className={styles.stepTitle}>
+                  <FaCheck /> Confirm Booking
+                </h3>
+                <div className={styles.summary}>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Service</span>
+                    <span className={styles.summaryValue}>{selectedService.title || selectedService.name}</span>
+                  </div>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Professional</span>
+                    <span className={styles.summaryValue}>
+                      {useAnyProfessional ? 'Any available' : selectedProfessional?.name}
+                    </span>
+                  </div>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Date</span>
+                    <span className={styles.summaryValue}>
+                      {selectedDate?.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Time</span>
+                    <span className={styles.summaryValue}>{selectedSlot && formatTime(selectedSlot)}</span>
+                  </div>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Duration</span>
+                    <span className={styles.summaryValue}>
+                      {formatDuration(selectedService.duration, (selectedService as any).durationMin, (selectedService as any).durationMax)}
+                    </span>
+                  </div>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Location</span>
+                    <span className={styles.summaryValue}>
+                      <FaMapMarkerAlt /> {isMobile ? 'Mobile visit' : salon.address || `${salon.city}, ${salon.province}`}
+                    </span>
+                  </div>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Contact</span>
+                    <span className={styles.summaryValue}>{clientPhone}</span>
+                  </div>
+                  {clientNotes && (
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Notes</span>
+                      <span className={styles.summaryValue}>{clientNotes}</span>
+                    </div>
+                  )}
+                  {bookingPreferences?.colorSelection && (
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Color Choice</span>
+                      <span className={styles.summaryValue}>{bookingPreferences.colorSelection}</span>
+                    </div>
+                  )}
+                  {bookingPreferences?.materialSelection && (
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Material</span>
+                      <span className={styles.summaryValue}>{bookingPreferences.materialSelection}</span>
+                    </div>
+                  )}
+                  <div className={styles.summaryDivider} />
+                  {paymentDetails && (
+                    <>
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryLabel}>Deposit (60%)</span>
+                        <span className={styles.summaryValue}>R{paymentDetails.depositAmount.toFixed(2)}</span>
+                      </div>
+                      {paymentDetails.useCashback && paymentDetails.cashbackUsed > 0 && (
+                        <div className={styles.summaryItem}>
+                          <span className={styles.summaryLabel}>Cashback Applied</span>
+                          <span className={styles.summaryValue} style={{ color: 'var(--success)' }}>
+                            -R{paymentDetails.cashbackUsed.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryLabel}>Due Now</span>
+                        <span className={styles.summaryValue} style={{ fontWeight: 600 }}>
+                          R{paymentDetails.amountToPay.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className={styles.summaryDivider} />
+                    </>
+                  )}
+                  <div className={styles.summaryTotal}>
+                    <span>Total</span>
+                    <span className={styles.totalPrice}>R{totalCost.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Cancellation Policy */}
+                {(salon as any).cancellationPolicy && (
+                  <div className={styles.cancellationPolicy}>
+                    <div className={styles.cancellationPolicyHeader}>
+                      <FaExclamationTriangle /> Cancellation Policy
+                    </div>
+                    <p className={styles.cancellationPolicyText}>
+                      {(salon as any).cancellationPolicy}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className={styles.footer}>
+            {currentStep === 'confirm' ? (
+              <button
+                className={styles.primaryButton}
+                onClick={() => handleSubmit()}
+                disabled={isLoading || isPending}
+              >
+                {isLoading ? 'Sending...' : isPending ? 'Finalising...' : 'Confirm Booking'}
+              </button>
+            ) : (
+              <button
+                className={styles.primaryButton}
+                onClick={goNext}
+                disabled={!canProceed()}
+              >
+                Continue <FaChevronRight />
+              </button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <UpsellPopup
+        isOpen={showUpsell}
+        onClose={() => setShowUpsell(false)}
+        serviceName={selectedService?.title || selectedService?.name || ''}
+        salonId={salon.id}
+        onProductSelect={(product) => {
+          window.open(`/marketplace?product=${product.id}`, '_blank');
+          setShowUpsell(false);
+        }}
+      />
+    </>
   );
-
-  // Use portal to render modal at document body level
-  if (typeof window === 'undefined') return null;
-  return createPortal(modalContent, document.body);
 }

@@ -41,6 +41,7 @@ import styles from './Navbar.module.css';
 import { Sheet, SheetContent, SheetHeader, SheetBody, SheetFooter, SheetTitle } from './ui';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
+import { CommandSearch } from './CommandSearch';
 
 const NOTIFICATIONS_CACHE_KEY = 'nav-notifications-cache';
 const NOTIFICATIONS_PAGE_SIZE = 10;
@@ -600,6 +601,7 @@ export default function Navbar() {
           <Image src="/logo-transparent.png" alt="Stylr SA" width={124} height={32} priority />
         </Link>
         <div className={styles.mobileActions}>
+          <CommandSearch />
           {authStatus === 'authenticated' && (
             <button
               type="button"

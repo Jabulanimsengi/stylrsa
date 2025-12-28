@@ -7,7 +7,7 @@
 }
 
 .title {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 800;
   color: var(--color-text-strong);
   margin: 0 0 0.5rem 0;
@@ -55,7 +55,7 @@
 }
 
 .provinceTitle {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--color-text-strong);
   margin: 0;
@@ -304,7 +304,7 @@
   }
 
   .title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     padding: 0 0.75rem;
   }
 
@@ -324,7 +324,7 @@
   }
 
   .provinceTitle {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .salonCount {
@@ -432,11 +432,11 @@
   }
 
   .title {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
   }
 
   .provinceTitle {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .salonCard {

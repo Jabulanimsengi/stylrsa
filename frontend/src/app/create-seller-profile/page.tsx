@@ -7,7 +7,7 @@ import styles from './CreateSellerProfile.module.css';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
 import PageNav from '@/components/PageNav';
-import { APP_PLANS, PLAN_BY_CODE, PlanCode } from '@/constants/plans';
+import { COMMISSION_RATES } from '@/constants/plans';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { ApprovalStatus } from '@/types';
@@ -36,25 +36,8 @@ interface SellerProfileDraft {
     website: string;
     whatsapp: string;
     provincesServed: string[];
-    selectedPlan: PlanCode;
-    hasSentProof: boolean;
-    paymentReference: string;
     savedAt: string;
 }
-
-const BANK_DETAILS = {
-    bank: 'Capitec Bank',
-    accountNumber: '1618097723',
-    accountHolder: 'J Msengi',
-    whatsapp: '0738021196',
-};
-
-const PLAN_PAYMENT_LABELS: Record<string, string> = {
-    PENDING_SELECTION: 'Package not selected',
-    AWAITING_PROOF: 'Awaiting proof of payment',
-    PROOF_SUBMITTED: 'Proof submitted — pending review',
-    VERIFIED: 'Payment verified',
-};
 
 const APPROVAL_LABELS: Record<ApprovalStatus, { label: string; color: string }> = {
     PENDING: { label: 'Pending Review', color: '#b45309' },
@@ -76,13 +59,7 @@ export default function CreateSellerProfilePage() {
     const [whatsapp, setWhatsapp] = useState('');
     const [provincesServed, setProvincesServed] = useState<string[]>([]);
 
-    // Plan selection fields
-    const [selectedPlan, setSelectedPlan] = useState<PlanCode>('STARTER');
-    const [hasSentProof, setHasSentProof] = useState(false);
-    const [paymentReference, setPaymentReference] = useState('');
-
     // Status from server
-    const [planPaymentStatus, setPlanPaymentStatus] = useState<string>('PENDING_SELECTION');
     const [sellerApprovalStatus, setSellerApprovalStatus] = useState<ApprovalStatus | null>(null);
     const [profileSubmittedAt, setProfileSubmittedAt] = useState<string | null>(null);
 
@@ -92,8 +69,6 @@ export default function CreateSellerProfilePage() {
     const [isSaving, setIsSaving] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-
-    const selectedPlanDetails = PLAN_BY_CODE[selectedPlan];
 
     // Load existing profile data from server
     const loadProfile = useCallback(async () => {
@@ -111,15 +86,6 @@ export default function CreateSellerProfilePage() {
             setWebsite(data.sellerWebsite ?? '');
             setWhatsapp(data.sellerWhatsapp ?? '');
             setProvincesServed(data.sellerProvincesServed ?? []);
-
-            // Plan info
-            setSelectedPlan((data.sellerPlanCode ?? 'STARTER') as PlanCode);
-            setPlanPaymentStatus(data.sellerPlanPaymentStatus ?? 'PENDING_SELECTION');
-            setPaymentReference(data.sellerPlanPaymentReference ?? '');
-            setHasSentProof(
-                data.sellerPlanPaymentStatus === 'PROOF_SUBMITTED' ||
-                data.sellerPlanPaymentStatus === 'VERIFIED'
-            );
 
             // Approval status
             setSellerApprovalStatus(data.sellerApprovalStatus ?? null);
@@ -178,9 +144,6 @@ export default function CreateSellerProfilePage() {
                 website,
                 whatsapp,
                 provincesServed,
-                selectedPlan,
-                hasSentProof,
-                paymentReference,
                 savedAt: new Date().toISOString(),
             };
             localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
@@ -210,7 +173,7 @@ export default function CreateSellerProfilePage() {
         } finally {
             setIsSaving(false);
         }
-    }, [businessName, contactPerson, contactPhone, contactEmail, physicalAddress, website, whatsapp, provincesServed, selectedPlan, hasSentProof, paymentReference]);
+    }, [businessName, contactPerson, contactPhone, contactEmail, physicalAddress, website, whatsapp, provincesServed]);
 
     // Load draft from saved data
     const loadDraft = (draft: SellerProfileDraft) => {
@@ -222,9 +185,6 @@ export default function CreateSellerProfilePage() {
         setWebsite(draft.website || '');
         setWhatsapp(draft.whatsapp || '');
         setProvincesServed(draft.provincesServed || []);
-        setSelectedPlan(draft.selectedPlan || 'STARTER');
-        setHasSentProof(draft.hasSentProof || false);
-        setPaymentReference(draft.paymentReference || '');
         if (draft.savedAt) {
             setLastSaved(new Date(draft.savedAt).toLocaleString());
         }
@@ -279,6 +239,7 @@ export default function CreateSellerProfilePage() {
                     sellerWebsite: website.trim() || null,
                     sellerWhatsapp: whatsapp.trim() || null,
                     sellerProvincesServed: provincesServed,
+                    sellerPlanCode: 'FREE', // Always FREE now
                 }),
             });
             if (!saveRes.ok) {
@@ -313,31 +274,6 @@ export default function CreateSellerProfilePage() {
         }
     };
 
-    const handlePlanSave = async () => {
-        setIsSaving(true);
-        try {
-            const res = await fetch('/api/users/me/seller-plan', {
-                method: 'PATCH',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    planCode: selectedPlan,
-                    hasSentProof,
-                    paymentReference: paymentReference.trim() || businessName.trim() || undefined,
-                }),
-            });
-            if (!res.ok) throw new Error('Failed to save plan');
-            const updated = await res.json();
-            setPlanPaymentStatus(updated.sellerPlanPaymentStatus ?? 'AWAITING_PROOF');
-            toast.success('Package selection saved');
-        } catch (error) {
-            logger.error('Error saving plan:', error);
-            toast.error(toFriendlyMessage(error, 'Could not save package selection'));
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
     if (authStatus === 'loading' || isLoading) {
         return <LoadingSpinner />;
     }
@@ -352,6 +288,21 @@ export default function CreateSellerProfilePage() {
             <p className={styles.subtitle}>
                 Set up your business profile to start listing products on Stylr SA
             </p>
+
+            {/* Commission Info Banner */}
+            <div className={styles.commissionBanner}>
+                <div className={styles.bannerIcon}>🎉</div>
+                <div className={styles.bannerContent}>
+                    <h3>100% FREE to List Products!</h3>
+                    <p>
+                        List your products completely free. We only earn when you make a sale —
+                        a {Math.round(COMMISSION_RATES.TOTAL * 100)}% commission on completed orders.
+                    </p>
+                    <p className={styles.bannerHighlight}>
+                        <strong>No monthly fees, no setup costs!</strong> You pay nothing unless you get sales.
+                    </p>
+                </div>
+            </div>
 
             {/* Approval Status Banner */}
             {sellerApprovalStatus && (
@@ -388,90 +339,6 @@ export default function CreateSellerProfilePage() {
 
             <div className={styles.card}>
                 <form onSubmit={handleSubmit} className={styles.form}>
-                    {/* Plan Selection Section */}
-                    <div className={styles.planSection}>
-                        <h2 className={styles.sectionTitle}>Select your package</h2>
-                        <p className={styles.sectionHint}>
-                            Choose the plan that matches your business needs. Pricing is the same for all sellers.
-                        </p>
-
-                        <div className={styles.planMeta}>
-                            <span className={`${styles.planStatusBadge} ${styles[`planStatus_${planPaymentStatus.toLowerCase()}`]}`}>
-                                {PLAN_PAYMENT_LABELS[planPaymentStatus]}
-                            </span>
-                        </div>
-
-                        <div className={styles.planGrid}>
-                            {APP_PLANS.map((plan) => {
-                                const isSelected = plan.code === selectedPlan;
-                                return (
-                                    <button
-                                        type="button"
-                                        key={plan.code}
-                                        onClick={() => setSelectedPlan(plan.code as PlanCode)}
-                                        className={`${styles.planCard} ${isSelected ? styles.planCardSelected : ''}`}
-                                        aria-pressed={isSelected}
-                                    >
-                                        <div className={styles.planCardHeader}>
-                                            <span className={styles.planName}>{plan.name}</span>
-                                            <span className={styles.planPrice}>
-                                                {plan.price}
-                                                <span className={styles.planPerMonth}>/mo</span>
-                                            </span>
-                                        </div>
-                                        <div className={styles.planDetails}>
-                                            <span>Max listings: <strong>{plan.maxListings}</strong></span>
-                                            <span>Visibility weight: <strong>{plan.visibilityWeight}</strong></span>
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <div className={styles.paymentNotice}>
-                            <p>
-                                Send <strong>{selectedPlanDetails.price}</strong> to{' '}
-                                <strong>{BANK_DETAILS.bank}</strong>, account{' '}
-                                <strong>{BANK_DETAILS.accountNumber}</strong> (Account holder:{' '}
-                                <strong>{BANK_DETAILS.accountHolder}</strong>). Use{' '}
-                                <strong>{paymentReference.trim() || businessName || 'your business name'}</strong>{' '}
-                                as the payment reference and WhatsApp the proof to{' '}
-                                <strong>{BANK_DETAILS.whatsapp}</strong>.
-                            </p>
-                        </div>
-
-                        <div className={styles.paymentFields}>
-                            <div className={styles.inputGroup}>
-                                <label htmlFor="paymentReference">Payment reference</label>
-                                <input
-                                    id="paymentReference"
-                                    type="text"
-                                    value={paymentReference}
-                                    onChange={(e) => setPaymentReference(e.target.value)}
-                                    placeholder={businessName || 'Your business name'}
-                                    className={styles.input}
-                                />
-                            </div>
-                            <label className={styles.checkbox}>
-                                <input
-                                    type="checkbox"
-                                    checked={hasSentProof}
-                                    onChange={(e) => setHasSentProof(e.target.checked)}
-                                    disabled={planPaymentStatus === 'VERIFIED'}
-                                />
-                                <span>I have sent the proof of payment via WhatsApp</span>
-                            </label>
-                            <button
-                                type="button"
-                                className="btn btn-secondary"
-                                onClick={handlePlanSave}
-                                disabled={isSaving}
-                            >
-                                {isSaving ? 'Saving...' : 'Save Package Selection'}
-                            </button>
-                        </div>
-                    </div>
-
                     {/* Business Details Section */}
                     <h2 className={styles.sectionTitle}>Business Details</h2>
                     <p className={styles.sectionHint}>
@@ -633,7 +500,7 @@ export default function CreateSellerProfilePage() {
                             disabled={isSubmitting}
                             className="btn btn-primary"
                         >
-                            {isSubmitting ? 'Submitting...' : isApproved ? 'Update Profile' : 'Submit for Review'}
+                            {isSubmitting ? 'Submitting...' : isApproved ? 'Update Profile' : 'Submit for Review — FREE'}
                         </button>
                     </div>
                 </form>

@@ -9,6 +9,7 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { EventsGateway } from '../events/events.gateway';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { MailService } from 'src/mail/mail.service';
+import { CashbackService, COMMISSION_RATES, DEPOSIT_RATE } from 'src/cashback/cashback.service';
 
 type ServiceWithSalon = any;
 type BookingWithServiceAndSalon = any;
@@ -31,6 +32,7 @@ export class BookingsService {
     private eventsGateway: EventsGateway,
     private notificationsService: NotificationsService,
     private mailService: MailService,
+    private cashbackService: CashbackService,
   ) { }
 
   /**
@@ -210,6 +212,23 @@ export class BookingsService {
       throw new BadRequestException('The requested time slot is not available');
     }
 
+    // Calculate financial breakdown
+    const totalCost = service.price;
+    const depositAmount = totalCost * DEPOSIT_RATE;
+    const commissionAmount = totalCost * COMMISSION_RATES.TOTAL;
+    const salonPayout = totalCost - commissionAmount;
+
+    // Handle cashback if requested
+    let cashbackUsed = 0;
+    if (dto.useCashback && dto.cashbackUsed && dto.cashbackUsed > 0) {
+      // Verify user has sufficient cashback balance
+      const { balance } = await this.cashbackService.getBalance(user.id);
+      if (balance < dto.cashbackUsed) {
+        throw new BadRequestException('Insufficient cashback balance');
+      }
+      cashbackUsed = dto.cashbackUsed;
+    }
+
     const booking = await this.prisma.booking.create({
       data: {
         userId: user.id,
@@ -221,7 +240,18 @@ export class BookingsService {
         teamMemberId: dto.teamMemberId || null,
         clientNotes: dto.clientNotes || null,
         status: 'PENDING',
-        totalCost: service.price,
+        totalCost,
+        // New financial fields
+        depositAmount,
+        depositPaid: dto.depositPaid ?? false,
+        commissionAmount,
+        salonPayout,
+        // Cashback fields
+        useCashback: dto.useCashback ?? false,
+        cashbackUsed,
+        // Customization fields
+        colorSelection: dto.colorSelection || null,
+        materialSelection: dto.materialSelection || null,
       },
       include: {
         service: true,
@@ -229,6 +259,16 @@ export class BookingsService {
         teamMember: true,
       },
     });
+
+    // Deduct cashback if used
+    if (cashbackUsed > 0) {
+      await this.cashbackService.spendCashback(
+        user.id,
+        cashbackUsed,
+        booking.id,
+        `Used on booking at ${service.salon.name}`,
+      );
+    }
 
     const notification = await this.notificationsService.create(
       service.salon.ownerId,
@@ -402,6 +442,16 @@ export class BookingsService {
         booking.service.salon.name,
         booking.service.title,
       );
+    } else if (status === 'COMPLETED') {
+      // Award cashback for completed bookings over R100
+      if (booking.totalCost >= 100) {
+        await this.cashbackService.awardCashback(
+          booking.userId,
+          booking.totalCost,
+          booking.id,
+          `Cashback from ${booking.service.salon.name}`,
+        );
+      }
     }
 
     return updatedBooking;

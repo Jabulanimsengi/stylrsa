@@ -13,4 +13,4 @@ CREATE INDEX IF NOT EXISTS "Service_categoryId_approvalStatus_idx" ON "Service"(
 -- Product indexes for listings and filtering
 CREATE INDEX IF NOT EXISTS "Product_approvalStatus_idx" ON "Product"("approvalStatus");
 CREATE INDEX IF NOT EXISTS "Product_sellerId_approvalStatus_idx" ON "Product"("sellerId", "approvalStatus");
-CREATE INDEX IF NOT EXISTS "Product_category_idx" ON "Product"("category");
+

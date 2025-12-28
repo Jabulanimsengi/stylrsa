@@ -27,7 +27,12 @@ import EmailVerificationBannerWrapper from '@/components/EmailVerificationBanner
 // Client-only components with ssr: false must be in a Client Component (Next.js 15 requirement)
 import ClientComponents from '@/components/ClientComponents';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap', // Prevents FOUT layout shift
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+});
 
 export const viewport = {
   width: 'device-width',

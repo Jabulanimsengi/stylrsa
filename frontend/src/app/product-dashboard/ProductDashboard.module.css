@@ -304,6 +304,11 @@
   margin-top: 0.75rem;
 }
 
+/* Stats Section */
+.statsSection {
+  margin-bottom: 2rem;
+}
+
 .ordersSection {
   display: flex;
   flex-direction: column;

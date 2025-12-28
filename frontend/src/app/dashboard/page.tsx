@@ -42,6 +42,14 @@ import AvailabilityManager from '@/components/AvailabilityManager/AvailabilityMa
 import JobPostingForm from '@/components/JobPostingForm/JobPostingForm';
 import TeamMembers from '@/components/TeamMembers/TeamMembers';
 import { getSalonUrl } from '@/utils/salonUrl';
+import {
+  Card,
+  Button,
+  Alert,
+  LoadingButton,
+  Badge,
+} from '@/components/ui';
+import StatusBadge from '@/components/StatusBadge';
 
 type DashboardBooking = Booking & {
   user: { firstName: string; lastName: string };
@@ -145,7 +153,7 @@ function DashboardPageContent() {
   const confirmedBookings = bookings.filter(b => b.status === 'CONFIRMED');
   const pastBookings = bookings.filter(b => ['COMPLETED', 'DECLINED', 'CANCELLED'].includes(b.status));
 
-  const planCode = (salon?.planCode as PlanCode | null) ?? 'STARTER';
+  const planCode = (salon?.planCode as PlanCode | null) ?? 'FREE';
   const planDetails = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
   const planStatus = (salon?.planPaymentStatus as PlanPaymentStatus | null) ?? 'PENDING_SELECTION';
   const planReference = salon?.planPaymentReference ?? salon?.name ?? 'your salon name';
@@ -551,29 +559,38 @@ function DashboardPageContent() {
 
         {/* Header Actions */}
         <div className={styles.headerActions}>
-          <button onClick={toggleAvailability} className="btn btn-ghost">
+          <Button variant="ghost" onClick={toggleAvailability}>
             {salon.isAvailableNow ? 'Set Unavailable' : 'Set Available'}
-          </button>
-          <Link href={getSalonUrl(salon)} className="btn btn-ghost" target="_blank">View Profile</Link>
-          <button onClick={() => setIsEditSalonModalOpen(true)} className="btn btn-secondary">Edit Profile</button>
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link href={getSalonUrl(salon)} target="_blank">View Profile</Link>
+          </Button>
+          <Button variant="secondary" onClick={() => setIsEditSalonModalOpen(true)}>
+            <FaEdit className="mr-1 h-4 w-4" /> Edit Profile
+          </Button>
         </div>
 
         {/* Payment Notice */}
         {planStatus !== 'VERIFIED' && (
-          <div className={styles.paymentNotice}>
-            <p>
+          <Alert variant="warning" title="Payment Required" className="mb-4">
+            <p className="mb-3">
               Pay <strong>{planDetails.price}</strong> to <strong>{BANK_DETAILS.bank}</strong>, account <strong>{BANK_DETAILS.accountNumber}</strong>.
               Please make an instant payment to allow us to track the payment fast. Use <strong>{planReference}</strong> as reference. WhatsApp proof to <strong>{BANK_DETAILS.whatsapp}</strong>.
             </p>
-            <div className={styles.paymentActions}>
-              <button type="button" onClick={handleCopyReference} className={styles.copyButton}>Copy Reference</button>
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={handleCopyReference}>Copy Reference</Button>
               {planStatus !== 'PROOF_SUBMITTED' && (
-                <button type="button" onClick={() => handlePlanProofUpdate(true)} disabled={isPlanUpdating} className="btn btn-secondary">
-                  {isPlanUpdating ? 'Saving...' : 'I sent proof'}
-                </button>
+                <LoadingButton
+                  size="sm"
+                  loading={isPlanUpdating}
+                  loadingText="Saving..."
+                  onClick={() => handlePlanProofUpdate(true)}
+                >
+                  I sent proof
+                </LoadingButton>
               )}
             </div>
-          </div>
+          </Alert>
         )}
 
         {/* Main Layout with Sidebar */}

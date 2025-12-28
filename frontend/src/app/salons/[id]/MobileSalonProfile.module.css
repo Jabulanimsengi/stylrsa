@@ -21,58 +21,79 @@
     width: 100%;
     height: 300px;
     background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
-    overflow: hidden;
+    overflow: hidden !important;
 }
 
-.carouselTrack {
-    display: flex;
+/* Carousel Wrapper - Override Shadcn/Embla defaults */
+.carouselWrapper {
+    width: 100%;
     height: 100%;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden !important;
+}
+
+/* Override Embla viewport */
+.carouselWrapper>div {
+    overflow: hidden !important;
+    height: 100%;
+}
+
+.carouselContent {
+    height: 300px;
+    margin-left: 0 !important;
+    display: flex;
+    touch-action: pan-x;
 }
 
 .carouselSlide {
-    flex: 0 0 100%;
     position: relative;
-    cursor: pointer;
+    padding-left: 0 !important;
+    height: 300px;
+    min-width: 100%;
+    flex: 0 0 100%;
 }
 
-.heroImage {
-    object-fit: cover;
-    transition: transform 0.3s ease;
+.slideImageWrapper {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    overflow: hidden;
 }
 
+/* Carousel Segmented Line Indicators */
 .carouselIndicators {
     position: absolute;
     bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 16px;
+    right: 16px;
     display: flex;
-    gap: 4px;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
     z-index: 10;
-    background: rgba(0, 0, 0, 0.25);
-    padding: 4px 6px;
-    border-radius: 12px;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    pointer-events: none;
 }
 
-.indicator {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(255, 255, 255, 0.5);
-    cursor: pointer;
-    transition: all 0.25s ease;
+.indicatorSegment {
+    flex: 1;
+    max-width: 40px;
+    height: 2px;
     padding: 0;
-    min-width: 4px;
-    min-height: 4px;
+    margin: 0;
+    border: none;
+    border-radius: 1px;
+    background: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    pointer-events: auto;
+    transition: all 0.3s ease;
 }
 
-.indicator.active {
-    background: #fff;
-    width: 14px;
-    border-radius: 2px;
+.indicatorSegment.active {
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+.indicatorSegment:hover {
+    background: rgba(255, 255, 255, 0.7);
 }
 
 .photoCountBadge {

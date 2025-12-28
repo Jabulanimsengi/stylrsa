@@ -17,6 +17,9 @@ import {
   SelectContent,
   SelectItem,
   SelectValue,
+  Dialog,
+  DialogContent,
+  DialogTitle,
 } from '@/components/ui';
 import MapboxMap from '@/components/MapboxMap';
 import { forwardGeocode, GeocodingResult } from '@/lib/mapbox';
@@ -544,449 +547,451 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
   };
 
   return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
-        <h2 className={styles.title}>Edit Salon Profile</h2>
-        <button onClick={onClose} className={styles.closeButton}><FaTimes /></button>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[700px] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0 gap-0">
+        <DialogTitle className="sr-only">Edit Salon Profile</DialogTitle>
+        <div className={styles.modalContent} style={{ position: 'relative', backgroundColor: 'transparent', boxShadow: 'none' }}>
+          <h2 className={styles.title}>Edit Salon Profile</h2>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.formScrollableContent}>
-            {error && <p className={styles.errorMessage}>{error}</p>}
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <div className={styles.formScrollableContent}>
+              {error && <p className={styles.errorMessage}>{error}</p>}
 
-            <div className={styles.fullWidth}>
-              <label htmlFor="name" className={styles.label}>Salon Name</label>
-              <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className={styles.input} />
-            </div>
-            <div className={styles.fullWidth}>
-              <label htmlFor="description" className={styles.label}>Description</label>
-              <textarea id="description" name="description" value={formData.description} onChange={handleChange} className={styles.textarea} />
-            </div>
-            <div className={styles.grid}>
-              <div>
-                <label htmlFor="address" className={styles.label}>Street Address</label>
-                <input type="text" id="address" name="address" value={formData.address} onChange={handleChange} className={styles.input} />
+              <div className={styles.fullWidth}>
+                <label htmlFor="name" className={styles.label}>Salon Name</label>
+                <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className={styles.input} />
               </div>
-              <div>
-                <label className={styles.label}>Province</label>
-                <Select
-                  value={formData.province || '__none__'}
-                  onValueChange={(value) => {
-                    const newProvince = value === '__none__' ? '' : value;
-                    setFormData(prev => ({ ...prev, province: newProvince, city: '', town: '' }));
-                  }}
-                  disabled={fieldsLocked}
-                >
-                  <SelectTrigger className={styles.input} style={{ opacity: fieldsLocked ? 0.7 : 1 }}>
-                    <SelectValue placeholder="Select a province" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Select a province</SelectItem>
-                    {Object.keys(locationsData).sort().map(p => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className={styles.fullWidth}>
+                <label htmlFor="description" className={styles.label}>Description</label>
+                <textarea id="description" name="description" value={formData.description} onChange={handleChange} className={styles.textarea} />
               </div>
-              <div>
-                <label className={styles.label}>City/Town</label>
-                {fieldsLocked ? (
-                  <input
-                    type="text"
-                    value={formData.city}
-                    readOnly
-                    disabled
-                    className={styles.input}
-                    style={{ opacity: 0.7 }}
-                  />
-                ) : (
+              <div className={styles.grid}>
+                <div>
+                  <label htmlFor="address" className={styles.label}>Street Address</label>
+                  <input type="text" id="address" name="address" value={formData.address} onChange={handleChange} className={styles.input} />
+                </div>
+                <div>
+                  <label className={styles.label}>Province</label>
                   <Select
-                    value={formData.city || '__none__'}
+                    value={formData.province || '__none__'}
                     onValueChange={(value) => {
-                      const selectedCity = value === '__none__' ? '' : value;
-                      setFormData(prev => ({ ...prev, city: selectedCity, town: selectedCity }));
+                      const newProvince = value === '__none__' ? '' : value;
+                      setFormData(prev => ({ ...prev, province: newProvince, city: '', town: '' }));
                     }}
-                    disabled={!formData.province}
+                    disabled={fieldsLocked}
                   >
-                    <SelectTrigger className={styles.input}>
-                      <SelectValue
-                        placeholder={!formData.province ? 'Select a province first' : 'Select a city/town'}
-                      />
+                    <SelectTrigger className={styles.input} style={{ opacity: fieldsLocked ? 0.7 : 1 }}>
+                      <SelectValue placeholder="Select a province" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none__">
-                        {!formData.province ? 'Select a province first' : 'Select a city/town'}
-                      </SelectItem>
-                      {availableCities.map(c => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      <SelectItem value="__none__">Select a province</SelectItem>
+                      {Object.keys(locationsData).sort().map(p => (
+                        <SelectItem key={p} value={p}>{p}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <label className={styles.label}>City/Town</label>
+                  {fieldsLocked ? (
+                    <input
+                      type="text"
+                      value={formData.city}
+                      readOnly
+                      disabled
+                      className={styles.input}
+                      style={{ opacity: 0.7 }}
+                    />
+                  ) : (
+                    <Select
+                      value={formData.city || '__none__'}
+                      onValueChange={(value) => {
+                        const selectedCity = value === '__none__' ? '' : value;
+                        setFormData(prev => ({ ...prev, city: selectedCity, town: selectedCity }));
+                      }}
+                      disabled={!formData.province}
+                    >
+                      <SelectTrigger className={styles.input}>
+                        <SelectValue
+                          placeholder={!formData.province ? 'Select a province first' : 'Select a city/town'}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">
+                          {!formData.province ? 'Select a province first' : 'Select a city/town'}
+                        </SelectItem>
+                        {availableCities.map(c => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+                {fieldsLocked && (
+                  <div className={styles.fullWidth} style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                      📍 Location fields auto-populated from map
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setFieldsLocked(false)}
+                      style={{
+                        padding: '4px 12px',
+                        fontSize: '0.875rem',
+                        backgroundColor: 'var(--color-primary)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Edit Location
+                    </button>
+                  </div>
                 )}
               </div>
-              {fieldsLocked && (
-                <div className={styles.fullWidth} style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                    📍 Location fields auto-populated from map
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setFieldsLocked(false)}
-                    style={{
-                      padding: '4px 12px',
-                      fontSize: '0.875rem',
-                      backgroundColor: 'var(--color-primary)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Edit Location
-                  </button>
-                </div>
-              )}
-            </div>
-            <h3 className={styles.subheading}>Location</h3>
-            <div className={styles.grid}>
-              <div className={styles.fullWidth}>
-                <label htmlFor="addrQuery" className={styles.label}>Find on Map</label>
-                <input
-                  id="addrQuery"
-                  type="text"
-                  value={addrQuery}
-                  onChange={async (e) => {
-                    const v = e.target.value;
-                    setAddrQuery(v);
-                    if (v.trim().length > 2) {
-                      try {
-                        const results = await forwardGeocode(v, { country: 'za', limit: 5 });
-                        setAddrSuggestions(results);
-                        setShowAddrSuggestions(true);
-                      } catch {
+              <h3 className={styles.subheading}>Location</h3>
+              <div className={styles.grid}>
+                <div className={styles.fullWidth}>
+                  <label htmlFor="addrQuery" className={styles.label}>Find on Map</label>
+                  <input
+                    id="addrQuery"
+                    type="text"
+                    value={addrQuery}
+                    onChange={async (e) => {
+                      const v = e.target.value;
+                      setAddrQuery(v);
+                      if (v.trim().length > 2) {
+                        try {
+                          const results = await forwardGeocode(v, { country: 'za', limit: 5 });
+                          setAddrSuggestions(results);
+                          setShowAddrSuggestions(true);
+                        } catch {
+                          setAddrSuggestions([]);
+                          setShowAddrSuggestions(false);
+                        }
+                      } else {
                         setAddrSuggestions([]);
                         setShowAddrSuggestions(false);
                       }
-                    } else {
-                      setAddrSuggestions([]);
-                      setShowAddrSuggestions(false);
-                    }
-                  }}
-                  placeholder="Type an address, suburb, or landmark"
-                  className={styles.input}
-                />
-                {showAddrSuggestions && addrSuggestions.length > 0 && (
-                  <ul
-                    ref={suggestionsRef}
-                    style={{ position: 'absolute', zIndex: 10, background: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)', borderRadius: 6, marginTop: 4, width: 'min(520px, 95vw)', listStyle: 'none', padding: 0, maxHeight: '300px', overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-                    {addrSuggestions.map((s: GeocodingResult) => (
-                      <li key={s.place_id} style={{ padding: '8px 10px', cursor: 'pointer' }}
-                        onClick={() => {
-                          setFormData((prev: any) => ({ ...prev, address: s.display_name, latitude: s.lat, longitude: s.lon }));
-                          setAddrQuery(s.display_name);
-                          setShowAddrSuggestions(false);
+                    }}
+                    placeholder="Type an address, suburb, or landmark"
+                    className={styles.input}
+                  />
+                  {showAddrSuggestions && addrSuggestions.length > 0 && (
+                    <ul
+                      ref={suggestionsRef}
+                      style={{ position: 'absolute', zIndex: 10, background: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)', borderRadius: 6, marginTop: 4, width: 'min(520px, 95vw)', listStyle: 'none', padding: 0, maxHeight: '300px', overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+                      {addrSuggestions.map((s: GeocodingResult) => (
+                        <li key={s.place_id} style={{ padding: '8px 10px', cursor: 'pointer' }}
+                          onClick={() => {
+                            setFormData((prev: any) => ({ ...prev, address: s.display_name, latitude: s.lat, longitude: s.lon }));
+                            setAddrQuery(s.display_name);
+                            setShowAddrSuggestions(false);
 
-                          // Extract and auto-populate location fields from address details
-                          if (s.address) {
-                            const addr = s.address;
-                            const SA_PROVINCES = Object.keys(locationsData);
+                            // Extract and auto-populate location fields from address details
+                            if (s.address) {
+                              const addr = s.address;
+                              const SA_PROVINCES = Object.keys(locationsData);
 
-                            // Extract province/state
-                            const provinceValue = addr.state || '';
-                            if (provinceValue) {
-                              // Try to match with SA provinces
-                              const matchedProvince = SA_PROVINCES.find(p =>
-                                provinceValue.toLowerCase().includes(p.toLowerCase()) ||
-                                p.toLowerCase().includes(provinceValue.toLowerCase())
-                              );
-                              if (matchedProvince) {
-                                setFormData((prev: any) => ({ ...prev, province: matchedProvince }));
+                              // Extract province/state
+                              const provinceValue = addr.state || '';
+                              if (provinceValue) {
+                                // Try to match with SA provinces
+                                const matchedProvince = SA_PROVINCES.find(p =>
+                                  provinceValue.toLowerCase().includes(p.toLowerCase()) ||
+                                  p.toLowerCase().includes(provinceValue.toLowerCase())
+                                );
+                                if (matchedProvince) {
+                                  setFormData((prev: any) => ({ ...prev, province: matchedProvince }));
+                                }
                               }
-                            }
 
-                            // Extract city
-                            const cityValue = addr.city || addr.town || '';
-                            // Extract town/suburb - fallback to city if not available
-                            const townValue = addr.suburb || cityValue || '';
-                            if (cityValue || townValue) {
-                              setFormData((prev: any) => ({
-                                ...prev,
-                                city: cityValue || townValue,
-                                town: townValue || cityValue
-                              }));
-                            }
+                              // Extract city
+                              const cityValue = addr.city || addr.town || '';
+                              // Extract town/suburb - fallback to city if not available
+                              const townValue = addr.suburb || cityValue || '';
+                              if (cityValue || townValue) {
+                                setFormData((prev: any) => ({
+                                  ...prev,
+                                  city: cityValue || townValue,
+                                  town: townValue || cityValue
+                                }));
+                              }
 
-                            // Lock the fields after auto-population
-                            setFieldsLocked(true);
-                            toast.success('Location set successfully! 📍 Fields auto-populated.');
-                          }
-                        }}>
-                        {s.display_name}
-                      </li>
-                    ))}
-                  </ul>
+                              // Lock the fields after auto-population
+                              setFieldsLocked(true);
+                              toast.success('Location set successfully! 📍 Fields auto-populated.');
+                            }
+                          }}>
+                          {s.display_name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div>
+                  <label className={styles.label}>Latitude</label>
+                  <input type="number" step="any" value={(formData as any).latitude} onChange={(e) => setFormData((p: any) => ({ ...p, latitude: e.target.value }))} className={styles.input} />
+                </div>
+                <div>
+                  <label className={styles.label}>Longitude</label>
+                  <input type="number" step="any" value={(formData as any).longitude} onChange={(e) => setFormData((p: any) => ({ ...p, longitude: e.target.value }))} className={styles.input} />
+                </div>
+                {(formData as any).latitude && (formData as any).longitude && (
+                  <div className={styles.fullWidth}>
+                    <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
+                      <MapboxMap
+                        latitude={Number((formData as any).latitude)}
+                        longitude={Number((formData as any).longitude)}
+                        height={220}
+                        zoom={15}
+                        style="streets"
+                        markerColor="#F51957"
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
-              <div>
-                <label className={styles.label}>Latitude</label>
-                <input type="number" step="any" value={(formData as any).latitude} onChange={(e) => setFormData((p: any) => ({ ...p, latitude: e.target.value }))} className={styles.input} />
+              <h3 className={styles.subheading}>Contact Information</h3>
+              <div className={styles.grid}>
+                <div>
+                  <label htmlFor="phoneNumber" className={styles.label}>Phone Number</label>
+                  <input type="tel" id="phoneNumber" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} className={styles.input} />
+                </div>
+                <div>
+                  <label htmlFor="contactEmail" className={styles.label}>Contact Email</label>
+                  <input type="email" id="contactEmail" name="contactEmail" value={formData.contactEmail} onChange={handleChange} className={styles.input} />
+                </div>
+                <div>
+                  <label htmlFor="website" className={styles.label}>Website</label>
+                  <input type="text" id="website" name="website" value={formData.website} onChange={handleChange} placeholder="https://example.com" className={styles.input} />
+                </div>
+                <div>
+                  <label htmlFor="whatsapp" className={styles.label}>WhatsApp Number</label>
+                  <input type="tel" id="whatsapp" name="whatsapp" value={formData.whatsapp} onChange={handleChange} className={styles.input} />
+                </div>
               </div>
-              <div>
-                <label className={styles.label}>Longitude</label>
-                <input type="number" step="any" value={(formData as any).longitude} onChange={(e) => setFormData((p: any) => ({ ...p, longitude: e.target.value }))} className={styles.input} />
-              </div>
-              {(formData as any).latitude && (formData as any).longitude && (
-                <div className={styles.fullWidth}>
-                  <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
-                    <MapboxMap
-                      latitude={Number((formData as any).latitude)}
-                      longitude={Number((formData as any).longitude)}
-                      height={220}
-                      zoom={15}
-                      style="streets"
-                      markerColor="#F51957"
-                    />
-                  </div>
+
+              <h3 className={styles.subheading}>Images</h3>
+              {isProcessingFile && (
+                <div style={{ padding: '12px', background: 'var(--color-surface-elevated)', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '16px', height: '16px', border: '2px solid var(--color-primary)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
+                  <span>Processing file...</span>
                 </div>
               )}
-            </div>
-            <h3 className={styles.subheading}>Contact Information</h3>
-            <div className={styles.grid}>
-              <div>
-                <label htmlFor="phoneNumber" className={styles.label}>Phone Number</label>
-                <input type="tel" id="phoneNumber" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} className={styles.input} />
-              </div>
-              <div>
-                <label htmlFor="contactEmail" className={styles.label}>Contact Email</label>
-                <input type="email" id="contactEmail" name="contactEmail" value={formData.contactEmail} onChange={handleChange} className={styles.input} />
-              </div>
-              <div>
-                <label htmlFor="website" className={styles.label}>Website</label>
-                <input type="text" id="website" name="website" value={formData.website} onChange={handleChange} placeholder="https://example.com" className={styles.input} />
-              </div>
-              <div>
-                <label htmlFor="whatsapp" className={styles.label}>WhatsApp Number</label>
-                <input type="tel" id="whatsapp" name="whatsapp" value={formData.whatsapp} onChange={handleChange} className={styles.input} />
-              </div>
-            </div>
 
-            <h3 className={styles.subheading}>Images</h3>
-            {isProcessingFile && (
-              <div style={{ padding: '12px', background: 'var(--color-surface-elevated)', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '16px', height: '16px', border: '2px solid var(--color-primary)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
-                <span>Processing file...</span>
-              </div>
-            )}
-
-            {/* Upload Progress Indicators */}
-            {Object.keys(uploadProgress).length > 0 && (
-              <div style={{ padding: '12px', background: 'var(--color-surface-elevated)', borderRadius: '8px', marginBottom: '16px' }}>
-                {uploadProgress.background !== undefined && uploadProgress.background < 100 && (
-                  <div style={{ marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Background Image</span>
-                      <span style={{ fontSize: '0.875rem', color: 'var(--color-primary)' }}>{uploadProgress.background}%</span>
-                    </div>
-                    <div style={{ width: '100%', height: '6px', background: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: `${uploadProgress.background}%`, height: '100%', background: 'var(--color-primary)', transition: 'width 0.3s ease' }}></div>
-                    </div>
-                  </div>
-                )}
-
-                {uploadProgress.logo !== undefined && uploadProgress.logo < 100 && (
-                  <div style={{ marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Logo</span>
-                      <span style={{ fontSize: '0.875rem', color: 'var(--color-primary)' }}>{uploadProgress.logo}%</span>
-                    </div>
-                    <div style={{ width: '100%', height: '6px', background: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: `${uploadProgress.logo}%`, height: '100%', background: 'var(--color-primary)', transition: 'width 0.3s ease' }}></div>
-                    </div>
-                  </div>
-                )}
-
-                {Object.keys(uploadProgress).filter(k => k.startsWith('hero_')).map(key => {
-                  const progress = uploadProgress[key];
-                  if (progress >= 100) return null;
-                  const index = key.replace('hero_', '');
-                  return (
-                    <div key={key} style={{ marginBottom: '8px' }}>
+              {/* Upload Progress Indicators */}
+              {Object.keys(uploadProgress).length > 0 && (
+                <div style={{ padding: '12px', background: 'var(--color-surface-elevated)', borderRadius: '8px', marginBottom: '16px' }}>
+                  {uploadProgress.background !== undefined && uploadProgress.background < 100 && (
+                    <div style={{ marginBottom: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Hero Image {parseInt(index) + 1}</span>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--color-primary)' }}>{progress}%</span>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Background Image</span>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-primary)' }}>{uploadProgress.background}%</span>
                       </div>
                       <div style={{ width: '100%', height: '6px', background: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden' }}>
-                        <div style={{ width: `${progress}%`, height: '100%', background: 'var(--color-primary)', transition: 'width 0.3s ease' }}></div>
+                        <div style={{ width: `${uploadProgress.background}%`, height: '100%', background: 'var(--color-primary)', transition: 'width 0.3s ease' }}></div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-            <div className={styles.grid}>
-              <div className={styles.imageUploadSection}>
-                <label className={styles.label}>
-                  Background Image
-                  <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Recommended: 1200x600px or larger. Minimum: 600x300px (wide format)
-                  </span>
-                </label>
-                <input
-                  type="file"
-                  name="backgroundImage"
-                  className={styles.fileInput}
-                  onChange={handleFileChange}
-                  accept="image/*"
-                  disabled={isProcessingFile || isUploading}
-                />
-                <div className={styles.imagePreviewContainer}>
-                  {backgroundImagePreview && (
-                    <div className={styles.imageWrapper}>
-                      <Image
-                        src={backgroundImagePreview}
-                        alt="Background Preview"
-                        className={styles.imagePreview}
-                        width={200}
-                        height={160}
-                      />
-                      <button type="button" className={styles.deleteButton} onClick={() => handleDeleteImage(backgroundImagePreview, 'background')} disabled={isProcessingFile || isUploading}>×</button>
+                  )}
+
+                  {uploadProgress.logo !== undefined && uploadProgress.logo < 100 && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Logo</span>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-primary)' }}>{uploadProgress.logo}%</span>
+                      </div>
+                      <div style={{ width: '100%', height: '6px', background: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ width: `${uploadProgress.logo}%`, height: '100%', background: 'var(--color-primary)', transition: 'width 0.3s ease' }}></div>
+                      </div>
                     </div>
                   )}
-                </div>
-              </div>
-              <div className={styles.imageUploadSection}>
-                <label className={styles.label}>
-                  Salon Logo
-                  <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Recommended: 512x512px or larger. Minimum: 150x150px (square format)
-                  </span>
-                </label>
-                <input
-                  type="file"
-                  name="logo"
-                  className={styles.fileInput}
-                  onChange={handleFileChange}
-                  accept="image/*"
-                  disabled={isProcessingFile || isUploading}
-                />
-                <div className={styles.imagePreviewContainer}>
-                  {logoPreview && (
-                    <div className={styles.imageWrapper}>
-                      <Image
-                        src={logoPreview}
-                        alt="Logo Preview"
-                        className={styles.imagePreview}
-                        width={200}
-                        height={160}
-                      />
-                      <button type="button" className={styles.deleteButton} onClick={() => handleDeleteImage(logoPreview, 'logo')} disabled={isProcessingFile || isUploading}>×</button>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className={styles.imageUploadSection}>
-                <label className={styles.label}>
-                  Hero Images
-                  <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Recommended: 1200x800px or larger. Minimum: 450x300px per image
-                  </span>
-                </label>
-                <input
-                  type="file"
-                  name="heroImages"
-                  multiple
-                  className={styles.fileInput}
-                  onChange={handleFileChange}
-                  accept="image/*"
-                  disabled={isProcessingFile || isUploading}
-                />
-                <div className={styles.imagePreviewContainer}>
-                  {heroImagesPreview.map((src, index) => (
-                    <div key={src} className={styles.imageWrapper}>
-                      <Image
-                        src={src}
-                        alt={`Hero Preview ${index + 1}`}
-                        className={styles.imagePreview}
-                        width={200}
-                        height={160}
-                      />
-                      <button type="button" className={styles.deleteButton} onClick={() => handleDeleteImage(src, 'hero')} disabled={isProcessingFile || isUploading}>×</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <h3 className={styles.subheading}>Service Type</h3>
-            <div className={styles.grid}>
-              <div>
-                <label className={styles.label}>Service Type</label>
-                <Select
-                  value={formData.bookingType}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, bookingType: value }))}
-                >
-                  <SelectTrigger className={styles.input}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ONSITE">On site</SelectItem>
-                    <SelectItem value="MOBILE">Off site (mobile)</SelectItem>
-                    <SelectItem value="BOTH">Both on site and off site</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {(formData.bookingType === 'MOBILE' || formData.bookingType === 'BOTH') && (
-                <div>
-                  <label htmlFor="mobileFee" className={styles.label}>Mobile Fee (R)</label>
-                  <input type="number" id="mobileFee" name="mobileFee" min={0} step="0.01" value={formData.mobileFee} onChange={handleChange} className={styles.input} />
+
+                  {Object.keys(uploadProgress).filter(k => k.startsWith('hero_')).map(key => {
+                    const progress = uploadProgress[key];
+                    if (progress >= 100) return null;
+                    const index = key.replace('hero_', '');
+                    return (
+                      <div key={key} style={{ marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Hero Image {parseInt(index) + 1}</span>
+                          <span style={{ fontSize: '0.875rem', color: 'var(--color-primary)' }}>{progress}%</span>
+                        </div>
+                        <div style={{ width: '100%', height: '6px', background: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ width: `${progress}%`, height: '100%', background: 'var(--color-primary)', transition: 'width 0.3s ease' }}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-            </div>
-
-            <h3 className={styles.subheading}>Operating Hours</h3>
-            <div className={styles.grid}>
-              <div className={styles.fullWidth}>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ minWidth: 120, fontWeight: 600 }}>Apply to all</span>
-                  <input type="time" value={hours['Monday'].open} onChange={(e) => {
-                    const v = e.target.value; setHours(prev => { const next = { ...prev }; days.forEach(d => next[d] = { ...next[d], open: v }); return next; });
-                  }} className={styles.input} style={{ maxWidth: 160 }} />
-                  <span>to</span>
-                  <input type="time" value={hours['Monday'].close} onChange={(e) => {
-                    const v = e.target.value; setHours(prev => { const next = { ...prev }; days.forEach(d => next[d] = { ...next[d], close: v }); return next; });
-                  }} className={styles.input} style={{ maxWidth: 160 }} />
-                  <input type="checkbox" checked={Object.values(hours).every(h => h.isOpen)} onChange={(e) => {
-                    const isOpen = e.target.checked;
-                    setHours(prev => {
-                      const next = { ...prev };
-                      days.forEach(d => next[d] = { ...next[d], isOpen });
-                      return next;
-                    });
-                  }} />
+              <div className={styles.grid}>
+                <div className={styles.imageUploadSection}>
+                  <label className={styles.label}>
+                    Background Image
+                    <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)', marginTop: '4px' }}>
+                      Recommended: 1200x600px or larger. Minimum: 600x300px (wide format)
+                    </span>
+                  </label>
+                  <input
+                    type="file"
+                    name="backgroundImage"
+                    className={styles.fileInput}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    disabled={isProcessingFile || isUploading}
+                  />
+                  <div className={styles.imagePreviewContainer}>
+                    {backgroundImagePreview && (
+                      <div className={styles.imageWrapper}>
+                        <Image
+                          src={backgroundImagePreview}
+                          alt="Background Preview"
+                          className={styles.imagePreview}
+                          width={200}
+                          height={160}
+                        />
+                        <button type="button" className={styles.deleteButton} onClick={() => handleDeleteImage(backgroundImagePreview, 'background')} disabled={isProcessingFile || isUploading}>×</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div style={{ display: 'grid', gap: 8 }}>
-                  {days.map((d) => (
-                    <div key={d} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <input type="checkbox" checked={hours[d].isOpen} onChange={(e) => setHours(prev => ({ ...prev, [d]: { ...prev[d], isOpen: e.target.checked } }))} />
-                      <span style={{ minWidth: 120 }}>{d}</span>
-                      <input type="time" value={hours[d].open} disabled={!hours[d].isOpen} onChange={(e) => setHours(prev => ({ ...prev, [d]: { ...prev[d], open: e.target.value } }))} className={styles.input} style={{ maxWidth: 160 }} />
-                      <span>to</span>
-                      <input type="time" value={hours[d].close} disabled={!hours[d].isOpen} onChange={(e) => setHours(prev => ({ ...prev, [d]: { ...prev[d], close: e.target.value } }))} className={styles.input} style={{ maxWidth: 160 }} />
-                    </div>
-                  ))}
+                <div className={styles.imageUploadSection}>
+                  <label className={styles.label}>
+                    Salon Logo
+                    <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)', marginTop: '4px' }}>
+                      Recommended: 512x512px or larger. Minimum: 150x150px (square format)
+                    </span>
+                  </label>
+                  <input
+                    type="file"
+                    name="logo"
+                    className={styles.fileInput}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    disabled={isProcessingFile || isUploading}
+                  />
+                  <div className={styles.imagePreviewContainer}>
+                    {logoPreview && (
+                      <div className={styles.imageWrapper}>
+                        <Image
+                          src={logoPreview}
+                          alt="Logo Preview"
+                          className={styles.imagePreview}
+                          width={200}
+                          height={160}
+                        />
+                        <button type="button" className={styles.deleteButton} onClick={() => handleDeleteImage(logoPreview, 'logo')} disabled={isProcessingFile || isUploading}>×</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className={styles.imageUploadSection}>
+                  <label className={styles.label}>
+                    Hero Images
+                    <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)', marginTop: '4px' }}>
+                      Recommended: 1200x800px or larger. Minimum: 450x300px per image
+                    </span>
+                  </label>
+                  <input
+                    type="file"
+                    name="heroImages"
+                    multiple
+                    className={styles.fileInput}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    disabled={isProcessingFile || isUploading}
+                  />
+                  <div className={styles.imagePreviewContainer}>
+                    {heroImagesPreview.map((src, index) => (
+                      <div key={src} className={styles.imageWrapper}>
+                        <Image
+                          src={src}
+                          alt={`Hero Preview ${index + 1}`}
+                          className={styles.imagePreview}
+                          width={200}
+                          height={160}
+                        />
+                        <button type="button" className={styles.deleteButton} onClick={() => handleDeleteImage(src, 'hero')} disabled={isProcessingFile || isUploading}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <h3 className={styles.subheading}>Service Type</h3>
+              <div className={styles.grid}>
+                <div>
+                  <label className={styles.label}>Service Type</label>
+                  <Select
+                    value={formData.bookingType}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, bookingType: value }))}
+                  >
+                    <SelectTrigger className={styles.input}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ONSITE">On site</SelectItem>
+                      <SelectItem value="MOBILE">Off site (mobile)</SelectItem>
+                      <SelectItem value="BOTH">Both on site and off site</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {(formData.bookingType === 'MOBILE' || formData.bookingType === 'BOTH') && (
+                  <div>
+                    <label htmlFor="mobileFee" className={styles.label}>Mobile Fee (R)</label>
+                    <input type="number" id="mobileFee" name="mobileFee" min={0} step="0.01" value={formData.mobileFee} onChange={handleChange} className={styles.input} />
+                  </div>
+                )}
+              </div>
+
+              <h3 className={styles.subheading}>Operating Hours</h3>
+              <div className={styles.grid}>
+                <div className={styles.fullWidth}>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: 8 }}>
+                    <span style={{ minWidth: 120, fontWeight: 600 }}>Apply to all</span>
+                    <input type="time" value={hours['Monday'].open} onChange={(e) => {
+                      const v = e.target.value; setHours(prev => { const next = { ...prev }; days.forEach(d => next[d] = { ...next[d], open: v }); return next; });
+                    }} className={styles.input} style={{ maxWidth: 160 }} />
+                    <span>to</span>
+                    <input type="time" value={hours['Monday'].close} onChange={(e) => {
+                      const v = e.target.value; setHours(prev => { const next = { ...prev }; days.forEach(d => next[d] = { ...next[d], close: v }); return next; });
+                    }} className={styles.input} style={{ maxWidth: 160 }} />
+                    <input type="checkbox" checked={Object.values(hours).every(h => h.isOpen)} onChange={(e) => {
+                      const isOpen = e.target.checked;
+                      setHours(prev => {
+                        const next = { ...prev };
+                        days.forEach(d => next[d] = { ...next[d], isOpen });
+                        return next;
+                      });
+                    }} />
+                  </div>
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {days.map((d) => (
+                      <div key={d} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input type="checkbox" checked={hours[d].isOpen} onChange={(e) => setHours(prev => ({ ...prev, [d]: { ...prev[d], isOpen: e.target.checked } }))} />
+                        <span style={{ minWidth: 120 }}>{d}</span>
+                        <input type="time" value={hours[d].open} disabled={!hours[d].isOpen} onChange={(e) => setHours(prev => ({ ...prev, [d]: { ...prev[d], open: e.target.value } }))} className={styles.input} style={{ maxWidth: 160 }} />
+                        <span>to</span>
+                        <input type="time" value={hours[d].close} disabled={!hours[d].isOpen} onChange={(e) => setHours(prev => ({ ...prev, [d]: { ...prev[d], close: e.target.value } }))} className={styles.input} style={{ maxWidth: 160 }} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className={styles.buttonContainer}>
-            <button type="button" onClick={onClose} className={styles.cancelButton}>
-              Cancel
-            </button>
-            <button type="submit" className={styles.saveButton} disabled={isUploading}>
-              {isUploading ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            <div className={styles.buttonContainer}>
+              <button type="button" onClick={onClose} className={styles.cancelButton}>
+                Cancel
+              </button>
+              <button type="submit" className={styles.saveButton} disabled={isUploading}>
+                {isUploading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

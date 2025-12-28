@@ -3,12 +3,14 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import styles from './PromotionCard.module.css';
 import { transformCloudinary } from '@/utils/cloudinary';
 import { SkeletonCard } from './Skeleton/Skeleton';
 import BookingConfirmationModal from './BookingConfirmationModal/BookingConfirmationModal';
 import { toast } from 'react-toastify';
 import { getSalonUrl } from '@/utils/salonUrl';
+import { Card, CardContent, Badge, Button } from '@/components/ui';
+import { cn } from '@/lib/utils';
+import { FaClock } from 'react-icons/fa';
 
 const DEFAULT_PLACEHOLDER_IMAGE =
   'data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid slice"%3E%3Cdefs%3E%3ClinearGradient id="g" x1="0" x2="1" y1="0" y2="1"%3E%3Cstop offset="0%25" stop-color="%23f3f4f6"/%3E%3Cstop offset="100%25" stop-color="%23d1d5db"/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="600" height="400" fill="url(%23g)"/%3E%3Cg fill="%239ca3af" font-family="Arial, sans-serif" font-size="28" font-weight="600" text-anchor="middle"%3E%3Ctext x="50%25" y="52%25"%3ENo Image%3C/text%3E%3C/g%3E%3C/svg%3E';
@@ -61,9 +63,9 @@ function calculateTimeRemaining(endDate: string): string {
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
   if (days > 0) {
-    return `${days} day${days > 1 ? 's' : ''} left`;
+    return `${days}d left`;
   } else if (hours > 0) {
-    return `${hours} hour${hours > 1 ? 's' : ''} left`;
+    return `${hours}h left`;
   } else {
     return 'Ending soon';
   }
@@ -74,10 +76,10 @@ export default function PromotionCard({ promotion, onImageClick, onBookNow }: Pr
   const [isLoadingBooking, setIsLoadingBooking] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [salonData, setSalonData] = useState<any>(null);
-  
+
   const isService = Boolean(promotion.service);
   const item = isService ? promotion.service : promotion.product;
-  
+
   if (!item) return null;
 
   const title = isService ? item.title : (item as any).name;
@@ -97,11 +99,11 @@ export default function PromotionCard({ promotion, onImageClick, onBookNow }: Pr
 
   const optimizedSrc = primaryImage
     ? transformCloudinary(primaryImage, {
-        width: 600,
-        quality: 'auto',
-        format: 'auto',
-        crop: 'fill',
-      })
+      width: 600,
+      quality: 'auto',
+      format: 'auto',
+      crop: 'fill',
+    })
     : DEFAULT_PLACEHOLDER_IMAGE;
 
   const isCloudinarySource = typeof primaryImage === 'string' && primaryImage.includes('/image/upload/');
@@ -119,32 +121,26 @@ export default function PromotionCard({ promotion, onImageClick, onBookNow }: Pr
   const handleBookNow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!salonId || linkHref === '#') return;
-    
+
     setIsLoadingBooking(true);
     try {
-      // Fetch salon data to check for booking message
       const response = await fetch(`/api/salons/${salonId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch salon details');
-      }
-      
+      if (!response.ok) throw new Error('Failed to fetch salon details');
+
       const salon = await response.json();
-      
+
       if (salon.bookingMessage) {
-        // Show confirmation modal - keep loading state while modal is open
         setSalonData(salon);
         setShowConfirmation(true);
       } else {
-        // Navigate directly
         router.push(linkHref);
       }
     } catch (error) {
       console.error('Error fetching salon:', error);
       toast.error('Failed to load salon details');
       setIsLoadingBooking(false);
-      // Navigate anyway
       router.push(linkHref);
     }
   };
@@ -152,13 +148,11 @@ export default function PromotionCard({ promotion, onImageClick, onBookNow }: Pr
   const handleConfirmationAccept = useCallback(() => {
     setShowConfirmation(false);
     setIsLoadingBooking(false);
-    
-    // If onBookNow callback is provided, use it instead of navigating
+
     if (onBookNow && salonData && promotion.service) {
       onBookNow(salonData, promotion.service);
       setSalonData(null);
     } else if (linkHref && linkHref !== '#') {
-      // Fallback to navigation if no callback provided
       setSalonData(null);
       router.push(linkHref);
     }
@@ -170,75 +164,79 @@ export default function PromotionCard({ promotion, onImageClick, onBookNow }: Pr
     setIsLoadingBooking(false);
   }, []);
 
-
-
   return (
-    <div className={styles.card}>
-      <div 
-        className={styles.cardImageWrapper}
-        onClick={handleImageClick}
-        style={{ cursor: images.length > 0 ? 'pointer' : 'default' }}
-      >
-        <Image
-          src={optimizedSrc}
-          alt={title}
-          className={styles.cardImage}
-          fill
-          sizes="(max-width: 768px) 100vw, 50vw"
-          unoptimized={!isCloudinarySource}
-        />
-        {images.length > 1 && (
-          <div className={styles.imageCounter}>
-            1/{images.length}
+    <>
+      <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group">
+        {/* Image */}
+        <div
+          className="relative aspect-[4/3] overflow-hidden cursor-pointer"
+          onClick={handleImageClick}
+        >
+          <Image
+            src={optimizedSrc}
+            alt={title}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, 50vw"
+            unoptimized={!isCloudinarySource}
+          />
+
+          {/* Image counter */}
+          {images.length > 1 && (
+            <span className="absolute bottom-2 right-2 px-2 py-0.5 text-xs bg-black/60 text-white rounded">
+              1/{images.length}
+            </span>
+          )}
+
+          {/* Discount badge */}
+          <Badge className="absolute top-3 left-3 bg-red-500 hover:bg-red-600 text-white">
+            {promotion.discountPercentage}% OFF
+          </Badge>
+        </div>
+
+        {/* Content */}
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-foreground line-clamp-1 mb-1">{title}</h3>
+
+          {isService && salonName && (
+            <p className="text-sm text-muted-foreground">{salonName}</p>
+          )}
+          {!isService && sellerName && (
+            <p className="text-sm text-muted-foreground">Sold by {sellerName}</p>
+          )}
+          {location && (
+            <p className="text-xs text-muted-foreground mb-2">{location}</p>
+          )}
+
+          {/* Price */}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm text-muted-foreground line-through">
+              R{promotion.originalPrice.toFixed(2)}
+            </span>
+            <span className="font-bold text-primary">
+              R{promotion.promotionalPrice.toFixed(2)}
+            </span>
           </div>
-        )}
-        <div className={styles.discountBadge}>
-          {promotion.discountPercentage}% OFF
-        </div>
-      </div>
-      <div className={styles.cardContent}>
-        <h3 className={styles.cardTitle}>{title}</h3>
-        {isService && salonName && (
-          <p className={styles.providerName}>{salonName}</p>
-        )}
-        {!isService && sellerName && (
-          <p className={styles.providerName}>Sold by {sellerName}</p>
-        )}
-        {location && <p className={styles.location}>{location}</p>}
-        
-        <div className={styles.priceContainer}>
-          <span className={styles.originalPrice}>R{promotion.originalPrice.toFixed(2)}</span>
-          <span className={styles.promotionalPrice}>R{promotion.promotionalPrice.toFixed(2)}</span>
-        </div>
-        
-        <div className={styles.timeRemaining}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-          {timeRemaining}
-        </div>
-        
-        {isService && salonId && (
-          <button 
-            onClick={handleBookNow}
-            className={styles.bookButton}
-            disabled={isLoadingBooking}
-          >
-            {isLoadingBooking ? 'Loading...' : 'Book Now'}
-          </button>
-        )}
-      </div>
+
+          {/* Time remaining */}
+          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
+            <FaClock className="w-3 h-3" />
+            {timeRemaining}
+          </div>
+
+          {/* Book button */}
+          {isService && salonId && (
+            <Button
+              onClick={handleBookNow}
+              className="w-full"
+              size="sm"
+              disabled={isLoadingBooking}
+            >
+              {isLoadingBooking ? 'Loading...' : 'Book Now'}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
 
       <BookingConfirmationModal
         isOpen={showConfirmation}
@@ -248,7 +246,7 @@ export default function PromotionCard({ promotion, onImageClick, onBookNow }: Pr
         salonLogo={salonData?.backgroundImage}
         message={salonData?.bookingMessage || ''}
       />
-    </div>
+    </>
   );
 }
 

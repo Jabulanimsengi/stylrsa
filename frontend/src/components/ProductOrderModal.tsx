@@ -1,11 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import styles from './ProductOrderModal.module.css';
 import { Product } from '@/types';
 import { apiJson } from '@/lib/api';
 import { toast } from 'react-toastify';
 import { toFriendlyMessage } from '@/lib/errors';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  Button,
+  Input,
+  Textarea,
+  Label,
+} from '@/components/ui';
 
 interface ProductOrderModalProps {
   product: Product;
@@ -20,8 +31,6 @@ export default function ProductOrderModal({ product, isOpen, onClose, onSuccess 
   const [contactPhone, setContactPhone] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  if (!isOpen) return null;
 
   const total = quantity * product.price;
 
@@ -58,19 +67,27 @@ export default function ProductOrderModal({ product, isOpen, onClose, onSuccess 
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose();
+    }
+  };
+
   return (
-    <div className={styles.backdrop} role="dialog" aria-modal="true">
-      <div className={styles.modal}>
-        <header className={styles.header}>
-          <h2>Order {product.name}</h2>
-          <button className={styles.closeButton} onClick={onClose} aria-label="Close order modal">
-            ×
-          </button>
-        </header>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.fieldGroup}>
-            <label htmlFor="quantity">Quantity</label>
-            <input
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Order {product.name}</DialogTitle>
+          <DialogDescription>
+            Complete your order details below
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Quantity */}
+          <div className="space-y-2">
+            <Label htmlFor="quantity">Quantity</Label>
+            <Input
               id="quantity"
               type="number"
               min={1}
@@ -80,12 +97,14 @@ export default function ProductOrderModal({ product, isOpen, onClose, onSuccess 
               required
             />
             {product.stock !== undefined && (
-              <span className={styles.helper}>In stock: {product.stock}</span>
+              <p className="text-sm text-muted-foreground">In stock: {product.stock}</p>
             )}
           </div>
-          <div className={styles.fieldGroup}>
-            <label htmlFor="deliveryMethod">Delivery preference</label>
-            <input
+
+          {/* Delivery Method */}
+          <div className="space-y-2">
+            <Label htmlFor="deliveryMethod">Delivery preference</Label>
+            <Input
               id="deliveryMethod"
               type="text"
               placeholder="Courier, pickup, etc."
@@ -93,9 +112,11 @@ export default function ProductOrderModal({ product, isOpen, onClose, onSuccess 
               onChange={(e) => setDeliveryMethod(e.target.value)}
             />
           </div>
-          <div className={styles.fieldGroup}>
-            <label htmlFor="contactPhone">Contact phone</label>
-            <input
+
+          {/* Contact Phone */}
+          <div className="space-y-2">
+            <Label htmlFor="contactPhone">Contact phone</Label>
+            <Input
               id="contactPhone"
               type="tel"
               placeholder="Provide a phone number"
@@ -103,9 +124,11 @@ export default function ProductOrderModal({ product, isOpen, onClose, onSuccess 
               onChange={(e) => setContactPhone(e.target.value)}
             />
           </div>
-          <div className={styles.fieldGroup}>
-            <label htmlFor="notes">Notes for the seller</label>
-            <textarea
+
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes for the seller</Label>
+            <Textarea
               id="notes"
               rows={3}
               placeholder="Add any special requests or delivery details"
@@ -113,15 +136,23 @@ export default function ProductOrderModal({ product, isOpen, onClose, onSuccess 
               onChange={(e) => setNotes(e.target.value)}
             />
           </div>
-          <div className={styles.summary}>
-            <span>Total</span>
-            <strong>R{total.toFixed(2)}</strong>
+
+          {/* Total Summary */}
+          <div className="flex items-center justify-between py-3 border-t border-b">
+            <span className="font-medium">Total</span>
+            <strong className="text-lg">R{total.toFixed(2)}</strong>
           </div>
-          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Placing order…' : 'Confirm Order'}
-          </button>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Placing order…' : 'Confirm Order'}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -10,7 +10,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
 import { useNavigationLoading } from '@/context/NavigationLoadingContext';
 import { toast } from 'react-toastify';
-import styles from './TrendCard.module.css';
+import { Card, CardContent, Badge } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 interface TrendCardProps {
   trend: Trend;
@@ -75,7 +76,6 @@ export default function TrendCard({ trend, onLike }: TrendCardProps) {
   const categoryLabel = trend.category.replace(/_/g, ' ');
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Only handle navigation if it's not the like button being clicked
     if ((e.target as HTMLElement).closest('button')) {
       return;
     }
@@ -84,8 +84,12 @@ export default function TrendCard({ trend, onLike }: TrendCardProps) {
   };
 
   return (
-    <div className={styles.card} onClick={handleCardClick} style={{ cursor: 'pointer' }}>
-      <div className={styles.imageWrapper}>
+    <Card
+      className="overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group"
+      onClick={handleCardClick}
+    >
+      {/* Image Wrapper */}
+      <div className="relative aspect-[4/3] overflow-hidden">
         <Image
           src={transformCloudinary(primaryImage, {
             width: 600,
@@ -95,39 +99,45 @@ export default function TrendCard({ trend, onLike }: TrendCardProps) {
           })}
           alt={trend.title}
           fill
-          className={styles.image}
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, 33vw"
         />
-        
+
         {/* Category badge - top left */}
-        <div className={styles.categoryBadge}>{categoryLabel}</div>
-        
+        <Badge className="absolute top-3 left-3 capitalize">
+          {categoryLabel}
+        </Badge>
+
         {/* Like button - top right */}
         <button
           onClick={handleLike}
-          className={`${styles.likeButton} ${isLiked ? styles.liked : ''}`}
+          className={cn(
+            'absolute top-3 right-3 p-2 rounded-full transition-all duration-200',
+            'bg-white/90 hover:bg-white shadow-sm',
+            isLiked && 'text-red-500'
+          )}
           aria-label={isLiked ? 'Unlike' : 'Like'}
           disabled={isLiking}
         >
-          <FaHeart />
+          <FaHeart className="w-4 h-4" />
         </button>
       </div>
-      
-      {/* Card content - below image */}
-      <div className={styles.cardContent}>
-        <h3 className={styles.cardTitle}>{trend.title}</h3>
+
+      {/* Card content */}
+      <CardContent className="p-4">
+        <h3 className="font-semibold text-foreground line-clamp-1 mb-1">{trend.title}</h3>
         {trend.styleName && (
-          <p className={styles.cardStyleName}>{trend.styleName}</p>
+          <p className="text-sm text-muted-foreground line-clamp-1 mb-2">{trend.styleName}</p>
         )}
-        <div className={styles.cardStats}>
-          <span className={styles.cardStat}>
-            <FaEye /> {trend.viewCount.toLocaleString()}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <FaEye className="w-3 h-3" /> {trend.viewCount.toLocaleString()}
           </span>
-          <span className={styles.cardStat}>
-            <FaHeart /> {likeCount.toLocaleString()}
+          <span className="flex items-center gap-1">
+            <FaHeart className="w-3 h-3" /> {likeCount.toLocaleString()}
           </span>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

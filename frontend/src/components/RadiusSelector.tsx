@@ -1,9 +1,9 @@
-// Radius selector component for geolocation-based filtering
+// Radius selector component using Shadcn Slider
 'use client';
 
-import { useState } from 'react';
 import { FaMapMarkerAlt } from 'react-icons/fa';
-import styles from './RadiusSelector.module.css';
+import { Slider, Label } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 interface RadiusSelectorProps {
   value: number;
@@ -12,95 +12,66 @@ interface RadiusSelectorProps {
   hasLocation?: boolean;
 }
 
-const RADIUS_OPTIONS = [
-  { value: 5, label: '5 km' },
-  { value: 10, label: '10 km' },
-  { value: 25, label: '25 km' },
-  { value: 50, label: '50 km' },
-  { value: 100, label: '100 km' },
-  { value: 0, label: 'Any distance' }
-];
+const RADIUS_STEPS = [5, 10, 25, 50, 100];
+const MAX_RADIUS = 100;
 
-export default function RadiusSelector({ 
-  value, 
-  onChange, 
-  disabled = false, 
-  hasLocation = false 
+export default function RadiusSelector({
+  value,
+  onChange,
+  disabled = false,
+  hasLocation = false
 }: RadiusSelectorProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const selectedOption = RADIUS_OPTIONS.find(option => option.value === value) || RADIUS_OPTIONS[1];
-
-  const handleSelect = (radius: number) => {
-    onChange(radius);
-    setIsOpen(false);
-  };
-
   if (!hasLocation) {
     return null; // Only show when user has location
   }
 
-  return (
-    <div className={styles.radiusSelector}>
-      <label className={styles.label}>
-        <FaMapMarkerAlt className={styles.icon} />
-        Search Radius
-      </label>
-      
-      <div className={styles.dropdown}>
-        <button
-          type="button"
-          className={`${styles.trigger} ${disabled ? styles.disabled : ''}`}
-          onClick={() => !disabled && setIsOpen(!isOpen)}
-          disabled={disabled}
-        >
-          <span>{selectedOption.label}</span>
-          <svg 
-            className={`${styles.chevron} ${isOpen ? styles.open : ''}`}
-            width="12" 
-            height="12" 
-            viewBox="0 0 12 12" 
-            fill="none"
-          >
-            <path 
-              d="M3 4.5L6 7.5L9 4.5" 
-              stroke="currentColor" 
-              strokeWidth="1.5" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+  // Find the closest step for display
+  const getLabel = (v: number) => {
+    if (v === 0 || v >= MAX_RADIUS) return 'Any distance';
+    return `${v} km`;
+  };
 
-        {isOpen && (
-          <div className={styles.menu}>
-            {RADIUS_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={`${styles.option} ${value === option.value ? styles.selected : ''}`}
-                onClick={() => handleSelect(option.value)}
-              >
-                {option.label}
-                {value === option.value && (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path 
-                      d="M13.5 4.5L6 12L2.5 8.5" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
+  const handleSliderChange = (values: number[]) => {
+    const newValue = values[0];
+    // Snap to nearest step for better UX
+    const closest = RADIUS_STEPS.reduce((prev, curr) =>
+      Math.abs(curr - newValue) < Math.abs(prev - newValue) ? curr : prev
+    );
+    onChange(newValue >= MAX_RADIUS ? 0 : closest);
+  };
+
+  // Convert 0 (any distance) to max for slider display
+  const sliderValue = value === 0 ? MAX_RADIUS : value;
+
+  return (
+    <div className="space-y-3 p-3 bg-muted/50 rounded-lg">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <FaMapMarkerAlt className="w-3.5 h-3.5 text-primary" />
+        <Label>Search Radius</Label>
+        <span className="ml-auto text-primary font-semibold">
+          {getLabel(value)}
+        </span>
       </div>
 
-      {value > 0 && (
-        <p className={styles.description}>
+      <Slider
+        value={[sliderValue]}
+        onValueChange={handleSliderChange}
+        min={5}
+        max={MAX_RADIUS}
+        step={5}
+        disabled={disabled}
+        className={cn(disabled && 'opacity-50')}
+      />
+
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>5 km</span>
+        <span>25 km</span>
+        <span>50 km</span>
+        <span>Any</span>
+      </div>
+
+      {value > 0 && value < MAX_RADIUS && (
+        <p className="text-xs text-muted-foreground text-center">
           Showing salons within {value} km of your location
         </p>
       )}

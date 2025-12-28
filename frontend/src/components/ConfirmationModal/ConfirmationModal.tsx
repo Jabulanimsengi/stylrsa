@@ -1,5 +1,6 @@
 // frontend/src/components/ConfirmationModal/ConfirmationModal.tsx
 import styles from './ConfirmationModal.module.css';
+import { Button } from '@/components/ui';
 
 interface ConfirmationModalProps {
   message: string;
@@ -8,6 +9,7 @@ interface ConfirmationModalProps {
   confirmText?: string;
   cancelText?: string;
   details?: string[];
+  isDestructive?: boolean;
 }
 
 export default function ConfirmationModal({
@@ -17,6 +19,7 @@ export default function ConfirmationModal({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   details,
+  isDestructive = false,
 }: ConfirmationModalProps) {
   return (
     <div className={styles.modalOverlay}>
@@ -33,12 +36,12 @@ export default function ConfirmationModal({
           </div>
         )}
         <div className={styles.buttonGroup}>
-          <button className={`${styles.actionButton} ${styles.cancelButton}`} onClick={onCancel}>
+          <Button variant="outline" onClick={onCancel}>
             {cancelText}
-          </button>
-          <button className={`${styles.actionButton} ${styles.confirmButton}`} onClick={onConfirm}>
+          </Button>
+          <Button variant={isDestructive ? 'destructive' : 'default'} onClick={onConfirm}>
             {confirmText}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

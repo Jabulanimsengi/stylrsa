@@ -145,7 +145,7 @@ export default function MobileSearch({ onSearch, initialQuery = '' }: MobileSear
           <input
             ref={searchInputRef}
             type="text"
-            placeholder="Search salons or services..."
+            placeholder="Search..."
             className={styles.searchInput}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

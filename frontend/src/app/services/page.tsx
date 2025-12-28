@@ -6,7 +6,7 @@ import Link from "next/link";
 import ServiceCard from "@/components/ServiceCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import FilterBar, { type FilterValues } from "@/components/FilterBar/FilterBar";
-import { SkeletonGroup, SkeletonCard } from "@/components/Skeleton/Skeleton";
+import ServicesPageSkeleton from "@/components/Skeleton/ServicesPageSkeleton";
 import styles from "./ServicesPage.module.css";
 import { Service, Salon, Booking } from "@/types";
 import { toast } from "react-toastify";
@@ -383,9 +383,7 @@ function ServicesPageContent() {
       )}
 
       {isLoading && services.length === 0 ? (
-        <SkeletonGroup count={6} className={styles.servicesGrid}>
-          {() => <SkeletonCard hasImage lines={3} />}
-        </SkeletonGroup>
+        <ServicesPageSkeleton message="Loading services..." cardCount={6} />
       ) : services.length === 0 ? (
         <EmptyState
           variant="no-results"

@@ -19,7 +19,7 @@ interface VideoUploadProps {
   onUploadComplete: () => void;
 }
 
-const ALLOWED_PLANS: PlanCode[] = ['GROWTH', 'PRO', 'ELITE'];
+const ALLOWED_PLANS: PlanCode[] = ['FREE', 'GROWTH', 'PRO', 'ELITE'];
 
 export default function VideoUpload({ salonId, services, planCode, onUploadComplete }: VideoUploadProps) {
   const [videoFile, setVideoFile] = useState<File | null>(null);

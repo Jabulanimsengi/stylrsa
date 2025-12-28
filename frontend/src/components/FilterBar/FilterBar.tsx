@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useDeferredValue, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaSpinner, FaMapMarkerAlt, FaExclamationTriangle, FaBolt, FaStar } from 'react-icons/fa';
+import { FaSpinner, FaMapMarkerAlt, FaExclamationTriangle, FaBolt, FaStar, FaSlidersH, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import styles from './FilterBar.module.css';
 import { toFriendlyMessage } from '@/lib/errors';
 import { getCategoriesCached, getLocationsCached } from '@/lib/resourceCache';
@@ -84,6 +84,7 @@ export default function FilterBar({
   const [serviceSuggestions, setServiceSuggestions] = useState<ServiceSuggestion[]>([]);
   const [isServiceLoading, setIsServiceLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const deferredServiceSearch = useDeferredValue(serviceSearch);
   const router = useRouter();
   const enableAutoSearch = autoSearch ?? !isHomePage;
@@ -379,49 +380,54 @@ export default function FilterBar({
         className={`${styles.filterBar} ${isHomePage ? styles.homeFilterBar : ''
           } ${orientation === 'vertical' ? styles.vertical : ''}`}
       >
-        <div className={styles.filterGroup}>
-          <label>Province</label>
-          <Select
-            value={province}
-            onValueChange={(value) => {
-              setProvince(value === '__all__' ? '' : value);
-              setCity('');
-            }}
-          >
-            <SelectTrigger className={styles.filterSelect}>
-              <SelectValue placeholder="All Provinces" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">All Provinces</SelectItem>
-              {Object.keys(locations).map((prov) => (
-                <SelectItem key={prov} value={prov}>
-                  {prov}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className={styles.filterGroup}>
-          <label>Town/City</label>
-          <Select
-            value={city}
-            onValueChange={(value) => setCity(value === '__all__' ? '' : value)}
-            disabled={!province}
-          >
-            <SelectTrigger className={styles.filterSelect}>
-              <SelectValue placeholder="All Cities" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">All Cities</SelectItem>
-              {province &&
-                locations[province]?.map((c: string, index: number) => (
-                  <SelectItem key={`${c}-${index}`} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Advanced Filters - Collapsible */}
+        {showAdvancedFilters && (
+          <>
+            <div className={styles.filterGroup}>
+              <label>Province</label>
+              <Select
+                value={province}
+                onValueChange={(value) => {
+                  setProvince(value === '__all__' ? '' : value);
+                  setCity('');
+                }}
+              >
+                <SelectTrigger className={styles.filterSelect}>
+                  <SelectValue placeholder="All Provinces" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All Provinces</SelectItem>
+                  {Object.keys(locations).map((prov) => (
+                    <SelectItem key={prov} value={prov}>
+                      {prov}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className={styles.filterGroup}>
+              <label>Town/City</label>
+              <Select
+                value={city}
+                onValueChange={(value) => setCity(value === '__all__' ? '' : value)}
+                disabled={!province}
+              >
+                <SelectTrigger className={styles.filterSelect}>
+                  <SelectValue placeholder="All Cities" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All Cities</SelectItem>
+                  {province &&
+                    locations[province]?.map((c: string, index: number) => (
+                      <SelectItem key={`${c}-${index}`} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        )}
         <div className={styles.filterGroup}>
           <label htmlFor="service">Service</label>
           <input
@@ -494,81 +500,98 @@ export default function FilterBar({
             </SelectContent>
           </Select>
         </div>
-        <div className={styles.filterGroup}>
-          <label>Sort By</label>
-          <Select
-            value={sortBy || '__default__'}
-            onValueChange={(value) => setSortBy(value === '__default__' ? '' : value)}
-          >
-            <SelectTrigger className={styles.filterSelect}>
-              <SelectValue placeholder="Default" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__default__">Default</SelectItem>
-              <SelectItem value="top_rated">Top Rated</SelectItem>
-              <SelectItem value="distance">Nearest</SelectItem>
-              <SelectItem value="price">Lowest Price</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {coordinates && (
-          <div className={styles.filterGroup}>
-            <label>Within</label>
-            <Select
-              value={radius?.toString() || '__any__'}
-              onValueChange={(value) => setRadius(value === '__any__' ? null : Number(value))}
-            >
-              <SelectTrigger className={styles.filterSelect}>
-                <SelectValue placeholder="Any distance" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__any__">Any distance</SelectItem>
-                <SelectItem value="5">5 km</SelectItem>
-                <SelectItem value="10">10 km</SelectItem>
-                <SelectItem value="25">25 km</SelectItem>
-                <SelectItem value="50">50 km</SelectItem>
-                <SelectItem value="100">100 km</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+
+        {/* More Filters Toggle */}
+        <button
+          type="button"
+          className={styles.moreFiltersToggle}
+          onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+        >
+          <FaSlidersH />
+          {showAdvancedFilters ? 'Less' : 'More'}
+          {showAdvancedFilters ? <FaChevronUp /> : <FaChevronDown />}
+        </button>
+
+        {/* Remaining Advanced Filters */}
+        {showAdvancedFilters && (
+          <>
+            <div className={styles.filterGroup}>
+              <label>Sort By</label>
+              <Select
+                value={sortBy || '__default__'}
+                onValueChange={(value) => setSortBy(value === '__default__' ? '' : value)}
+              >
+                <SelectTrigger className={styles.filterSelect}>
+                  <SelectValue placeholder="Default" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__default__">Default</SelectItem>
+                  <SelectItem value="top_rated">Top Rated</SelectItem>
+                  <SelectItem value="distance">Nearest</SelectItem>
+                  <SelectItem value="price">Lowest Price</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {coordinates && (
+              <div className={styles.filterGroup}>
+                <label>Within</label>
+                <Select
+                  value={radius?.toString() || '__any__'}
+                  onValueChange={(value) => setRadius(value === '__any__' ? null : Number(value))}
+                >
+                  <SelectTrigger className={styles.filterSelect}>
+                    <SelectValue placeholder="Any distance" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__any__">Any distance</SelectItem>
+                    <SelectItem value="5">5 km</SelectItem>
+                    <SelectItem value="10">10 km</SelectItem>
+                    <SelectItem value="25">25 km</SelectItem>
+                    <SelectItem value="50">50 km</SelectItem>
+                    <SelectItem value="100">100 km</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className={styles.checkboxGroup}>
+              <Checkbox
+                id="openNow"
+                checked={openNow}
+                onCheckedChange={(checked) => setOpenNow(checked === true)}
+                label="Open now"
+              />
+            </div>
+            <div className={styles.checkboxGroup}>
+              <Checkbox
+                id="offersMobile"
+                checked={offersMobile}
+                onCheckedChange={(checked) => setOffersMobile(checked === true)}
+                label="Offers Mobile Services"
+              />
+            </div>
+            <div className={styles.filterGroup}>
+              <label>Price Range (R)</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={priceMin}
+                  onChange={(e) => setPriceMin(e.target.value)}
+                  className={styles.filterInput}
+                  min={0}
+                />
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={priceMax}
+                  onChange={(e) => setPriceMax(e.target.value)}
+                  className={styles.filterInput}
+                  min={0}
+                />
+              </div>
+            </div>
+          </>
         )}
-        <div className={styles.checkboxGroup}>
-          <Checkbox
-            id="openNow"
-            checked={openNow}
-            onCheckedChange={(checked) => setOpenNow(checked === true)}
-            label="Open now"
-          />
-        </div>
-        <div className={styles.checkboxGroup}>
-          <Checkbox
-            id="offersMobile"
-            checked={offersMobile}
-            onCheckedChange={(checked) => setOffersMobile(checked === true)}
-            label="Offers Mobile Services"
-          />
-        </div>
-        <div className={styles.filterGroup}>
-          <label>Price Range (R)</label>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <input
-              type="number"
-              placeholder="Min"
-              value={priceMin}
-              onChange={(e) => setPriceMin(e.target.value)}
-              className={styles.filterInput}
-              min={0}
-            />
-            <input
-              type="number"
-              placeholder="Max"
-              value={priceMax}
-              onChange={(e) => setPriceMax(e.target.value)}
-              className={styles.filterInput}
-              min={0}
-            />
-          </div>
-        </div>
         <button
           onClick={handleFindNearby}
           disabled={isGeoLoading}

@@ -53,7 +53,8 @@ import BooksySidebar, { HeroGallery, SalonInfoHeader, BooksyReviewsSection, Stic
 import MobileSalonProfile from './MobileSalonProfile';
 import mobileStyles from './MobileSalonProfile.module.css';
 
-import BeforeAfterStories from '@/components/BeforeAfterStories/BeforeAfterStories';
+import VideoShortsRow from '@/components/VideoShortsRow/VideoShortsRow';
+import MaterialsShowcase from '@/components/MaterialsShowcase/MaterialsShowcase';
 
 type Props = {
   initialSalon: Salon | null;
@@ -821,6 +822,25 @@ export default function SalonProfileClient({ initialSalon, salonId, breadcrumbIt
                   </div>
                 </section>
               )}
+
+              {/* Video Shorts Row - TikTok/Reels style */}
+              <section id="shorts-section">
+                <VideoShortsRow
+                  salonId={salon.id}
+                  onVideoClick={(video) => openVideoLightbox(video)}
+                />
+              </section>
+
+              {/* Materials & Products Showcase */}
+              <section id="materials-section">
+                <MaterialsShowcase
+                  salonId={salon.id}
+                  onMaterialClick={(material) => {
+                    // Could open a modal or navigate to product page
+                    toast.info(`${material.name} - ${material.isSold ? `R${material.price?.toFixed(2)}` : 'Used by this salon'}`);
+                  }}
+                />
+              </section>
 
               {/* Team Members Section */}
               <section id="team-section">

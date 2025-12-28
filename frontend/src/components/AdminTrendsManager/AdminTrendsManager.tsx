@@ -74,6 +74,16 @@ export default function AdminTrendsManager() {
   const [imageInput, setImageInput] = useState('');
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [filterQuery, setFilterQuery] = useState('');
+
+  // Filter trends based on search query
+  const filteredTrends = filterQuery.trim()
+    ? trends.filter(t =>
+      t.title.toLowerCase().includes(filterQuery.toLowerCase()) ||
+      t.category.toLowerCase().includes(filterQuery.toLowerCase()) ||
+      t.description.toLowerCase().includes(filterQuery.toLowerCase())
+    )
+    : trends;
 
   useEffect(() => {
     fetchTrends();
@@ -262,6 +272,20 @@ export default function AdminTrendsManager() {
         <button onClick={handleCreateNew} className={styles.createButton}>
           <FaPlus /> Create New Trend
         </button>
+      </div>
+
+      {/* Filter Bar */}
+      <div className={styles.filterBar}>
+        <input
+          type="text"
+          value={filterQuery}
+          onChange={(e) => setFilterQuery(e.target.value)}
+          placeholder="Filter by title, category, description..."
+          className={styles.filterInput}
+        />
+        <span className={styles.filterCount}>
+          Showing {filteredTrends.length} of {trends.length}
+        </span>
       </div>
 
       {showForm && (
@@ -482,10 +506,14 @@ export default function AdminTrendsManager() {
       )}
 
       <div className={styles.trendsGrid}>
-        {trends.length === 0 ? (
-          <p className={styles.emptyState}>No trends created yet. Click "Create New Trend" to get started!</p>
+        {filteredTrends.length === 0 ? (
+          <p className={styles.emptyState}>
+            {trends.length === 0
+              ? 'No trends created yet. Click "Create New Trend" to get started!'
+              : 'No trends match your filter.'}
+          </p>
         ) : (
-          trends.map((trend) => (
+          filteredTrends.map((trend) => (
             <div key={trend.id} className={styles.trendCard}>
               <div className={styles.trendImage}>
                 <Image
