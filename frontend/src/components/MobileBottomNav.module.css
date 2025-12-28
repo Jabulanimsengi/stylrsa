@@ -5,6 +5,12 @@
   display: none;
 }
 
+/* Hide bottom nav when any fullscreen modal is open (body overflow hidden) */
+:global(body[style*="overflow: hidden"]) .bottomNav,
+:global(body[style*="overflow:hidden"]) .bottomNav {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
   .bottomNav {
     display: flex;

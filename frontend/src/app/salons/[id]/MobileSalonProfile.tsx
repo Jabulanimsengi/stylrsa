@@ -407,6 +407,20 @@ export default function MobileSalonProfile({
                                 ))}
                             </CarouselContent>
 
+                            {/* Dot indicators for image scrolling */}
+                            {count > 1 && (
+                                <div className={styles.carouselIndicators}>
+                                    {Array.from({ length: count }).map((_, idx) => (
+                                        <button
+                                            key={idx}
+                                            className={`${styles.indicatorSegment} ${idx + 1 === current ? styles.active : ''}`}
+                                            onClick={() => api?.scrollTo(idx)}
+                                            aria-label={`Go to slide ${idx + 1}`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
                             {/* Photo count badge */}
                             <div className={styles.photoCountBadge}>
                                 <FaImages /> {current}/{count}

@@ -466,15 +466,17 @@
 
   .container {
     padding-top: 0;
-    padding-bottom: 70px;
   }
 
   .hero {
-    margin-top: 62px;
+    margin-top: 0;
+    padding-top: 60px;
+    /* Navbar height compensation */
     /* Adjusted aspect ratio to show more content */
     aspect-ratio: 4 / 3;
-    min-height: 240px;
-    max-height: 340px;
+    min-height: 300px;
+    /* Increased to account for padding */
+    max-height: 400px;
     width: 100%;
     margin-left: 0;
     margin-right: 0;
@@ -585,14 +587,15 @@
 @media (max-width: 540px) {
   .container {
     padding-top: 0;
-    padding-bottom: 65px;
   }
 
   .hero {
     aspect-ratio: 4 / 3;
-    min-height: 220px;
-    max-height: 320px;
-    margin-top: 58px;
+    min-height: 280px;
+    /* Increased to account for padding */
+    max-height: 380px;
+    margin-top: 0;
+    padding-top: 60px;
     margin-bottom: clamp(0.75rem, 2vw, 1rem);
     width: 100%;
     margin-left: 0;
@@ -647,14 +650,15 @@
 @media (max-width: 400px) {
   .container {
     padding-top: 0;
-    padding-bottom: 60px;
   }
 
   .hero {
     aspect-ratio: 4 / 3;
-    min-height: 200px;
-    max-height: 280px;
-    margin-top: 56px;
+    min-height: 260px;
+    /* Increased to account for padding */
+    max-height: 340px;
+    margin-top: 0;
+    padding-top: 60px;
     margin-bottom: 0.75rem;
     width: 100%;
     margin-left: 0;

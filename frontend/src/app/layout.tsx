@@ -12,7 +12,6 @@ import { NavigationLoadingProvider } from '@/context/NavigationLoadingContext';
 import TopNav from '@/components/TopNav';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import MobileBottomNav from '@/components/MobileBottomNav';
 import MobileNavIcons from '@/components/MobileNavIcons';
 
 import AuthSessionProvider from '@/components/AuthSessionProvider';
@@ -161,7 +160,6 @@ export default function RootLayout({
                           <main className="main-content" id="main-content">{children}</main>
                           <Footer />
                         </div>
-                        <MobileBottomNav />
                       </div>
                       <ClientComponents />
                     </NavigationLoadingProvider>
