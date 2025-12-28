@@ -289,8 +289,8 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
 
                 bounds.extend([salon.longitude, salon.latitude]);
 
-                // Hover handler for popup
-                markerEl.addEventListener('mouseenter', () => {
+                // Function to show popup (used by both click and hover)
+                const showPopup = () => {
                     if (popupRef.current) {
                         popupRef.current.remove();
                     }
@@ -341,8 +341,8 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
 
                     const popup = new mapboxgl.Popup({
                         offset: 25,
-                        closeButton: false,
-                        closeOnClick: true,
+                        closeButton: true, // Show close button for mobile
+                        closeOnClick: false,
                         maxWidth: '280px',
                     })
                         .setLngLat([salon.longitude!, salon.latitude!])
@@ -350,9 +350,18 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
                         .addTo(map);
 
                     popupRef.current = popup;
+                };
+
+                // Click handler for mobile (touch) support
+                markerEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showPopup();
                 });
 
-                // Close popup on mouse leave (with small delay for UX)
+                // Hover handler for desktop
+                markerEl.addEventListener('mouseenter', showPopup);
+
+                // Close popup on mouse leave (desktop only - with small delay for UX)
                 markerEl.addEventListener('mouseleave', () => {
                     setTimeout(() => {
                         // Only close if mouse is not over the popup
