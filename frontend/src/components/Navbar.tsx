@@ -659,7 +659,7 @@ export default function Navbar() {
               >
                 <span className={styles.sectionLabelContent}>
                   <FaBuilding className={styles.sectionIcon} />
-                  <span>Company</span>
+                  <span>About Stylr SA</span>
                 </span>
                 <span className={styles.expandIcon}>
                   {isCompanyMenuOpen ? <FaChevronUp /> : <FaChevronDown />}
