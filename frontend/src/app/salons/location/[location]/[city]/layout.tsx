@@ -394,16 +394,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!cityInfo) {
     return {
-      title: 'Salons & Beauty Services Near Me',
-      description: 'Find the best salons and beauty professionals near you in South Africa',
+      title: '💇 Salons & Beauty Services Near Me | Stylr SA',
+      description: '✓ Find verified salons and beauty professionals near you in South Africa. Book online instantly!',
     };
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
   const canonicalUrl = `${siteUrl}/salons/location/${location}/${city}`;
 
-  const title = `${cityInfo.name} Salons Near Me | Hair, Nails, Spa & Beauty Services`;
-  const description = cityInfo.description;
+  // Enhanced title with emojis and trust signals
+  const title = `⭐ Best Salons in ${cityInfo.name} | Book Online Today | Stylr SA`;
+
+  // Enhanced description with trust signals and CTAs
+  const description = `✓ Top-rated salons in ${cityInfo.name} ✓ Instant online booking ✓ Verified reviews ✓ 5% cashback. Find hair, nails, spa & beauty services near you!`;
+
   const keywords = cityInfo.keywords.join(', ');
 
   return {
@@ -414,7 +418,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical: canonicalUrl,
     },
     openGraph: {
-      title,
+      title: `Best Salons in ${cityInfo.name} | Stylr SA`,
       description,
       url: canonicalUrl,
       siteName: 'Stylr SA',
@@ -423,7 +427,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: `Best Salons in ${cityInfo.name} | Stylr SA`,
       description,
     },
   };

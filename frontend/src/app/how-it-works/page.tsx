@@ -1,10 +1,149 @@
+import { Metadata } from 'next';
+import Script from 'next/script';
 import styles from '../info-page.module.css';
 import PageNav from '@/components/PageNav';
 import Link from 'next/link';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
+
+// HowTo Schema for rich snippets
+const howToBookSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'How to Book a Salon Appointment on Stylr SA',
+  description: 'Book beauty services online in South Africa - Find and book appointments at salons, spas, and beauty professionals in your area.',
+  totalTime: 'PT5M',
+  estimatedCost: {
+    '@type': 'MonetaryAmount',
+    currency: 'ZAR',
+    value: '0'
+  },
+  step: [
+    {
+      '@type': 'HowToStep',
+      name: 'Discover Salons',
+      text: 'Use our powerful search and filter tools to find top-rated salons, specific services, or must-have beauty products in your area.',
+      position: 1
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Book & Pay',
+      text: 'Select a service, choose a time slot that works for you, and confirm your booking instantly. Purchase products from your favorite local sellers with secure checkout.',
+      position: 2
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Earn Cashback',
+      text: 'Get 5% cashback on every booking. Use it to pay for future appointments or products!',
+      position: 3
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Enjoy Your Service',
+      text: 'Attend your appointment and leave a review to help the community. Track your product orders right to your door.',
+      position: 4
+    }
+  ]
+};
+
+// HowTo Schema for salon owners
+const howToListSalonSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'How to List Your Salon on Stylr SA',
+  description: 'List your salon or beauty business on South Africa\'s premier beauty platform - Free to join, pay only when you earn.',
+  totalTime: 'PT15M',
+  estimatedCost: {
+    '@type': 'MonetaryAmount',
+    currency: 'ZAR',
+    value: '0'
+  },
+  step: [
+    {
+      '@type': 'HowToStep',
+      name: 'Create Your Free Profile',
+      text: 'Sign up in minutes and build a beautiful profile showcasing your salon, your unique services, and your team\'s talent. There are no monthly fees or subscription costs.',
+      position: 1
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'List Your Services',
+      text: 'Add as many services as you offer with photos, pricing, and descriptions. Upload videos, before & after photos, and showcase your team members — all included free.',
+      position: 2
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Manage Your Business',
+      text: 'Use our intuitive dashboard to manage your schedule, accept new bookings, communicate with clients via our built-in chat, and track your performance.',
+      position: 3
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Get Paid Weekly',
+      text: 'Payouts are processed every Friday directly to your bank account. We only charge 32% commission on completed bookings.',
+      position: 4
+    }
+  ]
+};
+
+// Breadcrumb Schema
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: siteUrl
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'How It Works',
+      item: `${siteUrl}/how-it-works`
+    }
+  ]
+};
+
+export const metadata: Metadata = {
+  title: '📖 How It Works | Book Salons Online in 4 Easy Steps | Stylr SA',
+  description: '✓ Discover salons ✓ Book instantly ✓ Earn 5% cashback ✓ Enjoy your service. Learn how Stylr SA makes booking beauty services easy for clients and salon owners.',
+  keywords: 'how to book salon, salon booking guide, Stylr SA tutorial, list salon online, beauty platform South Africa',
+  alternates: {
+    canonical: `${siteUrl}/how-it-works`,
+  },
+  openGraph: {
+    title: 'How It Works | Stylr SA',
+    description: 'Your next favorite salon is just a few clicks away. Learn how to book beauty services or list your salon on Stylr SA.',
+    type: 'website',
+    url: `${siteUrl}/how-it-works`,
+  },
+};
+
 export default function HowItWorksPage() {
   return (
     <div className={styles.container}>
+      {/* HowTo Schemas for rich snippets */}
+      <Script
+        id="howto-book-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToBookSchema) }}
+        strategy="beforeInteractive"
+      />
+      <Script
+        id="howto-list-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToListSalonSchema) }}
+        strategy="beforeInteractive"
+      />
+      <Script
+        id="howto-breadcrumb-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        strategy="beforeInteractive"
+      />
+
       <PageNav />
       <h1 className={styles.pageTitle}>How It Works</h1>
       <p className={styles.paragraph}>
