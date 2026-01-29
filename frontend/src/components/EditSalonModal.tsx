@@ -66,8 +66,6 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
   const [addrQuery, setAddrQuery] = useState('');
   const [addrSuggestions, setAddrSuggestions] = useState<any[]>([]);
   const [showAddrSuggestions, setShowAddrSuggestions] = useState(false);
-  const [locationsData, setLocationsData] = useState<Record<string, string[]>>({});
-  const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [fieldsLocked, setFieldsLocked] = useState(false);
   const suggestionsRef = useRef<HTMLUListElement>(null);
 
@@ -155,30 +153,6 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
     }
   }, [salon]);
 
-  // Fetch locations data from API
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const response = await fetch('/api/locations');
-        if (response.ok) {
-          const data = await response.json();
-          setLocationsData(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch locations data:', error);
-      }
-    };
-    fetchLocations();
-  }, []);
-
-  // Update available cities when province changes
-  useEffect(() => {
-    if (formData.province && locationsData[formData.province]) {
-      setAvailableCities(locationsData[formData.province]);
-    } else {
-      setAvailableCities([]);
-    }
-  }, [formData.province, locationsData]);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -572,163 +546,137 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                 </div>
                 <div>
                   <label className={styles.label}>Province</label>
-                  <Select
-                    value={formData.province || '__none__'}
-                    onValueChange={(value) => {
-                      const newProvince = value === '__none__' ? '' : value;
-                      setFormData(prev => ({ ...prev, province: newProvince, city: '', town: '' }));
-                    }}
-                    disabled={fieldsLocked}
-                  >
-                    <SelectTrigger className={styles.input} style={{ opacity: fieldsLocked ? 0.7 : 1 }}>
-                      <SelectValue placeholder="Select a province" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">Select a province</SelectItem>
-                      {Object.keys(locationsData).sort().map(p => (
-                        <SelectItem key={p} value={p}>{p}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <input
+                    type="text"
+                    name="province"
+                    value={formData.province}
+                    onChange={handleChange}
+                    placeholder="e.g., Gauteng, Western Cape, North West"
+                    className={styles.input}
+                  />
+                  {fieldsLocked && (
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-soft)', marginTop: '4px', display: 'block' }}>
+                      Auto-filled from map (editable)
+                    </span>
+                  )}
                 </div>
                 <div>
                   <label className={styles.label}>City/Town</label>
-                  {fieldsLocked ? (
-                    <input
-                      type="text"
-                      value={formData.city}
-                      readOnly
-                      disabled
-                      className={styles.input}
-                      style={{ opacity: 0.7 }}
-                    />
-                  ) : (
-                    <Select
-                      value={formData.city || '__none__'}
-                      onValueChange={(value) => {
-                        const selectedCity = value === '__none__' ? '' : value;
-                        setFormData(prev => ({ ...prev, city: selectedCity, town: selectedCity }));
-                      }}
-                      disabled={!formData.province}
-                    >
-                      <SelectTrigger className={styles.input}>
-                        <SelectValue
-                          placeholder={!formData.province ? 'Select a province first' : 'Select a city/town'}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">
-                          {!formData.province ? 'Select a province first' : 'Select a city/town'}
-                        </SelectItem>
-                        {availableCities.map(c => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData(prev => ({ ...prev, city: value, town: value }));
+                    }}
+                    placeholder="e.g., Johannesburg, Cape Town, Hartbeespoort"
+                    className={styles.input}
+                  />
+                  {fieldsLocked && (
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-soft)', marginTop: '4px', display: 'block' }}>
+                      Auto-filled from map (editable)
+                    </span>
                   )}
                 </div>
-                {fieldsLocked && (
-                  <div className={styles.fullWidth} style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                      📍 Location fields auto-populated from map
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setFieldsLocked(false)}
-                      style={{
-                        padding: '4px 12px',
-                        fontSize: '0.875rem',
-                        backgroundColor: 'var(--color-primary)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Edit Location
-                    </button>
-                  </div>
-                )}
               </div>
               <h3 className={styles.subheading}>Location</h3>
               <div className={styles.grid}>
                 <div className={styles.fullWidth}>
                   <label htmlFor="addrQuery" className={styles.label}>Find on Map</label>
-                  <input
-                    id="addrQuery"
-                    type="text"
-                    value={addrQuery}
-                    onChange={async (e) => {
-                      const v = e.target.value;
-                      setAddrQuery(v);
-                      if (v.trim().length > 2) {
-                        try {
-                          const results = await forwardGeocode(v, { country: 'za', limit: 5 });
-                          setAddrSuggestions(results);
-                          setShowAddrSuggestions(true);
-                        } catch {
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      id="addrQuery"
+                      type="text"
+                      value={addrQuery}
+                      onChange={async (e) => {
+                        const v = e.target.value;
+                        setAddrQuery(v);
+                        if (v.trim().length > 2) {
+                          try {
+                            console.log('Searching for:', v);
+                            const results = await forwardGeocode(v, { country: 'za', limit: 5 });
+                            console.log('Mapbox results:', results);
+                            setAddrSuggestions(results);
+                            setShowAddrSuggestions(results.length > 0);
+                          } catch (error) {
+                            console.error('Mapbox search error:', error);
+                            setAddrSuggestions([]);
+                            setShowAddrSuggestions(false);
+                          }
+                        } else {
                           setAddrSuggestions([]);
                           setShowAddrSuggestions(false);
                         }
-                      } else {
-                        setAddrSuggestions([]);
-                        setShowAddrSuggestions(false);
-                      }
-                    }}
-                    placeholder="Type an address, suburb, or landmark"
-                    className={styles.input}
-                  />
-                  {showAddrSuggestions && addrSuggestions.length > 0 && (
-                    <ul
-                      ref={suggestionsRef}
-                      style={{ position: 'absolute', zIndex: 10, background: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)', borderRadius: 6, marginTop: 4, width: 'min(520px, 95vw)', listStyle: 'none', padding: 0, maxHeight: '300px', overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-                      {addrSuggestions.map((s: GeocodingResult) => (
-                        <li key={s.place_id} style={{ padding: '8px 10px', cursor: 'pointer' }}
-                          onClick={() => {
-                            setFormData((prev: any) => ({ ...prev, address: s.display_name, latitude: s.lat, longitude: s.lon }));
-                            setAddrQuery(s.display_name);
-                            setShowAddrSuggestions(false);
+                      }}
+                      placeholder="Type an address, suburb, or landmark"
+                      className={styles.input}
+                    />
+                    {showAddrSuggestions && addrSuggestions.length > 0 && (
+                      <ul
+                        ref={suggestionsRef}
+                        style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          zIndex: 100,
+                          background: 'var(--color-surface-elevated)',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 6,
+                          marginTop: 4,
+                          listStyle: 'none',
+                          padding: 0,
+                          maxHeight: '300px',
+                          overflowY: 'auto',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        }}
+                      >
+                        {addrSuggestions.map((s: GeocodingResult) => (
+                          <li
+                            key={s.place_id}
+                            style={{ padding: '8px 10px', cursor: 'pointer', borderBottom: '1px solid var(--color-border)' }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-light, rgba(245, 25, 87, 0.1))'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            onClick={() => {
+                              setFormData((prev: any) => ({ ...prev, address: s.display_name, latitude: s.lat, longitude: s.lon }));
+                              setAddrQuery(s.display_name);
+                              setShowAddrSuggestions(false);
 
-                            // Extract and auto-populate location fields from address details
-                            if (s.address) {
-                              const addr = s.address;
-                              const SA_PROVINCES = Object.keys(locationsData);
+                              // Extract and auto-populate location fields from address details
+                              if (s.address) {
+                                const addr = s.address;
 
-                              // Extract province/state
-                              const provinceValue = addr.state || '';
-                              if (provinceValue) {
-                                // Try to match with SA provinces
-                                const matchedProvince = SA_PROVINCES.find(p =>
-                                  provinceValue.toLowerCase().includes(p.toLowerCase()) ||
-                                  p.toLowerCase().includes(provinceValue.toLowerCase())
-                                );
-                                if (matchedProvince) {
-                                  setFormData((prev: any) => ({ ...prev, province: matchedProvince }));
+                                // Extract province/state directly
+                                const provinceValue = addr.state || '';
+                                if (provinceValue) {
+                                  setFormData((prev: any) => ({ ...prev, province: provinceValue }));
                                 }
-                              }
 
-                              // Extract city
-                              const cityValue = addr.city || addr.town || '';
-                              // Extract town/suburb - fallback to city if not available
-                              const townValue = addr.suburb || cityValue || '';
-                              if (cityValue || townValue) {
-                                setFormData((prev: any) => ({
-                                  ...prev,
-                                  city: cityValue || townValue,
-                                  town: townValue || cityValue
-                                }));
-                              }
+                                // Extract city
+                                const cityValue = addr.city || addr.town || '';
+                                // Extract town/suburb - fallback to city if not available
+                                const townValue = addr.suburb || cityValue || '';
+                                if (cityValue || townValue) {
+                                  setFormData((prev: any) => ({
+                                    ...prev,
+                                    city: cityValue || townValue,
+                                    town: townValue || cityValue
+                                  }));
+                                }
 
-                              // Lock the fields after auto-population
-                              setFieldsLocked(true);
-                              toast.success('Location set successfully! 📍 Fields auto-populated.');
-                            }
-                          }}>
-                          {s.display_name}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                                // Fields are editable, just mark as auto-filled
+                                setFieldsLocked(true);
+                                toast.success('Location set successfully! 📍 Fields auto-populated and editable.');
+                              }
+                            }}
+                          >
+                            {s.display_name}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className={styles.label}>Latitude</label>

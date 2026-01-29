@@ -149,6 +149,185 @@ a.cta:active,
   font-size: 0.95rem;
 }
 
+/* Pricing Grid - Multiple Plans */
+.pricingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  justify-content: center;
+}
+
+@media (min-width: 1200px) {
+  .pricingGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .pricingGrid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+.pricingCard {
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  background: var(--color-surface-elevated);
+  box-shadow: 0 2px 8px rgba(29, 29, 31, 0.08);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.pricingCard:hover {
+  box-shadow: 0 6px 16px rgba(29, 29, 31, 0.15);
+  transform: translateY(-4px);
+}
+
+.popularCard {
+  border-color: var(--color-primary);
+  border-width: 2px;
+  box-shadow: 0 4px 16px rgba(29, 29, 31, 0.12);
+}
+
+.popularCard:hover {
+  box-shadow: 0 8px 24px rgba(29, 29, 31, 0.2);
+}
+
+.popularBadge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #000000 100%);
+  color: white;
+  padding: 0.35rem 0.85rem;
+  border-radius: 16px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(29, 29, 31, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.cardHeader {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-top: 0.5rem;
+}
+
+.planName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  color: var(--color-text-strong);
+}
+
+.priceSection {
+  margin: 0.5rem 0 1rem;
+}
+
+.mainPrice {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-text-strong);
+  line-height: 1;
+}
+
+.mainPrice .perMonth {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-soft);
+  margin-left: 0.25rem;
+}
+
+.originalPrice {
+  font-size: 0.95rem;
+  color: var(--color-text-soft);
+  text-decoration: line-through;
+  margin-top: 0.25rem;
+}
+
+.planDescription {
+  font-size: 0.85rem;
+  color: var(--color-text-soft);
+  line-height: 1.5;
+  min-height: 3rem;
+}
+
+.featuresSection {
+  flex: 1;
+  margin-bottom: 1.5rem;
+}
+
+.featuresList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.featureItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  font-size: 0.85rem;
+  color: var(--color-text-strong);
+  line-height: 1.5;
+}
+
+.featureItem .checkIcon {
+  color: #22c55e;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.selectButton {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid var(--color-primary);
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: block;
+}
+
+.selectButton:hover {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(29, 29, 31, 0.15);
+}
+
+.popularButton {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.popularButton:hover {
+  background-color: #000000;
+  border-color: #000000;
+  color: #ffffff;
+}
+
 /* Comparison Table - Desktop Only */
 .comparisonSection {
   margin-top: 3rem;

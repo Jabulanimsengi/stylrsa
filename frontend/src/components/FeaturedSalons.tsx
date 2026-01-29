@@ -33,12 +33,20 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
   const [loadingState, setLoadingState] = useState<'pending' | 'loading' | 'done'>(
     hasServerData ? 'done' : 'pending'
   );
+
+  // Debug logging to help identify auth issues
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('FeaturedSalons - initialSalons count:', initialSalons.length);
+    console.log('FeaturedSalons - hasServerData:', hasServerData);
+    console.log('FeaturedSalons - loadingState:', loadingState);
+  }
   const [activeIndex, setActiveIndex] = useState(0);
   const [showPrevArrow, setShowPrevArrow] = useState(false);
   const swiperRef = useRef<SwiperType | null>(null);
   const [, startTransition] = useTransition();
-  const { authStatus } = useAuth();
-  const { openModal } = useAuthModal();
+  // Auth is optional - non-logged-in users can still view featured salons
+  const { authStatus } = useAuth() || { authStatus: 'unauthenticated' };
+  const { openModal } = useAuthModal() || { openModal: () => {} };
   const prevRef = useRef<HTMLButtonElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -161,6 +169,10 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
 
   // Don't render if we have no salons (after loading completes)
   if (loadingState === 'done' && salons.length === 0) {
+    // In development, show why section is hidden to help debug
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.log('FeaturedSalons: No salons to display - section hidden');
+    }
     return null;
   }
 

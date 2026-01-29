@@ -15,7 +15,7 @@ interface PageProps {
 }
 
 // ISR - suburb pages generated on-demand only
-export const dynamic = 'force-dynamic';
+// Removed force-dynamic to allow ISR caching with on-demand generation
 export const dynamicParams = true;
 export const revalidate = 86400; // Cache for 24 hours
 

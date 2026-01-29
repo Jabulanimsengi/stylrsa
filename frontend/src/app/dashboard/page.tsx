@@ -92,6 +92,7 @@ const NAV_SECTIONS = [
   {
     label: 'Settings',
     items: [
+      { id: 'package', label: 'Package & Billing' },
       { id: 'availability', label: 'Availability' },
       { id: 'booking-settings', label: 'Booking Settings' },
     ],
@@ -105,7 +106,7 @@ const NAV_SECTIONS = [
   },
 ];
 
-type TabId = 'bookings' | 'services' | 'reviews' | 'gallery' | 'promotions' | 'booking-settings' | 'availability' | 'team' | 'jobs';
+type TabId = 'bookings' | 'services' | 'reviews' | 'gallery' | 'promotions' | 'package' | 'booking-settings' | 'availability' | 'team' | 'jobs';
 
 function DashboardPageContent() {
   const [salon, setSalon] = useState<Salon | null | undefined>(undefined);
@@ -143,6 +144,10 @@ function DashboardPageContent() {
   const [isEditingHours, setIsEditingHours] = useState(false);
   const [isSavingHours, setIsSavingHours] = useState(false);
 
+  const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState<PlanCode | null>(null);
+  const [paymentReference, setPaymentReference] = useState('');
+  const [isSubmittingPlanChange, setIsSubmittingPlanChange] = useState(false);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const socket = useSocket();
@@ -178,6 +183,46 @@ function DashboardPageContent() {
       setIsPlanUpdating(false);
     }
   }, [ownerId]);
+
+  const handlePlanChange = useCallback(async (newPlanCode: PlanCode) => {
+    if (!ownerId) return;
+    setIsSubmittingPlanChange(true);
+    try {
+      const body: any = {
+        planCode: newPlanCode,
+        paymentReference: paymentReference || salon?.name || 'Payment reference'
+      };
+
+      // For FREE plan, no proof needed
+      // For paid plans, set hasSentProof to false initially (awaiting proof)
+      if (newPlanCode !== 'FREE') {
+        body.hasSentProof = false;
+      }
+
+      const res = await fetch(`/api/salons/mine/plan?ownerId=${ownerId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) throw new Error('Failed to change plan');
+      const updatedSalon = await res.json();
+      setSalon(updatedSalon);
+      setSelectedPlanForUpgrade(null);
+      setPaymentReference('');
+
+      if (newPlanCode === 'FREE') {
+        toast.success('Switched to FREE plan');
+      } else {
+        toast.success(`Plan changed to ${PLAN_BY_CODE[newPlanCode].name}. Please submit payment proof.`);
+      }
+    } catch (err) {
+      toast.error('Could not change plan. Please try again.');
+    } finally {
+      setIsSubmittingPlanChange(false);
+    }
+  }, [ownerId, paymentReference, salon?.name]);
 
   const fetchDashboardData = useCallback(async () => {
     if (!ownerId) {
@@ -242,8 +287,16 @@ function DashboardPageContent() {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
+    const upgrade = searchParams.get('upgrade');
+
     if (tab && NAV_SECTIONS.flatMap(s => s.items).some(i => i.id === tab)) {
       setActiveMainTab(tab as TabId);
+    }
+
+    // If upgrade param exists, switch to package tab and select that plan
+    if (upgrade && APP_PLANS.some(p => p.code === upgrade)) {
+      setActiveMainTab('package');
+      setSelectedPlanForUpgrade(upgrade as PlanCode);
     }
   }, [searchParams]);
 
@@ -846,6 +899,252 @@ function DashboardPageContent() {
             {activeMainTab === 'jobs' && salon && (
               <div className={styles.contentCard}>
                 <JobPostingForm salonId={salon.id} salonName={salon.name} salonLocation={salon.city || ''} />
+              </div>
+            )}
+
+            {/* Package Tab */}
+            {activeMainTab === 'package' && (
+              <div className={styles.contentCard}>
+                <div className={styles.cardHeader}>
+                  <h3 className={styles.cardTitle}>Package & Billing</h3>
+                </div>
+
+                {/* Current Plan Section */}
+                <div style={{ padding: '1.5rem', background: 'var(--color-surface)', borderRadius: '12px', marginBottom: '2rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div>
+                      <h4 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Current Plan: {planDetails.name}</h4>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
+                        {planDetails.description}
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-primary)' }}>
+                        {planDetails.price}{planCode !== 'FREE' && <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>/month</span>}
+                      </div>
+                      <div style={{
+                        marginTop: '0.5rem',
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '6px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        display: 'inline-block',
+                        background: planStatus === 'VERIFIED' ? '#dcfce7' : planStatus === 'PROOF_SUBMITTED' ? '#fef3c7' : '#fee2e2',
+                        color: planStatus === 'VERIFIED' ? '#16a34a' : planStatus === 'PROOF_SUBMITTED' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {PLAN_PAYMENT_LABELS[planStatus]}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
+                    <div style={{ padding: '1rem', background: 'var(--color-surface-elevated)', borderRadius: '8px' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Visibility Boost</div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{planDetails.visibilityWeight}x</div>
+                    </div>
+                    <div style={{ padding: '1rem', background: 'var(--color-surface-elevated)', borderRadius: '8px' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Service Listings</div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{planDetails.maxListings}</div>
+                    </div>
+                    <div style={{ padding: '1rem', background: 'var(--color-surface-elevated)', borderRadius: '8px' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Commission Rate</div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{planCode === 'FREE' ? '32%' : '0%'}</div>
+                    </div>
+                  </div>
+
+                  {/* Features List */}
+                  <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--color-surface-elevated)', borderRadius: '8px' }}>
+                    <h5 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.75rem' }}>Plan Features</h5>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {planDetails.features.map((feature, idx) => (
+                        <li key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0', fontSize: '0.85rem' }}>
+                          <span style={{ color: '#22c55e' }}>✓</span>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Payment Instructions for Non-Verified Plans */}
+                {planStatus !== 'VERIFIED' && planCode !== 'FREE' && (
+                  <div style={{ padding: '1.5rem', background: '#fef3c7', borderRadius: '12px', marginBottom: '2rem', border: '1px solid #fde047' }}>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', color: '#92400e' }}>
+                      Complete Your Payment
+                    </h4>
+                    <div style={{ marginBottom: '1rem', color: '#78350f' }}>
+                      <p style={{ marginBottom: '0.5rem' }}><strong>Bank:</strong> {BANK_DETAILS.bank}</p>
+                      <p style={{ marginBottom: '0.5rem' }}><strong>Account Number:</strong> {BANK_DETAILS.accountNumber}</p>
+                      <p style={{ marginBottom: '0.5rem' }}><strong>Account Holder:</strong> {BANK_DETAILS.accountHolder}</p>
+                      <p style={{ marginBottom: '0.5rem' }}><strong>Reference:</strong> {planReference}</p>
+                      <p style={{ marginBottom: '0.5rem' }}><strong>Amount:</strong> {planDetails.price}</p>
+                    </div>
+                    <p style={{ fontSize: '0.85rem', color: '#78350f', marginBottom: '1rem' }}>
+                      After payment, WhatsApp proof to <strong>{BANK_DETAILS.whatsapp}</strong>, then click "I sent proof" below.
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <Button variant="outline" size="sm" onClick={handleCopyReference}>
+                        Copy Reference
+                      </Button>
+                      {planStatus !== 'PROOF_SUBMITTED' && (
+                        <LoadingButton
+                          size="sm"
+                          loading={isPlanUpdating}
+                          loadingText="Submitting..."
+                          onClick={() => handlePlanProofUpdate(true)}
+                        >
+                          I sent proof
+                        </LoadingButton>
+                      )}
+                      {planStatus === 'PROOF_SUBMITTED' && (
+                        <div style={{ padding: '0.5rem 1rem', background: '#fde047', borderRadius: '6px', fontSize: '0.85rem', color: '#78350f' }}>
+                          ⏳ Awaiting admin verification (usually within 24 hours)
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Available Plans Section */}
+                <div>
+                  <h4 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
+                    {planCode === 'FREE' ? 'Upgrade Your Plan' : 'Change Plan'}
+                  </h4>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                    gap: '1rem',
+                    marginBottom: '2rem'
+                  }}>
+                    {APP_PLANS.filter(plan => plan.code !== planCode).map(plan => (
+                      <div
+                        key={plan.code}
+                        style={{
+                          border: selectedPlanForUpgrade === plan.code ? '2px solid var(--color-primary)' : '2px solid var(--color-border)',
+                          borderRadius: '12px',
+                          padding: '1.25rem',
+                          background: 'var(--color-surface-elevated)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          position: 'relative'
+                        }}
+                        onClick={() => setSelectedPlanForUpgrade(plan.code)}
+                      >
+                        {plan.popular && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '-10px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            background: 'linear-gradient(135deg, var(--color-primary) 0%, #000000 100%)',
+                            color: 'white',
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '12px',
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase'
+                          }}>
+                            ⭐ Popular
+                          </div>
+                        )}
+                        <div style={{ textAlign: 'center', marginTop: plan.popular ? '0.5rem' : '0' }}>
+                          <h5 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem' }}>{plan.name}</h5>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary)', marginBottom: '0.25rem' }}>
+                            {plan.price}{plan.code !== 'FREE' && <span style={{ fontSize: '0.75rem' }}>/mo</span>}
+                          </div>
+                          {plan.originalPrice && (
+                            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', textDecoration: 'line-through' }}>
+                              {plan.originalPrice}/mo
+                            </div>
+                          )}
+                          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.75rem', minHeight: '2.5rem' }}>
+                            {plan.description}
+                          </p>
+                          <ul style={{ listStyle: 'none', padding: 0, margin: '1rem 0 0', textAlign: 'left' }}>
+                            {plan.features.slice(0, 3).map((feature, idx) => (
+                              <li key={idx} style={{ fontSize: '0.75rem', padding: '0.25rem 0', display: 'flex', gap: '0.25rem' }}>
+                                <span style={{ color: '#22c55e' }}>✓</span>
+                                <span>{feature}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          {selectedPlanForUpgrade === plan.code && (
+                            <div style={{
+                              marginTop: '0.75rem',
+                              padding: '0.5rem',
+                              background: 'var(--color-primary)',
+                              color: 'white',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600
+                            }}>
+                              Selected ✓
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Confirm Plan Change */}
+                  {selectedPlanForUpgrade && (
+                    <div style={{ padding: '1.5rem', background: 'var(--color-surface)', borderRadius: '12px', border: '2px solid var(--color-primary)' }}>
+                      <h5 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem' }}>
+                        Confirm Plan Change to {PLAN_BY_CODE[selectedPlanForUpgrade].name}
+                      </h5>
+
+                      {selectedPlanForUpgrade !== 'FREE' && (
+                        <>
+                          <p style={{ fontSize: '0.9rem', marginBottom: '1rem', color: 'var(--color-text-muted)' }}>
+                            After confirming, you'll need to make a payment of <strong>{PLAN_BY_CODE[selectedPlanForUpgrade].price}</strong> to activate your new plan.
+                          </p>
+                          <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                              Payment Reference (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={paymentReference}
+                              onChange={(e) => setPaymentReference(e.target.value)}
+                              placeholder={salon?.name || 'Your salon name'}
+                              style={{
+                                width: '100%',
+                                padding: '0.75rem',
+                                border: '1px solid var(--color-border)',
+                                borderRadius: '8px',
+                                fontSize: '0.9rem'
+                              }}
+                            />
+                            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                              This will be used to track your payment. Leave blank to use your salon name.
+                            </p>
+                          </div>
+                        </>
+                      )}
+
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <LoadingButton
+                          loading={isSubmittingPlanChange}
+                          loadingText="Changing..."
+                          onClick={() => handlePlanChange(selectedPlanForUpgrade)}
+                          style={{ flex: 1 }}
+                        >
+                          Confirm {selectedPlanForUpgrade === 'FREE' ? 'Downgrade' : 'Upgrade'}
+                        </LoadingButton>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedPlanForUpgrade(null);
+                            setPaymentReference('');
+                          }}
+                          style={{ flex: 1 }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </main>

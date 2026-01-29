@@ -53,9 +53,9 @@ async function getInitialData() {
   try {
     // Fetch salon data in parallel for faster loading
     const [featuredSalonsRes, allSalonsRes, availableNowRes, mobileSalonsRes] = await Promise.all([
-      // Fetch featured/recommended salons - 1 hour revalidation
+      // Fetch featured/recommended salons - 5 minute revalidation (admin changes)
       fetch(`${apiUrl}/api/salons/featured`, {
-        next: { revalidate: 3600 },
+        next: { revalidate: 300 },
       }),
       // Fetch all salons for Featured Salons section - 30 minute revalidation
       fetch(`${apiUrl}/api/salons/approved`, {

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import PageNav from '@/components/PageNav';
 import styles from './prices.module.css';
-import { COMMISSION_RATES } from '@/constants/plans';
+import { APP_PLANS, COMMISSION_RATES } from '@/constants/plans';
 
 interface AccordionItemProps {
   title: string;
@@ -20,7 +20,7 @@ function AccordionItem({ title, children, defaultOpen = false }: AccordionItemPr
       <button
         className={styles.accordionHeader}
         onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
+        aria-label={isOpen ? `Collapse ${title}` : `Expand ${title}`}
       >
         <span>{title}</span>
         <span className={`${styles.accordionIcon} ${isOpen ? styles.accordionIconOpen : ''}`}>
@@ -33,200 +33,119 @@ function AccordionItem({ title, children, defaultOpen = false }: AccordionItemPr
 }
 
 export default function PricingPage() {
-
   return (
     <div className={styles.container}>
       <PageNav />
 
       <div className={styles.header}>
-        <h1 className={styles.title}>Simple, Fair Pricing</h1>
+        <h1 className={styles.title}>Choose Your Growth Plan</h1>
         <p className={styles.subtitle}>
-          List your salon for free. Pay only when you get clients.
+          Flexible monthly plans. No commission fees. No long-term contracts.
         </p>
       </div>
 
-      {/* Main Value Proposition - Centered Card */}
-      <div className={styles.cardWrapper}>
-        <div className={styles.card}>
-          <div className={styles.badge}>
-            <span className={styles.badgeIcon}>⭐</span>
-            Our Promise
-          </div>
-          <h3 className={styles.planName}>Free Forever</h3>
-          <div className={styles.priceContainer}>
-            <div className={styles.price}>
-              R0
-              <span className={styles.perMonth}> to list</span>
+      {/* Pricing Cards Grid */}
+      <div className={styles.pricingGrid}>
+        {APP_PLANS.filter(plan => plan.code !== 'FREE').map((plan) => (
+          <div
+            key={plan.code}
+            className={`${styles.pricingCard} ${plan.popular ? styles.popularCard : ''}`}
+          >
+            {plan.popular && (
+              <div className={styles.popularBadge}>
+                <span>⭐</span> Most Popular
+              </div>
+            )}
+
+            <div className={styles.cardHeader}>
+              <h3 className={styles.planName}>{plan.name}</h3>
+              <div className={styles.priceSection}>
+                <div className={styles.mainPrice}>
+                  {plan.price}
+                  {plan.code !== 'FREE' && <span className={styles.perMonth}>/month</span>}
+                </div>
+                {plan.originalPrice && (
+                  <div className={styles.originalPrice}>{plan.originalPrice}/month</div>
+                )}
+              </div>
+              <p className={styles.planDescription}>{plan.description}</p>
             </div>
+
+            <div className={styles.featuresSection}>
+              <ul className={styles.featuresList}>
+                {plan.features.map((feature, index) => (
+                  <li key={index} className={styles.featureItem}>
+                    <span className={styles.checkIcon}>✓</span>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <Link
+              href={`/create-salon?plan=${plan.code}`}
+              className={`${styles.selectButton} ${plan.popular ? styles.popularButton : ''}`}
+            >
+              Select {plan.name}
+            </Link>
           </div>
-          <p className={styles.description}>
-            List your salon and all your services completely free. No monthly fees. No hidden charges.
-            We only charge when you successfully receive a booking.
-          </p>
-          <Link href="/create-salon" className={styles.cta}>
-            Create Your Profile — Free
-          </Link>
-        </div>
+        ))}
       </div>
 
-      {/* Commission Breakdown */}
+      {/* Feature Comparison Table */}
       <div className={styles.comparisonSection}>
-        <h2 className={styles.comparisonTitle}>Our {Math.round(COMMISSION_RATES.TOTAL * 100)}% Commission Breakdown</h2>
-        <p className={styles.sectionSubtitle}>
-          Only charged on completed bookings — you pay nothing if you don&apos;t get clients
-        </p>
+        <h2 className={styles.comparisonTitle}>Compare All Features</h2>
 
-        {/* Desktop Table */}
-        <div className={styles.tableWrapper}>
-          <table className={styles.comparisonTable}>
-            <thead>
-              <tr>
-                <th className={styles.featureHeader}>Component</th>
-                <th className={styles.planHeader}>Percentage</th>
-                <th className={styles.planHeader}>Purpose</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className={styles.featureName}>Platform Fee</td>
-                <td className={styles.featureValue}>{Math.round(COMMISSION_RATES.PLATFORM * 100)}%</td>
-                <td className={styles.featureValue}>Marketing, advertising, technology & continuous improvements</td>
-              </tr>
-              <tr className={styles.evenRow}>
-                <td className={styles.featureName}>Client Cashback</td>
-                <td className={styles.featureValue}>{Math.round(COMMISSION_RATES.CASHBACK * 100)}%</td>
-                <td className={styles.featureValue}>Returned to clients to encourage repeat bookings</td>
-              </tr>
-              <tr>
-                <td className={styles.featureName}>Payment Processing</td>
-                <td className={styles.featureValue}>{Math.round(COMMISSION_RATES.PAYMENT * 100)}%</td>
-                <td className={styles.featureValue}>Secure transactions & weekly payouts every Friday</td>
-              </tr>
-              <tr className={styles.totalRow}>
-                <td className={styles.featureName}>Total</td>
-                <td className={styles.featureValue}>{Math.round(COMMISSION_RATES.TOTAL * 100)}%</td>
-                <td className={styles.featureValue}>Only on completed bookings</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile Accordion */}
-        <div className={styles.mobileAccordion}>
-          <AccordionItem title={`Platform Fee — ${Math.round(COMMISSION_RATES.PLATFORM * 100)}%`}>
-            <p>Marketing, advertising, technology & continuous improvements</p>
-          </AccordionItem>
-          <AccordionItem title={`Client Cashback — ${Math.round(COMMISSION_RATES.CASHBACK * 100)}%`}>
-            <p>Returned to clients to encourage repeat bookings</p>
-          </AccordionItem>
-          <AccordionItem title={`Payment Processing — ${Math.round(COMMISSION_RATES.PAYMENT * 100)}%`}>
-            <p>Secure transactions & weekly payouts every Friday</p>
-          </AccordionItem>
-          <div className={styles.totalBanner}>
-            <strong>Total: {Math.round(COMMISSION_RATES.TOTAL * 100)}%</strong> — Only on completed bookings
-          </div>
-        </div>
-      </div>
-
-      {/* Why We're Different */}
-      <div className={styles.comparisonSection}>
-        <h2 className={styles.comparisonTitle}>Why Choose StylrSA?</h2>
-
-        {/* Desktop Table */}
         <div className={styles.tableWrapper}>
           <table className={styles.comparisonTable}>
             <thead>
               <tr>
                 <th className={styles.featureHeader}>Feature</th>
-                <th className={`${styles.planHeader} ${styles.highlightHeader}`}>StylrSA</th>
-                <th className={styles.planHeader}>Competitors</th>
+                {APP_PLANS.filter(plan => plan.code !== 'FREE').map(plan => (
+                  <th key={plan.code} className={styles.planHeader}>
+                    {plan.name}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className={styles.featureName}>Listing Fee</td>
-                <td className={`${styles.featureValue} ${styles.highlightColumn}`}><span className={styles.checkIcon}>✓</span> FREE</td>
-                <td className={styles.featureValue}>R399 - R1,500/month</td>
+                <td className={styles.featureName}>Monthly Price</td>
+                {APP_PLANS.filter(plan => plan.code !== 'FREE').map(plan => (
+                  <td key={plan.code} className={styles.featureValue}>{plan.price}</td>
+                ))}
               </tr>
               <tr className={styles.evenRow}>
                 <td className={styles.featureName}>Service Listings</td>
-                <td className={`${styles.featureValue} ${styles.highlightColumn}`}><span className={styles.checkIcon}>✓</span> Unlimited</td>
-                <td className={styles.featureValue}>Limited by plan</td>
+                {APP_PLANS.filter(plan => plan.code !== 'FREE').map(plan => (
+                  <td key={plan.code} className={styles.featureValue}>Unlimited</td>
+                ))}
               </tr>
               <tr>
-                <td className={styles.featureName}>Pay Without Clients</td>
-                <td className={`${styles.featureValue} ${styles.highlightColumn}`}><span className={styles.checkIcon}>✓</span> Never</td>
-                <td className={styles.featureValue}>Yes, every month</td>
+                <td className={styles.featureName}>Visibility Boost</td>
+                {APP_PLANS.filter(plan => plan.code !== 'FREE').map(plan => (
+                  <td key={plan.code} className={styles.featureValue}>
+                    {plan.visibilityWeight}x
+                  </td>
+                ))}
               </tr>
               <tr className={styles.evenRow}>
-                <td className={styles.featureName}>Client Cashback</td>
-                <td className={`${styles.featureValue} ${styles.highlightColumn}`}><span className={styles.checkIcon}>✓</span> 5% back</td>
-                <td className={styles.featureValue}><span className={styles.crossIcon}>—</span></td>
+                <td className={styles.featureName}>Booking Commission</td>
+                {APP_PLANS.filter(plan => plan.code !== 'FREE').map(plan => (
+                  <td key={plan.code} className={styles.featureValue}>
+                    None (0%)
+                  </td>
+                ))}
               </tr>
               <tr>
-                <td className={styles.featureName}>Weekly Payouts</td>
-                <td className={`${styles.featureValue} ${styles.highlightColumn}`}><span className={styles.checkIcon}>✓</span> Every Friday</td>
-                <td className={styles.featureValue}>Varies</td>
-              </tr>
-              <tr className={styles.evenRow}>
-                <td className={styles.featureName}>Risk</td>
-                <td className={`${styles.featureValue} ${styles.highlightColumn}`}><span className={styles.checkIcon}>✓</span> Zero</td>
-                <td className={styles.featureValue}>Pay even with no clients</td>
+                <td className={styles.featureName}>Support Level</td>
+                <td className={styles.featureValue}>Priority</td>
+                <td className={styles.featureValue}>Dedicated</td>
+                <td className={styles.featureValue}>Premium</td>
+                <td className={styles.featureValue}>White-glove</td>
               </tr>
             </tbody>
           </table>
-        </div>
-
-        {/* Mobile Accordion */}
-        <div className={styles.mobileAccordion}>
-          <AccordionItem title="Listing Fee">
-            <div className={styles.comparisonRow}>
-              <div className={styles.comparisonUs}>
-                <span className={styles.checkIcon}>✓</span> StylrSA: <strong>FREE</strong>
-              </div>
-              <div className={styles.comparisonThem}>Others: R399 - R1,500/month</div>
-            </div>
-          </AccordionItem>
-          <AccordionItem title="Service Listings">
-            <div className={styles.comparisonRow}>
-              <div className={styles.comparisonUs}>
-                <span className={styles.checkIcon}>✓</span> StylrSA: <strong>Unlimited</strong>
-              </div>
-              <div className={styles.comparisonThem}>Others: Limited by plan</div>
-            </div>
-          </AccordionItem>
-          <AccordionItem title="Pay Without Clients">
-            <div className={styles.comparisonRow}>
-              <div className={styles.comparisonUs}>
-                <span className={styles.checkIcon}>✓</span> StylrSA: <strong>Never</strong>
-              </div>
-              <div className={styles.comparisonThem}>Others: Yes, every month</div>
-            </div>
-          </AccordionItem>
-          <AccordionItem title="Client Cashback">
-            <div className={styles.comparisonRow}>
-              <div className={styles.comparisonUs}>
-                <span className={styles.checkIcon}>✓</span> StylrSA: <strong>5% back</strong>
-              </div>
-              <div className={styles.comparisonThem}>Others: None</div>
-            </div>
-          </AccordionItem>
-          <AccordionItem title="Weekly Payouts">
-            <div className={styles.comparisonRow}>
-              <div className={styles.comparisonUs}>
-                <span className={styles.checkIcon}>✓</span> StylrSA: <strong>Every Friday</strong>
-              </div>
-              <div className={styles.comparisonThem}>Others: Varies</div>
-            </div>
-          </AccordionItem>
-          <AccordionItem title="Risk">
-            <div className={styles.comparisonRow}>
-              <div className={styles.comparisonUs}>
-                <span className={styles.checkIcon}>✓</span> StylrSA: <strong>Zero</strong>
-              </div>
-              <div className={styles.comparisonThem}>Others: Pay even with no clients</div>
-            </div>
-          </AccordionItem>
         </div>
       </div>
 
@@ -235,32 +154,28 @@ export default function PricingPage() {
         <h2 className={styles.faqTitle}>Frequently Asked Questions</h2>
         <div className={styles.faqGrid}>
           <div className={styles.faqItem}>
-            <h4>Is it really free to list?</h4>
-            <p>Yes! Creating your salon profile and listing all your services is 100% free. No monthly fees, no setup costs, no hidden charges.</p>
+            <h4>What's included in all plans?</h4>
+            <p>All plans include unlimited service listings, unlimited gallery images, full analytics dashboard, and zero commission on bookings.</p>
           </div>
           <div className={styles.faqItem}>
-            <h4>When do I pay the commission?</h4>
-            <p>Only when a client books and completes an appointment through our platform. If you don&apos;t get clients, you pay nothing.</p>
+            <h4>What happens when I upgrade?</h4>
+            <p>Your visibility increases immediately, search ranking improves, and you get access to premium features like dedicated support.</p>
           </div>
           <div className={styles.faqItem}>
-            <h4>Why {Math.round(COMMISSION_RATES.TOTAL * 100)}% commission?</h4>
-            <p>
-              {Math.round(COMMISSION_RATES.PLATFORM * 100)}% covers the platform, marketing & tech.
-              {Math.round(COMMISSION_RATES.CASHBACK * 100)}% goes back to clients as cashback.
-              {Math.round(COMMISSION_RATES.PAYMENT * 100)}% covers secure payment processing.
-            </p>
+            <h4>Can I cancel my plan anytime?</h4>
+            <p>Yes, cancel anytime with no penalties. You'll keep access until the end of your billing period. No long-term contracts required.</p>
           </div>
           <div className={styles.faqItem}>
-            <h4>When do I get paid?</h4>
-            <p>Payouts are processed every Friday. Your earnings from completed bookings will be deposited directly to your account.</p>
+            <h4>How does the visibility boost work?</h4>
+            <p>Higher plans appear first in search results, get featured placement, and receive priority in recommendations. ESSENTIAL gets 3x boost, up to ELITE's 10x boost.</p>
           </div>
           <div className={styles.faqItem}>
-            <h4>Why not monthly subscriptions?</h4>
-            <p>Most service providers told us they&apos;re frustrated paying for platforms that don&apos;t deliver clients. We only succeed when you succeed.</p>
+            <h4>Do you charge booking commissions?</h4>
+            <p>No! All plans have ZERO commission on bookings. You keep 100% of your earnings.</p>
           </div>
           <div className={styles.faqItem}>
-            <h4>How many services can I list?</h4>
-            <p>Unlimited! List as many services as you offer. There are no limits on services, images, or team members.</p>
+            <h4>How do I change my plan?</h4>
+            <p>Click "Choose Plan" above, or upgrade/downgrade from your salon dashboard anytime. Changes take effect immediately.</p>
           </div>
         </div>
       </div>
@@ -268,10 +183,7 @@ export default function PricingPage() {
       {/* CTA */}
       <div className={styles.ctaSection}>
         <h2>Ready to Grow Your Business?</h2>
-        <p>Join thousands of service providers who only pay when they earn.</p>
-        <Link href="/create-salon" className={styles.cta}>
-          Get Started — Free
-        </Link>
+        <p>Select a plan above to get started with StylrSA</p>
       </div>
     </div>
   );

@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, FormEvent, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, FormEvent, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import styles from './CreateSalon.module.css';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
 import PageNav from '@/components/PageNav';
-import { COMMISSION_RATES } from '@/constants/plans';
+import { APP_PLANS, PLAN_BY_CODE, PlanCode } from '@/constants/plans';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import MapboxMap from '@/components/MapboxMap';
@@ -36,7 +36,7 @@ interface SalonDraft {
   savedAt: string;
 }
 
-export default function CreateSalonPage() {
+function CreateSalonPageContent() {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -49,8 +49,6 @@ export default function CreateSalonPage() {
   const [description, setDescription] = useState('');
   const [bookingType, setBookingType] = useState<'ONSITE' | 'MOBILE' | 'BOTH'>('ONSITE');
   const [mobileFee, setMobileFee] = useState('');
-  const [locationsData, setLocationsData] = useState<Record<string, string[]>>({});
-  const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [addrQuery, setAddrQuery] = useState('');
@@ -66,8 +64,11 @@ export default function CreateSalonPage() {
     Object.fromEntries(days.map(d => [d, { open: '09:00', close: '17:00', isOpen: true }])) as Record<string, { open: string, close: string, isOpen: boolean }>
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanCode | null>(null);
+  const [hasConfirmedPayment, setHasConfirmedPayment] = useState(false);
   const { authStatus, user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Save draft to localStorage
   const saveDraft = useCallback(() => {
@@ -161,34 +162,17 @@ export default function CreateSalonPage() {
     }
   }, [loadDraft]);
 
-  // Fetch locations data from API
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const response = await fetch('/api/locations');
-        if (response.ok) {
-          const data = await response.json();
-          setLocationsData(data);
-        }
-      } catch (error) {
-        logger.error('Failed to fetch locations data:', error);
-      }
-    };
-    fetchLocations();
-  }, []);
 
-  // Update available cities when province changes
+  // Get plan from URL params
   useEffect(() => {
-    if (province && locationsData[province]) {
-      setAvailableCities(locationsData[province]);
-      // Reset city if it's not in the new province's cities
-      if (city && !locationsData[province].includes(city)) {
-        setCity('');
+    const planParam = searchParams.get('plan');
+    if (planParam) {
+      const validPlan = APP_PLANS.find(p => p.code === planParam.toUpperCase());
+      if (validPlan && validPlan.code !== 'FREE') {
+        setSelectedPlan(validPlan.code as PlanCode);
       }
-    } else {
-      setAvailableCities([]);
     }
-  }, [province, locationsData, city]);
+  }, [searchParams]);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -243,8 +227,6 @@ export default function CreateSalonPage() {
     }
   }, [authStatus, router, user]);
 
-  const SA_PROVINCES = Object.keys(locationsData).sort();
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     console.log('handleSubmit called');
@@ -267,6 +249,18 @@ export default function CreateSalonPage() {
 
       const isValidUrl = (value: string) => { try { new URL(value); return true; } catch { return false; } };
 
+      // Validate package selection
+      if (!selectedPlan) {
+        toast.error('Please select a package to continue');
+        return;
+      }
+
+      // Validate WhatsApp confirmation
+      if (!hasConfirmedPayment) {
+        toast.error('Please confirm that you have sent proof of payment to WhatsApp');
+        return;
+      }
+
       const payload: any = {
         name,
         address,
@@ -279,7 +273,8 @@ export default function CreateSalonPage() {
         offersMobile: bookingType !== 'ONSITE',
         latitude,
         longitude,
-        planCode: 'FREE', // Always FREE plan now
+        planCode: selectedPlan,
+        hasSentProof: true, // User confirmed payment proof sent
       };
       if (website && website.trim().length > 0 && isValidUrl(website.trim())) {
         payload.website = website.trim();
@@ -358,21 +353,85 @@ export default function CreateSalonPage() {
       <h1 className={styles.title}>Create Your Salon Profile</h1>
 
       <div className={styles.card}>
-        {/* Commission Model Info Banner */}
-        <div className={styles.commissionBanner}>
-          <div className={styles.bannerIcon}>🎉</div>
-          <div className={styles.bannerContent}>
-            <h3>100% FREE to List!</h3>
-            <p>
-              List your salon and services completely free. We only earn when you earn —
-              a {Math.round(COMMISSION_RATES.TOTAL * 100)}% commission on completed bookings
-              ({Math.round(COMMISSION_RATES.PLATFORM * 100)}% platform + {Math.round(COMMISSION_RATES.CASHBACK * 100)}% client cashback + {Math.round(COMMISSION_RATES.PAYMENT * 100)}% payment processing).
-            </p>
-            <p className={styles.bannerHighlight}>
-              <strong>Unlike competitors charging R399-R1,500/month</strong> — you pay nothing unless you get clients!
-            </p>
+        {/* Package Selection Section */}
+        {!selectedPlan ? (
+          <div className={styles.packageSelection}>
+            <h2 className={styles.sectionTitle}>Select Your Package</h2>
+            <p className={styles.sectionSubtitle}>Choose a plan to get started. You can upgrade or downgrade anytime.</p>
+
+            <div className={styles.plansGrid}>
+              {APP_PLANS.filter(plan => plan.code !== 'FREE').map((plan) => (
+                <div
+                  key={plan.code}
+                  className={`${styles.planCard} ${selectedPlan === plan.code ? styles.planCardSelected : ''} ${plan.popular ? styles.planCardPopular : ''}`}
+                  onClick={() => setSelectedPlan(plan.code as PlanCode)}
+                >
+                  {plan.popular && (
+                    <div className={styles.popularBadge}>⭐ Most Popular</div>
+                  )}
+                  <h3 className={styles.planName}>{plan.name}</h3>
+                  <div className={styles.planPrice}>
+                    {plan.price}
+                    <span className={styles.planPriceperiod}>/month</span>
+                  </div>
+                  {plan.originalPrice && (
+                    <div className={styles.planOriginalPrice}>{plan.originalPrice}/month</div>
+                  )}
+                  <p className={styles.planDescription}>{plan.description}</p>
+                  <ul className={styles.planFeatures}>
+                    {plan.features.slice(0, 4).map((feature, idx) => (
+                      <li key={idx}>✓ {feature}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Selected Package Banner */}
+            <div className={styles.selectedPackageBanner}>
+              <div className={styles.bannerContent}>
+                <h3>Selected Package: {PLAN_BY_CODE[selectedPlan].name}</h3>
+                <p>
+                  <strong>{PLAN_BY_CODE[selectedPlan].price}/month</strong> • {PLAN_BY_CODE[selectedPlan].visibilityWeight}x visibility boost • 0% commission on bookings
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedPlan(null);
+                    setHasConfirmedPayment(false);
+                  }}
+                  className={styles.changePlanButton}
+                >
+                  Change Package
+                </button>
+              </div>
+            </div>
+
+            {/* WhatsApp Payment Confirmation */}
+            <div className={styles.paymentConfirmation}>
+              <h3 className={styles.sectionTitle}>Payment Confirmation</h3>
+              <div className={styles.paymentInstructions}>
+                <p><strong>Bank Transfer Details:</strong></p>
+                <p>Please transfer <strong>{PLAN_BY_CODE[selectedPlan].price}</strong> and send proof of payment to:</p>
+                <p className={styles.whatsappNumber}>
+                  <strong>WhatsApp: 078 777 0524</strong>
+                </p>
+                <p className={styles.paymentNote}>Include your salon name in the payment reference.</p>
+              </div>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={hasConfirmedPayment}
+                  onChange={(e) => setHasConfirmedPayment(e.target.checked)}
+                  className={styles.checkbox}
+                />
+                <span>I confirm that I have sent proof of payment to the WhatsApp number above</span>
+              </label>
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
@@ -399,188 +458,161 @@ export default function CreateSalonPage() {
           </div>
           <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
             <label htmlFor="addrQuery">Find on Map (Required for location-based search)</label>
-            <input
-              id="addrQuery"
-              type="text"
-              value={addrQuery}
-              onChange={async (e) => {
-                const v = e.target.value;
-                setAddrQuery(v);
-                if (v.trim().length > 2) {
-                  try {
-                    const results = await forwardGeocode(v, { country: 'za', limit: 5 });
-                    setAddrSuggestions(results);
-                    setShowAddrSuggestions(true);
-                  } catch {
+            <div style={{ position: 'relative' }}>
+              <input
+                id="addrQuery"
+                type="text"
+                value={addrQuery}
+                onChange={async (e) => {
+                  const v = e.target.value;
+                  setAddrQuery(v);
+                  if (v.trim().length > 2) {
+                    try {
+                      console.log('Searching for:', v);
+                      const results = await forwardGeocode(v, { country: 'za', limit: 5 });
+                      console.log('Mapbox results:', results);
+                      setAddrSuggestions(results);
+                      setShowAddrSuggestions(results.length > 0);
+                    } catch (error) {
+                      console.error('Mapbox search error:', error);
+                      setAddrSuggestions([]);
+                      setShowAddrSuggestions(false);
+                    }
+                  } else {
                     setAddrSuggestions([]);
                     setShowAddrSuggestions(false);
                   }
-                } else {
-                  setAddrSuggestions([]);
-                  setShowAddrSuggestions(false);
-                }
-              }}
-              placeholder="Search for your exact address (e.g., 123 Main St, Johannesburg)"
-              className={styles.input}
-            />
-            {showAddrSuggestions && addrSuggestions.length > 0 && (
-              <ul
-                ref={suggestionsRef}
-                style={{
-                  listStyle: 'none',
-                  margin: '4px 0 0 0',
-                  padding: 0,
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 8,
-                  backgroundColor: 'var(--color-surface-elevated, var(--color-bg))',
-                  maxHeight: 250,
-                  overflowY: 'auto',
-                  position: 'absolute',
-                  zIndex: 100,
-                  width: '100%',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                }}>
-                {addrSuggestions.map((s: GeocodingResult) => (
-                  <li
-                    key={s.place_id}
-                    style={{
-                      padding: '8px 12px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid var(--color-border)',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-light)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    onClick={() => {
-                      setAddress(s.display_name);
-                      setLatitude(parseFloat(s.lat));
-                      setLongitude(parseFloat(s.lon));
-                      setAddrQuery(s.display_name);
-                      setShowAddrSuggestions(false);
+                }}
+                placeholder="Search for your exact address (e.g., 123 Main St, Johannesburg)"
+                className={styles.input}
+              />
+              {showAddrSuggestions && addrSuggestions.length > 0 && (
+                <ul
+                  ref={suggestionsRef}
+                  style={{
+                    listStyle: 'none',
+                    margin: 0,
+                    padding: 0,
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 8,
+                    backgroundColor: 'var(--color-surface-elevated, var(--color-bg))',
+                    maxHeight: 250,
+                    overflowY: 'auto',
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    marginTop: 4,
+                    zIndex: 100,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  }}>
+                  {addrSuggestions.map((s: GeocodingResult) => (
+                    <li
+                      key={s.place_id}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid var(--color-border)',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-light, rgba(245, 25, 87, 0.1))'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      onClick={() => {
+                        setAddress(s.display_name);
+                        setLatitude(parseFloat(s.lat));
+                        setLongitude(parseFloat(s.lon));
+                        setAddrQuery(s.display_name);
+                        setShowAddrSuggestions(false);
 
-                      // Extract and auto-populate location fields from address details
-                      if (s.address) {
-                        const addr = s.address;
+                        // Extract and auto-populate location fields from address details
+                        if (s.address) {
+                          const addr = s.address;
 
-                        // Extract province/state
-                        const provinceValue = addr.state || '';
-                        if (provinceValue) {
-                          // Try to match with SA provinces
-                          const matchedProvince = SA_PROVINCES.find(p =>
-                            provinceValue.toLowerCase().includes(p.toLowerCase()) ||
-                            p.toLowerCase().includes(provinceValue.toLowerCase())
-                          );
-                          if (matchedProvince) {
-                            setProvince(matchedProvince);
+                          // Extract province/state directly
+                          const provinceValue = addr.state || '';
+                          if (provinceValue) {
+                            setProvince(provinceValue);
                           }
+
+                          // Extract city
+                          const cityValue = addr.city || addr.town || '';
+                          if (cityValue) {
+                            setCity(cityValue);
+                          }
+
+                          // Extract town/suburb - fallback to city if not available
+                          const townValue = addr.suburb || addr.city || addr.town || '';
+                          if (townValue) {
+                            setTown(townValue);
+                          }
+
+                          // Extract postal code
+                          const postalValue = addr.postcode || '';
+                          if (postalValue) {
+                            setPostalCode(postalValue);
+                          }
+
+                          // Fields are editable, just mark as auto-filled
+                          setFieldsLocked(true);
                         }
 
-                        // Extract city
-                        const cityValue = addr.city || addr.town || '';
-                        if (cityValue) {
-                          setCity(cityValue);
-                        }
-
-                        // Extract town/suburb - fallback to city if not available
-                        const townValue = addr.suburb || addr.city || addr.town || '';
-                        if (townValue) {
-                          setTown(townValue);
-                        }
-
-                        // Extract postal code
-                        const postalValue = addr.postcode || '';
-                        if (postalValue) {
-                          setPostalCode(postalValue);
-                        }
-
-                        // Lock the fields after auto-population
-                        setFieldsLocked(true);
-                      }
-
-                      toast.success('Location set successfully! 📍 Fields auto-populated.');
-                    }}
-                  >
-                    {s.display_name}
-                  </li>
-                ))}
-              </ul>
-            )}
+                        toast.success('Location set successfully! 📍 Fields auto-populated and editable.');
+                      }}
+                    >
+                      {s.display_name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             {latitude && longitude && (
               <div style={{ marginTop: 8, padding: 8, backgroundColor: 'var(--color-success-bg)', border: '1px solid var(--color-success)', borderRadius: 4, fontSize: '0.875rem' }}>
                 ✓ Location set: {latitude.toFixed(6)}, {longitude.toFixed(6)}
               </div>
             )}
             {fieldsLocked && (
-              <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                  📍 Location fields auto-populated from map
+              <div style={{ marginTop: 8, padding: '8px 12px', backgroundColor: 'var(--color-info-bg, #e3f2fd)', border: '1px solid var(--color-info, #2196f3)', borderRadius: '4px' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-strong)' }}>
+                  📍 Location fields have been auto-populated from the map. You can edit them if needed.
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setFieldsLocked(false)}
-                  style={{
-                    padding: '4px 12px',
-                    fontSize: '0.875rem',
-                    backgroundColor: 'var(--color-primary)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Edit Location
-                </button>
               </div>
             )}
           </div>
           <div className={styles.inputGroup}>
             <label htmlFor="province">Province</label>
-            <select
+            <input
               id="province"
+              type="text"
               value={province}
               onChange={(e) => setProvince(e.target.value)}
               required
-              disabled={fieldsLocked}
+              placeholder="e.g., Gauteng, Western Cape"
               className={styles.input}
-              style={{ opacity: fieldsLocked ? 0.7 : 1 }}
-            >
-              <option value="" disabled>Select a province</option>
-              {SA_PROVINCES.map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+            />
+            {fieldsLocked && (
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-soft)', marginTop: '4px' }}>
+                Auto-filled from map (editable)
+              </span>
+            )}
           </div>
           <div className={styles.inputGroup}>
             <label htmlFor="city">City/Town</label>
-            {fieldsLocked ? (
-              <input
-                id="city"
-                type="text"
-                value={city}
-                readOnly
-                disabled
-                className={styles.input}
-                style={{ opacity: 0.7 }}
-              />
-            ) : (
-              <select
-                id="city"
-                value={city}
-                onChange={(e) => {
-                  const selectedCity = e.target.value;
-                  setCity(selectedCity);
-                  setTown(selectedCity);
-                }}
-                required
-                disabled={!province}
-                className={styles.input}
-              >
-                <option value="" disabled>
-                  {!province ? 'Select a province first' : 'Select a city/town'}
-                </option>
-                {availableCities.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+            <input
+              id="city"
+              type="text"
+              value={city}
+              onChange={(e) => {
+                const selectedCity = e.target.value;
+                setCity(selectedCity);
+                setTown(selectedCity);
+              }}
+              required
+              placeholder="e.g., Johannesburg, Cape Town, Hartbeespoort"
+              className={styles.input}
+            />
+            {fieldsLocked && (
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-soft)', marginTop: '4px' }}>
+                Auto-filled from map (editable)
+              </span>
             )}
           </div>
           <div className={styles.inputGroup}>
@@ -591,11 +623,14 @@ export default function CreateSalonPage() {
               value={postalCode}
               onChange={(e) => setPostalCode(e.target.value)}
               required
-              readOnly={fieldsLocked}
-              disabled={fieldsLocked}
+              placeholder="e.g., 2000, 8001"
               className={styles.input}
-              style={{ opacity: fieldsLocked ? 0.7 : 1 }}
             />
+            {fieldsLocked && (
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-soft)', marginTop: '4px' }}>
+                Auto-filled from map (editable)
+              </span>
+            )}
           </div>
           {latitude && longitude && (
             <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
@@ -735,5 +770,13 @@ export default function CreateSalonPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function CreateSalonPage() {
+  return (
+    <Suspense fallback={<div className={styles.container}><PageNav /><LoadingSpinner /></div>}>
+      <CreateSalonPageContent />
+    </Suspense>
   );
 }
