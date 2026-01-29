@@ -1,10 +1,9 @@
-/* ===== FOOTER - MODERN ORGANIZED DESIGN ===== */
+/* ===== FOOTER - MODERN DARK GREY DESIGN ===== */
 
 .footer {
-  background: linear-gradient(180deg, var(--color-surface-subtle) 0%, var(--color-surface) 100%);
-  color: var(--color-text-strong);
+  background: #2d2d35;
+  color: #ffffff;
   margin-top: auto;
-  border-top: 1px solid var(--color-border);
 }
 
 /* ===== MAIN CONTENT GRID ===== */
@@ -36,11 +35,12 @@
 .logo {
   height: 40px;
   width: auto;
+  filter: brightness(0) invert(1);
 }
 
 .tagline {
   font-size: 0.9rem;
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.5;
   margin: 0;
 }
@@ -59,11 +59,11 @@
   gap: 0.5rem;
   font-size: 0.8rem;
   font-weight: 500;
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .trustBadge svg {
-  color: var(--color-secondary, #3ab7a5);
+  color: rgba(255, 255, 255, 0.9);
   flex-shrink: 0;
 }
 
@@ -85,7 +85,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--color-text-strong);
+  color: #ffffff;
   margin: 0 0 0.25rem 0;
 }
 
@@ -104,14 +104,14 @@
 
 .linkList a {
   font-size: 0.875rem;
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   transition: color 0.2s ease;
   display: inline-block;
 }
 
 .linkList a:hover {
-  color: var(--color-primary);
+  color: #ffffff;
 }
 
 /* ===== CONTACT SECTION ===== */
@@ -132,25 +132,25 @@
   align-items: center;
   gap: 0.625rem;
   font-size: 0.85rem;
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .contactItem svg {
-  color: var(--color-primary);
+  color: rgba(255, 255, 255, 0.9);
   flex-shrink: 0;
 }
 
 a.contactItem:hover {
-  color: var(--color-primary);
+  color: #ffffff;
 }
 
 /* ===== APP BANNER ===== */
 .appBanner {
-  background: linear-gradient(135deg, rgba(245, 25, 87, 0.06) 0%, rgba(58, 183, 165, 0.06) 100%);
-  border-top: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .appBannerContent {
@@ -173,7 +173,7 @@ a.contactItem:hover {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: var(--color-text-strong);
+  color: #ffffff;
 }
 
 .appText strong {
@@ -181,7 +181,7 @@ a.contactItem:hover {
 }
 
 .appText span {
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* ===== BOTTOM BAR ===== */
@@ -193,11 +193,12 @@ a.contactItem:hover {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .copyright {
   font-size: 0.8rem;
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.6);
   margin: 0;
 }
 
@@ -208,22 +209,22 @@ a.contactItem:hover {
 
 .legalLinks a {
   font-size: 0.8rem;
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.6);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .legalLinks a:hover {
-  color: var(--color-primary);
+  color: #ffffff;
 }
 
-/* ===== DARK MODE ===== */
+/* ===== DARK MODE - Same styling ===== */
 [data-theme='dark'] .footer {
-  background: linear-gradient(180deg, var(--color-surface-subtle) 0%, var(--color-surface) 100%);
+  background: #1a1a24;
 }
 
 [data-theme='dark'] .appBanner {
-  background: linear-gradient(135deg, rgba(245, 25, 87, 0.08) 0%, rgba(58, 183, 165, 0.08) 100%);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 /* ===== TABLET RESPONSIVE ===== */

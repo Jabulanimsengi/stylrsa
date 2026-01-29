@@ -56,7 +56,7 @@ export default function Footer() {
         <div className={styles.brandSection}>
           <Link href="/" className={styles.logoLink}>
             <Image
-              src="/logo-transparent.png"
+              src="/logo-white.png"
               alt="Stylr SA Logo"
               width={160}
               height={40}
@@ -121,7 +121,6 @@ export default function Footer() {
             <h3 className={styles.columnTitle}>Explore</h3>
             <ul className={styles.linkList}>
               <li><Link href="/salons">Find Salons</Link></li>
-              <li><Link href="/services">Browse Services</Link></li>
               <li><Link href="/products">Shop Products</Link></li>
               <li><Link href="/promotions">View Deals</Link></li>
               <li><Link href="/talent">Find Jobs</Link></li>

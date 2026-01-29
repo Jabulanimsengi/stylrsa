@@ -60,7 +60,7 @@
 
 .upgradeButton {
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, #F51957 0%, #d4144c 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #000000 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -72,7 +72,7 @@
 
 .upgradeButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 25, 87, 0.3);
+  box-shadow: 0 4px 12px rgba(29, 29, 31, 0.3);
 }
 
 /* Upload Area */
@@ -96,7 +96,7 @@
 
 .uploadButton:hover {
   background: white;
-  border-color: #F51957;
+  border-color: var(--color-primary);
   transform: translateY(-2px);
 }
 
@@ -149,7 +149,7 @@
 }
 
 .removeButton:hover {
-  background: #F51957;
+  background: var(--color-primary);
   color: white;
 }
 
@@ -187,7 +187,7 @@
 .select:focus,
 .textarea:focus {
   outline: none;
-  border-color: #F51957;
+  border-color: var(--color-primary);
 }
 
 .textarea {
@@ -214,13 +214,13 @@
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(135deg, #F51957 0%, #d4144c 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #000000 100%);
   transition: width 0.3s;
 }
 
 .submitButton {
   padding: 1rem;
-  background: linear-gradient(135deg, #F51957 0%, #d4144c 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #000000 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -232,7 +232,7 @@
 
 .submitButton:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 25, 87, 0.3);
+  box-shadow: 0 4px 12px rgba(29, 29, 31, 0.3);
 }
 
 .submitButton:disabled {
@@ -275,7 +275,7 @@
   content: '✓';
   position: absolute;
   left: 0;
-  color: #F51957;
+  color: var(--color-primary);
   font-weight: 700;
 }
 

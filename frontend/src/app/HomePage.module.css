@@ -18,98 +18,261 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Hero Section - Premium Design */
+/* Hero Section - Modern Art Background with Mesh Gradients */
 .hero {
   position: relative;
-  width: calc(100% + 2 * var(--space-lg));
-  margin: 0 calc(-1 * var(--space-lg)) clamp(1rem, 3vw, 1.5rem) calc(-1 * var(--space-lg));
-  /* Stable aspect-ratio prevents CLS - no more min-height variability */
-  aspect-ratio: 21 / 9;
-  min-height: 280px;
-  max-height: 420px;
+  width: 100%;
+  margin: 0 0 clamp(0.5rem, 1.5vw, 1rem) 0;
+  padding: clamp(3rem, 8vw, 5rem) clamp(1rem, 3vw, 2rem);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: visible;
-  border-radius: 0;
-  color: var(--hero-text-color);
-  isolation: isolate;
-  /* Contain paint to prevent reflows */
-  contain: layout paint;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+  color: var(--color-text-strong);
+}
+
+/* Modern Art - Gradient Blob 1 (Top Left) */
+.heroBlob1 {
+  position: absolute;
+  top: -15%;
+  left: -10%;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(
+    circle at 30% 40%,
+    rgba(29, 29, 31, 0.08) 0%,
+    rgba(60, 60, 62, 0.05) 35%,
+    rgba(140, 140, 142, 0.02) 70%,
+    transparent 100%
+  );
+  border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
+  filter: blur(40px);
+  z-index: 0;
+  animation: float1 20s ease-in-out infinite;
+}
+
+/* Modern Art - Gradient Blob 2 (Top Right) */
+.heroBlob2 {
+  position: absolute;
+  top: -5%;
+  right: -8%;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(
+    circle at 60% 50%,
+    rgba(29, 29, 31, 0.06) 0%,
+    rgba(70, 70, 72, 0.04) 40%,
+    rgba(150, 150, 152, 0.02) 75%,
+    transparent 100%
+  );
+  border-radius: 47% 53% 41% 59% / 62% 44% 56% 38%;
+  filter: blur(35px);
+  z-index: 0;
+  animation: float2 18s ease-in-out infinite;
+}
+
+/* Modern Art - Gradient Blob 3 (Bottom Center) */
+.heroBlob3 {
+  position: absolute;
+  bottom: -12%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(29, 29, 31, 0.05) 0%,
+    rgba(80, 80, 82, 0.03) 45%,
+    rgba(160, 160, 162, 0.015) 80%,
+    transparent 100%
+  );
+  border-radius: 41% 59% 48% 52% / 53% 61% 39% 47%;
+  filter: blur(45px);
+  z-index: 0;
+  animation: float3 22s ease-in-out infinite;
+}
+
+/* Modern Art - Geometric Line Pattern 1 */
+.heroGeometric1 {
+  position: absolute;
+  top: 10%;
+  right: 15%;
+  width: 200px;
+  height: 200px;
+  border: 1px solid rgba(29, 29, 31, 0.08);
+  border-radius: 12px;
+  transform: rotate(15deg);
+  z-index: 1;
+  animation: rotateGeometric1 25s linear infinite;
+}
+
+/* Modern Art - Geometric Line Pattern 2 */
+.heroGeometric2 {
+  position: absolute;
+  bottom: 15%;
+  left: 12%;
+  width: 150px;
+  height: 150px;
+  border: 1px solid rgba(29, 29, 31, 0.06);
+  border-radius: 50%;
+  z-index: 1;
+  animation: scaleGeometric2 20s ease-in-out infinite;
+}
+
+/* Floating Animations */
+@keyframes float1 {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  33% {
+    transform: translate(30px, -20px) rotate(5deg);
+  }
+  66% {
+    transform: translate(-20px, 15px) rotate(-3deg);
+  }
+}
+
+@keyframes float2 {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  33% {
+    transform: translate(-25px, 20px) rotate(-4deg);
+  }
+  66% {
+    transform: translate(20px, -15px) rotate(6deg);
+  }
+}
+
+@keyframes float3 {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateX(-50%) translateY(-18px) rotate(3deg);
+  }
+  66% {
+    transform: translateX(-50%) translateY(12px) rotate(-4deg);
+  }
+}
+
+@keyframes rotateGeometric1 {
+  0% {
+    transform: rotate(15deg);
+  }
+  50% {
+    transform: rotate(30deg);
+  }
+  100% {
+    transform: rotate(15deg);
+  }
+}
+
+@keyframes scaleGeometric2 {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+  }
+}
+
+/* Dark Mode Support for Modern Art Background */
+[data-theme='dark'] .heroBlob1 {
+  background: radial-gradient(
+    circle at 30% 40%,
+    rgba(245, 245, 247, 0.06) 0%,
+    rgba(200, 200, 202, 0.04) 35%,
+    rgba(150, 150, 152, 0.02) 70%,
+    transparent 100%
+  );
+}
+
+[data-theme='dark'] .heroBlob2 {
+  background: radial-gradient(
+    circle at 60% 50%,
+    rgba(245, 245, 247, 0.05) 0%,
+    rgba(200, 200, 202, 0.03) 40%,
+    rgba(150, 150, 152, 0.015) 75%,
+    transparent 100%
+  );
+}
+
+[data-theme='dark'] .heroBlob3 {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(245, 245, 247, 0.04) 0%,
+    rgba(200, 200, 202, 0.025) 45%,
+    rgba(150, 150, 152, 0.01) 80%,
+    transparent 100%
+  );
+}
+
+[data-theme='dark'] .heroGeometric1 {
+  border-color: rgba(245, 245, 247, 0.06);
+}
+
+[data-theme='dark'] .heroGeometric2 {
+  border-color: rgba(245, 245, 247, 0.05);
+}
+
+[data-theme='dark'] .hero {
+  background: linear-gradient(180deg, #000000 0%, #1D1D1F 100%);
 }
 
 @media (min-width: 1024px) {
   .hero {
-    width: calc(100% + 2 * var(--space-xl));
-    margin-left: calc(-1 * var(--space-xl));
-    margin-right: calc(-1 * var(--space-xl));
-    aspect-ratio: 21 / 9;
-    min-height: 320px;
-    max-height: 420px;
+    padding: clamp(4rem, 10vw, 6rem) clamp(2rem, 5vw, 3rem);
   }
 }
 
 .heroImage {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  /* Optimized for LCP - remove content-visibility which can delay paint */
-  /* Reserve space to prevent CLS */
-  contain-intrinsic-size: auto 350px;
+  display: none; /* Removed for clean minimal design */
 }
 
-/* Enhanced gradient overlay for better text readability */
+/* Removed gradient overlay - not needed without background image */
 .heroGradient {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg,
-      rgba(0, 0, 0, 0.1) 0%,
-      rgba(0, 0, 0, 0.4) 50%,
-      rgba(0, 0, 0, 0.7) 100%);
-  z-index: 1;
+  display: none;
 }
 
-/* Hero Content - Premium styling */
+/* Hero Content - Clean minimal styling */
 .heroContent {
   position: relative;
   z-index: 2;
-  width: min(780px, 100%);
-  padding: clamp(1rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2rem);
+  width: min(680px, 100%);
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(1rem, 2vw, 1.5rem);
+  gap: clamp(1.25rem, 2.5vw, 1.75rem);
   text-align: center;
 }
 
-/* Hero Title - Fresha style: clean, bold */
+/* Hero Title - Clean, bold, dark text */
 .heroTitle {
-  font-size: clamp(1.5rem, 4vw, 2.3rem);
-  font-weight: 800;
-  line-height: 1.1;
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  font-weight: 700;
+  line-height: 1.15;
   margin: 0;
-  color: #fff;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  color: var(--color-text-strong, #1a1a1a);
   text-align: center;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
-/* Hero Subtitle - Fresha style */
+/* Hero Subtitle - Cashback badge */
 .heroSubtitle {
-  font-size: clamp(0.9rem, 2vw, 1.05rem);
+  font-size: clamp(0.875rem, 2vw, 1rem);
   font-weight: 600;
   color: #fff;
   background-color: #10b981;
-  /* Emerald green */
-  padding: 0.5rem 1.25rem;
+  padding: 0.625rem 1.5rem;
   border-radius: 50px;
   text-align: center;
-  margin: 0.25rem 0 0 0;
+  margin: 0;
   max-width: fit-content;
   line-height: 1.4;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
 
 /* Cashback Banner - Eye-catching promo badge */
@@ -154,31 +317,28 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  margin-top: 1rem;
+  gap: 1rem;
 }
 
-/* Fresha-style Search Box - Clean white pill */
+/* Clean Search Box - Prominent and modern */
 .heroSearchBox {
   position: relative;
   width: 100%;
-  max-width: 520px;
+  max-width: 600px;
   display: flex;
   align-items: center;
   background: #fff;
   border-radius: 50px;
   overflow: visible;
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e5e5;
   z-index: 1;
   transition: all 0.3s ease;
 }
 
 .heroSearchBox:focus-within {
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.2),
-    0 0 0 2px var(--color-primary, #F51957);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  border-color: var(--color-primary);
   transform: translateY(-2px);
 }
 
@@ -212,10 +372,10 @@
   color: var(--color-text-muted);
 }
 
-/* Fresha-style Search Button - Pink accent */
+/* Apple-style Search Button */
 .heroSearchButton {
   padding: 0.875rem 1.75rem;
-  background: var(--color-primary, #F51957);
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 50px;
@@ -228,7 +388,7 @@
 }
 
 .heroSearchButton:hover {
-  background: var(--color-primary-hover, #ff2d6f);
+  background: var(--color-primary-hover);
   transform: scale(1.02);
 }
 
@@ -266,7 +426,7 @@
 }
 
 .heroSuggestionItem:hover {
-  background: linear-gradient(135deg, rgba(0, 188, 212, 0.08) 0%, rgba(0, 188, 212, 0.04) 100%);
+  background: var(--color-surface-subtle);
 }
 
 .heroSuggestionTitle {
@@ -281,21 +441,21 @@
 }
 
 .categorySuggestion {
-  background: linear-gradient(135deg, rgba(0, 188, 212, 0.1) 0%, rgba(0, 188, 212, 0.05) 100%);
+  background: var(--color-surface-subtle);
 }
 
 .categorySuggestion:hover {
-  background: linear-gradient(135deg, rgba(0, 188, 212, 0.15) 0%, rgba(0, 188, 212, 0.08) 100%);
+  background: var(--color-border);
 }
 
 .categoryBadge {
   display: inline-flex;
   font-size: 0.65rem;
   font-weight: 700;
-  color: var(--color-primary, #00bcd4);
-  background: rgba(0, 188, 212, 0.12);
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
   padding: 0.25rem 0.6rem;
-  border-radius: 6px;
+  border-radius: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   width: fit-content;
@@ -470,16 +630,48 @@
 
   .hero {
     margin-top: 0;
-    padding-top: 60px;
-    /* Navbar height compensation */
-    /* Adjusted aspect ratio to show more content */
-    aspect-ratio: 4 / 3;
-    min-height: 300px;
-    /* Increased to account for padding */
-    max-height: 400px;
+    padding: clamp(2rem, 6vw, 3rem) clamp(1rem, 3vw, 1.5rem);
     width: 100%;
     margin-left: 0;
     margin-right: 0;
+  }
+
+  /* Scale down background art on mobile */
+  .heroBlob1 {
+    width: 280px;
+    height: 280px;
+    top: -8%;
+    left: -15%;
+    filter: blur(30px);
+  }
+
+  .heroBlob2 {
+    width: 240px;
+    height: 240px;
+    top: -3%;
+    right: -12%;
+    filter: blur(25px);
+  }
+
+  .heroBlob3 {
+    width: 320px;
+    height: 320px;
+    bottom: -8%;
+    filter: blur(35px);
+  }
+
+  .heroGeometric1 {
+    width: 120px;
+    height: 120px;
+    top: 8%;
+    right: 10%;
+  }
+
+  .heroGeometric2 {
+    width: 90px;
+    height: 90px;
+    bottom: 12%;
+    left: 8%;
   }
 
   .heroContent {
@@ -590,13 +782,9 @@
   }
 
   .hero {
-    aspect-ratio: 4 / 3;
-    min-height: 280px;
-    /* Increased to account for padding */
-    max-height: 380px;
     margin-top: 0;
-    padding-top: 60px;
-    margin-bottom: clamp(0.75rem, 2vw, 1rem);
+    padding: clamp(1.5rem, 5vw, 2.5rem) clamp(0.875rem, 2.5vw, 1.25rem);
+    margin-bottom: clamp(0.5rem, 1.5vw, 1rem);
     width: 100%;
     margin-left: 0;
     margin-right: 0;
@@ -653,16 +841,36 @@
   }
 
   .hero {
-    aspect-ratio: 4 / 3;
-    min-height: 260px;
-    /* Increased to account for padding */
-    max-height: 340px;
     margin-top: 0;
-    padding-top: 60px;
-    margin-bottom: 0.75rem;
+    padding: clamp(1.25rem, 4vw, 2rem) 0.75rem;
+    margin-bottom: 0.5rem;
     width: 100%;
     margin-left: 0;
     margin-right: 0;
+  }
+
+  /* Further reduce background art on very small screens */
+  .heroBlob1 {
+    width: 200px;
+    height: 200px;
+    opacity: 0.8;
+  }
+
+  .heroBlob2 {
+    width: 180px;
+    height: 180px;
+    opacity: 0.8;
+  }
+
+  .heroBlob3 {
+    width: 240px;
+    height: 240px;
+    opacity: 0.8;
+  }
+
+  .heroGeometric1,
+  .heroGeometric2 {
+    display: none; /* Hide geometric shapes on very small screens */
   }
 
   .heroContent {

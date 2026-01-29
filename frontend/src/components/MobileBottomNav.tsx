@@ -253,9 +253,9 @@ export default function MobileBottomNav() {
 
   // Handle FAB click
   const handleFabClick = useCallback(() => {
-    // Navigate to services page for booking
+    // Navigate to salons page for booking
     if (fabConfig.icon === 'book') {
-      window.location.href = '/services';
+      window.location.href = '/salons';
     } else if (fabConfig.icon === 'search') {
       window.location.href = '/salons';
     } else if (fabConfig.icon === 'cart') {

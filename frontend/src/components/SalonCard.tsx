@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, memo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { FaHeart, FaEye } from 'react-icons/fa';
+import { FaHeart } from 'react-icons/fa';
 import { transformCloudinary } from '@/utils/cloudinary';
 import { getImageWithFallback } from '@/lib/placeholders';
 import ImageLightbox from '@/components/ImageLightbox';
@@ -12,9 +12,11 @@ import { useNavigationLoading } from '@/context/NavigationLoadingContext';
 import { Salon } from '@/types';
 import { getSalonUrl } from '@/utils/salonUrl';
 import styles from './SalonCard.module.css';
-import AvailabilityIndicator from './AvailabilityIndicator/AvailabilityIndicator';
 import VerificationBadge from './VerificationBadge/VerificationBadge';
 import { useSalonImpression } from '@/hooks/useSalonImpression';
+
+// Blur placeholder for CLS prevention - tiny base64 encoded image
+const BLUR_DATA_URL = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDAwUBAAAAAAAAAAAAAQIDAAQRBRIhBhMiMUFR/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAZEQACAwEAAAAAAAAAAAAAAAABAgADESH/2gAMAwEAAhEDEQA/AKOm6hqF1qMUV1cSSwq2WRmJBx+VYpSlKqxYAOxP/9k=';
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
 
@@ -26,9 +28,10 @@ interface SalonCardProps {
   compact?: boolean;
   enableLightbox?: boolean; // Enable image lightbox (default: false)
   onViewCountUpdate?: (salonId: string, newCount: number) => void; // Callback when view count should be updated
+  showPromoted?: boolean; // Show promoted label at bottom
 }
 
-function SalonCard({ salon, showFavorite = true, onToggleFavorite, showHours = true, compact = false, enableLightbox = false, onViewCountUpdate }: SalonCardProps) {
+function SalonCard({ salon, showFavorite = true, onToggleFavorite, showHours = true, compact = false, enableLightbox = false, onViewCountUpdate, showPromoted = false }: SalonCardProps) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -147,40 +150,12 @@ function SalonCard({ salon, showFavorite = true, onToggleFavorite, showHours = t
         )}
         <div className={styles.salonLink}>
           <div className={styles.imageWrapper} onClick={handleImageClick}>
-            {salon.isVerified && (
-              <div className={styles.verificationOverlay}>
-                <VerificationBadge size="small" overlay={true} />
-              </div>
-            )}
             {salon.reviewCount !== undefined && salon.avgRating !== undefined && salon.reviewCount > 0 && (
               <div className={styles.ratingBadge}>
-                <div className={styles.ratingValue}>★ {salon.avgRating.toFixed(1)}</div>
+                <div className={styles.ratingValue}>{salon.avgRating.toFixed(1)}</div>
                 <div className={styles.reviewCount}>{salon.reviewCount} {salon.reviewCount === 1 ? 'review' : 'reviews'}</div>
               </div>
             )}
-            <div className={styles.statusOverlay}>
-              <AvailabilityIndicator salon={salon} showNextAvailable={false} compact={true} />
-            </div>
-            <div className={styles.logoOverlay}>
-              {salon.logo && !logoError ? (
-                <Image
-                  src={transformCloudinary(salon.logo, {
-                    width: 128,
-                    quality: 'auto',
-                    format: 'auto'
-                  })}
-                  alt={`${salon.name} logo`}
-                  className={styles.salonLogo}
-                  width={64}
-                  height={64}
-                  onError={() => setLogoError(true)}
-                />
-              ) : (
-                <div className={styles.logoPlaceholder}>
-                  <span>{salon.name.charAt(0).toUpperCase()}</span>
-                </div>
-              )}
-            </div>
             <Image
               src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), {
                 width: 600,
@@ -192,6 +167,8 @@ function SalonCard({ salon, showFavorite = true, onToggleFavorite, showHours = t
               className={styles.cardImage}
               fill
               sizes="(max-width: 479px) 45vw, (max-width: 767px) 40vw, (max-width: 1023px) 33vw, (max-width: 1439px) 25vw, 20vw"
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
             />
           </div>
           <div className={styles.cardContent}>
@@ -209,13 +186,6 @@ function SalonCard({ salon, showFavorite = true, onToggleFavorite, showHours = t
               </h2>
             </div>
             <p className={styles.cardLocation}>{salon.city}, {salon.province}</p>
-            {compact && (
-              <div className={styles.cardStats}>
-                <span className={styles.cardStat}>
-                  <FaEye /> {(salon.viewCount || 0).toLocaleString('en-US')}
-                </span>
-              </div>
-            )}
             {salon.distance !== null && salon.distance !== undefined && (
               <>
                 <div className={styles.distanceBadge}>
@@ -242,30 +212,11 @@ function SalonCard({ salon, showFavorite = true, onToggleFavorite, showHours = t
                 )}
               </>
             )}
-            {showHours && (() => {
-              const oh = salon.operatingHours as unknown;
-              let hoursRecord: Record<string, string> | null = null;
-              if (Array.isArray(oh)) {
-                const derived: Record<string, string> = {};
-                oh.forEach((entry: { day?: string; open?: string; close?: string }) => {
-                  const day = entry?.day;
-                  if (!day) return;
-                  const open = entry.open;
-                  const close = entry.close;
-                  if (!open && !close) return;
-                  derived[day] = `${open ?? ''} - ${close ?? ''}`.trim();
-                });
-                hoursRecord = Object.keys(derived).length > 0 ? derived : null;
-              } else if (oh && typeof oh === 'object') {
-                hoursRecord = oh as Record<string, string>;
-              }
-              if (!hoursRecord) return null;
-              const entries = Object.entries(hoursRecord);
-              if (entries.length === 0) return null;
-              const samples = entries.slice(0, 2).map(([day, hrs]) => `${day.substring(0, 3)} ${hrs}`);
-              const extra = entries.length > 2 ? ` +${entries.length - 2} more` : '';
-              return <p className={styles.cardMeta}>Hours: {samples.join(' • ')}{extra}</p>;
-            })()}
+            {showPromoted && (
+              <div className={styles.promotedLabel}>
+                Promoted
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -292,40 +243,12 @@ function SalonCard({ salon, showFavorite = true, onToggleFavorite, showHours = t
           className={styles.imageWrapper}
           onClick={handleImageClick}
         >
-          {salon.isVerified && (
-            <div className={styles.verificationOverlay}>
-              <VerificationBadge size="small" overlay={true} />
-            </div>
-          )}
           {salon.reviewCount !== undefined && salon.avgRating !== undefined && salon.reviewCount > 0 && (
             <div className={styles.ratingBadge}>
-              <div className={styles.ratingValue}>★ {salon.avgRating.toFixed(1)}</div>
+              <div className={styles.ratingValue}>{salon.avgRating.toFixed(1)}</div>
               <div className={styles.reviewCount}>{salon.reviewCount} {salon.reviewCount === 1 ? 'review' : 'reviews'}</div>
             </div>
           )}
-          <div className={styles.statusOverlay}>
-            <AvailabilityIndicator salon={salon} showNextAvailable={false} compact={true} />
-          </div>
-          <div className={styles.logoOverlay}>
-            {salon.logo && !logoError ? (
-              <Image
-                src={transformCloudinary(salon.logo, {
-                  width: 128,
-                  quality: 'auto',
-                  format: 'auto'
-                })}
-                alt={`${salon.name} logo`}
-                className={styles.salonLogo}
-                width={64}
-                height={64}
-                onError={() => setLogoError(true)}
-              />
-            ) : (
-              <div className={styles.logoPlaceholder}>
-                <span>{salon.name.charAt(0).toUpperCase()}</span>
-              </div>
-            )}
-          </div>
           <Image
             src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), {
               width: 600,
@@ -337,6 +260,8 @@ function SalonCard({ salon, showFavorite = true, onToggleFavorite, showHours = t
             className={styles.cardImage}
             fill
             sizes="(max-width: 479px) 45vw, (max-width: 767px) 40vw, (max-width: 1023px) 33vw, (max-width: 1439px) 25vw, 20vw"
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
           />
         </div>
         <div className={styles.cardContent}>
@@ -354,14 +279,6 @@ function SalonCard({ salon, showFavorite = true, onToggleFavorite, showHours = t
             </h2>
           </div>
           <p className={styles.cardLocation}>{salon.city}, {salon.province}</p>
-          {compact && (
-            <div className={styles.cardStats}>
-              <span className={styles.cardStat}>
-                <FaEye /> {(salon.viewCount || 0).toLocaleString('en-US')}
-              </span>
-            </div>
-          )}
-          {!compact && <AvailabilityIndicator salon={salon} showNextAvailable={false} />}
           {salon.distance !== null && salon.distance !== undefined && (
             <>
               <div className={styles.distanceBadge}>
@@ -388,30 +305,11 @@ function SalonCard({ salon, showFavorite = true, onToggleFavorite, showHours = t
               )}
             </>
           )}
-          {showHours && (() => {
-            const oh = salon.operatingHours as unknown;
-            let hoursRecord: Record<string, string> | null = null;
-            if (Array.isArray(oh)) {
-              const derived: Record<string, string> = {};
-              oh.forEach((entry: { day?: string; open?: string; close?: string }) => {
-                const day = entry?.day;
-                if (!day) return;
-                const open = entry.open;
-                const close = entry.close;
-                if (!open && !close) return;
-                derived[day] = `${open ?? ''} - ${close ?? ''}`.trim();
-              });
-              hoursRecord = Object.keys(derived).length > 0 ? derived : null;
-            } else if (oh && typeof oh === 'object') {
-              hoursRecord = oh as Record<string, string>;
-            }
-            if (!hoursRecord) return null;
-            const entries = Object.entries(hoursRecord);
-            if (entries.length === 0) return null;
-            const samples = entries.slice(0, 2).map(([day, hrs]) => `${day.substring(0, 3)} ${hrs}`);
-            const extra = entries.length > 2 ? ` +${entries.length - 2} more` : '';
-            return <p className={styles.cardMeta}>Hours: {samples.join(' • ')}{extra}</p>;
-          })()}
+          {showPromoted && (
+            <div className={styles.promotedLabel}>
+              Promoted
+            </div>
+          )}
         </div>
       </div>
 
@@ -435,6 +333,7 @@ export default memo(SalonCard, (prevProps, nextProps) => {
     prevProps.salon.viewCount === nextProps.salon.viewCount &&
     prevProps.compact === nextProps.compact &&
     prevProps.showFavorite === nextProps.showFavorite &&
-    prevProps.showHours === nextProps.showHours
+    prevProps.showHours === nextProps.showHours &&
+    prevProps.showPromoted === nextProps.showPromoted
   );
 });

@@ -19,8 +19,6 @@ interface ThemeContextValue {
   isReady: boolean;
 }
 
-const STORAGE_KEY = 'hairpros-theme';
-
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 function applyTheme(theme: Theme) {
@@ -34,39 +32,23 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
+  // Always use light mode - dark mode toggle removed
+  const [theme] = useState<Theme>('light');
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
-    if (storedTheme === 'light' || storedTheme === 'dark') {
-      setThemeState(storedTheme);
-      applyTheme(storedTheme);
-      setIsReady(true);
-      return;
-    }
-
-    // Default to light mode for new users (ignore system preference)
-    const initialTheme: Theme = 'light';
-    setThemeState(initialTheme);
-    applyTheme(initialTheme);
+    // Always apply light theme
+    applyTheme('light');
     setIsReady(true);
   }, []);
 
-  useEffect(() => {
-    if (!isReady) {
-      return;
-    }
-    window.localStorage.setItem(STORAGE_KEY, theme);
-    applyTheme(theme);
-  }, [theme, isReady]);
-
-  const setTheme = useCallback((next: Theme) => {
-    setThemeState(next);
+  // No-op functions to maintain compatibility with existing code
+  const setTheme = useCallback(() => {
+    // Theme is locked to light mode
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
+    // Theme is locked to light mode
   }, []);
 
   const value = useMemo(

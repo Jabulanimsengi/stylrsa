@@ -4,10 +4,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function GET(
     request: Request,
-    { params }: { params: { salonId: string } }
+    { params }: { params: Promise<{ salonId: string }> }
 ) {
     try {
-        const { salonId } = params;
+        const { salonId } = await params;
         const url = new URL(request.url);
         const limit = url.searchParams.get('limit') || '10';
 

@@ -41,6 +41,27 @@
   margin-top: 1.5rem;
 }
 
+/* Category Layout - Featured + Vertical List */
+.categoryLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  margin-top: 1.5rem;
+}
+
+.featuredSection {
+  position: relative;
+}
+
+.verticalSalonsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
 /* Province Section */
 .provinceSection {
   position: relative;

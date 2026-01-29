@@ -6,15 +6,15 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 
 // Generate metadata for homepage
 export const metadata: Metadata = {
-  title: 'Stylr SA - South Africa\'s Premier Beauty & Wellness Platform',
-  description: 'Discover and book appointments at South Africa\'s top-rated salons, spas, and beauty professionals. Browse services, read reviews, and book online instantly.',
+  title: 'Stylr SA - Book Beauty & Wellness Services Near You',
+  description: 'Book beauty & wellness services near you. Browse salons, spas, and beauty professionals. Read reviews and book online instantly.',
   keywords: 'salon booking South Africa, beauty services, hair salon, nail salon, spa, makeup artist, braiding, barbershop, wellness, Johannesburg, Cape Town, Durban, Pretoria',
   alternates: {
     canonical: siteUrl,
   },
   openGraph: {
-    title: 'Stylr SA - Book Beauty & Wellness Services Online',
-    description: 'South Africa\'s premier platform for discovering and booking beauty services. Connect with top-rated salons and professionals.',
+    title: 'Stylr SA - Book Beauty & Wellness Services Near You',
+    description: 'Book beauty & wellness services near you. Browse salons, spas, and beauty professionals across South Africa.',
     url: siteUrl,
     siteName: 'Stylr SA',
     type: 'website',
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Stylr SA - Book Beauty Services Online',
-    description: 'Discover South Africa\'s top salons, spas, and beauty professionals',
+    title: 'Stylr SA - Book Beauty & Wellness Services Near You',
+    description: 'Book beauty & wellness services near you across South Africa',
     images: [`${siteUrl}/logo-transparent.png`],
   },
 };

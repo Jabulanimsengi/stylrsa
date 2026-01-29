@@ -157,28 +157,17 @@ export default function HomePageClient({
       </div>
 
       <section className={styles.hero} aria-label="Hero section">
-        <Image
-          src={HERO_IMAGE.src}
-          alt={HERO_IMAGE.alt}
-          className={styles.heroImage}
-          fill
-          priority
-          fetchPriority="high"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1920px"
-          quality={isMobile ? 60 : 70}
-          placeholder="blur"
-          blurDataURL={HERO_IMAGE.blurDataURL}
-          loading="eager"
-          decoding="async"
-        />
-        <div className={styles.heroGradient} />
+        {/* Modern Art Background Elements */}
+        <div className={styles.heroBlob1} aria-hidden="true" />
+        <div className={styles.heroBlob2} aria-hidden="true" />
+        <div className={styles.heroBlob3} aria-hidden="true" />
+        <div className={styles.heroGeometric1} aria-hidden="true" />
+        <div className={styles.heroGeometric2} aria-hidden="true" />
+
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle} id="hero-title">
-            Find and book top-rated beauty & wellness near you
+            Your beauty and wellness hub
           </h1>
-          <p className={styles.heroSubtitle}>
-            Enjoy 5% cashback with StylrSA
-          </p>
 
           <div className={styles.heroSearchContainer}>
             <div className={styles.heroSearchBox} ref={heroSearchRef}>
@@ -268,7 +257,7 @@ export default function HomePageClient({
         title="Featured Salons"
         salons={initialAllSalons}
         viewAllLink="/salons"
-        showViewAll={true}
+        showViewAll={false}
       />
 
       {/* 3. Available Now Section - Salons currently open */}
@@ -276,7 +265,7 @@ export default function HomePageClient({
         title="Available Now"
         salons={initialAvailableNowSalons}
         viewAllLink="/salons?openNow=true"
-        showViewAll={true}
+        showViewAll={false}
       />
 
       {/* 4. Mobile Salons Section - Salons offering mobile services */}
@@ -284,7 +273,7 @@ export default function HomePageClient({
         title="Mobile Salons"
         salons={initialMobileSalons}
         viewAllLink="/salons?offersMobile=true"
-        showViewAll={true}
+        showViewAll={false}
       />
 
       <Script

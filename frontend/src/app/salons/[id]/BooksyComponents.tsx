@@ -88,11 +88,11 @@ export function StickyTabNavigation({
     reviewsCount: number;
 }) {
     const tabs = [
-        { id: 'photos-section', label: 'Photos', show: hasPhotos },
-        { id: 'services-section', label: 'Services', show: true },
-        { id: 'team-section', label: 'Team', show: hasTeam },
-        { id: 'reviews-section', label: 'Reviews', count: reviewsCount, show: true },
         { id: 'about-section', label: 'About', show: true },
+        { id: 'reviews-section', label: 'Reviews', count: reviewsCount, show: true },
+        { id: 'services-section', label: 'Services', show: true },
+        { id: 'photos-section', label: 'Photos', show: hasPhotos },
+        { id: 'team-section', label: 'Team', show: hasTeam },
     ].filter(tab => tab.show);
 
     return (
@@ -154,152 +154,8 @@ export default function BooksySidebar({
     // Get open status
     const { isOpen, statusText } = getOpenStatus(hoursRecord, todayLabel);
 
-    return (
-        <div className={styles.booksySidebar}>
-            {/* Salon Info Card */}
-            <div className={styles.sidebarInfoCard}>
-                {/* Badges */}
-                <div className={styles.sidebarBadges}>
-                    {salon.isFeatured && (
-                        <span className={styles.featuredBadge}>
-                            <FaAward /> Featured
-                        </span>
-                    )}
-                    {(salon.bookingType === 'MOBILE' || salon.bookingType === 'BOTH') && (
-                        <span className={styles.mobileBadgeSmall}>Mobile</span>
-                    )}
-                </div>
-
-                {/* Book Now Button */}
-                <button className={styles.sidebarBookBtn} onClick={onBookNow}>
-                    Book now
-                </button>
-
-                {/* Open/Closed Status */}
-                <div className={`${styles.sidebarStatus} ${isOpen ? styles.open : styles.closed}`}>
-                    <FaRegClock />
-                    <span className={styles.statusDot} />
-                    <span>{isOpen ? 'Open' : 'Closed'} · {statusText}</span>
-                </div>
-
-                {/* Address */}
-                <div className={styles.sidebarAddress}>
-                    <FaMapMarkerAlt />
-                    <span>{salon.address || `${salon.town}, ${salon.city}, ${salon.province}`}</span>
-                </div>
-
-                {/* Quick Actions */}
-                <div className={styles.sidebarQuickActions}>
-                    {salon.phoneNumber && (
-                        <a
-                            href={`tel:${salon.phoneNumber.replace(/[^0-9+]/g, '')}`}
-                            className={styles.quickActionBtn}
-                            title="Call"
-                        >
-                            <FaPhone />
-                        </a>
-                    )}
-                    {salon.whatsapp && (
-                        <a
-                            href={`https://wa.me/${salon.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi! I found your salon on Stylr SA and I'd like to make a booking.`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`${styles.quickActionBtn} ${styles.whatsapp}`}
-                            title="WhatsApp"
-                        >
-                            <FaWhatsapp />
-                        </a>
-                    )}
-                    <a
-                        href={mapsHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.quickActionBtn}
-                        title="Get Directions"
-                    >
-                        <FaDirections />
-                    </a>
-                    {showFavoriteButton && (
-                        <button
-                            className={`${styles.quickActionBtn} ${isFavorited ? styles.favorited : ''}`}
-                            onClick={onToggleFavorite}
-                            title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-                        >
-                            <FaHeart />
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* Map Card */}
-            {latitude && longitude && (
-                <div className={styles.sidebarCard}>
-                    <div className={styles.sidebarMap}>
-                        <MapboxMap
-                            latitude={latitude}
-                            longitude={longitude}
-                            height={180}
-                            zoom={15}
-                            style="streets"
-                            markerColor="#F51957"
-                        />
-                        <a
-                            href={mapsHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.mapDirectionsBtn}
-                            title="Get directions"
-                        >
-                            <FaDirections /> Get directions
-                        </a>
-                    </div>
-                </div>
-            )}
-
-            {/* Business Hours Card */}
-            {hoursRecord && (
-                <div className={styles.sidebarCard}>
-                    <p className={styles.sidebarCardTitle}>Opening times</p>
-                    <div className={styles.weeklyHoursList}>
-                        <ul>
-                            {orderedOperatingDays.map(day => {
-                                const hours = hoursRecord[day];
-                                const isToday = day === todayLabel;
-                                const isClosed = hours?.toLowerCase() === 'closed';
-
-                                return (
-                                    <li key={day} className={isToday ? styles.today : ''}>
-                                        <span className={`${styles.dayDot} ${isClosed ? styles.closedDot : styles.openDot}`} />
-                                        <span className={styles.dayName}>{day}</span>
-                                        <span className={isClosed ? styles.closedText : ''}>
-                                            {hours || 'Closed'}
-                                        </span>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </div>
-                </div>
-            )}
-
-            {/* Additional Information */}
-            <div className={styles.sidebarCard}>
-                <p className={styles.sidebarCardTitle}>Additional information</p>
-                <div className={styles.additionalInfo}>
-                    <div className={styles.infoRow}>
-                        <FaCheckCircle className={styles.infoIconGreen} />
-                        <span>Instant Confirmation</span>
-                    </div>
-                    {salon.isVerified && (
-                        <div className={styles.infoRow}>
-                            <FaCheckCircle className={styles.infoIconGreen} />
-                            <span>Verified Business</span>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
+    // All sidebar content removed - features already displayed in main content
+    return null;
 }
 
 // Hero Gallery Component
@@ -528,96 +384,108 @@ export function AboutSection({
     };
 
     return (
-        <section id="about-section" className={styles.aboutSection}>
-            <h2 className={styles.sectionTitle}>About</h2>
+        <div className={styles.aboutContent}>
+            {/* Description */}
+            {salon.description && (
+                <div className={styles.aboutSection}>
+                    <h3 className={styles.subsectionTitle}>About {salon.name}</h3>
+                    <p className={styles.aboutDescription}>{salon.description}</p>
+                </div>
+            )}
 
-            <div className={styles.aboutGrid}>
-                {/* Description */}
-                {salon.description && (
-                    <div className={styles.aboutCard}>
-                        <h3 className={styles.aboutCardTitle}>About {salon.name}</h3>
-                        <p className={styles.aboutDescription}>{salon.description}</p>
-                    </div>
-                )}
+            {/* Opening Times */}
+            {hoursRecord && (
+                <div className={styles.aboutSection}>
+                    <h3 className={styles.subsectionTitle}>Opening hours</h3>
+                    <div className={styles.aboutHoursList}>
+                        {orderedOperatingDays.map(day => {
+                            const hours = hoursRecord[day];
+                            const isToday = day === todayLabel;
+                            const isClosed = hours?.toLowerCase() === 'closed';
 
-                {/* Location & Map */}
-                <div className={styles.aboutCard}>
-                    <h3 className={styles.aboutCardTitle}>Location</h3>
-                    <div className={styles.aboutAddressRow}>
-                        <FaMapMarkerAlt />
-                        <span>{addressText}</span>
-                        <button
-                            className={styles.copyButton}
-                            onClick={handleCopyAddress}
-                            title="Copy address"
-                        >
-                            {showCopied ? <FaCheck /> : <FaCopy />}
-                        </button>
+                            return (
+                                <div key={day} className={`${styles.aboutHoursRow} ${isToday ? styles.today : ''}`}>
+                                    <span className={`${styles.dayDot} ${isClosed ? styles.closedDot : styles.openDot}`} />
+                                    <span className={styles.dayName}>{day}</span>
+                                    <span className={isClosed ? styles.closedText : ''}>
+                                        {hours || 'Closed'}
+                                    </span>
+                                </div>
+                            );
+                        })}
                     </div>
-                    {latitude && longitude && (
-                        <div className={styles.aboutMapWrapper}>
-                            <MapboxMap
-                                latitude={latitude}
-                                longitude={longitude}
-                                height={200}
-                                zoom={15}
-                                style="streets"
-                                markerColor="#F51957"
-                            />
-                            <a
-                                href={mapsHref}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.aboutDirectionsBtn}
-                            >
-                                <FaDirections /> Get directions
-                            </a>
+                </div>
+            )}
+
+            {/* Additional Information */}
+            <div className={styles.aboutSection}>
+                <h3 className={styles.subsectionTitle}>Additional information</h3>
+                <div className={styles.aboutInfoList}>
+                    <div className={styles.aboutInfoRow}>
+                        <FaCheckCircle className={styles.infoIconGreen} />
+                        <span>Instant Confirmation</span>
+                    </div>
+                    {salon.isVerified && (
+                        <div className={styles.aboutInfoRow}>
+                            <FaCheckCircle className={styles.infoIconGreen} />
+                            <span>Verified Business</span>
                         </div>
                     )}
                 </div>
+            </div>
 
-                {/* Opening Times */}
-                {hoursRecord && (
-                    <div className={styles.aboutCard}>
-                        <h3 className={styles.aboutCardTitle}>Opening times</h3>
-                        <div className={styles.aboutHoursList}>
-                            {orderedOperatingDays.map(day => {
-                                const hours = hoursRecord[day];
-                                const isToday = day === todayLabel;
-                                const isClosed = hours?.toLowerCase() === 'closed';
-
-                                return (
-                                    <div key={day} className={`${styles.aboutHoursRow} ${isToday ? styles.today : ''}`}>
-                                        <span className={`${styles.dayDot} ${isClosed ? styles.closedDot : styles.openDot}`} />
-                                        <span className={styles.dayName}>{day}</span>
-                                        <span className={isClosed ? styles.closedText : ''}>
-                                            {hours || 'Closed'}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
+            {/* Location & Large Map at Bottom */}
+            <div className={styles.aboutSection}>
+                <h3 className={styles.subsectionTitle}>Location</h3>
+                <div className={styles.fullLocationDisplay}>
+                    <div className={styles.locationIcon}>
+                        <FaMapMarkerAlt />
                     </div>
-                )}
-
-                {/* Additional Information */}
-                <div className={styles.aboutCard}>
-                    <h3 className={styles.aboutCardTitle}>Additional information</h3>
-                    <div className={styles.aboutInfoList}>
-                        <div className={styles.aboutInfoRow}>
-                            <FaCheckCircle className={styles.infoIconGreen} />
-                            <span>Instant Confirmation</span>
-                        </div>
-                        {salon.isVerified && (
-                            <div className={styles.aboutInfoRow}>
-                                <FaCheckCircle className={styles.infoIconGreen} />
-                                <span>Verified Business</span>
+                    <div className={styles.locationDetails}>
+                        {salon.address && (
+                            <div className={styles.locationLine}>
+                                <strong>{salon.address}</strong>
                             </div>
+                        )}
+                        {salon.town && (
+                            <div className={styles.locationLine}>{salon.town}</div>
+                        )}
+                        {salon.city && (
+                            <div className={styles.locationLine}>{salon.city}</div>
+                        )}
+                        {salon.province && (
+                            <div className={styles.locationLine}>{salon.province}</div>
+                        )}
+                        {salon.postalCode && (
+                            <div className={styles.locationLine}>{salon.postalCode}</div>
                         )}
                     </div>
                 </div>
+                {latitude && longitude && (
+                    <div className={styles.aboutLargeMapWrapper}>
+                        <MapboxMap
+                            latitude={Number(latitude)}
+                            longitude={Number(longitude)}
+                            height={450}
+                            zoom={15}
+                            style="streets"
+                            markerColor="#F51957"
+                            interactive={true}
+                            showPopup={true}
+                            popupContent={`<strong>${salon.name}</strong><br/>${addressText}`}
+                        />
+                        <a
+                            href={mapsHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.mapGetDirectionsBtn}
+                        >
+                            <FaDirections /> Get directions
+                        </a>
+                    </div>
+                )}
             </div>
-        </section>
+        </div>
     );
 }
 
@@ -668,20 +536,15 @@ export function BooksyReviewsSection({
 
     if (reviews.length === 0) {
         return (
-            <section id="reviews-section" className={styles.reviewsSection}>
-                <h2 className={styles.sectionTitle}>Reviews</h2>
-                <div className={styles.emptyReviews}>
-                    <FaStar className={styles.emptyIcon} />
-                    <p>No reviews yet. Be the first to leave a review!</p>
-                </div>
-            </section>
+            <div className={styles.emptyReviews}>
+                <FaStar className={styles.emptyIcon} />
+                <p>No reviews yet. Be the first to leave a review!</p>
+            </div>
         );
     }
 
     return (
-        <section id="reviews-section" className={styles.reviewsSection}>
-            <h2 className={styles.sectionTitle}>Reviews</h2>
-
+        <>
             {/* Rating Summary Card */}
             <div className={styles.ratingSummaryCard}>
                 <div className={styles.ratingSummary}>
@@ -804,7 +667,7 @@ export function BooksyReviewsSection({
                     Show more reviews ({totalReviews - visibleCount} remaining)
                 </button>
             )}
-        </section>
+        </>
     );
 }
 

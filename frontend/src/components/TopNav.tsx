@@ -26,7 +26,6 @@ import {
     FaShieldAlt,
     FaSignOutAlt,
 } from 'react-icons/fa';
-import { ThemeToggle } from './ThemeToggle';
 import styles from './TopNav.module.css';
 import { toast } from 'react-toastify';
 import { logger } from '@/lib/logger';
@@ -326,78 +325,14 @@ export default function TopNav() {
 
                     <ul className={styles.navLinks}>
                         <li className={styles.navItem}>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <button className={styles.navButton}>
-                                        Discover
-                                        <FaChevronDown className={styles.chevron} />
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start" sideOffset={8}>
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/" className={styles.dropdownItemLink}>
-                                            <span className={styles.dropdownIcon}><FaHome /></span>
-                                            <span>Home Feed</span>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/salons" className={styles.dropdownItemLink}>
-                                            <span className={styles.dropdownIcon}><FaCut /></span>
-                                            <span>Salons</span>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/products" className={styles.dropdownItemLink}>
-                                            <span className={styles.dropdownIcon}><FaBoxOpen /></span>
-                                            <span>Marketplace</span>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/promotions" className={styles.dropdownItemLink}>
-                                            <span className={styles.dropdownIcon}><FaMagic /></span>
-                                            <span>Promotions</span>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/candidates" className={styles.dropdownItemLink}>
-                                            <span className={styles.dropdownIcon}><FaUser /></span>
-                                            <span>Find Talent</span>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </li>
-
-
-
-                        <li className={styles.navItem}>
-                            <Link href="/about" className={styles.navButton}>
-                                About Us
-                            </Link>
-                        </li>
-                        <li className={styles.navItem}>
-                            <Link href="/prices" className={styles.navButton}>
-                                Pricing
-                            </Link>
-                        </li>
-                        <li className={styles.navItem}>
-                            <Link href="/how-it-works" className={styles.navButton}>
-                                How It Works
-                            </Link>
-                        </li>
-                        <li className={styles.navItem}>
-                            <Link href="/contact" className={styles.navButton}>
-                                Contact
+                            <Link href="/salons" className={styles.navButton}>
+                                Salons
                             </Link>
                         </li>
                     </ul>
                 </div>
 
                 <div className={styles.rightSection}>
-                    <SalonMapButton variant="desktop" />
-                    <RequestTop10Button variant="desktop" />
-                    <ThemeToggle />
-
                     {authStatus === 'authenticated' ? (
                         <>
                             <button

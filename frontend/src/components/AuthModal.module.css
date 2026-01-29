@@ -78,12 +78,12 @@
 }
 
 .tab:hover {
-  color: var(--color-primary, #F51957);
+  color: var(--color-primary, var(--color-primary));
 }
 
 .tab.active {
-  color: var(--color-primary, #F51957);
-  border-bottom: 2px solid var(--color-primary, #F51957);
+  color: var(--color-primary, var(--color-primary));
+  border-bottom: 2px solid var(--color-primary, var(--color-primary));
   font-weight: 600;
 }
 
@@ -93,7 +93,7 @@
   }
 
   .modalContent {
-    border-radius: 0.3rem;
+    border-radius: 12px;
     padding: 0.75rem;
     max-height: 85vh;
     width: min(100%, 300px);
@@ -135,7 +135,7 @@
   .modalContent {
     max-width: 92%;
     max-height: 80vh;
-    border-radius: 0.3rem;
+    border-radius: 12px;
     padding: 0.75rem;
     overflow-y: auto;
   }
@@ -151,7 +151,7 @@
   }
 
   .modalContent {
-    border-radius: 0.25rem;
+    border-radius: 12px;
     padding: 0.625rem;
     max-height: 85vh;
     width: 95%;
@@ -204,7 +204,7 @@
   padding: 0.4rem 0.5rem;
   margin-bottom: 0.5rem;
   border: 1px solid var(--input-border);
-  border-radius: 0.2rem;
+  border-radius: 8px;
   font-size: 0.75rem;
   color: var(--color-text-strong);
   background-color: var(--color-surface);
@@ -222,7 +222,7 @@
   color: var(--color-text-inverse);
   padding: 0.4rem;
   border: none;
-  border-radius: 0.2rem;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.75rem;
   font-weight: bold;
@@ -262,7 +262,7 @@
 /* Links within modal */
 .modalContent a {
   font-size: 0.75rem;
-  color: var(--color-primary, #F51957);
+  color: var(--color-primary, var(--color-primary));
   font-weight: 500;
 }
 

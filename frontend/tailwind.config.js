@@ -9,13 +9,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Use CSS variables from globals.css for Apple theme
         primary: {
-          DEFAULT: '#F51957',
-          hover: '#d4144c',
-          light: '#ff2d6f',
-          strong: '#b80f41',
-          soft: '#ff9ab5',
-          foreground: '#FFFFFF',
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
         },
         neutral: {
           50: '#FFFFFF',

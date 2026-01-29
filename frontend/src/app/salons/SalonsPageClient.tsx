@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { transformCloudinary } from '@/utils/cloudinary';
 import { useSearchParams } from 'next/navigation';
-import { Salon } from '@/types';
+import { Salon, Service, Booking } from '@/types';
 import styles from './SalonsPage.module.css';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { FaHeart, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
@@ -25,6 +25,9 @@ import MobileSearch from '@/components/MobileSearch/MobileSearch';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import EmptyState from '@/components/EmptyState/EmptyState';
+import DetailedSalonCard from '@/components/DetailedSalonCard/DetailedSalonCard';
+import BookingModal from '@/components/BookingModal';
+import BookingConfirmationModal from '@/components/BookingConfirmationModal/BookingConfirmationModal';
 
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
@@ -185,6 +188,11 @@ export default function SalonsPageClient() {
     const [salons, setSalons] = useState<SalonWithFavorite[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [navigatingSalonId, setNavigatingSalonId] = useState<string | null>(null);
+    const [selectedService, setSelectedService] = useState<Service | null>(null);
+    const [bookingModalOpen, setBookingModalOpen] = useState(false);
+    const [showBookingConfirmation, setShowBookingConfirmation] = useState(false);
+    const [pendingBookingService, setPendingBookingService] = useState<Service | null>(null);
+    const [pendingSalon, setPendingSalon] = useState<Salon | null>(null);
     const isMobile = useMediaQuery('(max-width: 768px)');
     const router = useRouter();
 
@@ -379,8 +387,77 @@ export default function SalonsPageClient() {
         setTimeout(() => setNavigatingSalonId(null), 5000);
     };
 
-    // Check if filtering by specific province
+    // Handle booking service from detailed salon card
+    const handleBookService = async (service: Service) => {
+        if (authStatus !== 'authenticated') {
+            toast.info('Please log in to book a service.');
+            openModal('login');
+            return;
+        }
+
+        let salonData: Salon;
+        if (!service.salon || !service.salon.name) {
+            try {
+                const res = await fetch(`/api/salons/${service.salonId}`, { credentials: 'include' });
+                if (!res.ok) throw new Error('Failed to fetch salon details');
+                salonData = await res.json();
+                service.salon = {
+                    id: salonData.id,
+                    name: salonData.name,
+                    ownerId: salonData.ownerId,
+                    city: salonData.city,
+                    province: salonData.province,
+                };
+            } catch (error) {
+                toast.error('Unable to load salon details. Please try again.');
+                return;
+            }
+        } else {
+            try {
+                const res = await fetch(`/api/salons/${service.salonId}`, { credentials: 'include' });
+                if (!res.ok) throw new Error('Failed to fetch salon details');
+                salonData = await res.json();
+            } catch (error) {
+                toast.error('Unable to load salon details. Please try again.');
+                return;
+            }
+        }
+
+        if (salonData.bookingMessage) {
+            setPendingBookingService(service);
+            setPendingSalon(salonData);
+            setShowBookingConfirmation(true);
+        } else {
+            setSelectedService(service);
+            setBookingModalOpen(true);
+        }
+    };
+
+    const handleBookingConfirmationAccept = () => {
+        setShowBookingConfirmation(false);
+        if (pendingBookingService) {
+            setSelectedService(pendingBookingService);
+            setBookingModalOpen(true);
+            setPendingBookingService(null);
+            setPendingSalon(null);
+        }
+    };
+
+    const handleBookingConfirmationClose = () => {
+        setShowBookingConfirmation(false);
+        setPendingBookingService(null);
+        setPendingSalon(null);
+    };
+
+    const handleBookingSuccess = (booking: Booking) => {
+        setBookingModalOpen(false);
+        setSelectedService(null);
+        toast.success('Booking confirmed!');
+    };
+
+    // Check if filtering by specific province or category
     const isFilteredByProvince = Boolean(searchParams.get('province'));
+    const isFilteredByCategory = Boolean(searchParams.get('category'));
     const pageTitle = searchParams.get('offersMobile') === 'true'
         ? 'Mobile Salons'
         : 'Explore Salons';
@@ -397,10 +474,13 @@ export default function SalonsPageClient() {
                 </p>
             </div>
 
-            {isMobile ? (
-                <MobileSearch onSearch={fetchSalons} />
-            ) : (
-                <FilterBar onSearch={fetchSalons} initialFilters={initialFilters} />
+            {/* Hide filters on category pages */}
+            {!isFilteredByCategory && (
+                isMobile ? (
+                    <MobileSearch onSearch={fetchSalons} />
+                ) : (
+                    <FilterBar onSearch={fetchSalons} initialFilters={initialFilters} />
+                )
             )}
 
             {isLoading ? (
@@ -419,6 +499,43 @@ export default function SalonsPageClient() {
                     title="No Salons Found"
                     description="Try adjusting your filters or search terms to find salons near you."
                 />
+            ) : isFilteredByCategory ? (
+                // If filtered by category, show featured salons in a row, then other salons vertically with details
+                <div className={styles.categoryLayout}>
+                    {/* Featured Salons Row */}
+                    {salons.filter(s => s.isFeatured).length > 0 && (
+                        <section className={styles.featuredSection}>
+                            <div className={styles.provinceHeader}>
+                                <h2 className={styles.provinceTitle}>
+                                    Featured Salons
+                                    <span className={styles.salonCount}>
+                                        ({salons.filter(s => s.isFeatured).length} {salons.filter(s => s.isFeatured).length === 1 ? 'salon' : 'salons'})
+                                    </span>
+                                </h2>
+                            </div>
+                            <ProvinceRow
+                                province=""
+                                salons={salons.filter(s => s.isFeatured)}
+                                onToggleFavorite={handleToggleFavorite}
+                                onNavigate={handleNavigate}
+                                navigatingSalonId={navigatingSalonId}
+                                isMobile={isMobile}
+                            />
+                        </section>
+                    )}
+
+                    {/* Other Salons - Vertical Detailed View */}
+                    <div className={styles.verticalSalonsList}>
+                        {salons.filter(s => !s.isFeatured).map((salon) => (
+                            <DetailedSalonCard
+                                key={salon.id}
+                                salon={salon}
+                                onToggleFavorite={handleToggleFavorite}
+                                onBook={handleBookService}
+                            />
+                        ))}
+                    </div>
+                </div>
             ) : isFilteredByProvince ? (
                 // If filtered by province, show traditional grid
                 <div className={styles.salonGrid}>
@@ -485,6 +602,37 @@ export default function SalonsPageClient() {
                         />
                     ))}
                 </div>
+            )}
+
+            {/* Booking Modal */}
+            {bookingModalOpen && selectedService && selectedService.salon && (
+                <BookingModal
+                    salon={{
+                        id: selectedService.salon.id,
+                        name: selectedService.salon.name,
+                        ownerId: selectedService.salon.ownerId,
+                        city: selectedService.salon.city || '',
+                        province: selectedService.salon.province || '',
+                    } as Salon}
+                    service={selectedService}
+                    onClose={() => {
+                        setBookingModalOpen(false);
+                        setSelectedService(null);
+                    }}
+                    onBookingSuccess={handleBookingSuccess}
+                />
+            )}
+
+            {/* Booking Confirmation Modal */}
+            {showBookingConfirmation && pendingSalon && (
+                <BookingConfirmationModal
+                    isOpen={showBookingConfirmation}
+                    onClose={handleBookingConfirmationClose}
+                    onAccept={handleBookingConfirmationAccept}
+                    salonName={pendingSalon.name || ''}
+                    salonLogo={pendingSalon.backgroundImage || undefined}
+                    message={pendingSalon.bookingMessage || ''}
+                />
             )}
         </div>
     );

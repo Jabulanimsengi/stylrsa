@@ -36,7 +36,6 @@ import ConfirmationModal from './ConfirmationModal/ConfirmationModal';
 import { useSocket } from '@/context/SocketContext';
 import { Notification, PaginatedNotifications } from '@/types';
 import { toast } from 'react-toastify';
-import { ThemeToggle } from './ThemeToggle';
 import styles from './Navbar.module.css';
 import { Sheet, SheetContent, SheetHeader, SheetBody, SheetFooter, SheetTitle } from './ui';
 import { toFriendlyMessage } from '@/lib/errors';
@@ -356,7 +355,6 @@ export default function Navbar() {
       { href: '/', label: 'Home Feed', icon: FaHome },
       { href: '/salons', label: 'Salons', icon: FaCut },
       { href: '/salons?offersMobile=true', label: 'Mobile Salons', icon: FaBuilding },
-      { href: '/services', label: 'Services', icon: FaMagic },
       { href: '/products', label: 'Marketplace', icon: FaBoxOpen },
       { href: '/candidates', label: 'Find Talent', icon: FaUser },
       { href: '/promotions', label: 'Promotions', icon: FaMagic },
@@ -601,7 +599,6 @@ export default function Navbar() {
           <Image src="/logo-transparent.png" alt="Stylr SA" width={124} height={32} priority />
         </Link>
         <div className={styles.mobileActions}>
-          <CommandSearch />
           {authStatus === 'authenticated' && (
             <button
               type="button"
@@ -615,7 +612,7 @@ export default function Navbar() {
           )}
           <button
             type="button"
-            className={styles.iconOnlyButton}
+            className={`${styles.iconOnlyButton} ${styles.hamburgerButton}`}
             onClick={() => setIsMobileOpen((prev) => !prev)}
             aria-label="Toggle navigation"
           >
@@ -639,12 +636,6 @@ export default function Navbar() {
           </SheetHeader>
 
           <SheetBody>
-            <div className={styles.topControls}>
-              <div className={styles.themeToggleShell}>
-                <ThemeToggle />
-              </div>
-            </div>
-
             <nav>
               <p className={styles.sectionLabel}>Discover</p>
               <ul className={styles.navList}>{discoverLinks.map(renderNavLink)}</ul>

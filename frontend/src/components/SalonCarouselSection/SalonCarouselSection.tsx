@@ -195,6 +195,7 @@ function SalonCarouselSection({
                         },
                         769: {
                             slidesPerView: 4.1,
+                            spaceBetween: 20,
                         },
                     }}
                 >
@@ -202,9 +203,9 @@ function SalonCarouselSection({
                         <SwiperSlide
                             key={salon.id}
                             style={{
-                                width: isMobile ? 'calc(100% / 1.35 - 10px)' : 'calc((100% - 48px) / 4.1)',
+                                width: isMobile ? 'auto' : 'calc((100% - 60px) / 4.1)',
                                 minHeight: isMobile ? '240px' : '280px',
-                                flexShrink: 0,
+                                height: isMobile ? '240px' : '280px',
                             }}
                         >
                             <SalonCard

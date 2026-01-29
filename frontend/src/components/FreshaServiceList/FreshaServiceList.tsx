@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Service, Salon } from '@/types';
 import styles from './FreshaServiceList.module.css';
-import { FaPlus, FaCheck, FaImages, FaChevronLeft, FaChevronRight, FaStar, FaTimes, FaShoppingCart, FaArrowUp } from 'react-icons/fa';
+import { FaPlus, FaCheck, FaImages, FaChevronDown, FaChevronUp, FaStar, FaTimes, FaShoppingCart, FaArrowUp } from 'react-icons/fa';
 import Image from 'next/image';
 import { transformCloudinary } from '@/utils/cloudinary';
 import { SERVICE_CATEGORIES } from '@/constants/categories';
@@ -128,36 +128,9 @@ export default function FreshaServiceList({
     onImageClick
 }: FreshaServiceListProps) {
     const [selectedServices, setSelectedServices] = useState<Service[]>([]);
-    const [activeCategory, setActiveCategory] = useState<string>('all');
-    const [isCartVisible, setIsCartVisible] = useState(false);
-    const tabsRef = useRef<HTMLDivElement>(null);
+    const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
     const categoryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
     const containerRef = useRef<HTMLDivElement>(null);
-
-    // Intersection Observer to track when services section is in view
-    useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                // Show cart when any part of the container is visible
-                const isVisible = entries[0].isIntersecting;
-                setIsCartVisible(isVisible);
-            },
-            {
-                root: null, // viewport
-                rootMargin: '-100px 0px -20% 0px', // Offset for navbar and bottom margin
-                threshold: 0 // Trigger when any part is visible
-            }
-        );
-
-        observer.observe(container);
-
-        return () => {
-            observer.disconnect();
-        };
-    }, []);
 
     // Group services by category - only using valid categories from SERVICE_CATEGORIES
     const groupedServices = useMemo<CategoryService[]>(() => {
@@ -221,21 +194,18 @@ export default function FreshaServiceList({
         return sorted;
     }, [services]);
 
-    // Get all unique categories for tabs
-    const categories = useMemo(() => {
-        return [
-            { id: 'all', name: 'All Services' },
-            ...groupedServices.map(g => ({ id: g.categoryId, name: g.categoryName }))
-        ];
-    }, [groupedServices]);
-
-    // Filter services based on active category
-    const filteredGroups = useMemo(() => {
-        if (activeCategory === 'all') {
-            return groupedServices;
-        }
-        return groupedServices.filter(g => g.categoryId === activeCategory);
-    }, [groupedServices, activeCategory]);
+    // Toggle category expansion
+    const toggleCategory = (categoryId: string) => {
+        setExpandedCategories(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(categoryId)) {
+                newSet.delete(categoryId);
+            } else {
+                newSet.add(categoryId);
+            }
+            return newSet;
+        });
+    };
 
     // Toggle service selection
     const toggleService = (service: Service) => {
@@ -288,28 +258,6 @@ export default function FreshaServiceList({
         return `${hours} hr${hours > 1 ? 's' : ''}, ${mins} mins`;
     };
 
-    // Scroll category tabs
-    const scrollTabs = (direction: 'left' | 'right') => {
-        if (tabsRef.current) {
-            const scrollAmount = 200;
-            tabsRef.current.scrollBy({
-                left: direction === 'left' ? -scrollAmount : scrollAmount,
-                behavior: 'smooth'
-            });
-        }
-    };
-
-    // Handle category click - scroll to section
-    const handleCategoryClick = (categoryId: string) => {
-        setActiveCategory(categoryId);
-
-        if (categoryId !== 'all') {
-            const element = categoryRefs.current.get(categoryId);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
-    };
 
     // Handle continue to booking
     const handleContinue = () => {
@@ -325,34 +273,6 @@ export default function FreshaServiceList({
 
     return (
         <div className={styles.container} ref={containerRef}>
-            {/* Category Tabs */}
-            <div className={styles.categoryTabs} ref={tabsRef}>
-                <button
-                    className={styles.tabScrollButton}
-                    onClick={() => scrollTabs('left')}
-                    aria-label="Scroll left"
-                >
-                    <FaChevronLeft />
-                </button>
-
-                {categories.map(category => (
-                    <button
-                        key={category.id}
-                        className={`${styles.categoryTab} ${activeCategory === category.id ? styles.active : ''}`}
-                        onClick={() => handleCategoryClick(category.id)}
-                    >
-                        {category.name}
-                    </button>
-                ))}
-
-                <button
-                    className={styles.tabScrollButton}
-                    onClick={() => scrollTabs('right')}
-                    aria-label="Scroll right"
-                >
-                    <FaChevronRight />
-                </button>
-            </div>
 
             {/* Selected Services Indicator */}
             {selectedServices.length > 0 && (
@@ -366,13 +286,26 @@ export default function FreshaServiceList({
             <div className={styles.mainLayout}>
                 {/* Services Column */}
                 <div className={styles.servicesColumn}>
-                    {filteredGroups.map(group => (
-                        <div
-                            key={group.categoryId}
-                            className={styles.categorySection}
-                            ref={el => { if (el) categoryRefs.current.set(group.categoryId, el); }}
-                        >
-                            <h3 className={styles.categoryTitle}>{group.categoryName}</h3>
+                    {groupedServices.map(group => {
+                        const isExpanded = expandedCategories.has(group.categoryId);
+
+                        return (
+                            <div
+                                key={group.categoryId}
+                                className={styles.categorySection}
+                                ref={el => { if (el) categoryRefs.current.set(group.categoryId, el); }}
+                            >
+                                <button
+                                    className={styles.categoryTitle}
+                                    onClick={() => toggleCategory(group.categoryId)}
+                                    aria-expanded={isExpanded}
+                                >
+                                    <span>{group.categoryName}</span>
+                                    {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                                </button>
+
+                                {isExpanded && (
+                                    <div className={styles.categoryServices}>
 
                             {group.services.map(service => {
                                 const isSelected = isServiceSelected(service.id);
@@ -438,13 +371,16 @@ export default function FreshaServiceList({
                                     </div>
                                 );
                             })}
-                        </div>
-                    ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
 
 
-                {/* Cart Sidebar (Desktop) - Only visible when services section is in view */}
-                {isCartVisible && (
+                {/* Cart Sidebar (Desktop) - Only visible when services are selected */}
+                {selectedServices.length > 0 && (
                     <div className={styles.cartColumn}>
                         <div className={styles.cartSidebar}>
                             {/* Salon Info */}
@@ -460,12 +396,12 @@ export default function FreshaServiceList({
                                 )}
                                 <div className={styles.cartSalonInfo}>
                                     <h4 className={styles.cartSalonName}>{salon.name}</h4>
-                                    {salon.avgRating && salon.avgRating > 0 && (
+                                    {salon.avgRating && salon.avgRating > 0 ? (
                                         <div className={styles.cartSalonRating}>
                                             <FaStar /> {salon.avgRating.toFixed(1)}
-                                            {salon.reviewCount && ` (${salon.reviewCount})`}
+                                            {salon.reviewCount && salon.reviewCount > 0 && ` (${salon.reviewCount})`}
                                         </div>
-                                    )}
+                                    ) : null}
                                     <p className={styles.cartSalonLocation}>
                                         {[salon.town, salon.city].filter(Boolean).join(', ')}
                                     </p>
@@ -475,51 +411,42 @@ export default function FreshaServiceList({
                             <div className={styles.cartDivider} />
 
                             {/* Cart Items */}
-                            {selectedServices.length > 0 ? (
-                                <>
-                                    <div className={styles.cartItems}>
-                                        {selectedServices.map(service => (
-                                            <div key={service.id} className={styles.cartItem}>
-                                                <div className={styles.cartItemInfo}>
-                                                    <p className={styles.cartItemName}>
-                                                        {service.title || service.name}
-                                                    </p>
-                                                    <p className={styles.cartItemDetails}>
-                                                        {formatDuration(service)} • with any professional
-                                                    </p>
-                                                </div>
-                                                <span className={styles.cartItemPrice}>
-                                                    R {service.price.toFixed(0)}
-                                                </span>
-                                                <button
-                                                    className={styles.cartItemRemove}
-                                                    onClick={() => toggleService(service)}
-                                                    aria-label="Remove service"
-                                                >
-                                                    <FaTimes />
-                                                </button>
-                                            </div>
-                                        ))}
+                            <div className={styles.cartItems}>
+                                {selectedServices.map(service => (
+                                    <div key={service.id} className={styles.cartItem}>
+                                        <div className={styles.cartItemInfo}>
+                                            <p className={styles.cartItemName}>
+                                                {service.title || service.name}
+                                            </p>
+                                            <p className={styles.cartItemDetails}>
+                                                {formatDuration(service)} • with any professional
+                                            </p>
+                                        </div>
+                                        <span className={styles.cartItemPrice}>
+                                            R {service.price.toFixed(0)}
+                                        </span>
+                                        <button
+                                            className={styles.cartItemRemove}
+                                            onClick={() => toggleService(service)}
+                                            aria-label="Remove service"
+                                        >
+                                            <FaTimes />
+                                        </button>
                                     </div>
+                                ))}
+                            </div>
 
-                                    <div className={styles.cartTotal}>
-                                        <span className={styles.cartTotalLabel}>Total</span>
-                                        <span className={styles.cartTotalPrice}>R {totalPrice.toFixed(0)}</span>
-                                    </div>
+                            <div className={styles.cartTotal}>
+                                <span className={styles.cartTotalLabel}>Total</span>
+                                <span className={styles.cartTotalPrice}>R {totalPrice.toFixed(0)}</span>
+                            </div>
 
-                                    <button
-                                        className={styles.continueButton}
-                                        onClick={handleContinue}
-                                    >
-                                        Continue
-                                    </button>
-                                </>
-                            ) : (
-                                <div className={styles.emptyCart}>
-                                    <FaShoppingCart />
-                                    <p>Select services to book</p>
-                                </div>
-                            )}
+                            <button
+                                className={styles.continueButton}
+                                onClick={handleContinue}
+                            >
+                                Continue
+                            </button>
                         </div>
                     </div>
                 )}

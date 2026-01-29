@@ -254,6 +254,7 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
                 showHours={false}
                 compact
                 onViewCountUpdate={handleViewCountUpdate}
+                showPromoted
               />
             </SwiperSlide>
           ))}

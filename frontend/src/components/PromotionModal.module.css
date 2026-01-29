@@ -15,7 +15,7 @@
   background: var(--color-surface-elevated);
   color: var(--color-text-strong);
   padding: 2rem;
-  border-radius: 0.5rem;
+  border-radius: 12px;
   width: 90%;
   max-width: 500px;
   border: 1px solid var(--color-border);
@@ -35,7 +35,7 @@
   width: 100%;
   padding: 0.5rem;
   border: 1px solid var(--input-border);
-  border-radius: 0.25rem;
+  border-radius: 8px;
   background-color: var(--color-surface);
   color: var(--color-text-strong);
 }
@@ -89,7 +89,7 @@
   .modalContent {
     padding: 1rem;
     max-height: 95vh;
-    border-radius: 10px;
+    border-radius: 12px;
     width: 98%;
   }
 

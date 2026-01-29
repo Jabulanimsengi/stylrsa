@@ -25,7 +25,7 @@
 }
 
 .titleIcon {
-    color: #F51957;
+    color: var(--color-primary);
 }
 
 .clearButton {
@@ -163,7 +163,7 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #F51957;
+    color: var(--color-primary);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     transition: all 0.2s ease;
 }

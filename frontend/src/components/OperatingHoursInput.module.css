@@ -36,7 +36,7 @@
 .bulkButton {
   padding: 0.4rem 0.8rem;
   font-size: 0.875rem;
-  background: var(--primary, #f51957);
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -45,7 +45,7 @@
 }
 
 .bulkButton:hover {
-  background: var(--primary-hover, #d4144c);
+  background: var(--color-primary-hover);
 }
 
 .daysGrid {
@@ -65,7 +65,7 @@
 }
 
 .dayRow:hover {
-  border-color: var(--primary, #f51957);
+  border-color: var(--color-primary);
 }
 
 .dayRowClosed {
@@ -116,8 +116,8 @@
 
 .timeInput:focus {
   outline: none;
-  border-color: var(--primary, #f51957);
-  box-shadow: 0 0 0 3px rgba(245, 25, 87, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(29, 29, 31, 0.1);
 }
 
 .separator {

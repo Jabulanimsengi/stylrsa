@@ -47,19 +47,14 @@ import CalendarSchedule from '@/components/CalendarSchedule/CalendarSchedule';
 import TrustBadges from '@/components/TrustBadges/TrustBadges';
 import SocialShare from '@/components/SocialShare/SocialShare';
 import VerificationBadge from '@/components/VerificationBadge/VerificationBadge';
-import Breadcrumbs from '@/components/Breadcrumbs';
 import TeamMembers from '@/components/TeamMembers/TeamMembers';
 import BooksySidebar, { HeroGallery, SalonInfoHeader, BooksyReviewsSection, StickyTabNavigation, AboutSection } from './BooksyComponents';
 import MobileSalonProfile from './MobileSalonProfile';
 import mobileStyles from './MobileSalonProfile.module.css';
 
-import VideoShortsRow from '@/components/VideoShortsRow/VideoShortsRow';
-import MaterialsShowcase from '@/components/MaterialsShowcase/MaterialsShowcase';
-
 type Props = {
   initialSalon: Salon | null;
   salonId: string;
-  breadcrumbItems?: { label: string; href?: string }[];
 };
 
 const INITIAL_SERVICES_BATCH = 12;
@@ -68,7 +63,7 @@ const INITIAL_REVIEWS_BATCH = 4;
 const REVIEWS_BATCH_SIZE = 4;
 const EMPTY_REVIEWS: Review[] = [];
 
-export default function SalonProfileClient({ initialSalon, salonId, breadcrumbItems }: Props) {
+export default function SalonProfileClient({ initialSalon, salonId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { authStatus, user } = useAuth();
@@ -719,178 +714,123 @@ export default function SalonProfileClient({ initialSalon, salonId, breadcrumbIt
         </div>
 
         <div className={styles.container}>
-          {breadcrumbItems && breadcrumbItems.length > 0 && (
-            <Breadcrumbs items={breadcrumbItems} />
-          )}
-
-          {/* Sticky Tab Navigation */}
+          {/* Tab Navigation - Switches between different views */}
           <StickyTabNavigation
             activeSection={activeSection}
             onTabClick={(sectionId) => {
               setActiveSection(sectionId);
-              const el = document.getElementById(sectionId);
-              if (el) {
-                const offset = 80; // Account for sticky nav height
-                const elementPosition = el.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - offset;
-                window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-              }
+              // Scroll to top when switching tabs
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             hasPhotos={galleryImages.length > 0}
             hasTeam={true}
             reviewsCount={reviews.length}
           />
 
-          {/* Booksy-style Two-Column Layout */}
+          {/* Tabbed Content - Only show active section */}
           <div className={booksyStyles.booksyLayout}>
             {/* Left Column - Main Content */}
             <div className={booksyStyles.booksyMain}>
-              {/* Photos Section */}
-              <section id="photos-section">
-                {/* Hero Photo Gallery */}
-                <HeroGallery
-                  salon={salon}
-                  galleryImages={galleryImages}
-                  onShowAllPhotos={() => openLightbox(galleryImageUrls, 0)}
-                  onOpenLightbox={openLightbox}
-                />
-              </section>
-
-              {/* Salon Info Header */}
-              <SalonInfoHeader
-                salon={salon}
-                reviewsCount={reviews.length}
-                onReviewsClick={() => {
-                  const el = document.getElementById('reviews-section');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                hoursRecord={hoursRecord}
-                todayLabel={todayLabel}
-              />
-
-              {/* Services Section */}
-              <section id="services-section">
-                <h2 className={booksyStyles.sectionTitle}>Services</h2>
-
-                {/* Fresha-style Service List with Categories and Cart */}
-                <FreshaServiceList
-                  services={services}
-                  salon={salon}
-                  onBook={handleMultiServiceBook}
-                  onImageClick={openLightbox}
-                />
-              </section>
-
-              {/* Videos Section - only if there are videos */}
-              {salonVideos.length > 0 && (
-                <section id="videos-section" style={{ marginTop: '2rem' }}>
-                  <h2 className={styles.sectionTitle}>Videos</h2>
-                  <div className={styles.galleryGrid}>
-                    {salonVideos.map((video) => (
-                      <div
-                        key={video.id}
-                        className={styles.galleryItem}
-                        onClick={() => openVideoLightbox(video)}
-                        style={{ position: 'relative', cursor: 'pointer' }}
-                      >
-                        <Image
-                          src={video.thumbnailUrl || '/placeholder-video.png'}
-                          alt={video.caption || 'Service video'}
-                          className={styles.galleryImage}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 200px"
-                        />
-                        <div style={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          width: '48px',
-                          height: '48px',
-                          background: 'rgba(245, 25, 87, 0.9)',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          fontSize: '20px',
-                        }}>
-                          <FaPlay />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              {/* Photos Tab */}
+              {activeSection === 'photos-section' && (
+                <section className={booksyStyles.sectionContainerNoPadding}>
+                  <HeroGallery
+                    salon={salon}
+                    galleryImages={galleryImages}
+                    onShowAllPhotos={() => openLightbox(galleryImageUrls, 0)}
+                    onOpenLightbox={openLightbox}
+                  />
                 </section>
               )}
 
-              {/* Video Shorts Row - TikTok/Reels style */}
-              <section id="shorts-section">
-                <VideoShortsRow
-                  salonId={salon.id}
-                  onVideoClick={(video) => openVideoLightbox(video)}
-                />
-              </section>
+              {/* Services Tab */}
+              {activeSection === 'services-section' && (
+                <section className={booksyStyles.sectionContainer}>
+                  <FreshaServiceList
+                    services={services}
+                    salon={salon}
+                    onBook={handleMultiServiceBook}
+                    onImageClick={openLightbox}
+                  />
 
-              {/* Materials & Products Showcase */}
-              <section id="materials-section">
-                <MaterialsShowcase
-                  salonId={salon.id}
-                  onMaterialClick={(material) => {
-                    // Could open a modal or navigate to product page
-                    toast.info(`${material.name} - ${material.isSold ? `R${material.price?.toFixed(2)}` : 'Used by this salon'}`);
-                  }}
-                />
-              </section>
+                  {/* Videos in Services tab - only if there are videos */}
+                  {salonVideos.length > 0 && (
+                    <div style={{ marginTop: '2rem' }}>
+                      <h3 className={booksyStyles.subsectionTitle}>Videos</h3>
+                      <div className={styles.galleryGrid}>
+                        {salonVideos.map((video) => (
+                          <div
+                            key={video.id}
+                            className={styles.galleryItem}
+                            onClick={() => openVideoLightbox(video)}
+                            style={{ position: 'relative', cursor: 'pointer' }}
+                          >
+                            <Image
+                              src={video.thumbnailUrl || '/placeholder-video.png'}
+                              alt={video.caption || 'Service video'}
+                              className={styles.galleryImage}
+                              fill
+                              sizes="(max-width: 768px) 50vw, 200px"
+                            />
+                            <div style={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              width: '48px',
+                              height: '48px',
+                              background: 'rgba(245, 25, 87, 0.9)',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontSize: '20px',
+                            }}>
+                              <FaPlay />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </section>
+              )}
 
-              {/* Team Members Section */}
-              <section id="team-section">
-                <TeamMembers salonId={salon.id} isEditable={false} />
-              </section>
+              {/* Team Tab */}
+              {activeSection === 'team-section' && (
+                <section className={booksyStyles.sectionContainer}>
+                  <TeamMembers salonId={salon.id} isEditable={false} />
+                </section>
+              )}
 
-              {/* Booksy-style Reviews Section */}
-              <BooksyReviewsSection
-                reviews={reviews}
-                avgRating={salon.avgRating || 0}
-                galleryImages={galleryImages}
-                onOpenLightbox={openLightbox}
-              />
+              {/* Reviews Tab */}
+              {activeSection === 'reviews-section' && (
+                <section className={booksyStyles.sectionContainer}>
+                  <BooksyReviewsSection
+                    reviews={reviews}
+                    avgRating={salon.avgRating || 0}
+                    galleryImages={galleryImages}
+                    onOpenLightbox={openLightbox}
+                  />
+                </section>
+              )}
 
-              {/* About Section */}
-              <AboutSection
-                salon={salon}
-                latitude={salon.latitude}
-                longitude={salon.longitude}
-                mapsHref={mapsHref}
-                hoursRecord={hoursRecord}
-                todayLabel={todayLabel}
-                orderedOperatingDays={orderedOperatingDays}
-              />
+              {/* About Tab */}
+              {activeSection === 'about-section' && (
+                <section className={booksyStyles.sectionContainer}>
+                  <AboutSection
+                    salon={salon}
+                    latitude={salon.latitude}
+                    longitude={salon.longitude}
+                    mapsHref={mapsHref}
+                    hoursRecord={hoursRecord}
+                    todayLabel={todayLabel}
+                    orderedOperatingDays={orderedOperatingDays}
+                  />
+                </section>
+              )}
             </div>
-
-            {/* Right Sidebar - Booksy Style */}
-            <BooksySidebar
-              salon={salon}
-              galleryImages={galleryImages}
-              onShowAllPhotos={() => openLightbox(galleryImageUrls, 0)}
-              onOpenLightbox={openLightbox}
-              latitude={salon.latitude}
-              longitude={salon.longitude}
-              mapsHref={mapsHref}
-              hoursRecord={hoursRecord}
-              todayLabel={todayLabel}
-              orderedOperatingDays={orderedOperatingDays}
-              onBookNow={() => {
-                if (authStatus !== 'authenticated') {
-                  openModal('login');
-                } else if (services.length > 0) {
-                  setSelectedService(null);
-                  setShowBookingModal(true);
-                }
-              }}
-              isFavorited={salon.isFavorited || false}
-              onToggleFavorite={handleToggleFavorite}
-              showFavoriteButton={authStatus === 'authenticated'}
-            />
           </div>
         </div>
       </div>

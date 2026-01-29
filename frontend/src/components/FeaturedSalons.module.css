@@ -22,7 +22,7 @@
 }
 
 .title:hover {
-  color: var(--color-primary, #F51957);
+  color: var(--color-primary, var(--color-primary));
 }
 
 .title h2 {
@@ -38,16 +38,16 @@
   gap: 4px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--color-primary, #F51957);
+  color: var(--color-primary, var(--color-primary));
   text-decoration: none;
   transition: all 0.2s;
   padding: 0.5rem 1rem;
   border-radius: 20px;
-  background: rgba(245, 25, 87, 0.08);
+  background: var(--color-primary-soft);
 }
 
 .viewAll:hover {
-  background: rgba(245, 25, 87, 0.15);
+  background: rgba(29, 29, 31, 0.15);
   color: var(--color-primary-hover, #ff2d6f);
 }
 

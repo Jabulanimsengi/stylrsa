@@ -23,7 +23,7 @@
 
 .counterNumber.pulse {
     transform: scale(1.05);
-    color: var(--color-primary, #F51957);
+    color: var(--color-primary);
 }
 
 .counterLabel {

@@ -3,6 +3,7 @@
   max-width: 1024px;
   margin: 0 auto;
   padding-inline: var(--page-inline-padding);
+  min-height: calc(100vh - var(--app-shell-top-gap, 56px) - 80px);
 }
 
 /* Removed per-page sticky header; using PageNav */

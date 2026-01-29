@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
+import Image from 'next/image';
 
 interface NavigationLoadingContextType {
   setIsNavigating: (value: boolean) => void;
@@ -37,7 +37,22 @@ export function NavigationLoadingProvider({ children }: { children: ReactNode })
           zIndex: 99998,
           pointerEvents: 'auto'
         }}>
-          <LoadingSpinner size="large" color="white" />
+          <div
+            style={{
+              animation: 'navPulse 1.5s ease-in-out infinite',
+            }}
+          >
+            <Image
+              src="/logo-white.png"
+              alt="Stylr SA"
+              width={180}
+              height={60}
+              priority
+              style={{
+                objectFit: 'contain',
+              }}
+            />
+          </div>
         </div>
       )}
     </NavigationLoadingContext.Provider>
@@ -51,4 +66,5 @@ export function useNavigationLoading() {
   }
   return context;
 }
+
 

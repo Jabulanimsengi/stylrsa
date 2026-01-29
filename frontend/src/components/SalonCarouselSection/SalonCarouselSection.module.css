@@ -24,7 +24,7 @@
 }
 
 .title:hover {
-    color: var(--color-primary, #F51957);
+    color: var(--color-primary);
 }
 
 .title h2 {
@@ -40,22 +40,39 @@
     gap: 4px;
     font-size: 0.9rem;
     font-weight: 600;
-    color: var(--color-primary, #F51957);
+    color: var(--color-primary);
     text-decoration: none;
     transition: all 0.2s;
     padding: 0.5rem 1rem;
     border-radius: 20px;
-    background: rgba(245, 25, 87, 0.08);
+    background: rgba(29, 29, 31, 0.08);
 }
 
 .viewAll:hover {
-    background: rgba(245, 25, 87, 0.15);
-    color: var(--color-primary-hover, #ff2d6f);
+    background: rgba(29, 29, 31, 0.15);
+    color: var(--color-primary-hover);
 }
 
 .container {
     position: relative;
     padding: 0 var(--page-inline-padding, 1.5rem);
+}
+
+/* Prevent layout shift - ensure spacing is set before Swiper loads */
+.container :global(.swiper-slide) {
+    margin-right: 20px;
+}
+
+@media (max-width: 768px) {
+    .container :global(.swiper-slide) {
+        margin-right: 12px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+    .container :global(.swiper-slide) {
+        margin-right: 14px;
+    }
 }
 
 /* Navigation Buttons - Fresha-style */
@@ -88,9 +105,9 @@
 }
 
 .navButton:hover {
-    background: var(--color-primary, #F51957);
+    background: var(--color-primary);
     color: white;
-    box-shadow: 0 6px 16px rgba(245, 25, 87, 0.25);
+    box-shadow: 0 6px 16px rgba(29, 29, 31, 0.25);
 }
 
 .navButton:active {

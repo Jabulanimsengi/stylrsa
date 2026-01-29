@@ -109,7 +109,7 @@
 
 .categoryCard:hover {
   border-color: var(--color-primary);
-  background: rgba(245, 25, 87, 0.05);
+  background: rgba(29, 29, 31, 0.05);
   transform: translateY(-2px);
 }
 
@@ -280,7 +280,7 @@
 .submitButton {
   width: 100%;
   padding: 0.875rem;
-  background: linear-gradient(135deg, #F51957 0%, #d4144c 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #000000 100%);
   color: white;
   border: none;
   border-radius: 10px;
@@ -375,7 +375,7 @@
 }
 
 .loginLink:hover {
-  color: var(--primary-pink-dark, #d4144c);
+  color: var(--color-primary-hover);
 }
 
 /* Image Upload Section */
@@ -409,7 +409,7 @@
 
 .uploadBox:hover {
   border-color: var(--color-primary);
-  background: rgba(245, 25, 87, 0.05);
+  background: rgba(29, 29, 31, 0.05);
 }
 
 .uploadIcon {

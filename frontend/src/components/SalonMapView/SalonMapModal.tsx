@@ -249,7 +249,7 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
 
         const map = new mapboxgl.Map({
             container: mapContainerRef.current,
-            style: 'mapbox://styles/mapbox/streets-v12',
+            style: 'mapbox://styles/tsakanimsengi/cmkp36ijo001l01s54l2cgg4e', // Custom Stylr SA style
             center: userLocation ? [userLocation.lon, userLocation.lat] : defaultCenter,
             zoom: userLocation ? 10 : 5,
         });

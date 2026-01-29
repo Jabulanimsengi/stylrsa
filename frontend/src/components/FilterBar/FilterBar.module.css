@@ -13,7 +13,7 @@
   padding: 0.4rem 0.85rem;
   background: white;
   border: 1.5px solid var(--color-border, #e5e7eb);
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-primary, #1f2937);
@@ -39,7 +39,7 @@
 .filterBar {
   background: var(--color-surface, #fff);
   padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: 12px;
   margin-bottom: 0.75rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   display: flex;
@@ -73,7 +73,7 @@
   width: 100%;
   padding: 0.35rem 0.5rem;
   border: 1px solid var(--color-border, #d1d5db);
-  border-radius: 0.375rem;
+  border-radius: 8px;
   background-color: white;
   color: var(--color-text-strong);
   font-size: 0.75rem;
@@ -95,7 +95,7 @@
   overflow-y: auto;
   background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
-  border-radius: 0.375rem;
+  border-radius: 8px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
   padding: 0;
 }
@@ -187,7 +187,7 @@
   background-color: var(--color-primary, #f51957);
   color: white;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 0.75rem;
   cursor: pointer;
@@ -216,7 +216,7 @@
     overflow-x: auto;
     flex-wrap: nowrap;
     scrollbar-width: thin;
-    border-radius: 0.5rem;
+    border-radius: 12px;
   }
 
   .filterBar::-webkit-scrollbar {
@@ -279,7 +279,7 @@
   padding: 0.625rem 0.875rem;
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 0.5rem;
+  border-radius: 12px;
   margin-top: 0.5rem;
   width: 100%;
   backdrop-filter: blur(8px);
@@ -316,7 +316,7 @@
   padding: 0.45rem 0.75rem;
   background: white;
   border: 1.5px solid var(--color-border, #e5e7eb);
-  border-radius: 0.375rem;
+  border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--color-text-strong, #1f2937);

@@ -29,11 +29,11 @@
 }
 
 .card {
-  border: 2px solid #F51957;
+  border: 2px solid var(--color-primary);
   border-radius: 12px;
   padding: 1.25rem 1.5rem;
   background: var(--color-surface-elevated);
-  box-shadow: 0 4px 12px rgba(245, 25, 87, 0.12);
+  box-shadow: 0 4px 12px rgba(29, 29, 31, 0.12);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -48,7 +48,7 @@
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, #F51957 0%, #d4144c 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #000000 100%);
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 16px;
@@ -56,7 +56,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  box-shadow: 0 2px 6px rgba(245, 25, 87, 0.25);
+  box-shadow: 0 2px 6px rgba(29, 29, 31, 0.25);
   display: flex;
   align-items: center;
   gap: 0.2rem;
@@ -104,10 +104,10 @@
 /* Using a.cta for higher specificity to override global a { } styles */
 a.cta,
 .cta {
-  border: 2px solid #F51957 !important;
+  border: 2px solid var(--color-primary) !important;
   border-radius: 8px;
   padding: 0.625rem 1.5rem;
-  background-color: #F51957 !important;
+  background-color: var(--color-primary) !important;
   color: #ffffff !important;
   font-weight: 600;
   font-size: 0.9rem;
@@ -125,19 +125,19 @@ a.cta:link,
 a.cta:visited,
 .cta:visited {
   color: #ffffff !important;
-  background-color: #F51957 !important;
+  background-color: var(--color-primary) !important;
 }
 
 a.cta:hover,
 .cta:hover {
   background-color: #ffffff !important;
-  color: #F51957 !important;
-  border-color: #F51957 !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
 }
 
 a.cta:active,
 .cta:active {
-  color: #F51957 !important;
+  color: var(--color-primary) !important;
   background-color: #ffffff !important;
 }
 
@@ -199,8 +199,8 @@ a.cta:active,
 }
 
 .highlightHeader {
-  background: linear-gradient(135deg, rgba(245, 25, 87, 0.1) 0%, rgba(212, 20, 76, 0.05) 100%);
-  color: #F51957;
+  background: linear-gradient(135deg, rgba(29, 29, 31, 0.1) 0%, rgba(29, 29, 31, 0.05) 100%);
+  color: var(--color-primary);
 }
 
 .featureName {
@@ -215,7 +215,7 @@ a.cta:active,
 }
 
 .highlightColumn {
-  background: rgba(245, 25, 87, 0.03);
+  background: rgba(29, 29, 31, 0.03);
 }
 
 .evenRow {
@@ -223,7 +223,7 @@ a.cta:active,
 }
 
 .totalRow {
-  background: rgba(245, 25, 87, 0.08);
+  background: rgba(29, 29, 31, 0.08);
   font-weight: 600;
 }
 
@@ -268,6 +268,7 @@ a.cta:active,
 
 .accordionIcon {
   font-size: 0.65rem;
+  font-weight: 900;
   color: var(--color-text-soft);
   transition: transform 0.2s ease;
 }
@@ -288,8 +289,8 @@ a.cta:active,
 }
 
 .totalBanner {
-  background: rgba(245, 25, 87, 0.08);
-  border: 1px solid rgba(245, 25, 87, 0.2);
+  background: rgba(29, 29, 31, 0.08);
+  border: 1px solid rgba(29, 29, 31, 0.2);
   border-radius: 10px;
   padding: 0.875rem 1rem;
   text-align: center;

@@ -28,7 +28,7 @@
 }
 
 .description strong {
-  color: #F51957;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -55,7 +55,7 @@
   transition: all 0.2s ease;
   color: #1a1a2e;
   background: #f9fafb;
-  caret-color: #F51957;
+  caret-color: var(--color-primary);
 }
 
 .codeInput:hover:not(:disabled) {
@@ -63,13 +63,13 @@
 }
 
 .codeInput:focus {
-  border-color: #F51957;
+  border-color: var(--color-primary);
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(245, 25, 87, 0.1);
+  box-shadow: 0 0 0 3px rgba(29, 29, 31, 0.1);
 }
 
 .codeInput:not(:placeholder-shown) {
-  border-color: #F51957;
+  border-color: var(--color-primary);
   background: #fff5f7;
 }
 
@@ -96,7 +96,7 @@
 .submitButton {
   width: 100%;
   padding: 0.875rem;
-  background: #F51957;
+  background: var(--color-primary);
   color: white;
   font-weight: 600;
   font-size: 1rem;
@@ -130,7 +130,7 @@
 
 .resendButton {
   background: transparent;
-  color: #F51957;
+  color: var(--color-primary);
   border: none;
   font-weight: 600;
   font-size: 0.9rem;
@@ -141,7 +141,7 @@
 }
 
 .resendButton:hover:not(:disabled) {
-  background: rgba(245, 25, 87, 0.08);
+  background: rgba(29, 29, 31, 0.08);
 }
 
 .resendButton:disabled {

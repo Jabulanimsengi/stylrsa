@@ -113,7 +113,7 @@ export default function PricingPage() {
 
         {/* Mobile Accordion */}
         <div className={styles.mobileAccordion}>
-          <AccordionItem title={`Platform Fee — ${Math.round(COMMISSION_RATES.PLATFORM * 100)}%`} defaultOpen>
+          <AccordionItem title={`Platform Fee — ${Math.round(COMMISSION_RATES.PLATFORM * 100)}%`}>
             <p>Marketing, advertising, technology & continuous improvements</p>
           </AccordionItem>
           <AccordionItem title={`Client Cashback — ${Math.round(COMMISSION_RATES.CASHBACK * 100)}%`}>
@@ -179,7 +179,7 @@ export default function PricingPage() {
 
         {/* Mobile Accordion */}
         <div className={styles.mobileAccordion}>
-          <AccordionItem title="Listing Fee" defaultOpen>
+          <AccordionItem title="Listing Fee">
             <div className={styles.comparisonRow}>
               <div className={styles.comparisonUs}>
                 <span className={styles.checkIcon}>✓</span> StylrSA: <strong>FREE</strong>

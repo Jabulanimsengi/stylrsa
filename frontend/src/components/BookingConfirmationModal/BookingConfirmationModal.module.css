@@ -157,7 +157,7 @@
 .acceptButton {
   flex: 1;
   padding: 0.875rem 1.5rem;
-  border-radius: 10px;
+  border-radius: 12px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
@@ -249,7 +249,7 @@
   }
 
   .modal {
-    border-radius: 10px;
+    border-radius: 12px;
   }
 
   .header {

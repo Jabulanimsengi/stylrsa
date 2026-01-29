@@ -63,7 +63,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(245, 25, 87, 0.9);
+  background: rgba(29, 29, 31, 0.9);
   color: white;
   border: none;
   font-size: 1.5rem;
@@ -76,7 +76,7 @@
 }
 
 .removeButton:hover {
-  background: #F51957;
+  background: var(--color-primary);
 }
 
 .uploadButton {
@@ -138,7 +138,7 @@
 .select:focus,
 .textarea:focus {
   outline: none;
-  border-color: #F51957;
+  border-color: var(--color-primary);
 }
 
 .textarea {
@@ -157,7 +157,7 @@
 
 .submitButton {
   padding: 1rem;
-  background: linear-gradient(135deg, #F51957 0%, #d4144c 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #000000 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -169,7 +169,7 @@
 
 .submitButton:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 25, 87, 0.3);
+  box-shadow: 0 4px 12px rgba(29, 29, 31, 0.3);
 }
 
 .submitButton:disabled {

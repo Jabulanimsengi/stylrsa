@@ -22,7 +22,7 @@ interface MapboxMapProps {
 }
 
 const STYLE_URLS: Record<string, string> = {
-    streets: 'mapbox://styles/mapbox/streets-v12',
+    streets: 'mapbox://styles/tsakanimsengi/cmkp36ijo001l01s54l2cgg4e', // Custom Stylr SA style
     outdoors: 'mapbox://styles/mapbox/outdoors-v12',
     light: 'mapbox://styles/mapbox/light-v11',
     dark: 'mapbox://styles/mapbox/dark-v11',
