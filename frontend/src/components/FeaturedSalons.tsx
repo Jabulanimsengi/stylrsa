@@ -159,21 +159,34 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
     );
   }, []);
 
-  // Don't render anything until we've started fetching
-  // This prevents the flash of skeleton → empty
-  if (loadingState === 'pending') {
+  // Don't render if we have no salons (after loading completes)
+  if (loadingState === 'done' && salons.length === 0) {
     return null;
   }
 
-  // Don't show skeleton during loading - only show content once we have it
-  // This prevents skeleton flash when there's no content
-  if (loadingState === 'loading') {
-    return null;
-  }
-
-  // After loading completes, only render if we have salons
-  if (salons.length === 0) {
-    return null;
+  // Show loading state during fetch - prevents invisible section
+  if (loadingState === 'loading' || loadingState === 'pending') {
+    return (
+      <section className={styles.section}>
+        <div className={styles.header}>
+          <div style={{ width: '150px', height: '32px', background: '#f0f0f0', borderRadius: '8px' }} />
+        </div>
+        <div style={{ display: 'flex', gap: '16px', maxWidth: '1200px', margin: '0 auto' }}>
+          {[1, 2, 3, 4].map(i => (
+            <div
+              key={i}
+              style={{
+                width: isMobile ? 'calc(100% / 1.35 - 10px)' : 'calc((100% - 48px) / 4.1)',
+                height: isMobile ? '240px' : '280px',
+                background: '#f0f0f0',
+                borderRadius: '12px',
+                flexShrink: 0
+              }}
+            />
+          ))}
+        </div>
+      </section>
+    );
   }
 
   return (
