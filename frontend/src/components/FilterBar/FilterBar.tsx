@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useDeferredValue, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaSpinner, FaMapMarkerAlt, FaExclamationTriangle, FaBolt, FaStar, FaSlidersH, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaExclamationTriangle, FaBolt, FaStar, FaSlidersH, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import styles from './FilterBar.module.css';
 import { toFriendlyMessage } from '@/lib/errors';
 import { getCategoriesCached, getLocationsCached } from '@/lib/resourceCache';
@@ -17,6 +17,7 @@ import {
   SelectValue,
   Checkbox,
 } from '@/components/ui';
+import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 
 export interface FilterValues {
   province: string;
@@ -604,8 +605,8 @@ export default function FilterBar({
           <div className={styles.locationStatus}>
             {isGeoLoading && !coordinates && (
               <>
-                <FaSpinner className={styles.spinner} />
-                <span>Detecting location...</span>
+                <LoadingSpinner size="sm" inline />
+                <span style={{ marginLeft: '8px' }}>Detecting location...</span>
               </>
             )}
             {coordinates && !isGeoLoading && (

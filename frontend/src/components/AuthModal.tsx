@@ -74,7 +74,7 @@ export default function AuthModal({ view: initialView, onClose }: AuthModalProps
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[400px] max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="sm:max-w-[440px] p-0 border-0">
         {/* Verification flows */}
         {isVerificationView && (
           <div className="p-6">

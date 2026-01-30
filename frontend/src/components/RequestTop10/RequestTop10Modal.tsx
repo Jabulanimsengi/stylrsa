@@ -5,9 +5,10 @@ import Image from 'next/image';
 import styles from './RequestTop10.module.css';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
-import { FaCloudUploadAlt, FaTrash, FaSpinner } from 'react-icons/fa';
+import { FaCloudUploadAlt, FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { forwardGeocode, GeocodingResult } from '@/lib/mapbox';
+import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 
 const SERVICE_CATEGORIES = [
   { id: 'hair-salon', name: 'Hair Salon', icon: '💇' },
@@ -478,7 +479,7 @@ export default function RequestTop10Modal({ isOpen, onClose }: RequestTop10Modal
                       onClick={() => fileInputRef.current?.click()}
                     >
                       {isUploading ? (
-                        <FaSpinner className={styles.spinner} />
+                        <LoadingSpinner size="sm" inline />
                       ) : (
                         <>
                           <FaCloudUploadAlt className={styles.uploadIcon} />

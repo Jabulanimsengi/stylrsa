@@ -18,7 +18,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Hero Section - Modern Art Background with Mesh Gradients */
+/* Hero Section - Background Image */
 .hero {
   position: relative;
   width: 100%;
@@ -30,94 +30,53 @@
   overflow: hidden;
   background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
   color: var(--color-text-strong);
+  min-height: 500px;
 }
 
-/* Modern Art - Gradient Blob 1 (Top Left) */
-.heroBlob1 {
+/* Hero Background Image Wrapper */
+.heroImageWrapper {
   position: absolute;
-  top: -15%;
-  left: -10%;
-  width: 450px;
-  height: 450px;
-  background: radial-gradient(
-    circle at 30% 40%,
-    rgba(29, 29, 31, 0.08) 0%,
-    rgba(60, 60, 62, 0.05) 35%,
-    rgba(140, 140, 142, 0.02) 70%,
-    transparent 100%
-  );
-  border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
-  filter: blur(40px);
+  inset: 0;
+  width: 100%;
+  height: 100%;
   z-index: 0;
-  animation: float1 20s ease-in-out infinite;
+  overflow: hidden;
 }
 
-/* Modern Art - Gradient Blob 2 (Top Right) */
-.heroBlob2 {
+/* Hero Image Container - needed for Next.js Image fill prop */
+.heroImageContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Hero Background Image */
+.heroBackgroundImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Hero Overlay - for text readability */
+.heroOverlay {
   position: absolute;
-  top: -5%;
-  right: -8%;
-  width: 380px;
-  height: 380px;
-  background: radial-gradient(
-    circle at 60% 50%,
-    rgba(29, 29, 31, 0.06) 0%,
-    rgba(70, 70, 72, 0.04) 40%,
-    rgba(150, 150, 152, 0.02) 75%,
-    transparent 100%
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.25) 100%
   );
-  border-radius: 47% 53% 41% 59% / 62% 44% 56% 38%;
-  filter: blur(35px);
-  z-index: 0;
-  animation: float2 18s ease-in-out infinite;
-}
-
-/* Modern Art - Gradient Blob 3 (Bottom Center) */
-.heroBlob3 {
-  position: absolute;
-  bottom: -12%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(29, 29, 31, 0.05) 0%,
-    rgba(80, 80, 82, 0.03) 45%,
-    rgba(160, 160, 162, 0.015) 80%,
-    transparent 100%
-  );
-  border-radius: 41% 59% 48% 52% / 53% 61% 39% 47%;
-  filter: blur(45px);
-  z-index: 0;
-  animation: float3 22s ease-in-out infinite;
-}
-
-/* Modern Art - Geometric Line Pattern 1 */
-.heroGeometric1 {
-  position: absolute;
-  top: 10%;
-  right: 15%;
-  width: 200px;
-  height: 200px;
-  border: 1px solid rgba(29, 29, 31, 0.08);
-  border-radius: 12px;
-  transform: rotate(15deg);
   z-index: 1;
-  animation: rotateGeometric1 25s linear infinite;
 }
 
-/* Modern Art - Geometric Line Pattern 2 */
+/* Old gradient blobs - no longer used */
+.heroBlob1,
+.heroBlob2,
+.heroBlob3,
+.heroGeometric1,
 .heroGeometric2 {
-  position: absolute;
-  bottom: 15%;
-  left: 12%;
-  width: 150px;
-  height: 150px;
-  border: 1px solid rgba(29, 29, 31, 0.06);
-  border-radius: 50%;
-  z-index: 1;
-  animation: scaleGeometric2 20s ease-in-out infinite;
+  display: none;
 }
 
 /* Floating Animations */
@@ -178,47 +137,21 @@
   }
 }
 
-/* Dark Mode Support for Modern Art Background */
-[data-theme='dark'] .heroBlob1 {
-  background: radial-gradient(
-    circle at 30% 40%,
-    rgba(245, 245, 247, 0.06) 0%,
-    rgba(200, 200, 202, 0.04) 35%,
-    rgba(150, 150, 152, 0.02) 70%,
-    transparent 100%
-  );
-}
-
-[data-theme='dark'] .heroBlob2 {
-  background: radial-gradient(
-    circle at 60% 50%,
-    rgba(245, 245, 247, 0.05) 0%,
-    rgba(200, 200, 202, 0.03) 40%,
-    rgba(150, 150, 152, 0.015) 75%,
-    transparent 100%
-  );
-}
-
-[data-theme='dark'] .heroBlob3 {
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(245, 245, 247, 0.04) 0%,
-    rgba(200, 200, 202, 0.025) 45%,
-    rgba(150, 150, 152, 0.01) 80%,
-    transparent 100%
-  );
-}
-
-[data-theme='dark'] .heroGeometric1 {
-  border-color: rgba(245, 245, 247, 0.06);
-}
-
-[data-theme='dark'] .heroGeometric2 {
-  border-color: rgba(245, 245, 247, 0.05);
-}
-
+/* Dark Mode Support */
 [data-theme='dark'] .hero {
   background: linear-gradient(180deg, #000000 0%, #1D1D1F 100%);
+}
+
+[data-theme='dark'] .heroImageWrapper {
+  opacity: 0.7;
+}
+
+[data-theme='dark'] .heroOverlay {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
 }
 
 @media (min-width: 1024px) {
@@ -249,15 +182,25 @@
   text-align: center;
 }
 
-/* Hero Title - Clean, bold, dark text */
+/* Hero Title - Clean, bold text with dark background */
 .heroTitle {
   font-size: clamp(1.75rem, 5vw, 3rem);
   font-weight: 700;
   line-height: 1.15;
   margin: 0;
-  color: var(--color-text-strong, #1a1a1a);
+  color: #ffffff;
   text-align: center;
   letter-spacing: -0.02em;
+  background-color: rgba(26, 26, 26, 0.9);
+  padding: clamp(0.75rem, 2vw, 1.25rem) clamp(1.5rem, 4vw, 2.5rem);
+  border-radius: 50px;
+  display: inline-block;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Ensure typing animation cursor is visible on dark background */
+.heroTitle :global(.cursor) {
+  color: #ffffff !important;
 }
 
 /* Hero Subtitle - Cashback badge */
@@ -587,25 +530,6 @@
   padding: 2rem;
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid var(--light-silver);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: rotation 1s linear infinite;
-}
-
-@keyframes rotation {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 /* Tablet Responsive */
 @media (max-width: 992px) {
   .hero {
@@ -636,42 +560,8 @@
     margin-right: 0;
   }
 
-  /* Scale down background art on mobile */
-  .heroBlob1 {
-    width: 280px;
-    height: 280px;
-    top: -8%;
-    left: -15%;
-    filter: blur(30px);
-  }
-
-  .heroBlob2 {
-    width: 240px;
-    height: 240px;
-    top: -3%;
-    right: -12%;
-    filter: blur(25px);
-  }
-
-  .heroBlob3 {
-    width: 320px;
-    height: 320px;
-    bottom: -8%;
-    filter: blur(35px);
-  }
-
-  .heroGeometric1 {
-    width: 120px;
-    height: 120px;
-    top: 8%;
-    right: 10%;
-  }
-
-  .heroGeometric2 {
-    width: 90px;
-    height: 90px;
-    bottom: 12%;
-    left: 8%;
+  .hero {
+    min-height: 400px;
   }
 
   .heroContent {
@@ -849,28 +739,8 @@
     margin-right: 0;
   }
 
-  /* Further reduce background art on very small screens */
-  .heroBlob1 {
-    width: 200px;
-    height: 200px;
-    opacity: 0.8;
-  }
-
-  .heroBlob2 {
-    width: 180px;
-    height: 180px;
-    opacity: 0.8;
-  }
-
-  .heroBlob3 {
-    width: 240px;
-    height: 240px;
-    opacity: 0.8;
-  }
-
-  .heroGeometric1,
-  .heroGeometric2 {
-    display: none; /* Hide geometric shapes on very small screens */
+  .hero {
+    min-height: 350px;
   }
 
   .heroContent {

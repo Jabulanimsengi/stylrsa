@@ -50,6 +50,7 @@ import {
   Badge,
 } from '@/components/ui';
 import StatusBadge from '@/components/StatusBadge';
+import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 
 type DashboardBooking = Booking & {
   user: { firstName: string; lastName: string };
@@ -147,6 +148,7 @@ function DashboardPageContent() {
   const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState<PlanCode | null>(null);
   const [paymentReference, setPaymentReference] = useState('');
   const [isSubmittingPlanChange, setIsSubmittingPlanChange] = useState(false);
+  const [isTogglingAvailability, setIsTogglingAvailability] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -393,13 +395,25 @@ function DashboardPageContent() {
   };
 
   const toggleAvailability = async () => {
-    if (!ownerId) return;
+    if (!ownerId || isTogglingAvailability) return;
+    setIsTogglingAvailability(true);
     try {
       const updated = await apiJson(`/api/salons/mine/availability?ownerId=${ownerId}`, { method: 'PATCH' }) as Salon;
-      setSalon(updated);
-      toast.success(updated.isAvailableNow ? 'Marked as available' : 'Marked as unavailable');
+      // Use React's batching to update state safely
+      setSalon(prev => {
+        if (!prev) return updated;
+        return updated;
+      });
+      // Defer toast to avoid DOM manipulation conflicts
+      setTimeout(() => {
+        toast.success(updated.isAvailableNow ? 'Marked as available' : 'Marked as unavailable');
+      }, 0);
     } catch (e: any) {
-      toast.error(toFriendlyMessage(e, 'Could not update availability'));
+      setTimeout(() => {
+        toast.error(toFriendlyMessage(e, 'Could not update availability'));
+      }, 0);
+    } finally {
+      setIsTogglingAvailability(false);
     }
   };
 
@@ -483,8 +497,7 @@ function DashboardPageContent() {
         <PageNav />
         <h1 className={styles.title}>My Dashboard</h1>
         <div className={styles.loadingContainer}>
-          <div className={styles.loadingSpinner} />
-          <p className={styles.loadingText}>Loading your dashboard...</p>
+          <LoadingSpinner size="lg" inline text="Loading your dashboard..." />
         </div>
         <div className={styles.contentGrid}>
           {[1, 2, 3].map(i => (
@@ -536,11 +549,11 @@ function DashboardPageContent() {
   const renderBookingCard = (booking: DashboardBooking) => {
     const bookingDate = new Date(booking.bookingTime);
     return (
-      <div key={booking.id} className={styles.bookingCard}>
+      <div key={booking.id} className={styles.bookingCard} data-status={booking.status}>
         <div className={styles.bookingHeader}>
           <div>
             <h4 className={styles.bookingServiceTitle}>{booking.service.title}</h4>
-            <p className={styles.bookingCustomerName}>Customer: {booking.user.firstName} {booking.user.lastName}</p>
+            <p className={styles.bookingCustomerName}>{booking.user.firstName} {booking.user.lastName}</p>
           </div>
           <span className={`${styles.bookingStatusBadge} ${styles[`status${booking.status.charAt(0) + booking.status.slice(1).toLowerCase()}`]}`}>
             {booking.status}
@@ -548,25 +561,32 @@ function DashboardPageContent() {
         </div>
         <div className={styles.bookingDetails}>
           <div className={styles.bookingDetailItem}>
+            <strong>Date:</strong>
             <span>{bookingDate.toLocaleDateString('en-ZA', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</span>
           </div>
           <div className={styles.bookingDetailItem}>
+            <strong>Time:</strong>
             <span>{bookingDate.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
-          {booking.clientPhone && <div className={styles.bookingDetailItem}><span>{booking.clientPhone}</span></div>}
+          {booking.clientPhone && (
+            <div className={styles.bookingDetailItem}>
+              <strong>Phone:</strong>
+              <span>{booking.clientPhone}</span>
+            </div>
+          )}
         </div>
         <div className={styles.bookingActions}>
           {booking.status === 'PENDING' && (
             <>
-              <button onClick={() => handleBookingStatusUpdate(booking.id, 'CONFIRMED')} className={styles.confirmButton}>Accept</button>
-              <button onClick={() => handleBookingStatusUpdate(booking.id, 'DECLINED')} className={styles.declineButton}>Decline</button>
+              <button onClick={() => handleBookingStatusUpdate(booking.id, 'CONFIRMED')} className={styles.confirmButton}>Accept Booking</button>
+              <button onClick={() => handleBookingStatusUpdate(booking.id, 'DECLINED')} className={styles.declineButton}>Decline Booking</button>
             </>
           )}
           {booking.status === 'CONFIRMED' && (
-            <button onClick={() => setBookingToComplete(booking.id)} className={styles.completeButton}>Mark Completed</button>
+            <button onClick={() => setBookingToComplete(booking.id)} className={styles.completeButton}>Mark as Completed</button>
           )}
           {['COMPLETED', 'DECLINED', 'CANCELLED'].includes(booking.status) && (
-            <p className={styles.bookingStatusText}>{booking.status === 'COMPLETED' ? 'Service completed' : booking.status === 'DECLINED' ? 'Declined' : 'Cancelled'}</p>
+            <p className={styles.bookingStatusText}>{booking.status === 'COMPLETED' ? 'Service completed' : booking.status === 'DECLINED' ? 'Booking declined' : 'Booking cancelled'}</p>
           )}
         </div>
       </div>
@@ -592,35 +612,50 @@ function DashboardPageContent() {
 
         {/* Status Summary */}
         <div className={styles.statusSummary}>
-          <div className={styles.statusCard}>
+          <div className={styles.statusCard} onClick={() => setActiveMainTab('package')} style={{ cursor: 'pointer' }}>
             <span className={styles.statusLabel}>Package</span>
             <span className={styles.statusValue}>{planDetails.name}</span>
+            <span className={styles.statusSubtext}>{planDetails.visibilityWeight}x visibility boost</span>
           </div>
           <div className={styles.statusCard}>
             <span className={styles.statusLabel}>Payment</span>
             <span className={`${styles.statusValue} ${styles[`planStatus_${planStatus.toLowerCase()}`]}`}>{PLAN_PAYMENT_LABELS[planStatus]}</span>
           </div>
-          <div className={styles.statusCard}>
+          <div className={styles.statusCard} onClick={() => setActiveMainTab('bookings')} style={{ cursor: 'pointer' }}>
             <span className={styles.statusLabel}>Bookings</span>
-            <span className={styles.statusValue}>{pendingBookings.length} pending</span>
+            <span className={styles.statusValue}>{pendingBookings.length}</span>
+            <span className={styles.statusSubtext}>pending requests</span>
           </div>
           <div className={styles.statusCard}>
             <span className={styles.statusLabel}>Availability</span>
-            <span className={styles.statusValue}>{salon.isAvailableNow ? 'Available' : 'Unavailable'}</span>
+            <span className={`${styles.statusValue} ${salon.isAvailableNow ? styles.statusAvailable : styles.statusUnavailable}`}>
+              {salon.isAvailableNow ? 'Available' : 'Unavailable'}
+            </span>
+            <button
+              onClick={toggleAvailability}
+              disabled={isTogglingAvailability}
+              className={styles.toggleSwitch}
+              aria-label="Toggle availability"
+              style={{ opacity: isTogglingAvailability ? 0.6 : 1, cursor: isTogglingAvailability ? 'not-allowed' : 'pointer' }}
+            >
+              <span className={`${styles.toggleSlider} ${salon.isAvailableNow ? styles.toggleActive : ''}`}>
+                <span className={styles.toggleKnob}></span>
+              </span>
+              <span className={styles.toggleLabel}>
+                {salon.isAvailableNow ? 'ON' : 'OFF'}
+              </span>
+            </button>
           </div>
         </div>
 
         {/* Header Actions */}
         <div className={styles.headerActions}>
-          <Button variant="ghost" onClick={toggleAvailability}>
-            {salon.isAvailableNow ? 'Set Unavailable' : 'Set Available'}
-          </Button>
-          <Button variant="ghost" asChild>
-            <Link href={getSalonUrl(salon)} target="_blank">View Profile</Link>
-          </Button>
-          <Button variant="secondary" onClick={() => setIsEditSalonModalOpen(true)}>
-            <FaEdit className="mr-1 h-4 w-4" /> Edit Profile
-          </Button>
+          <Link href={getSalonUrl(salon)} target="_blank" className={styles.headerActionBtn}>
+            View Public Profile
+          </Link>
+          <button onClick={() => setIsEditSalonModalOpen(true)} className={`${styles.headerActionBtn} ${styles.headerActionBtnPrimary}`}>
+            Edit Salon Profile
+          </button>
         </div>
 
         {/* Payment Notice */}
@@ -728,9 +763,36 @@ function DashboardPageContent() {
                   <button onClick={() => setActiveBookingTab('past')} className={`${styles.tabButton} ${activeBookingTab === 'past' ? styles.activeTab : ''}`}>Past ({pastBookings.length})</button>
                 </div>
                 <div className={styles.list}>
-                  {activeBookingTab === 'pending' && (pendingBookings.length > 0 ? pendingBookings.map(renderBookingCard) : <p>No pending bookings</p>)}
-                  {activeBookingTab === 'confirmed' && (confirmedBookings.length > 0 ? confirmedBookings.map(renderBookingCard) : <p>No confirmed bookings</p>)}
-                  {activeBookingTab === 'past' && (pastBookings.length > 0 ? pastBookings.map(renderBookingCard) : <p>No past bookings</p>)}
+                  {activeBookingTab === 'pending' && (
+                    pendingBookings.length > 0 ? pendingBookings.map(renderBookingCard) : (
+                      <div className={styles.emptyState}>
+                        <h3 className={styles.emptyStateTitle}>No Pending Bookings</h3>
+                        <p className={styles.emptyStateMessage}>
+                          You're all caught up! New booking requests will appear here when customers book your services.
+                        </p>
+                      </div>
+                    )
+                  )}
+                  {activeBookingTab === 'confirmed' && (
+                    confirmedBookings.length > 0 ? confirmedBookings.map(renderBookingCard) : (
+                      <div className={styles.emptyState}>
+                        <h3 className={styles.emptyStateTitle}>No Confirmed Bookings</h3>
+                        <p className={styles.emptyStateMessage}>
+                          Once you accept booking requests, they will appear here.
+                        </p>
+                      </div>
+                    )
+                  )}
+                  {activeBookingTab === 'past' && (
+                    pastBookings.length > 0 ? pastBookings.map(renderBookingCard) : (
+                      <div className={styles.emptyState}>
+                        <h3 className={styles.emptyStateTitle}>No Past Bookings</h3>
+                        <p className={styles.emptyStateMessage}>
+                          Completed, declined, and cancelled bookings will appear here for your records.
+                        </p>
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
             )}
@@ -740,25 +802,40 @@ function DashboardPageContent() {
               <div className={styles.contentCard}>
                 <div className={styles.cardHeader}>
                   <h3 className={styles.cardTitle}>Services</h3>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button onClick={openSimpleServiceModalToAdd} className="btn btn-secondary">Quick Add</button>
-                    <button onClick={openServiceModalToAdd} className="btn btn-primary">Add Service</button>
-                  </div>
+                  <button onClick={openServiceModalToAdd} className={styles.addButton}>Add Service</button>
                 </div>
                 <div className={styles.list}>
                   {services.length > 0 ? services.map((service) => (
                     <div key={service.id} className={styles.listItem}>
-                      <p><strong>{service.title}</strong> - R{service.price.toFixed(2)}</p>
-                      <div className={styles.actions}>
-                        <span className={`${styles.statusBadge} ${getStatusClass(service.approvalStatus || 'PENDING')}`}>{service.approvalStatus}</span>
-                        {service.approvalStatus === 'APPROVED' && !promotions.active.some((p: any) => p.serviceId === service.id) && (
-                          <button onClick={() => { setSelectedServiceForPromo(service); setIsCreatePromoModalOpen(true); }} className={styles.promoButton}>Promo</button>
-                        )}
-                        <button onClick={() => openServiceModalToEdit(service)} className={styles.editButton}><FaEdit /></button>
-                        <button onClick={() => handleDeleteClick(service.id, 'service')} className={styles.deleteButton}><FaTrash /></button>
+                      <div className={styles.serviceMainInfo}>
+                        <span className={styles.serviceTitle}>{service.title}</span>
+                        <span className={styles.servicePriceInline}>R{service.price.toFixed(2)}</span>
+                      </div>
+                      <div className={styles.serviceActionsCompact}>
+                        <span className={`${styles.statusIcon} ${getStatusClass(service.approvalStatus || 'PENDING')}`} title={service.approvalStatus}>
+                          {service.approvalStatus === 'APPROVED' && '✓'}
+                          {service.approvalStatus === 'PENDING' && '○'}
+                          {service.approvalStatus === 'REJECTED' && '✕'}
+                        </span>
+                        <button onClick={() => openServiceModalToEdit(service)} className={styles.editButton} aria-label="Edit service">
+                          <FaEdit />
+                        </button>
+                        <button onClick={() => handleDeleteClick(service.id, 'service')} className={styles.deleteButton} aria-label="Delete service">
+                          <FaTrash />
+                        </button>
                       </div>
                     </div>
-                  )) : <p>No services yet. Add your first service.</p>}
+                  )) : (
+                    <div className={styles.emptyState}>
+                      <h3 className={styles.emptyStateTitle}>No Services Yet</h3>
+                      <p className={styles.emptyStateMessage}>
+                        Start by adding your first service. Services are what customers will book from your salon.
+                      </p>
+                      <button onClick={openServiceModalToAdd} className={styles.emptyStateAction}>
+                        Add Your First Service
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -769,7 +846,7 @@ function DashboardPageContent() {
                 <div className={styles.cardHeader}>
                   <h3 className={styles.cardTitle}>Promotions</h3>
                 </div>
-                <h4 style={{ marginBottom: '1rem', color: 'var(--color-text-strong)' }}>Active Promotions</h4>
+                <h4 className={styles.sectionHeading}>Active Promotions</h4>
                 <div className={styles.list}>
                   {promotions.active.length > 0 ? promotions.active.map((promo: any) => {
                     const item = promo.service || promo.product;
@@ -779,10 +856,15 @@ function DashboardPageContent() {
                       <div key={promo.id} className={styles.listItem}>
                         <div>
                           <p><strong>{itemName}</strong></p>
-                          <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-                            <span style={{ textDecoration: 'line-through' }}>R{promo.originalPrice.toFixed(2)}</span> → <span style={{ color: '#10b981' }}>R{promo.promotionalPrice.toFixed(2)}</span> ({promo.discountPercentage}% off)
+                          <p className={styles.promoDetails}>
+                            <span className={styles.promoPricing}>
+                              <span className={styles.promoOriginalPrice}>R{promo.originalPrice.toFixed(2)}</span>
+                              <span>→</span>
+                              <span className={styles.promoDiscountedPrice}>R{promo.promotionalPrice.toFixed(2)}</span>
+                              <span>({promo.discountPercentage}% off)</span>
+                            </span>
                           </p>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>{daysLeft > 0 ? `${daysLeft} days left` : 'Expired'}</p>
+                          <p className={styles.promoDuration}>{daysLeft > 0 ? `${daysLeft} days left` : 'Expired'}</p>
                         </div>
                         <div className={styles.actions}>
                           <span className={`${styles.statusBadge} ${getStatusClass(promo.approvalStatus)}`}>{promo.approvalStatus}</span>
@@ -790,11 +872,18 @@ function DashboardPageContent() {
                         </div>
                       </div>
                     );
-                  }) : <p>No active promotions. Create one from Services.</p>}
+                  }) : (
+                    <div className={styles.emptyState}>
+                      <h3 className={styles.emptyStateTitle}>No Active Promotions</h3>
+                      <p className={styles.emptyStateMessage}>
+                        Create promotions for your services to attract more customers with special offers and discounts.
+                      </p>
+                    </div>
+                  )}
                 </div>
                 {promotions.expired.length > 0 && (
                   <>
-                    <h4 style={{ marginTop: '2rem', marginBottom: '1rem', color: 'var(--color-text-strong)' }}>Expired Promotions</h4>
+                    <h4 className={styles.sectionHeadingTop}>Expired Promotions</h4>
                     <div className={styles.list}>
                       {promotions.expired.map((promo: any) => (
                         <div key={promo.id} className={styles.listItem}>
@@ -815,7 +904,7 @@ function DashboardPageContent() {
               <div className={styles.contentCard}>
                 <div className={styles.cardHeader}>
                   <h3 className={styles.cardTitle}>Gallery</h3>
-                  <button onClick={() => setIsGalleryModalOpen(true)} className="btn btn-primary">Add Image</button>
+                  <button onClick={() => setIsGalleryModalOpen(true)} className={styles.addButton}>Add Image</button>
                 </div>
                 <div className={styles.galleryGrid}>
                   {galleryImages.length > 0 ? galleryImages.map((image) => (
@@ -823,7 +912,17 @@ function DashboardPageContent() {
                       <Image src={image.imageUrl} alt={image.caption || 'Gallery'} className={styles.galleryItemImage} fill sizes="(max-width: 768px) 33vw, 160px" />
                       <button onClick={() => handleDeleteClick(image.id, 'gallery')} className={styles.deleteButton}><FaTrash /></button>
                     </div>
-                  )) : <p>Your gallery is empty.</p>}
+                  )) : (
+                    <div className={styles.emptyState}>
+                      <h3 className={styles.emptyStateTitle}>Your Gallery is Empty</h3>
+                      <p className={styles.emptyStateMessage}>
+                        Upload photos to showcase your work and attract more customers. Images help clients see the quality of your services.
+                      </p>
+                      <button onClick={() => setIsGalleryModalOpen(true)} className={styles.emptyStateAction}>
+                        Upload Your First Image
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -846,14 +945,14 @@ function DashboardPageContent() {
                 <div className={styles.cardHeader}>
                   <h3 className={styles.cardTitle}>Booking Settings</h3>
                 </div>
-                <div style={{ padding: '1rem' }}>
-                  <h4 style={{ marginBottom: '0.5rem' }}>Custom Booking Message</h4>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+                <div className={styles.settingsSection}>
+                  <h4 className={styles.settingsSubheading}>Custom Booking Message</h4>
+                  <p className={styles.settingsDescription}>
                     Set a message customers see before booking (e.g., booking fees, preparation requirements).
                   </p>
                   {!isEditingMessage && bookingMessage ? (
                     <div>
-                      <div style={{ padding: '1rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '8px', marginBottom: '1rem' }}>
+                      <div className={styles.messageDisplay}>
                         {bookingMessage}
                       </div>
                       <button onClick={() => setIsEditingMessage(true)} className="btn btn-secondary">Edit Message</button>
@@ -865,19 +964,19 @@ function DashboardPageContent() {
                         onChange={(e) => e.target.value.length <= 200 && setBookingMessage(e.target.value)}
                         placeholder="e.g., Please arrive 10 minutes early. Booking fee: R50"
                         rows={4}
-                        style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--color-border)', borderRadius: '8px', marginBottom: '0.5rem' }}
+                        className={styles.messageTextarea}
                       />
-                      <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>{bookingMessage.length}/200</p>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <p className={styles.characterCount}>{bookingMessage.length}/200</p>
+                      <div className={styles.actionButtonGroup}>
                         <button onClick={saveBookingMessage} disabled={isSavingMessage} className="btn btn-primary">{isSavingMessage ? 'Saving...' : 'Save'}</button>
                         {bookingMessage && <button onClick={() => setBookingMessage('')} className="btn btn-ghost">Clear</button>}
                       </div>
                     </div>
                   )}
 
-                  <h4 style={{ marginTop: '2rem', marginBottom: '0.5rem' }}>Operating Hours</h4>
+                  <h4 className={`${styles.settingsSubheading} ${styles.sectionDivider}`}>Operating Hours</h4>
                   <OperatingHoursInput hours={operatingHours} onChange={setOperatingHours} />
-                  <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+                  <div className={styles.actionButtonGroup}>
                     {isEditingHours ? (
                       <button onClick={saveOperatingHours} disabled={isSavingHours} className="btn btn-primary">{isSavingHours ? 'Saving...' : 'Save Hours'}</button>
                     ) : (
@@ -910,55 +1009,48 @@ function DashboardPageContent() {
                 </div>
 
                 {/* Current Plan Section */}
-                <div style={{ padding: '1.5rem', background: 'var(--color-surface)', borderRadius: '12px', marginBottom: '2rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <div>
-                      <h4 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Current Plan: {planDetails.name}</h4>
-                      <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-                        {planDetails.description}
-                      </p>
+                <div className={styles.currentPlanSection}>
+                  <div className={styles.planHeader}>
+                    <div className={styles.planInfo}>
+                      <h4>Current Plan: {planDetails.name}</h4>
+                      <p>{planDetails.description}</p>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-primary)' }}>
-                        {planDetails.price}{planCode !== 'FREE' && <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>/month</span>}
+                    <div className={styles.planPricing}>
+                      <div className={styles.planPrice}>
+                        {planDetails.price}{planCode !== 'FREE' && <span className={styles.planPriceUnit}>/month</span>}
                       </div>
-                      <div style={{
-                        marginTop: '0.5rem',
-                        padding: '0.35rem 0.75rem',
-                        borderRadius: '6px',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        display: 'inline-block',
-                        background: planStatus === 'VERIFIED' ? '#dcfce7' : planStatus === 'PROOF_SUBMITTED' ? '#fef3c7' : '#fee2e2',
-                        color: planStatus === 'VERIFIED' ? '#16a34a' : planStatus === 'PROOF_SUBMITTED' ? '#ca8a04' : '#dc2626'
-                      }}>
+                      <div className={`${styles.planStatusBadgeBox} ${
+                        planStatus === 'VERIFIED' ? styles.planStatusVerified :
+                        planStatus === 'PROOF_SUBMITTED' ? styles.planStatusProofSubmitted :
+                        styles.planStatusAwaiting
+                      }`}>
                         {PLAN_PAYMENT_LABELS[planStatus]}
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
-                    <div style={{ padding: '1rem', background: 'var(--color-surface-elevated)', borderRadius: '8px' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Visibility Boost</div>
-                      <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{planDetails.visibilityWeight}x</div>
+                  <div className={styles.planMetricsGrid}>
+                    <div className={styles.metricCard}>
+                      <div className={styles.metricLabel}>Visibility Boost</div>
+                      <div className={styles.metricValue}>{planDetails.visibilityWeight}x</div>
                     </div>
-                    <div style={{ padding: '1rem', background: 'var(--color-surface-elevated)', borderRadius: '8px' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Service Listings</div>
-                      <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{planDetails.maxListings}</div>
+                    <div className={styles.metricCard}>
+                      <div className={styles.metricLabel}>Service Listings</div>
+                      <div className={styles.metricValue}>{planDetails.maxListings}</div>
                     </div>
-                    <div style={{ padding: '1rem', background: 'var(--color-surface-elevated)', borderRadius: '8px' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Commission Rate</div>
-                      <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{planCode === 'FREE' ? '32%' : '0%'}</div>
+                    <div className={styles.metricCard}>
+                      <div className={styles.metricLabel}>Commission Rate</div>
+                      <div className={styles.metricValue}>{planCode === 'FREE' ? '32%' : '0%'}</div>
                     </div>
                   </div>
 
                   {/* Features List */}
-                  <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--color-surface-elevated)', borderRadius: '8px' }}>
-                    <h5 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.75rem' }}>Plan Features</h5>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  <div className={styles.planFeaturesBox}>
+                    <h5 className={styles.featuresHeading}>Plan Features</h5>
+                    <ul className={styles.featuresList}>
                       {planDetails.features.map((feature, idx) => (
-                        <li key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0', fontSize: '0.85rem' }}>
-                          <span style={{ color: '#22c55e' }}>✓</span>
+                        <li key={idx} className={styles.featureItem}>
+                          <span className={styles.featureCheckmark}>✓</span>
                           {feature}
                         </li>
                       ))}
@@ -968,21 +1060,21 @@ function DashboardPageContent() {
 
                 {/* Payment Instructions for Non-Verified Plans */}
                 {planStatus !== 'VERIFIED' && planCode !== 'FREE' && (
-                  <div style={{ padding: '1.5rem', background: '#fef3c7', borderRadius: '12px', marginBottom: '2rem', border: '1px solid #fde047' }}>
-                    <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', color: '#92400e' }}>
+                  <div className={styles.paymentInstructions}>
+                    <h4 className={styles.paymentInstructionsHeading}>
                       Complete Your Payment
                     </h4>
-                    <div style={{ marginBottom: '1rem', color: '#78350f' }}>
-                      <p style={{ marginBottom: '0.5rem' }}><strong>Bank:</strong> {BANK_DETAILS.bank}</p>
-                      <p style={{ marginBottom: '0.5rem' }}><strong>Account Number:</strong> {BANK_DETAILS.accountNumber}</p>
-                      <p style={{ marginBottom: '0.5rem' }}><strong>Account Holder:</strong> {BANK_DETAILS.accountHolder}</p>
-                      <p style={{ marginBottom: '0.5rem' }}><strong>Reference:</strong> {planReference}</p>
-                      <p style={{ marginBottom: '0.5rem' }}><strong>Amount:</strong> {planDetails.price}</p>
+                    <div className={styles.paymentDetailsBox}>
+                      <p><strong>Bank:</strong> {BANK_DETAILS.bank}</p>
+                      <p><strong>Account Number:</strong> {BANK_DETAILS.accountNumber}</p>
+                      <p><strong>Account Holder:</strong> {BANK_DETAILS.accountHolder}</p>
+                      <p><strong>Reference:</strong> {planReference}</p>
+                      <p><strong>Amount:</strong> {planDetails.price}</p>
                     </div>
-                    <p style={{ fontSize: '0.85rem', color: '#78350f', marginBottom: '1rem' }}>
+                    <p className={styles.paymentNote}>
                       After payment, WhatsApp proof to <strong>{BANK_DETAILS.whatsapp}</strong>, then click "I sent proof" below.
                     </p>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div className={styles.paymentActionsGroup}>
                       <Button variant="outline" size="sm" onClick={handleCopyReference}>
                         Copy Reference
                       </Button>
@@ -997,7 +1089,7 @@ function DashboardPageContent() {
                         </LoadingButton>
                       )}
                       {planStatus === 'PROOF_SUBMITTED' && (
-                        <div style={{ padding: '0.5rem 1rem', background: '#fde047', borderRadius: '6px', fontSize: '0.85rem', color: '#78350f' }}>
+                        <div className={styles.awaitingVerification}>
                           ⏳ Awaiting admin verification (usually within 24 hours)
                         </div>
                       )}
@@ -1007,77 +1099,44 @@ function DashboardPageContent() {
 
                 {/* Available Plans Section */}
                 <div>
-                  <h4 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
+                  <h4 className={styles.availablePlansHeading}>
                     {planCode === 'FREE' ? 'Upgrade Your Plan' : 'Change Plan'}
                   </h4>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-                    gap: '1rem',
-                    marginBottom: '2rem'
-                  }}>
+                  <div className={styles.plansGrid}>
                     {APP_PLANS.filter(plan => plan.code !== planCode).map(plan => (
                       <div
                         key={plan.code}
-                        style={{
-                          border: selectedPlanForUpgrade === plan.code ? '2px solid var(--color-primary)' : '2px solid var(--color-border)',
-                          borderRadius: '12px',
-                          padding: '1.25rem',
-                          background: 'var(--color-surface-elevated)',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          position: 'relative'
-                        }}
+                        className={`${styles.planCard} ${selectedPlanForUpgrade === plan.code ? styles.planCardSelected : ''}`}
                         onClick={() => setSelectedPlanForUpgrade(plan.code)}
                       >
                         {plan.popular && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '-10px',
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            background: 'linear-gradient(135deg, var(--color-primary) 0%, #000000 100%)',
-                            color: 'white',
-                            padding: '0.25rem 0.75rem',
-                            borderRadius: '12px',
-                            fontSize: '0.65rem',
-                            fontWeight: 700,
-                            textTransform: 'uppercase'
-                          }}>
+                          <div className={styles.popularBadge}>
                             ⭐ Popular
                           </div>
                         )}
-                        <div style={{ textAlign: 'center', marginTop: plan.popular ? '0.5rem' : '0' }}>
-                          <h5 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem' }}>{plan.name}</h5>
-                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary)', marginBottom: '0.25rem' }}>
-                            {plan.price}{plan.code !== 'FREE' && <span style={{ fontSize: '0.75rem' }}>/mo</span>}
+                        <div className={`${styles.planCardContent} ${plan.popular ? styles.planCardContentWithBadge : ''}`}>
+                          <h5 className={styles.planCardName}>{plan.name}</h5>
+                          <div className={styles.planCardPrice}>
+                            {plan.price}{plan.code !== 'FREE' && <span className={styles.planCardPriceUnit}>/mo</span>}
                           </div>
                           {plan.originalPrice && (
-                            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', textDecoration: 'line-through' }}>
+                            <div className={styles.planCardOriginalPrice}>
                               {plan.originalPrice}/mo
                             </div>
                           )}
-                          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.75rem', minHeight: '2.5rem' }}>
+                          <p className={styles.planCardDescription}>
                             {plan.description}
                           </p>
-                          <ul style={{ listStyle: 'none', padding: 0, margin: '1rem 0 0', textAlign: 'left' }}>
+                          <ul className={styles.planCardFeaturesList}>
                             {plan.features.slice(0, 3).map((feature, idx) => (
-                              <li key={idx} style={{ fontSize: '0.75rem', padding: '0.25rem 0', display: 'flex', gap: '0.25rem' }}>
-                                <span style={{ color: '#22c55e' }}>✓</span>
+                              <li key={idx} className={styles.planCardFeatureItem}>
+                                <span className={styles.featureCheckmark}>✓</span>
                                 <span>{feature}</span>
                               </li>
                             ))}
                           </ul>
                           {selectedPlanForUpgrade === plan.code && (
-                            <div style={{
-                              marginTop: '0.75rem',
-                              padding: '0.5rem',
-                              background: 'var(--color-primary)',
-                              color: 'white',
-                              borderRadius: '6px',
-                              fontSize: '0.75rem',
-                              fontWeight: 600
-                            }}>
+                            <div className={styles.selectedPlanBadge}>
                               Selected ✓
                             </div>
                           )}
@@ -1088,18 +1147,18 @@ function DashboardPageContent() {
 
                   {/* Confirm Plan Change */}
                   {selectedPlanForUpgrade && (
-                    <div style={{ padding: '1.5rem', background: 'var(--color-surface)', borderRadius: '12px', border: '2px solid var(--color-primary)' }}>
-                      <h5 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem' }}>
+                    <div className={styles.confirmPlanSection}>
+                      <h5 className={styles.confirmPlanHeading}>
                         Confirm Plan Change to {PLAN_BY_CODE[selectedPlanForUpgrade].name}
                       </h5>
 
                       {selectedPlanForUpgrade !== 'FREE' && (
                         <>
-                          <p style={{ fontSize: '0.9rem', marginBottom: '1rem', color: 'var(--color-text-muted)' }}>
+                          <p className={styles.confirmPlanDescription}>
                             After confirming, you'll need to make a payment of <strong>{PLAN_BY_CODE[selectedPlanForUpgrade].price}</strong> to activate your new plan.
                           </p>
-                          <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                          <div className={styles.paymentReferenceSection}>
+                            <label className={styles.paymentReferenceLabel}>
                               Payment Reference (Optional)
                             </label>
                             <input
@@ -1107,27 +1166,20 @@ function DashboardPageContent() {
                               value={paymentReference}
                               onChange={(e) => setPaymentReference(e.target.value)}
                               placeholder={salon?.name || 'Your salon name'}
-                              style={{
-                                width: '100%',
-                                padding: '0.75rem',
-                                border: '1px solid var(--color-border)',
-                                borderRadius: '8px',
-                                fontSize: '0.9rem'
-                              }}
+                              className={styles.paymentReferenceInput}
                             />
-                            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                            <p className={styles.paymentReferenceHint}>
                               This will be used to track your payment. Leave blank to use your salon name.
                             </p>
                           </div>
                         </>
                       )}
 
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <div className={styles.confirmActionButtons}>
                         <LoadingButton
                           loading={isSubmittingPlanChange}
                           loadingText="Changing..."
                           onClick={() => handlePlanChange(selectedPlanForUpgrade)}
-                          style={{ flex: 1 }}
                         >
                           Confirm {selectedPlanForUpgrade === 'FREE' ? 'Downgrade' : 'Upgrade'}
                         </LoadingButton>
@@ -1137,7 +1189,6 @@ function DashboardPageContent() {
                             setSelectedPlanForUpgrade(null);
                             setPaymentReference('');
                           }}
-                          style={{ flex: 1 }}
                         >
                           Cancel
                         </Button>

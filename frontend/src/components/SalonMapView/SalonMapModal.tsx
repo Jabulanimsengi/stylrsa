@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { FaTimes, FaMapMarkerAlt, FaSpinner, FaExternalLinkAlt, FaSearch, FaLocationArrow } from 'react-icons/fa';
+import { FaTimes, FaMapMarkerAlt, FaExternalLinkAlt, FaSearch, FaLocationArrow } from 'react-icons/fa';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './SalonMapView.module.css';
 import Link from 'next/link';
+import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 
 // Set Mapbox access token (same token as lib/mapbox.ts)
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 'pk.eyJ1IjoidHNha2FuaW1zZW5naSIsImEiOiJjbWo5eDBxOWswMTBwM2ZzOXRkNTNzNm5yIn0.sGUZfX9eJHmhoFIJFn_0kw';
@@ -446,7 +447,9 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
                                     }}
                                 />
                                 {isSearching && (
-                                    <FaSpinner style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#999', animation: 'spin 1s linear infinite' }} />
+                                    <div style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)' }}>
+                                        <LoadingSpinner size="sm" inline />
+                                    </div>
                                 )}
                             </div>
                             <button
@@ -536,8 +539,7 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
                 <div className={styles.mapWrapper}>
                     {loading ? (
                         <div className={styles.loadingState}>
-                            <FaSpinner className={styles.spinner} />
-                            <p>Loading salons...</p>
+                            <LoadingSpinner size="md" inline text="Loading salons..." />
                         </div>
                     ) : (
                         <div ref={mapContainerRef} className={styles.mapContainer} />

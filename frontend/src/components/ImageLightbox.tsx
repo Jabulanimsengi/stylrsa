@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './ImageLightbox.module.css';
 import { FaTimes, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import LoadingSpinner from './LoadingSpinner/LoadingSpinner';
 
 interface ImageLightboxProps {
   images: string[];
@@ -100,7 +101,7 @@ export default function ImageLightbox({ images, initialImageIndex = 0, onClose }
         <div className={styles.imageWrapper}>
           {isLoading && !imageError && (
             <div className={styles.loadingSpinner}>
-              <div className={styles.spinner}></div>
+              <LoadingSpinner size="lg" color="white" inline />
             </div>
           )}
           {imageError && (

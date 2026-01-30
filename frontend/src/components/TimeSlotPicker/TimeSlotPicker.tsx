@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import styles from './TimeSlotPicker.module.css';
 import { FaClock, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 
 interface TimeSlot {
   time: string;
@@ -113,8 +114,7 @@ export default function TimeSlotPicker({
   if (loading) {
     return (
       <div className={styles.loadingState}>
-        <div className={styles.spinner}></div>
-        <p>Loading available slots...</p>
+        <LoadingSpinner size="md" inline text="Loading available slots..." />
       </div>
     );
   }

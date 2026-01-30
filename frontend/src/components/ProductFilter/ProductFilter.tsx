@@ -10,6 +10,7 @@ import {
   SelectValue,
   Checkbox,
 } from '@/components/ui';
+import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 
 export interface ProductFilterValues {
   search: string;
@@ -330,8 +331,8 @@ export default function ProductFilter({
           >
             {isSubmitting ? (
               <>
-                <span className={styles.spinner} />
-                Filtering...
+                <LoadingSpinner size="sm" inline />
+                <span style={{ marginLeft: '8px' }}>Filtering...</span>
               </>
             ) : (
               <>

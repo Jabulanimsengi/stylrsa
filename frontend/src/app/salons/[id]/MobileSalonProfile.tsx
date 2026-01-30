@@ -7,6 +7,7 @@ import {
     FaMapMarkerAlt,
     FaPhone,
     FaWhatsapp,
+    FaGlobe,
     FaDirections,
     FaBolt,
     FaCheck,
@@ -801,6 +802,23 @@ export default function MobileSalonProfile({
                                             <div className={styles.contactInfo}>
                                                 <span className={styles.contactLabel}>WhatsApp</span>
                                                 <span className={styles.contactValue}>Message on WhatsApp</span>
+                                            </div>
+                                            <FaChevronRight className={styles.contactArrow} />
+                                        </a>
+                                    )}
+                                    {salon.website && (
+                                        <a
+                                            href={salon.website}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={styles.contactRow}
+                                        >
+                                            <div className={styles.contactIcon}>
+                                                <FaGlobe />
+                                            </div>
+                                            <div className={styles.contactInfo}>
+                                                <span className={styles.contactLabel}>Website</span>
+                                                <span className={styles.contactValue}>Visit our website</span>
                                             </div>
                                             <FaChevronRight className={styles.contactArrow} />
                                         </a>

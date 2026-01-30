@@ -324,11 +324,6 @@ export default function TopNav() {
                     </Link>
 
                     <ul className={styles.navLinks}>
-                        <li className={styles.navItem}>
-                            <Link href="/salons" className={styles.navButton}>
-                                Salons
-                            </Link>
-                        </li>
                     </ul>
                 </div>
 

@@ -38,7 +38,6 @@ import { useAuthModal } from '@/context/AuthModalContext';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 
-import SalonProfileSkeleton from '@/components/Skeleton/SalonProfileSkeleton';
 import { sanitizeText } from '@/lib/sanitize';
 import PageNav from '@/components/PageNav';
 import PromotionDetailsModal from '@/components/PromotionDetailsModal/PromotionDetailsModal';
@@ -530,7 +529,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
     };
   }, [visibleReviewsCount, reviews.length]);
 
-  if (isLoading) return <SalonProfileSkeleton />;
   if (!salon) return <div style={{ textAlign: 'center', padding: '2rem' }}>Salon not found.</div>;
 
   // hero section removed; using compact info board instead
@@ -694,6 +692,32 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
                 <span className={styles.headerSalonLocation}>
                   <FaMapMarkerAlt /> {salon.city}, {salon.province}
                 </span>
+              )}
+              {(salon.website || salon.whatsapp) && (
+                <div className={styles.headerContactLinks}>
+                  {salon.website && (
+                    <a
+                      href={salon.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.headerContactLink}
+                      title="Visit website"
+                    >
+                      <FaGlobe /> Website
+                    </a>
+                  )}
+                  {salon.whatsapp && (
+                    <a
+                      href={`https://wa.me/${salon.whatsapp.replace(/[^0-9]/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.headerContactLink}
+                      title="Message on WhatsApp"
+                    >
+                      <FaWhatsapp /> WhatsApp
+                    </a>
+                  )}
+                </div>
               )}
             </div>
           </div>

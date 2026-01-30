@@ -11,6 +11,7 @@ import MobileSearch from '@/components/MobileSearch/MobileSearch';
 import FeaturedSalons from '@/components/FeaturedSalons';
 import ServiceCategoryCircles from '@/components/ServiceCategoryCircles/ServiceCategoryCircles';
 import SalonCarouselSection from '@/components/SalonCarouselSection';
+import TypingAnimation from '@/components/TypingAnimation/TypingAnimation';
 
 const HERO_IMAGE = {
   src: '/image_01.jpg',
@@ -25,6 +26,16 @@ interface HomePageClientProps {
   initialAvailableNowSalons: any[];
   initialMobileSalons: any[];
 }
+
+// Value proposition phrases for typewriter animation
+const VALUE_PROP_PHRASES = [
+  "Your style destination",
+  "Your confidence boost",
+  "Your transformation hub",
+  "Your beauty sanctuary",
+  "Your wellness escape",
+  "Your self-care moment"
+];
 
 export default function HomePageClient({
   initialFeaturedSalons,
@@ -157,16 +168,30 @@ export default function HomePageClient({
       </div>
 
       <section className={styles.hero} aria-label="Hero section">
-        {/* Modern Art Background Elements */}
-        <div className={styles.heroBlob1} aria-hidden="true" />
-        <div className={styles.heroBlob2} aria-hidden="true" />
-        <div className={styles.heroBlob3} aria-hidden="true" />
-        <div className={styles.heroGeometric1} aria-hidden="true" />
-        <div className={styles.heroGeometric2} aria-hidden="true" />
+        {/* Background Image */}
+        <div className={styles.heroImageWrapper}>
+          <div className={styles.heroImageContainer}>
+            <Image
+              src="/art_one.png"
+              alt="Hero background art"
+              fill
+              priority
+              quality={95}
+              className={styles.heroBackgroundImage}
+              sizes="100vw"
+            />
+          </div>
+          <div className={styles.heroOverlay} />
+        </div>
 
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle} id="hero-title">
-            Your beauty and wellness hub
+            <TypingAnimation
+              words={VALUE_PROP_PHRASES}
+              typingSpeed={80}
+              deletingSpeed={50}
+              delayBetweenWords={2500}
+            />
           </h1>
 
           <div className={styles.heroSearchContainer}>

@@ -45,7 +45,8 @@ function ProvinceRow({
     onToggleFavorite,
     onNavigate,
     navigatingSalonId,
-    isMobile
+    isMobile,
+    showViewAll = true
 }: {
     province: string;
     salons: SalonWithFavorite[];
@@ -53,6 +54,7 @@ function ProvinceRow({
     onNavigate: (salon: SalonWithFavorite) => void;
     navigatingSalonId: string | null;
     isMobile: boolean;
+    showViewAll?: boolean;
 }) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -102,9 +104,11 @@ function ProvinceRow({
                     {province}
                     <span className={styles.salonCount}>({salons.length} {salons.length === 1 ? 'salon' : 'salons'})</span>
                 </h2>
-                <Link href={`/salons?province=${encodeURIComponent(province)}`} className={styles.viewAllLink}>
-                    View all →
-                </Link>
+                {showViewAll && province && (
+                    <Link href={`/salons?province=${encodeURIComponent(province)}`} className={styles.viewAllLink}>
+                        View all →
+                    </Link>
+                )}
             </div>
 
             <div className={styles.scrollWrapper}>
@@ -162,7 +166,7 @@ function ProvinceRow({
                                     </div>
                                     <div className={styles.cardContent}>
                                         <h3 className={styles.cardTitle}>{salon.name}</h3>
-                                        <p className={styles.cardLocation}>{salon.city}</p>
+                                        <p className={styles.cardLocation}>{salon.city}, {salon.province}</p>
                                     </div>
                                 </div>
                             </div>
@@ -474,20 +478,18 @@ export default function SalonsPageClient() {
                 </p>
             </div>
 
-            {/* Hide filters on category pages */}
-            {!isFilteredByCategory && (
-                isMobile ? (
-                    <MobileSearch onSearch={fetchSalons} />
-                ) : (
-                    <FilterBar onSearch={fetchSalons} initialFilters={initialFilters} />
-                )
-            )}
-
             {isLoading ? (
                 salons.length === 0 ? (
-                    <SkeletonGroup count={8} className={styles.salonGrid}>
-                        {() => <SkeletonCard hasImage lines={3} />}
-                    </SkeletonGroup>
+                    isFilteredByCategory ? (
+                        // Simple loading spinner for category pages
+                        <div className={styles.loadingState}>
+                            <LoadingSpinner />
+                        </div>
+                    ) : (
+                        <SkeletonGroup count={8} className={styles.salonGrid}>
+                            {() => <SkeletonCard hasImage lines={3} />}
+                        </SkeletonGroup>
+                    )
                 ) : (
                     <div className={styles.loadingState}>
                         <LoadingSpinner />
@@ -500,41 +502,22 @@ export default function SalonsPageClient() {
                     description="Try adjusting your filters or search terms to find salons near you."
                 />
             ) : isFilteredByCategory ? (
-                // If filtered by category, show featured salons in a row, then other salons vertically with details
+                // If filtered by category, show all salons in horizontal carousel with featured first
                 <div className={styles.categoryLayout}>
-                    {/* Featured Salons Row */}
-                    {salons.filter(s => s.isFeatured).length > 0 && (
-                        <section className={styles.featuredSection}>
-                            <div className={styles.provinceHeader}>
-                                <h2 className={styles.provinceTitle}>
-                                    Featured Salons
-                                    <span className={styles.salonCount}>
-                                        ({salons.filter(s => s.isFeatured).length} {salons.filter(s => s.isFeatured).length === 1 ? 'salon' : 'salons'})
-                                    </span>
-                                </h2>
-                            </div>
-                            <ProvinceRow
-                                province=""
-                                salons={salons.filter(s => s.isFeatured)}
-                                onToggleFavorite={handleToggleFavorite}
-                                onNavigate={handleNavigate}
-                                navigatingSalonId={navigatingSalonId}
-                                isMobile={isMobile}
-                            />
-                        </section>
-                    )}
-
-                    {/* Other Salons - Vertical Detailed View */}
-                    <div className={styles.verticalSalonsList}>
-                        {salons.filter(s => !s.isFeatured).map((salon) => (
-                            <DetailedSalonCard
-                                key={salon.id}
-                                salon={salon}
-                                onToggleFavorite={handleToggleFavorite}
-                                onBook={handleBookService}
-                            />
-                        ))}
-                    </div>
+                    <ProvinceRow
+                        province=""
+                        salons={[...salons].sort((a, b) => {
+                            // Featured salons first
+                            if (a.isFeatured && !b.isFeatured) return -1;
+                            if (!a.isFeatured && b.isFeatured) return 1;
+                            return 0;
+                        })}
+                        onToggleFavorite={handleToggleFavorite}
+                        onNavigate={handleNavigate}
+                        navigatingSalonId={navigatingSalonId}
+                        isMobile={isMobile}
+                        showViewAll={false}
+                    />
                 </div>
             ) : isFilteredByProvince ? (
                 // If filtered by province, show traditional grid

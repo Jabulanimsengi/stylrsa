@@ -258,16 +258,6 @@
   background-color: color-mix(in srgb, var(--light-grey) 80%, var(--color-surface));
 }
 
-/* Spinner animation */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 /* ===== MOBILE RESPONSIVE STYLES ===== */
 @media (max-width: 768px) {

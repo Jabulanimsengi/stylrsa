@@ -353,9 +353,6 @@ export default function Navbar() {
   const discoverLinks: NavLinkItem[] = useMemo(
     () => [
       { href: '/', label: 'Home Feed', icon: FaHome },
-      { href: '/salons', label: 'Salons', icon: FaCut },
-      { href: '/salons?offersMobile=true', label: 'Mobile Salons', icon: FaBuilding },
-      { href: '/products', label: 'Marketplace', icon: FaBoxOpen },
       { href: '/candidates', label: 'Find Talent', icon: FaUser },
       { href: '/promotions', label: 'Promotions', icon: FaMagic },
     ],

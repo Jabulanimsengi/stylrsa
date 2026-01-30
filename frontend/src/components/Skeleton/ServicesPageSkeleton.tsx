@@ -1,5 +1,6 @@
 import { Skeleton, SkeletonGroup, SkeletonCard } from './Skeleton';
 import styles from './Skeleton.module.css';
+import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 
 interface ServicesPageSkeletonProps {
     message?: string;
@@ -14,7 +15,7 @@ export default function ServicesPageSkeleton({
         <div aria-hidden>
             {/* Loading indicator */}
             <div className={styles.loadingIndicator}>
-                <div className={styles.spinner} />
+                <LoadingSpinner size="md" inline />
                 <span>{message}</span>
             </div>
 
@@ -63,7 +64,7 @@ export function SalonsPageSkeleton({
         <div aria-hidden>
             {/* Loading indicator */}
             <div className={styles.loadingIndicator}>
-                <div className={styles.spinner} />
+                <LoadingSpinner size="md" inline />
                 <span>{message}</span>
             </div>
 

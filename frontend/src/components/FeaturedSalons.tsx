@@ -207,9 +207,6 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
         <a href="/salons" onClick={handleHeadingClick} className={styles.title}>
           <h2>Recommended</h2>
         </a>
-        <a href="/salons" onClick={handleViewAllClick} className={styles.viewAll}>
-          View All
-        </a>
       </div>
 
       <div className={styles.container}>
@@ -228,7 +225,7 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
               }
             }
           }}
-          spaceBetween={16}
+          spaceBetween={20}
           slidesPerView={'auto'}
           style={{
             width: '100%',
@@ -252,11 +249,11 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
           breakpoints={{
             320: {
               slidesPerView: 1.35,
-              spaceBetween: 12,
+              spaceBetween: 16,
             },
             480: {
               slidesPerView: 1.4,
-              spaceBetween: 14,
+              spaceBetween: 18,
             },
             769: {
               slidesPerView: 4.1,

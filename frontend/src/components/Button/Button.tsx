@@ -1,8 +1,8 @@
 'use client';
 
 import { ReactNode, ButtonHTMLAttributes } from 'react';
-import { FaSpinner } from 'react-icons/fa';
 import styles from './Button.module.css';
+import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -39,7 +39,7 @@ export default function Button({
     >
       {isLoading && (
         <span className={styles.spinner}>
-          <FaSpinner />
+          <LoadingSpinner size="sm" inline />
         </span>
       )}
       {!isLoading && leftIcon && (

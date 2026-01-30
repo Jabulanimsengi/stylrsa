@@ -25,6 +25,7 @@ interface SalonDraft {
   phone: string;
   email: string;
   website: string;
+  whatsapp: string;
   description: string;
   bookingType: 'ONSITE' | 'MOBILE' | 'BOTH';
   mobileFee: string;
@@ -46,6 +47,7 @@ function CreateSalonPageContent() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [website, setWebsite] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
   const [description, setDescription] = useState('');
   const [bookingType, setBookingType] = useState<'ONSITE' | 'MOBILE' | 'BOTH'>('ONSITE');
   const [mobileFee, setMobileFee] = useState('');
@@ -84,6 +86,7 @@ function CreateSalonPageContent() {
         phone,
         email,
         website,
+        whatsapp,
         description,
         bookingType,
         mobileFee,
@@ -120,6 +123,7 @@ function CreateSalonPageContent() {
       setEmail(draft.email || '');
     }
     setWebsite(draft.website || '');
+    setWhatsapp(draft.whatsapp || '');
     setDescription(draft.description || '');
     setBookingType(draft.bookingType || 'ONSITE');
     setMobileFee(draft.mobileFee || '');
@@ -278,6 +282,10 @@ function CreateSalonPageContent() {
       };
       if (website && website.trim().length > 0 && isValidUrl(website.trim())) {
         payload.website = website.trim();
+      }
+      const cleanedWhatsapp = (whatsapp || '').replace(/\D+/g, '');
+      if (cleanedWhatsapp) {
+        payload.whatsapp = cleanedWhatsapp;
       }
       if (bookingType !== 'ONSITE' && mobileFee !== '') {
         const feeNum = Number(mobileFee);
@@ -679,6 +687,18 @@ function CreateSalonPageContent() {
               type="url"
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
+              placeholder="https://example.com"
+              className={styles.input}
+            />
+          </div>
+          <div className={styles.inputGroup}>
+            <label htmlFor="whatsapp">WhatsApp Number (Optional)</label>
+            <input
+              id="whatsapp"
+              type="tel"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="e.g., 0781234567"
               className={styles.input}
             />
           </div>

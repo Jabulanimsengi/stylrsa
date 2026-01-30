@@ -27,6 +27,7 @@ import { toFriendlyMessage } from '@/lib/errors';
 import BookingPreferencesStep, { BookingPreferences } from './BookingPreferencesStep';
 import BookingPaymentStep, { PaymentDetails } from './BookingPaymentStep';
 import UpsellPopup from '../UpsellPopup/UpsellPopup';
+import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 import {
   Dialog,
   DialogContent,
@@ -489,8 +490,7 @@ export default function BookingModal({
                   {/* Team Members */}
                   {loadingTeam ? (
                     <div className={styles.loadingSlots}>
-                      <div className={styles.spinner} />
-                      <span>Loading team...</span>
+                      <LoadingSpinner size="md" inline text="Loading team..." />
                     </div>
                   ) : (
                     teamMembers.map((member) => (
@@ -617,8 +617,7 @@ export default function BookingModal({
                 )}
                 {loadingSlots ? (
                   <div className={styles.loadingSlots}>
-                    <div className={styles.spinner} />
-                    <span>Loading available times...</span>
+                    <LoadingSpinner size="md" inline text="Loading available times..." />
                   </div>
                 ) : availableSlots.length > 0 ? (
                   <div className={styles.timeGrid}>

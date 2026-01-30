@@ -97,6 +97,37 @@
   color: var(--color-primary);
 }
 
+.headerContactLinks {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.headerContactLink {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  background: rgba(245, 25, 87, 0.05);
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.headerContactLink:hover {
+  background: rgba(245, 25, 87, 0.1);
+  transform: translateY(-1px);
+}
+
+.headerContactLink svg {
+  font-size: 0.85rem;
+}
+
 .navButton {
   display: inline-flex;
   align-items: center;
