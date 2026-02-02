@@ -28,12 +28,12 @@ const PLAN_FALLBACKS: Record<
   PlanCode,
   { visibilityWeight: number; maxListings: number; priceCents: number }
 > = {
-  FREE: { visibilityWeight: 0, maxListings: 1, priceCents: 0 },
-  STARTER: { visibilityWeight: 1, maxListings: 3, priceCents: 4900 },
-  ESSENTIAL: { visibilityWeight: 2, maxListings: 7, priceCents: 9900 },
-  GROWTH: { visibilityWeight: 3, maxListings: 15, priceCents: 19900 },
-  PRO: { visibilityWeight: 4, maxListings: 27, priceCents: 29900 },
-  ELITE: { visibilityWeight: 5, maxListings: 9999, priceCents: 49900 },
+  FREE: { visibilityWeight: 1, maxListings: 9999, priceCents: 0 },
+  STARTER: { visibilityWeight: 2, maxListings: 10, priceCents: 9900 }, // Legacy
+  ESSENTIAL: { visibilityWeight: 3, maxListings: 9999, priceCents: 9900 },
+  GROWTH: { visibilityWeight: 5, maxListings: 9999, priceCents: 19900 },
+  PRO: { visibilityWeight: 7, maxListings: 9999, priceCents: 29900 },
+  ELITE: { visibilityWeight: 10, maxListings: 9999, priceCents: 49900 },
 };
 
 @Injectable()
@@ -200,6 +200,7 @@ export class SalonsService {
       visibilityWeight: planMeta.visibilityWeight,
       maxListings: planMeta.maxListings,
       planPriceCents: planMeta.priceCents,
+      commissionRate: requestedPlan === 'FREE' ? 0.32 : 0.0, // FREE: 32% commission, Paid: 0%
       planPaymentStatus,
       planPaymentReference: paymentReference,
       planProofSubmittedAt: requestedPlan === 'FREE' ? null : hasSentProof ? new Date() : null,
@@ -305,6 +306,8 @@ export class SalonsService {
       data.visibilityWeight = planMeta.visibilityWeight;
       data.maxListings = planMeta.maxListings;
       data.planPriceCents = planMeta.priceCents;
+      // Set commission rate: FREE has 32% commission, paid plans have 0%
+      data.commissionRate = normalizedPlan === 'FREE' ? 0.32 : 0.0;
     }
 
     const planChanged =

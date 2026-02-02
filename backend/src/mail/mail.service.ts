@@ -637,6 +637,51 @@ export class MailService {
     }
   }
 
+  async notifyAdminNewBooking(
+    adminEmail: string,
+    adminName: string,
+    customerName: string,
+    customerEmail: string,
+    salonName: string,
+    serviceName: string,
+    date: string,
+    time: string,
+    totalCost: number,
+  ) {
+    if (!this.isConfigured) {
+      console.log(`[DEV] Admin booking notification for ${adminEmail}`);
+      return;
+    }
+
+    try {
+      const msg = {
+        to: adminEmail,
+        from: this.fromEmail,
+        subject: `🔔 New Booking on Platform - ${salonName}`,
+        html: this.getSimpleEmailTemplate(
+          `Hi ${adminName},`,
+          `A new booking has been made on the platform. Monitor booking activity for quality assurance.`,
+          [
+            { label: 'Salon', value: salonName },
+            { label: 'Service', value: serviceName },
+            { label: 'Customer', value: customerName },
+            { label: 'Customer Email', value: customerEmail },
+            { label: 'Date', value: date },
+            { label: 'Time', value: time },
+            { label: 'Total Cost', value: `R${totalCost.toFixed(2)}` },
+          ],
+          null,
+          'View in Admin Dashboard',
+          'https://stylrsa.co.za/admin?tab=bookings',
+        ),
+      };
+      await sgMail.send(msg);
+      console.log(`[EMAIL] Admin booking notification sent to ${adminEmail}`);
+    } catch (error) {
+      console.error('[EMAIL] Failed to send admin booking notification:', error);
+    }
+  }
+
   async sendBookingApproved(
     userEmail: string,
     userName: string,

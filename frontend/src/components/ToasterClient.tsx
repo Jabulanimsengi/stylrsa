@@ -35,11 +35,11 @@ export default function ToasterClient() {
   return (
     <ToastContainer
       key={containerKey}
-      position="bottom-right"
+      position="top-right"
       theme="light"
       autoClose={5000}
       hideProgressBar={false}
-      newestOnTop={false}
+      newestOnTop={true}
       closeOnClick
       draggable={false}
       rtl={false}

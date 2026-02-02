@@ -37,9 +37,9 @@ import VerificationBadge from '@/components/VerificationBadge/VerificationBadge'
 import { SERVICE_CATEGORIES } from '@/constants/categories';
 import MapboxMap from '@/components/MapboxMap';
 import styles from './MobileSalonProfile.module.css';
-import VideoShortsRow from '@/components/VideoShortsRow/VideoShortsRow';
 import MaterialsShowcase from '@/components/MaterialsShowcase/MaterialsShowcase';
 import { toast } from 'react-toastify';
+import SimilarSalons from '@/components/SimilarSalons/SimilarSalons';
 
 type TabType = 'photos' | 'services' | 'details' | 'reviews';
 
@@ -408,17 +408,37 @@ export default function MobileSalonProfile({
                                 ))}
                             </CarouselContent>
 
-                            {/* Dot indicators for image scrolling */}
+                            {/* Progress indicators - Max 4 segments with merge animation */}
                             {count > 1 && (
                                 <div className={styles.carouselIndicators}>
-                                    {Array.from({ length: count }).map((_, idx) => (
-                                        <button
-                                            key={idx}
-                                            className={`${styles.indicatorSegment} ${idx + 1 === current ? styles.active : ''}`}
-                                            onClick={() => api?.scrollTo(idx)}
-                                            aria-label={`Go to slide ${idx + 1}`}
-                                        />
-                                    ))}
+                                    {(() => {
+                                        const maxSegments = 4;
+                                        const progress = (current - 1) / (count - 1); // 0 to 1
+                                        const activeSegment = Math.floor(progress * maxSegments);
+
+                                        return Array.from({ length: Math.min(maxSegments, count) }).map((_, idx) => {
+                                            const isActive = idx === activeSegment;
+                                            const isPassed = idx < activeSegment;
+                                            const segmentProgress = idx === activeSegment
+                                                ? ((current - 1) % Math.ceil(count / maxSegments)) / Math.ceil(count / maxSegments)
+                                                : 0;
+
+                                            return (
+                                                <button
+                                                    key={idx}
+                                                    className={`${styles.indicatorSegment} ${isActive ? styles.active : ''} ${isPassed ? styles.passed : ''}`}
+                                                    style={{
+                                                        width: isPassed ? '32px' : isActive ? `${24 + segmentProgress * 16}px` : '24px'
+                                                    }}
+                                                    onClick={() => {
+                                                        const targetSlide = Math.floor((idx / maxSegments) * count);
+                                                        api?.scrollTo(targetSlide);
+                                                    }}
+                                                    aria-label={`Go to section ${idx + 1}`}
+                                                />
+                                            );
+                                        });
+                                    })()}
                                 </div>
                             )}
 
@@ -651,18 +671,6 @@ export default function MobileSalonProfile({
                                 </div>
                             )}
 
-                            {/* Video Shorts Row */}
-                            <VideoShortsRow
-                                salonId={salon.id}
-                                onVideoClick={(video) => {
-                                    // Handle video click - could open lightbox
-                                    const videoImages = video.thumbnailUrl ? [video.thumbnailUrl] : [];
-                                    if (videoImages.length > 0) {
-                                        onOpenLightbox(videoImages, 0);
-                                    }
-                                }}
-                            />
-
                             {/* Materials Showcase */}
                             <MaterialsShowcase
                                 salonId={salon.id}
@@ -838,6 +846,14 @@ export default function MobileSalonProfile({
                         </div>
                     )}
                 </div>
+
+                {/* Similar Salons Section */}
+                <SimilarSalons
+                    currentSalonId={salon.id}
+                    city={salon.city}
+                    province={salon.province}
+                    services={services.map(s => s.name || (s as any).title).filter(Boolean)}
+                />
             </div>
 
             {/* Mobile Sticky Book Bar - Enhanced */}

@@ -270,6 +270,7 @@ export class BookingsService {
       );
     }
 
+    // Notify salon owner
     const notification = await this.notificationsService.create(
       service.salon.ownerId,
       `New booking for ${service.title} by ${user.firstName}.`,
@@ -284,6 +285,47 @@ export class BookingsService {
       'newNotification',
       notification,
     );
+
+    // Notify all admins about the new booking
+    const admins = await this.prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      select: { id: true, email: true, firstName: true },
+    });
+
+    for (const admin of admins) {
+      const adminNotification = await this.notificationsService.create(
+        admin.id,
+        `New booking: ${service.title} at ${service.salon.name} by ${user.firstName} ${user.lastName || ''}`.trim(),
+        {
+          bookingId: booking.id,
+          link: '/admin?tab=bookings',
+        },
+      );
+
+      this.eventsGateway.sendNotificationToUser(
+        admin.id,
+        'newNotification',
+        adminNotification,
+      );
+
+      // Send email to admin
+      try {
+        await this.mailService.notifyAdminNewBooking(
+          admin.email,
+          admin.firstName,
+          `${user.firstName} ${user.lastName || ''}`.trim(),
+          user.email,
+          service.salon.name,
+          service.title,
+          bookingDateFormatted,
+          bookingTimeFormatted,
+          totalCost,
+        );
+      } catch (error) {
+        // Log but don't fail if admin email fails
+        console.error('Failed to send admin booking notification email:', error);
+      }
+    }
 
     // Send email notifications
     const bookingDateFormatted = bookingDate.toLocaleDateString('en-ZA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });

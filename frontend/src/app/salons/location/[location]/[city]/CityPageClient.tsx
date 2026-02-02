@@ -119,18 +119,6 @@ function SalonsCityContent({ initialSalons = [], cityInfo }: CityPageClientProps
         </p>
       </div>
 
-      {isMobile ? (
-        <MobileSearch onSearch={fetchSalons} />
-      ) : (
-        <FilterBar
-          onSearch={fetchSalons}
-          initialFilters={{
-            city: cityName, province: '', service: '', category: '',
-            offersMobile: false, sortBy: '', openNow: false, priceMin: '', priceMax: '',
-          }}
-        />
-      )}
-
       {isLoading && salons.length === 0 ? (
         <SkeletonGroup count={8} className={styles.salonGrid}>
           {() => <SkeletonCard hasImage lines={3} />}

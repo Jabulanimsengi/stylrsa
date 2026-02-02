@@ -139,15 +139,8 @@ export class AdminService {
     if (!current) {
       throw new NotFoundException('Salon not found');
     }
-    if (
-      status === 'APPROVED' &&
-      (current.planCode as PlanCode | null) !== 'FREE' &&
-      current.planPaymentStatus !== 'VERIFIED'
-    ) {
-      throw new ForbiddenException(
-        'Cannot approve salon until payment has been verified.',
-      );
-    }
+    // Note: Admin can approve salons regardless of payment status
+    // Payment verification is handled separately in the payment verification flow
     const updated = await this.prisma.salon.update({
       where: { id: salonId },
       data: { approvalStatus: status },
@@ -661,6 +654,7 @@ export class AdminService {
       select: {
         planPaymentStatus: true,
         planProofSubmittedAt: true,
+        planCode: true,
       },
     });
     if (!existing) {
@@ -675,6 +669,8 @@ export class AdminService {
     const now = new Date();
     if (status === 'VERIFIED') {
       data.planVerifiedAt = now;
+      // Set commission rate: FREE has 32% commission, paid plans have 0%
+      data.commissionRate = existing.planCode === 'FREE' ? 0.32 : 0.0;
     } else {
       data.planVerifiedAt = null;
     }

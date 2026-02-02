@@ -25,6 +25,7 @@ import BackendStatus from '@/components/DevTools/BackendStatus';
 import EmailVerificationBannerWrapper from '@/components/EmailVerificationBannerWrapper';
 // Client-only components with ssr: false must be in a Client Component (Next.js 15 requirement)
 import ClientComponents from '@/components/ClientComponents';
+import ScrollToTop from '@/components/ScrollToTop';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -148,6 +149,7 @@ export default function RootLayout({
                 <SocketProvider>
                   <AuthModalProvider>
                     <NavigationLoadingProvider>
+                      <ScrollToTop />
                       <Suspense fallback={null}>
                         <AuthModalHandler />
                       </Suspense>

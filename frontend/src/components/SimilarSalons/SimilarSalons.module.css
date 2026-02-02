@@ -1,0 +1,235 @@
+.container {
+  max-width: 1200px;
+  margin: 3rem auto 2rem;
+  padding: 0 1rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text-strong);
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  margin: 0 0 1.5rem 0;
+}
+
+.scrollContainer {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  padding-bottom: 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scrollContainer::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scrollContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.salonCard {
+  flex-shrink: 0;
+  width: 280px;
+  background-color: var(--color-surface-elevated);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  cursor: pointer;
+  scroll-snap-align: start;
+  text-decoration: none;
+  color: inherit;
+}
+
+.salonCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.15);
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background: var(--color-surface-subtle);
+}
+
+.cardImage {
+  object-fit: cover;
+}
+
+.ratingBadge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ratingBadge svg {
+  color: #F51957;
+  font-size: 0.75rem;
+}
+
+.cardContent {
+  padding: 1rem;
+}
+
+.cardTitle {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-text-strong);
+  margin: 0 0 0.35rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardLocation {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0 0 0.25rem 0;
+}
+
+.reviewCount {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* Skeleton Loading States */
+.salonCard.skeleton {
+  pointer-events: none;
+}
+
+.skeletonImage {
+  width: 100%;
+  height: 180px;
+  background: linear-gradient(
+    90deg,
+    rgba(120, 120, 140, 0.12) 25%,
+    rgba(120, 120, 140, 0.24) 37%,
+    rgba(120, 120, 140, 0.12) 63%
+  );
+  animation: skeleton-loading 1.4s ease infinite;
+  background-size: 200% 100%;
+}
+
+.skeletonContent {
+  padding: 1rem;
+}
+
+.skeletonTitle {
+  height: 1rem;
+  width: 70%;
+  background: linear-gradient(
+    90deg,
+    rgba(120, 120, 140, 0.12) 25%,
+    rgba(120, 120, 140, 0.24) 37%,
+    rgba(120, 120, 140, 0.12) 63%
+  );
+  animation: skeleton-loading 1.4s ease infinite;
+  background-size: 200% 100%;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.skeletonLocation {
+  height: 0.85rem;
+  width: 50%;
+  background: linear-gradient(
+    90deg,
+    rgba(120, 120, 140, 0.12) 25%,
+    rgba(120, 120, 140, 0.24) 37%,
+    rgba(120, 120, 140, 0.12) 63%
+  );
+  animation: skeleton-loading 1.4s ease infinite;
+  background-size: 200% 100%;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.75rem;
+    margin: 2rem auto 1.5rem;
+  }
+
+  .title {
+    font-size: 1.25rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .scrollContainer {
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .salonCard {
+    width: 220px;
+  }
+
+  .imageWrapper {
+    height: 140px;
+  }
+
+  .cardContent {
+    padding: 0.75rem;
+  }
+
+  .cardTitle {
+    font-size: 0.9rem;
+  }
+
+  .cardLocation {
+    font-size: 0.8rem;
+  }
+
+  .reviewCount {
+    font-size: 0.75rem;
+  }
+}

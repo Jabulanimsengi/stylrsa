@@ -32,7 +32,6 @@ import FreshaServiceList from '@/components/FreshaServiceList';
 import { toast } from 'react-toastify';
 import { useSocket } from '@/context/SocketContext';
 import ImageLightbox from '@/components/ImageLightbox';
-import VideoLightbox from '@/components/VideoLightbox/VideoLightbox';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
 import { toFriendlyMessage } from '@/lib/errors';
@@ -50,6 +49,7 @@ import TeamMembers from '@/components/TeamMembers/TeamMembers';
 import BooksySidebar, { HeroGallery, SalonInfoHeader, BooksyReviewsSection, StickyTabNavigation, AboutSection } from './BooksyComponents';
 import MobileSalonProfile from './MobileSalonProfile';
 import mobileStyles from './MobileSalonProfile.module.css';
+import SimilarSalons from '@/components/SimilarSalons/SimilarSalons';
 
 type Props = {
   initialSalon: Salon | null;
@@ -73,9 +73,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
   const [services, setServices] = useState<Service[]>(initialSalon?.services ?? []);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>(initialSalon?.gallery ?? []);
 
-  const [salonVideos, setSalonVideos] = useState<any[]>([]);
-  const [isVideoLightboxOpen, setIsVideoLightboxOpen] = useState(false);
-  const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(!initialSalon);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -262,27 +259,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
     void fetchPromotions();
   }, [salonId]);
 
-  // Fetch salon media (before/after photos, videos)
-  // Use salon.id (UUID) instead of salonId (could be slug) for API queries
-  useEffect(() => {
-    if (!salon?.id) return;
-
-    const fetchSalonMedia = async () => {
-      try {
-        // Fetch videos for this salon using the actual UUID
-        const videosRes = await fetch(`/api/videos/approved?salonId=${salon.id}&limit=50`);
-        if (videosRes.ok) {
-          const videosData = await videosRes.json();
-          setSalonVideos(videosData);
-        }
-      } catch (error) {
-        logger.error('Failed to fetch salon media', error);
-        // Silently fail - media is not critical
-      }
-    };
-
-    void fetchSalonMedia();
-  }, [salon?.id]);
 
   // Refetch salon data when page becomes visible (fixes operating hours not updating)
   useEffect(() => {
@@ -335,16 +311,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
     setIsLightboxOpen(false);
     setLightboxImages([]);
     setLightboxStartIndex(0);
-  };
-
-  const openVideoLightbox = (video: any) => {
-    setSelectedVideo(video);
-    setIsVideoLightboxOpen(true);
-  };
-
-  const closeVideoLightbox = () => {
-    setIsVideoLightboxOpen(false);
-    setSelectedVideo(null);
   };
 
   const handleBookClick = (service: Service) => {
@@ -608,14 +574,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
         />
       )}
 
-      {isVideoLightboxOpen && selectedVideo && (
-        <VideoLightbox
-          videoUrl={selectedVideo.videoUrl}
-          isOpen={isVideoLightboxOpen}
-          onClose={closeVideoLightbox}
-        />
-      )}
-
       <PromotionDetailsModal
         promotion={selectedPromotion}
         isOpen={isPromotionModalOpen}
@@ -776,48 +734,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
                     onBook={handleMultiServiceBook}
                     onImageClick={openLightbox}
                   />
-
-                  {/* Videos in Services tab - only if there are videos */}
-                  {salonVideos.length > 0 && (
-                    <div style={{ marginTop: '2rem' }}>
-                      <h3 className={booksyStyles.subsectionTitle}>Videos</h3>
-                      <div className={styles.galleryGrid}>
-                        {salonVideos.map((video) => (
-                          <div
-                            key={video.id}
-                            className={styles.galleryItem}
-                            onClick={() => openVideoLightbox(video)}
-                            style={{ position: 'relative', cursor: 'pointer' }}
-                          >
-                            <Image
-                              src={video.thumbnailUrl || '/placeholder-video.png'}
-                              alt={video.caption || 'Service video'}
-                              className={styles.galleryImage}
-                              fill
-                              sizes="(max-width: 768px) 50vw, 200px"
-                            />
-                            <div style={{
-                              position: 'absolute',
-                              top: '50%',
-                              left: '50%',
-                              transform: 'translate(-50%, -50%)',
-                              width: '48px',
-                              height: '48px',
-                              background: 'rgba(245, 25, 87, 0.9)',
-                              borderRadius: '50%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: 'white',
-                              fontSize: '20px',
-                            }}>
-                              <FaPlay />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </section>
               )}
 
@@ -855,6 +771,14 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
                 </section>
               )}
             </div>
+
+            {/* Similar Salons Section */}
+            <SimilarSalons
+              currentSalonId={salon.id}
+              city={salon.city}
+              province={salon.province}
+              services={services.map(s => s.name || s.title).filter(Boolean)}
+            />
           </div>
         </div>
       </div>
