@@ -145,38 +145,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-// Pre-render top salons for better SEO and lower costs
-export async function generateStaticParams() {
-  try {
-    const apiOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
-    const url = buildApiUrl(apiOrigin, '/api/salons/approved?limit=5000&sortBy=viewCount');
+// ISR Configuration - Pages generated on first request, then cached
+export const revalidate = 86400; // Cache pages for 24 hours
+export const dynamic = 'force-dynamic'; // Generate on-demand (not at build time)
+export const dynamicParams = true; // Allow dynamic routes
 
-    const res = await fetch(url, {
-      next: { revalidate: 86400 } // Refresh list daily
-    });
-
-    if (!res.ok) {
-      console.warn('[generateStaticParams] Failed to fetch salons');
-      return [];
-    }
-
-    const salons = await res.json();
-
-    // Pre-render top 5,000 salons by view count/rating
-    return salons.map((salon: any) => ({
-      id: salon.slug || salon.id, // Use slug for SEO-friendly URLs
-    }));
-  } catch (error) {
-    console.error('[generateStaticParams] Error:', error);
-    return [];
-  }
-}
-
-// Enable ISR with 24-hour revalidation
-export const revalidate = 86400; // 24 hours
-
-// Generate remaining pages on-demand
-export const dynamicParams = true;
+// Note: We don't use generateStaticParams to avoid build-time API calls
+// Instead, pages are generated on first visit and cached by Vercel Edge
 
 export default async function SalonProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
