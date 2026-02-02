@@ -132,6 +132,23 @@
   border-color: #ccc;
 }
 
+.neverButton {
+  padding: 0.4rem 0.875rem;
+  background: transparent;
+  color: #999;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s;
+  text-decoration: underline;
+}
+
+.neverButton:hover {
+  color: #666;
+}
+
 /* Tablet */
 @media (max-width: 768px) {
   .promptContainer {
@@ -157,6 +174,11 @@
   .installButton,
   .dismissButton {
     width: 100%;
+  }
+
+  .neverButton {
+    width: 100%;
+    margin-top: 0.25rem;
   }
 }
 
@@ -189,5 +211,10 @@
   .dismissButton {
     padding: 0.5rem 0.875rem;
     font-size: 0.7rem;
+  }
+
+  .neverButton {
+    font-size: 0.65rem;
+    padding: 0.35rem 0.75rem;
   }
 }

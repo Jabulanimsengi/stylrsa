@@ -21,14 +21,20 @@ export default function PWAInstallPrompt() {
       return;
     }
 
+    // Check if user opted to never show again
+    const neverShow = localStorage.getItem('pwa-install-never-show');
+    if (neverShow === 'true') {
+      return;
+    }
+
     // Check if previously dismissed
     const dismissed = localStorage.getItem('pwa-install-dismissed');
     if (dismissed) {
       const dismissedDate = new Date(dismissed);
       const daysSinceDismissed = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
-      
-      // Show again after 7 days
-      if (daysSinceDismissed < 7) {
+
+      // Show again after 30 days (changed from 7 days)
+      if (daysSinceDismissed < 30) {
         return;
       }
     }
@@ -37,11 +43,11 @@ export default function PWAInstallPrompt() {
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      
-      // Show prompt after user has been on site for 30 seconds
+
+      // Show prompt after user has been on site for 3 minutes (changed from 30 seconds)
       setTimeout(() => {
         setShowPrompt(true);
-      }, 30000);
+      }, 180000);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
@@ -80,9 +86,16 @@ export default function PWAInstallPrompt() {
     setShowPrompt(false);
   };
 
-  const handleDismiss = () => {
+  const handleDismiss = (neverShowAgain: boolean = false) => {
     setShowPrompt(false);
-    localStorage.setItem('pwa-install-dismissed', new Date().toISOString());
+
+    if (neverShowAgain) {
+      // User wants to never see this again
+      localStorage.setItem('pwa-install-never-show', 'true');
+    } else {
+      // User dismissed temporarily (will show again in 30 days)
+      localStorage.setItem('pwa-install-dismissed', new Date().toISOString());
+    }
   };
 
   // Don't show if already installed or no prompt available
@@ -93,10 +106,11 @@ export default function PWAInstallPrompt() {
   return (
     <div className={styles.promptContainer}>
       <div className={styles.promptCard}>
-        <button 
-          className={styles.closeButton} 
-          onClick={handleDismiss}
-          aria-label="Dismiss"
+        <button
+          className={styles.closeButton}
+          onClick={() => handleDismiss(true)}
+          aria-label="Close and don't show again"
+          title="Don't show again"
         >
           <FaTimes />
         </button>
@@ -105,7 +119,7 @@ export default function PWAInstallPrompt() {
           <div className={styles.icon}>
             <FaDownload />
           </div>
-          
+
           <div className={styles.text}>
             <h3 className={styles.title}>Install Stylr SA</h3>
             <p className={styles.description}>
@@ -114,17 +128,23 @@ export default function PWAInstallPrompt() {
           </div>
 
           <div className={styles.actions}>
-            <button 
+            <button
               className={styles.installButton}
               onClick={handleInstall}
             >
               Install App
             </button>
-            <button 
+            <button
               className={styles.dismissButton}
-              onClick={handleDismiss}
+              onClick={() => handleDismiss(false)}
             >
               Not Now
+            </button>
+            <button
+              className={styles.neverButton}
+              onClick={() => handleDismiss(true)}
+            >
+              Don't Show Again
             </button>
           </div>
         </div>
