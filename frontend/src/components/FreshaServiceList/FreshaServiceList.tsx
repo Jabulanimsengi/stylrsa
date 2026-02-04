@@ -131,6 +131,36 @@ export default function FreshaServiceList({
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
     const categoryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
     const containerRef = useRef<HTMLDivElement>(null);
+    const [isFooterVisible, setIsFooterVisible] = useState(false);
+
+    // Detect when user scrolls near the footer to hide the cart
+    useEffect(() => {
+        // Find the footer element - look for common footer selectors
+        const findFooter = () => {
+            return document.querySelector('footer') ||
+                document.querySelector('[class*="footer"]') ||
+                document.querySelector('#footer');
+        };
+
+        const footer = findFooter();
+        if (!footer) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    setIsFooterVisible(entry.isIntersecting);
+                });
+            },
+            {
+                threshold: 0,
+                rootMargin: '100px 0px 0px 0px' // Start hiding 100px before footer is visible
+            }
+        );
+
+        observer.observe(footer);
+
+        return () => observer.disconnect();
+    }, []);
 
     // Group services by category - only using valid categories from SERVICE_CATEGORIES
     const groupedServices = useMemo<CategoryService[]>(() => {
@@ -307,70 +337,70 @@ export default function FreshaServiceList({
                                 {isExpanded && (
                                     <div className={styles.categoryServices}>
 
-                            {group.services.map(service => {
-                                const isSelected = isServiceSelected(service.id);
-                                const hasImages = service.images && service.images.length > 0;
-                                const serviceName = service.title || service.name || 'Service';
-                                const isPopular = service.isPopular;
-                                const isFeatured = service.isFeatured;
+                                        {group.services.map(service => {
+                                            const isSelected = isServiceSelected(service.id);
+                                            const hasImages = service.images && service.images.length > 0;
+                                            const serviceName = service.title || service.name || 'Service';
+                                            const isPopular = service.isPopular;
+                                            const isFeatured = service.isFeatured;
 
-                                return (
-                                    <div
-                                        key={service.id}
-                                        className={`${styles.serviceItem} ${isSelected ? styles.selected : ''}`}
-                                        onClick={() => toggleService(service)}
-                                    >
-                                        <div className={styles.serviceInfo}>
-                                            <div className={styles.serviceNameRow}>
-                                                <h4 className={styles.serviceName}>{serviceName}</h4>
-                                                {isPopular && (
-                                                    <span className={styles.popularBadge}>
-                                                        <FaStar /> Popular
-                                                    </span>
-                                                )}
-                                                {isFeatured && !isPopular && (
-                                                    <span className={styles.featuredBadge}>
-                                                        Featured
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className={styles.serviceDuration}>
-                                                {formatDuration(service)}
-                                            </p>
-                                            <p className={styles.servicePrice}>
-                                                <span className={styles.servicePriceFrom}>from</span>
-                                                R {service.price.toFixed(0)}
-                                            </p>
-                                        </div>
-
-                                        <div className={styles.serviceActions}>
-                                            {hasImages && (
-                                                <button
-                                                    className={styles.viewImagesButton}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onImageClick(service.images, 0);
-                                                    }}
-                                                    aria-label="View images"
+                                            return (
+                                                <div
+                                                    key={service.id}
+                                                    className={`${styles.serviceItem} ${isSelected ? styles.selected : ''}`}
+                                                    onClick={() => toggleService(service)}
                                                 >
-                                                    <FaImages /> View Images
-                                                </button>
-                                            )}
+                                                    <div className={styles.serviceInfo}>
+                                                        <div className={styles.serviceNameRow}>
+                                                            <h4 className={styles.serviceName}>{serviceName}</h4>
+                                                            {isPopular && (
+                                                                <span className={styles.popularBadge}>
+                                                                    <FaStar /> Popular
+                                                                </span>
+                                                            )}
+                                                            {isFeatured && !isPopular && (
+                                                                <span className={styles.featuredBadge}>
+                                                                    Featured
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className={styles.serviceDuration}>
+                                                            {formatDuration(service)}
+                                                        </p>
+                                                        <p className={styles.servicePrice}>
+                                                            <span className={styles.servicePriceFrom}>from</span>
+                                                            R {service.price.toFixed(0)}
+                                                        </p>
+                                                    </div>
 
-                                            <button
-                                                className={`${styles.addButton} ${isSelected ? styles.added : ''}`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleService(service);
-                                                }}
-                                                aria-label={isSelected ? 'Remove service' : 'Add service'}
-                                            >
-                                                {isSelected ? <FaCheck /> : <FaPlus />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                                    <div className={styles.serviceActions}>
+                                                        {hasImages && (
+                                                            <button
+                                                                className={styles.viewImagesButton}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onImageClick(service.images, 0);
+                                                                }}
+                                                                aria-label="View images"
+                                                            >
+                                                                <FaImages /> View Images
+                                                            </button>
+                                                        )}
+
+                                                        <button
+                                                            className={`${styles.addButton} ${isSelected ? styles.added : ''}`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                toggleService(service);
+                                                            }}
+                                                            aria-label={isSelected ? 'Remove service' : 'Add service'}
+                                                        >
+                                                            {isSelected ? <FaCheck /> : <FaPlus />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
@@ -379,8 +409,8 @@ export default function FreshaServiceList({
                 </div>
 
 
-                {/* Cart Sidebar (Desktop) - Only visible when services are selected */}
-                {selectedServices.length > 0 && (
+                {/* Cart Sidebar (Desktop) - Only visible when services are selected and footer is not visible */}
+                {selectedServices.length > 0 && !isFooterVisible && (
                     <div className={styles.cartColumn}>
                         <div className={styles.cartSidebar}>
                             {/* Salon Info */}
@@ -451,8 +481,8 @@ export default function FreshaServiceList({
                     </div>
                 )}
 
-                {/* Mobile Sticky Footer Cart */}
-                {selectedServices.length > 0 && (
+                {/* Mobile Sticky Footer Cart - Hidden when footer is visible */}
+                {selectedServices.length > 0 && !isFooterVisible && (
                     <div className={styles.mobileCartFooter}>
                         <div className={styles.mobileCartContent}>
                             <div className={styles.mobileCartInfo}>

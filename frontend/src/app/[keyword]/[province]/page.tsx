@@ -13,8 +13,7 @@ interface PageProps {
   }>;
 }
 
-// ISR - generate crucial pages at build, rest on-demand
-export const dynamic = 'force-dynamic';
+// ISR - pages cached for 24 hours, regenerated in background
 export const dynamicParams = true; // Allow any params (ISR)
 export const revalidate = 86400; // Cache for 24 hours
 

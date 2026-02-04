@@ -22,6 +22,7 @@ import MobileSearch from '@/components/MobileSearch/MobileSearch';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import { PROVINCES } from '@/lib/locationData';
 import { getSalonUrl } from '@/utils/salonUrl';
+import EmptyState from '@/components/EmptyState/EmptyState';
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
 
@@ -127,7 +128,16 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
           {() => <SkeletonCard hasImage lines={3} />}
         </SkeletonGroup>
       ) : salons.length === 0 ? (
-        <p className={styles.emptyState}>No salons found in {locationInfo.name}.</p>
+        <EmptyState
+          variant="no-salons"
+          locationName={locationInfo.name}
+          showSuggestions={true}
+          action={
+            <Link href="/salons" className="btn btn-primary">
+              Browse All Salons
+            </Link>
+          }
+        />
       ) : (
         <div className={styles.salonGrid}>
           {salons.map((salon, index) => (

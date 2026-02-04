@@ -152,8 +152,7 @@ async function getProduct(idOrSlug: string): Promise<{ product: Product | null; 
 
     try {
         const res = await fetch(url, {
-            cache: 'no-store',
-            next: { revalidate: 60 },
+            next: { revalidate: 300 }, // Cache for 5 minutes
         });
 
         if (res.status === 403) {

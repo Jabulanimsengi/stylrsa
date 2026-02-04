@@ -53,7 +53,7 @@ const fetchSalonWithTimeout = async (url: string, timeoutMs = 5000): Promise<Sal
 async function getSalon(id: string): Promise<Salon | null> {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BASE_PATH;
   const isBuildPhase = process.env.IS_BUILD_PHASE === 'true' || process.env.NEXT_PHASE === 'phase-production-build';
-  
+
   // Only skip fetching during build time when API is localhost
   if (isBuildPhase && (!baseUrl || baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1'))) {
     return null;
@@ -145,13 +145,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-// ISR Configuration - Pages generated on first request, then cached
+// ISR Configuration - Pages cached for 24 hours, regenerated in background
 export const revalidate = 86400; // Cache pages for 24 hours
-export const dynamic = 'force-dynamic'; // Generate on-demand (not at build time)
 export const dynamicParams = true; // Allow dynamic routes
 
-// Note: We don't use generateStaticParams to avoid build-time API calls
-// Instead, pages are generated on first visit and cached by Vercel Edge
+// Note: Using ISR instead of force-dynamic to reduce serverless function invocations
+// Pages are generated on first visit and served from cache for subsequent requests
 
 export default async function SalonProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

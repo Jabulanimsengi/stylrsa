@@ -1,38 +1,44 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { 
-  FaSearch, 
-  FaHeart, 
-  FaCalendarAlt, 
+import Link from 'next/link';
+import {
+  FaSearch,
+  FaHeart,
+  FaCalendarAlt,
   FaExclamationCircle,
   FaShoppingBag,
   FaImages,
   FaUsers,
-  FaMapMarkerAlt
+  FaMapMarkerAlt,
+  FaStore
 } from 'react-icons/fa';
 import styles from './EmptyState.module.css';
 
-export type EmptyStateVariant = 
-  | 'no-results' 
-  | 'no-favorites' 
-  | 'no-bookings' 
+export type EmptyStateVariant =
+  | 'no-results'
+  | 'no-favorites'
+  | 'no-bookings'
   | 'no-orders'
   | 'no-promotions'
   | 'no-gallery'
   | 'no-services'
   | 'no-location'
+  | 'no-salons'
+  | 'no-nearby'
   | 'error'
   | 'custom';
 
 interface EmptyStateProps {
   variant?: EmptyStateVariant;
   icon?: ReactNode;
-  title: string;
+  title?: string;
   description?: string;
   action?: ReactNode;
   illustration?: ReactNode;
   className?: string;
+  locationName?: string; // For location-specific messages
+  showSuggestions?: boolean; // Show alternative location suggestions
 }
 
 const variantConfig: Record<EmptyStateVariant, { icon: ReactNode; defaultTitle: string; defaultDescription: string }> = {
@@ -76,6 +82,16 @@ const variantConfig: Record<EmptyStateVariant, { icon: ReactNode; defaultTitle: 
     defaultTitle: 'No Salons in This Area',
     defaultDescription: 'Try searching in a different location or check back soon as we expand.'
   },
+  'no-salons': {
+    icon: <FaStore />,
+    defaultTitle: 'No Salons Available',
+    defaultDescription: 'We don\'t have any registered salons in this area yet. Check out salons in nearby locations or browse all available salons.'
+  },
+  'no-nearby': {
+    icon: <FaMapMarkerAlt />,
+    defaultTitle: 'No Nearby Salons',
+    defaultDescription: 'There are no other salons nearby. Explore salons in different areas to find the perfect match for you.'
+  },
   'error': {
     icon: <FaExclamationCircle />,
     defaultTitle: 'Something Went Wrong',
@@ -88,19 +104,33 @@ const variantConfig: Record<EmptyStateVariant, { icon: ReactNode; defaultTitle: 
   }
 };
 
-export default function EmptyState({ 
+export default function EmptyState({
   variant = 'custom',
-  icon, 
-  title, 
-  description, 
-  action, 
+  icon,
+  title,
+  description,
+  action,
   illustration,
-  className = ''
+  className = '',
+  locationName,
+  showSuggestions = false
 }: EmptyStateProps) {
   const config = variantConfig[variant];
   const displayIcon = icon || config.icon;
-  const displayTitle = title || config.defaultTitle;
-  const displayDescription = description || config.defaultDescription;
+
+  // Handle location-specific titles and descriptions
+  let displayTitle = title || config.defaultTitle;
+  let displayDescription = description || config.defaultDescription;
+
+  if (locationName) {
+    if (variant === 'no-salons') {
+      displayTitle = title || `No Salons in ${locationName}`;
+      displayDescription = description || `We don't have any registered salons in ${locationName} yet. Check out salons in nearby locations or browse all available salons.`;
+    } else if (variant === 'no-location') {
+      displayTitle = title || `No Salons in ${locationName}`;
+      displayDescription = description || `Try searching in a different location or check back soon as we expand to ${locationName}.`;
+    }
+  }
 
   return (
     <div className={`${styles.emptyState} ${className}`}>
@@ -121,6 +151,27 @@ export default function EmptyState({
       {action && (
         <div className={styles.action}>
           {action}
+        </div>
+      )}
+
+      {/* Show location suggestions for salon-related empty states */}
+      {showSuggestions && (variant === 'no-salons' || variant === 'no-location' || variant === 'no-nearby') && (
+        <div className={styles.suggestions}>
+          <p className={styles.suggestionsTitle}>Explore other locations:</p>
+          <div className={styles.suggestionLinks}>
+            <Link href="/salons" className={styles.suggestionLink}>
+              View All Salons
+            </Link>
+            <Link href="/salons/location/gauteng" className={styles.suggestionLink}>
+              Gauteng
+            </Link>
+            <Link href="/salons/location/western-cape" className={styles.suggestionLink}>
+              Western Cape
+            </Link>
+            <Link href="/salons/location/kwazulu-natal" className={styles.suggestionLink}>
+              KwaZulu-Natal
+            </Link>
+          </div>
         </div>
       )}
     </div>

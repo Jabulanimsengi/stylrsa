@@ -8,6 +8,7 @@ import { Salon } from '@/types';
 import { transformCloudinary } from '@/utils/cloudinary';
 import { getImageWithFallback } from '@/lib/placeholders';
 import { getSalonUrl } from '@/utils/salonUrl';
+import EmptyState from '@/components/EmptyState/EmptyState';
 import styles from './SimilarSalons.module.css';
 
 interface SimilarSalonsProps {
@@ -77,8 +78,19 @@ export default function SimilarSalons({ currentSalonId, city, province, services
     );
   }
 
+  // Show empty state when no similar salons found
   if (similarSalons.length === 0) {
-    return null;
+    return (
+      <div className={styles.container}>
+        <h2 className={styles.title}>Similar Salons Nearby</h2>
+        <EmptyState
+          variant="no-nearby"
+          locationName={city || province}
+          showSuggestions={true}
+          className={styles.emptyState}
+        />
+      </div>
+    );
   }
 
   return (

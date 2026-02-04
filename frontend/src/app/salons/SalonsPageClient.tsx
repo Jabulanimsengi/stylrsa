@@ -393,12 +393,6 @@ export default function SalonsPageClient() {
 
     // Handle booking service from detailed salon card
     const handleBookService = async (service: Service) => {
-        if (authStatus !== 'authenticated') {
-            toast.info('Please log in to book a service.');
-            openModal('login');
-            return;
-        }
-
         let salonData: Salon;
         if (!service.salon || !service.salon.name) {
             try {

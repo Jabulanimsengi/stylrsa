@@ -24,3 +24,8 @@ export { useIntersectionObserver, useInfiniteScroll } from './useIntersectionObs
 // Re-export existing hooks (if they exist)
 export { useAuth } from './useAuth';
 export { useMediaQuery } from './useMediaQuery';
+
+// Booking
+export { useBookingFlow, STEP_LABELS } from './useBookingFlow';
+export type { BookingStep, BookingPreferences, UseBookingFlowReturn } from './useBookingFlow';
+

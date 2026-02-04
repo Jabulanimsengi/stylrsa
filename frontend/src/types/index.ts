@@ -107,6 +107,11 @@ export interface Salon {
   bookingMessage?: string | null; // Optional booking message from salon owner
   cancellationPolicy?: string | null; // Salon's cancellation policy text
   isFeatured?: boolean; // Whether salon is currently featured
+  // Banking details for deposits
+  bankName?: string | null;
+  accountHolder?: string | null;
+  accountNumber?: string | null;
+  branchCode?: string | null;
 }
 
 export interface Service {

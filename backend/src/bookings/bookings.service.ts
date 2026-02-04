@@ -286,6 +286,10 @@ export class BookingsService {
       notification,
     );
 
+    // Format booking date and time for emails
+    const bookingDateFormatted = bookingDate.toLocaleDateString('en-ZA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const bookingTimeFormatted = bookingDate.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
+
     // Notify all admins about the new booking
     const admins = await this.prisma.user.findMany({
       where: { role: 'ADMIN' },
@@ -328,9 +332,6 @@ export class BookingsService {
     }
 
     // Send email notifications
-    const bookingDateFormatted = bookingDate.toLocaleDateString('en-ZA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const bookingTimeFormatted = bookingDate.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
-
     // Email to user confirming booking request
     await this.mailService.sendBookingConfirmation(
       user.email,

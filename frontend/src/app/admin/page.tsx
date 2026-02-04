@@ -5,7 +5,22 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './AdminPage.module.css';
+import AdminLayout from './AdminLayout';
+import AdminDashboard from './components/AdminDashboard/AdminDashboard';
+import { PendingSalons, AllSalons } from './components';
+import type { AdminView } from './components/AdminSidebar/AdminSidebar';
 import {
+  PendingSalon,
+  PendingService,
+  PendingReview,
+  PendingProduct,
+  SellerRow,
+  SellerDeletionTarget,
+  PLAN_PAYMENT_LABELS,
+  formatRand,
+  ensureArray,
+} from './types';
+import type {
   Salon,
   Service,
   ApprovalStatus,
@@ -42,56 +57,6 @@ import {
 } from '@/components/ui';
 import StatusBadge from '@/components/StatusBadge';
 
-const ensureArray = <T,>(value: unknown): T[] =>
-  Array.isArray(value) ? (value as T[]) : [];
-
-// FIX: Update PendingSalon to include the new fields from the backend response.
-type PendingSalon = Pick<Salon, 'id' | 'name' | 'approvalStatus' | 'createdAt' | 'city' | 'province' | 'isVerified'> & {
-  owner: { id: string; email: string; firstName: string; lastName: string; };
-  visibilityWeight?: number;
-  maxListings?: number;
-  featuredUntil?: string | null;
-  planCode?: PlanCode | null;
-  planPriceCents?: number | null;
-  planPaymentStatus?: PlanPaymentStatus | null;
-  planPaymentReference?: string | null;
-  planProofSubmittedAt?: string | null;
-  planVerifiedAt?: string | null;
-};
-type PendingService = Service & { salon: { name: string } };
-type PendingReview = Review & { author: { firstName: string }; salon: { name: string } };
-type PendingProduct = Product & {
-  seller: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    sellerPlanCode?: PlanCode | null;
-    sellerPlanPriceCents?: number | null;
-    sellerPlanPaymentStatus?: PlanPaymentStatus | null;
-    sellerPlanPaymentReference?: string | null;
-    sellerPlanProofSubmittedAt?: string | null;
-    sellerPlanVerifiedAt?: string | null;
-  };
-};
-
-type SellerRow = SellerSummary & {
-  sellerPlanPaymentStatus?: PlanPaymentStatus | null;
-};
-
-type SellerDeletionTarget = {
-  sellerId: string;
-  name: string;
-};
-
-const PLAN_PAYMENT_LABELS: Record<PlanPaymentStatus, string> = {
-  PENDING_SELECTION: 'Package not selected',
-  AWAITING_PROOF: 'Awaiting proof of payment',
-  PROOF_SUBMITTED: 'Proof submitted',
-  VERIFIED: 'Payment verified',
-};
-
-const formatRand = (value: number) => `R${(value / 100).toFixed(2)}`;
-
 export default function AdminPage() {
   const { data: session } = useSession();
   const { authStatus, user } = useAuth();
@@ -109,7 +74,7 @@ export default function AdminPage() {
   const [availableSalons, setAvailableSalons] = useState<PendingSalon[]>([]);
   const [metrics, setMetrics] = useState<any | null>(null);
   const [featureDuration, setFeatureDuration] = useState<number>(30);
-  const [view, setView] = useState<'salons' | 'services' | 'reviews' | 'all-salons' | 'products' | 'all-sellers' | 'deleted-salons' | 'deleted-sellers' | 'audit' | 'featured-salons' | 'promotions' | 'media' | 'trends' | 'salon-trendz' | 'blogs' | 'top10-requests' | 'pending-payments'>('salons');
+  const [view, setView] = useState<AdminView>('dashboard');
   const [top10Requests, setTop10Requests] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -899,192 +864,60 @@ export default function AdminPage() {
 
   if (isLoading || authStatus === 'loading') return <LoadingSpinner />;
 
+  // Calculate pending counts for the sidebar
+  const pendingCounts = {
+    salons: pendingSalons.length,
+    services: pendingServices.length,
+    reviews: pendingReviews.length,
+    products: pendingProducts.length,
+    promotions: pendingPromotions.length,
+    payments: pendingPaymentSalons.length,
+  };
+
+  // Dashboard metrics
+  const dashboardMetrics = {
+    totalSalons: allSalons.length,
+    totalSellers: allSellers.length,
+    pendingApprovals: pendingSalons.length + pendingServices.length + pendingReviews.length + pendingProducts.length,
+    pendingPayments: pendingPaymentSalons.length,
+  };
+
+  // Handle view changes with special cases
+  const handleViewChange = async (newView: AdminView) => {
+    setView(newView);
+
+    // Fetch additional data for specific views
+    if (newView === 'featured-salons') {
+      await fetchFeaturedSalons();
+    } else if (newView === 'top10-requests') {
+      try {
+        const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
+        const res = await fetch(`/api/salons/top10-requests?ts=${Date.now()}`, {
+          credentials: 'include',
+          cache: 'no-store' as any,
+          headers: authHeaders,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setTop10Requests(ensureArray<any>(data));
+        }
+      } catch { }
+    }
+  };
+
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Admin Dashboard</h1>
-      {metrics ? (
-        <div className={styles.metricsGrid}>
-          <div className={styles.metricCard} onClick={() => setView('salons')}>
-            <div className={`${styles.metricIcon} ${styles.salons}`}>📋</div>
-            <div className={styles.metricContent}>
-              <span className={styles.metricLabel}>Pending Salons</span>
-              <span className={styles.metricValue}>{metrics.salonsPending}</span>
-            </div>
-          </div>
-          <div className={styles.metricCard} onClick={() => setView('services')}>
-            <div className={`${styles.metricIcon} ${styles.services}`}>✂️</div>
-            <div className={styles.metricContent}>
-              <span className={styles.metricLabel}>Pending Services</span>
-              <span className={styles.metricValue}>{metrics.servicesPending}</span>
-            </div>
-          </div>
-          <div className={styles.metricCard} onClick={() => setView('reviews')}>
-            <div className={`${styles.metricIcon} ${styles.reviews}`}>⭐</div>
-            <div className={styles.metricContent}>
-              <span className={styles.metricLabel}>Pending Reviews</span>
-              <span className={styles.metricValue}>{metrics.reviewsPending}</span>
-            </div>
-          </div>
-          <div className={styles.metricCard} onClick={() => setView('products')}>
-            <div className={`${styles.metricIcon} ${styles.products}`}>📦</div>
-            <div className={styles.metricContent}>
-              <span className={styles.metricLabel}>Pending Products</span>
-              <span className={styles.metricValue}>{metrics.productsPending}</span>
-            </div>
-          </div>
-          <div className={styles.metricCard} onClick={() => setView('pending-payments')}>
-            <div className={`${styles.metricIcon} ${styles.payments}`}>💳</div>
-            <div className={styles.metricContent}>
-              <span className={styles.metricLabel}>Pending Payments</span>
-              <span className={styles.metricValue}>{pendingPaymentSalons.length}</span>
-            </div>
-          </div>
-          <div className={styles.metricCard} onClick={() => setView('all-sellers')}>
-            <div className={`${styles.metricIcon} ${styles.sellers}`}>👥</div>
-            <div className={styles.metricContent}>
-              <span className={styles.metricLabel}>Total Sellers</span>
-              <span className={styles.metricValue}>{allSellers.length}</span>
-            </div>
-          </div>
-          <div className={styles.metricCard} onClick={() => setView('media')}>
-            <div className={`${styles.metricIcon} ${styles.media}`}>🖼️</div>
-            <div className={styles.metricContent}>
-              <span className={styles.metricLabel}>Media Review</span>
-              <span className={styles.metricValue}>—</span>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className={styles.metricsGrid}>
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className={`${styles.loadingSkeleton} ${styles.skeletonMetric}`} />
-          ))}
-        </div>
+    <AdminLayout
+      currentView={view}
+      onViewChange={handleViewChange}
+      pendingCounts={pendingCounts}
+    >
+      {/* Dashboard View */}
+      {view === 'dashboard' && (
+        <AdminDashboard
+          metrics={dashboardMetrics}
+          onNavigate={handleViewChange}
+        />
       )}
-      <div className={styles.tabs}>
-        <button
-          onClick={() => setView('salons')}
-          className={`${styles.tabButton} ${view === 'salons' ? styles.activeTab : ''}`}
-        >
-          Pending Salons ({pendingSalons.length})
-        </button>
-        <button
-          onClick={() => setView('all-salons')}
-          className={`${styles.tabButton} ${view === 'all-salons' ? styles.activeTab : ''}`}
-        >
-          All Salons ({allSalons.length})
-        </button>
-        <button
-          onClick={async () => {
-            setView('featured-salons');
-            await fetchFeaturedSalons();
-          }}
-          className={`${styles.tabButton} ${view === 'featured-salons' ? styles.activeTab : ''}`}
-        >
-          Featured Salons ({featuredSalons.length})
-        </button>
-        <button
-          onClick={() => setView('all-sellers')}
-          className={`${styles.tabButton} ${view === 'all-sellers' ? styles.activeTab : ''}`}
-        >
-          All Sellers ({allSellers.length})
-        </button>
-        <button
-          onClick={() => setView('services')}
-          className={`${styles.tabButton} ${view === 'services' ? styles.activeTab : ''}`}
-        >
-          Pending Services ({pendingServices.length})
-        </button>
-        <button
-          onClick={() => setView('reviews')}
-          className={`${styles.tabButton} ${view === 'reviews' ? styles.activeTab : ''}`}
-        >
-          Pending Reviews ({pendingReviews.length})
-        </button>
-        <button
-          onClick={() => setView('products')}
-          className={`${styles.tabButton} ${view === 'products' ? styles.activeTab : ''}`}
-        >
-          Pending Products ({pendingProducts.length})
-        </button>
-        <button
-          onClick={() => setView('pending-payments')}
-          className={`${styles.tabButton} ${view === 'pending-payments' ? styles.activeTab : ''}`}
-        >
-          Pending Payments ({pendingPaymentSalons.length})
-        </button>
-        <button
-          onClick={() => setView('promotions')}
-          className={`${styles.tabButton} ${view === 'promotions' ? styles.activeTab : ''}`}
-        >
-          Pending Promotions ({pendingPromotions.length})
-        </button>
-        <button
-          onClick={() => setView('media')}
-          className={`${styles.tabButton} ${view === 'media' ? styles.activeTab : ''}`}
-        >
-          Media Review
-        </button>
-        <button
-          onClick={() => setView('trends')}
-          className={`${styles.tabButton} ${view === 'trends' ? styles.activeTab : ''}`}
-        >
-          Trendz
-        </button>
-        <button
-          onClick={() => setView('salon-trendz')}
-          className={`${styles.tabButton} ${view === 'salon-trendz' ? styles.activeTab : ''}`}
-        >
-          Salon Trendz
-        </button>
-        <button
-          onClick={() => setView('blogs')}
-          className={`${styles.tabButton} ${view === 'blogs' ? styles.activeTab : ''}`}
-        >
-          Blogs
-        </button>
-        <button
-          onClick={async () => {
-            setView('top10-requests');
-            try {
-              const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
-              const r = await fetch(`/api/admin/top10-requests?ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' as any, headers: authHeaders });
-              if (r.ok) setTop10Requests(await r.json());
-            } catch { }
-          }}
-          className={`${styles.tabButton} ${view === 'top10-requests' ? styles.activeTab : ''}`}
-        >
-          Top 10 Requests ({top10Requests.length})
-        </button>
-        <button
-          onClick={() => setView('deleted-salons')}
-          className={`${styles.tabButton} ${view === 'deleted-salons' ? styles.activeTab : ''}`}
-        >
-          Deleted Profiles ({deletedSalons.length})
-        </button>
-        <button
-          onClick={() => setView('deleted-sellers')}
-          className={`${styles.tabButton} ${view === 'deleted-sellers' ? styles.activeTab : ''}`}
-        >
-          Deleted Sellers ({deletedSellers.length})
-        </button>
-        <button
-          onClick={async () => {
-            setView('audit');
-            try { const r = await fetch(`/api/admin/audit?ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' as any }); if (r.ok) setAuditLogs(await r.json()); } catch { }
-          }}
-          className={`${styles.tabButton} ${view === 'audit' ? styles.activeTab : ''}`}
-        >
-          Activity Log
-        </button>
-        <Link
-          href="/admin/candidates"
-          className={styles.tabButton}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}
-        >
-          📄 Candidates / CVs
-        </Link>
-      </div>
 
       <div className={styles.list}>
         {view === 'salons' && (
@@ -2280,59 +2113,56 @@ export default function AdminPage() {
           }) : <p>No recent admin activity.</p>
         )}
       </div>
-      {
-        showDeleteModal && deleteMode === 'salon' && deletingSalon && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 1000 }}>
-            <div style={{ background: '#fff', color: '#000', padding: '1rem', borderRadius: 8, maxWidth: 560, width: '96%', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
-              <h3 style={{ marginTop: 0 }}>Delete Provider Profile</h3>
-              <p style={{ color: '#a00', fontWeight: 600 }}>Caution: This will remove the provider profile and all their listings from the platform. You can later restore it from Deleted Profiles.</p>
-              <p><strong>Provider:</strong> {deletingSalon.name}</p>
-              <label style={{ display: 'block', margin: '0.5rem 0' }}>Reason (required)</label>
-              <textarea value={deleteReason} onChange={e => setDeleteReason(e.target.value)} rows={4} style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 6 }} placeholder="Enter reason for deletion" />
-              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
-                <button className={styles.approveButton} onClick={confirmDeleteSalon} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Confirm Delete'}</button>
-                <button className={styles.rejectButton} onClick={() => { setShowDeleteModal(false); setDeletingSalon(null); }}>Cancel</button>
-              </div>
-            </div>
-          </div>
-        )
-      }
 
-      {
-        showDeleteModal && deleteMode === 'seller' && deletingSeller && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 1000 }}>
-            <div style={{ background: '#fff', color: '#000', padding: '1rem', borderRadius: 8, maxWidth: 560, width: '96%', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
-              <h3 style={{ marginTop: 0 }}>Delete Seller Profile</h3>
-              <p style={{ color: '#a00', fontWeight: 600 }}>Caution: This will remove the seller account and all their products from the platform. You can restore it from Deleted Sellers.</p>
-              <p style={{ color: '#a00', fontWeight: 600 }}>Are you sure you want to proceed with deleting this product seller?</p>
-              <p><strong>Seller:</strong> {deletingSeller.name}</p>
-              <label style={{ display: 'block', margin: '0.5rem 0' }}>Reason (required)</label>
-              <textarea
-                value={deleteReason}
-                onChange={(event) => setDeleteReason(event.target.value)}
-                rows={4}
-                style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 6 }}
-                placeholder="Enter reason for deletion"
-              />
-              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
-                <button type="button" className={styles.approveButton} onClick={confirmDeleteSeller} disabled={isDeleting}>
-                  {isDeleting ? 'Deleting...' : 'Confirm Delete'}
-                </button>
-                <button
-                  type="button"
-                  className={styles.rejectButton}
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setDeletingSeller(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
+      {showDeleteModal && deleteMode === 'salon' && deletingSalon && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', color: '#000', padding: '1rem', borderRadius: 8, maxWidth: 560, width: '96%', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
+            <h3 style={{ marginTop: 0 }}>Delete Provider Profile</h3>
+            <p style={{ color: '#a00', fontWeight: 600 }}>Caution: This will remove the provider profile and all their listings from the platform. You can later restore it from Deleted Profiles.</p>
+            <p><strong>Provider:</strong> {deletingSalon.name}</p>
+            <label style={{ display: 'block', margin: '0.5rem 0' }}>Reason (required)</label>
+            <textarea value={deleteReason} onChange={e => setDeleteReason(e.target.value)} rows={4} style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 6 }} placeholder="Enter reason for deletion" />
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+              <button className={styles.approveButton} onClick={confirmDeleteSalon} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Confirm Delete'}</button>
+              <button className={styles.rejectButton} onClick={() => { setShowDeleteModal(false); setDeletingSalon(null); }}>Cancel</button>
             </div>
           </div>
-        )
-      }
-    </div>
+        </div>
+      )}
+
+      {showDeleteModal && deleteMode === 'seller' && deletingSeller && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', color: '#000', padding: '1rem', borderRadius: 8, maxWidth: 560, width: '96%', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
+            <h3 style={{ marginTop: 0 }}>Delete Seller Profile</h3>
+            <p style={{ color: '#a00', fontWeight: 600 }}>Caution: This will remove the seller account and all their products from the platform. You can restore it from Deleted Sellers.</p>
+            <p style={{ color: '#a00', fontWeight: 600 }}>Are you sure you want to proceed with deleting this product seller?</p>
+            <p><strong>Seller:</strong> {deletingSeller.name}</p>
+            <label style={{ display: 'block', margin: '0.5rem 0' }}>Reason (required)</label>
+            <textarea
+              value={deleteReason}
+              onChange={(event) => setDeleteReason(event.target.value)}
+              rows={4}
+              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 6 }}
+              placeholder="Enter reason for deletion"
+            />
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+              <button type="button" className={styles.approveButton} onClick={confirmDeleteSeller} disabled={isDeleting}>
+                {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+              </button>
+              <button
+                type="button"
+                className={styles.rejectButton}
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletingSeller(null);
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </AdminLayout>
   );
 }

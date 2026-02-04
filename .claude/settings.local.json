@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)",
+      "Bash(git push)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix build error: Remove generateStaticParams to avoid build-time API calls\n\n- Changed from static generation to ISR-only mode\n- Pages generated on first request \\(not at build time\\)\n- Still cached for 24 hours at Vercel edge\n- Prevents build failures when backend API unavailable\n- Maintains all cost-saving benefits from caching\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(ls:*)",
+      "Read(//c/Users/ramos/all_coding/hairprosdirectory/**)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

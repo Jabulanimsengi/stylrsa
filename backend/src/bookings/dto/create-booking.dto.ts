@@ -6,8 +6,16 @@ import {
   IsOptional,
   IsString,
   IsNumber,
+  IsEnum,
+  Matches,
   Min,
 } from 'class-validator';
+
+export enum MaterialSelection {
+  HAVE_OWN = 'HAVE_OWN',
+  BUY_SALON = 'BUY_SALON',
+  BUY_PLATFORM = 'BUY_PLATFORM',
+}
 
 export class CreateBookingDto {
   @IsString()
@@ -19,9 +27,11 @@ export class CreateBookingDto {
   bookingTime: string;
 
   @IsBoolean()
+  @IsNotEmpty()
   isMobile: boolean;
 
   @IsString()
+  @Matches(/^0[0-9]{9}$/, { message: 'Phone number must be a valid South African number (10 digits starting with 0)' })
   @IsOptional()
   clientPhone?: string;
 
@@ -38,9 +48,9 @@ export class CreateBookingDto {
   @IsOptional()
   colorSelection?: string; // For nail services: selected color
 
-  @IsString()
+  @IsEnum(MaterialSelection)
   @IsOptional()
-  materialSelection?: string; // For braiding/hairpiece services: selected material
+  materialSelection?: MaterialSelection; // For braiding/hairpiece services: selected material
 
   // Payment-related fields
   @IsBoolean()

@@ -14,10 +14,10 @@ import SalonCarouselSection from '@/components/SalonCarouselSection';
 import TypingAnimation from '@/components/TypingAnimation/TypingAnimation';
 
 const HERO_IMAGE = {
-  src: '/image_01.jpg',
+  src: '/art_one.webp',
   alt: 'Professional hair styling and beauty services at South African salons',
   // Preload hint for LCP optimization
-  blurDataURL: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDAwUBAAAAAAAAAAAAAQIDAAQRBRIhBhMiMUFR/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAZEQACAwEAAAAAAAAAAAAAAAABAgADESH/2gAMAwEAAhEDEQA/AKOm6hqF1qMUV1cSSwq2WRmJBx+VYpSlKqxYAOxP/9k='
+  blurDataURL: 'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA='
 };
 
 interface HomePageClientProps {
@@ -172,13 +172,15 @@ export default function HomePageClient({
         <div className={styles.heroImageWrapper}>
           <div className={styles.heroImageContainer}>
             <Image
-              src="/art_one.png"
+              src="/art_one.webp"
               alt="Hero background art"
               fill
               priority
-              quality={95}
+              quality={85}
               className={styles.heroBackgroundImage}
-              sizes="100vw"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
+              placeholder="blur"
+              blurDataURL="data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA="
             />
           </div>
           <div className={styles.heroOverlay} />

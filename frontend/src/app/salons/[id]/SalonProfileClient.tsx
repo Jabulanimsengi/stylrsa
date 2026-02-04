@@ -314,28 +314,20 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
   };
 
   const handleBookClick = (service: Service) => {
-    if (authStatus !== 'authenticated') {
-      openModal('login');
+    // Check if salon has a booking message
+    if (salon?.bookingMessage) {
+      // Show confirmation modal first
+      setPendingBookingService(service);
+      setShowBookingConfirmation(true);
     } else {
-      // Check if salon has a booking message
-      if (salon?.bookingMessage) {
-        // Show confirmation modal first
-        setPendingBookingService(service);
-        setShowBookingConfirmation(true);
-      } else {
-        // Open booking modal directly
-        setSelectedService(service);
-        setShowBookingModal(true);
-      }
+      // Open booking modal directly
+      setSelectedService(service);
+      setShowBookingModal(true);
     }
   };
 
   // Handler for multi-service booking from FreshaServiceList
   const handleMultiServiceBook = (selectedSvcs: Service[]) => {
-    if (authStatus !== 'authenticated') {
-      openModal('login');
-      return;
-    }
 
     if (selectedSvcs.length === 0) {
       toast.warning('Please select at least one service');
@@ -606,9 +598,7 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
         onOpenLightbox={openLightbox}
         onBookService={handleBookClick}
         onBookNow={() => {
-          if (authStatus !== 'authenticated') {
-            openModal('login');
-          } else if (services.length > 0) {
+          if (services.length > 0) {
             setSelectedService(null);
             setShowBookingModal(true);
           }

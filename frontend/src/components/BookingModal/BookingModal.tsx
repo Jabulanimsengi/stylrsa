@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo, FormEvent, useTransition } from 'react';
+import { useState, FormEvent, useTransition } from 'react';
 import Image from 'next/image';
 import { Salon, Service, Booking, TeamMember } from '@/types';
 import styles from './BookingModal.module.css';
-import { toast } from 'react-toastify';
 import {
-  FaTimes,
   FaChevronLeft,
   FaChevronRight,
   FaCheck,
@@ -17,16 +15,18 @@ import {
   FaMapMarkerAlt,
   FaUsers,
   FaExclamationTriangle,
+  FaPalette,
+  FaBox,
+  FaShoppingCart,
   FaInfoCircle,
+  FaTimes,
+  FaWhatsapp,
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
 import { useSocket } from '@/context/SocketContext';
-import { apiJson } from '@/lib/api';
-import { toFriendlyMessage } from '@/lib/errors';
-import BookingPreferencesStep, { BookingPreferences } from './BookingPreferencesStep';
-import BookingPaymentStep, { PaymentDetails } from './BookingPaymentStep';
-import UpsellPopup from '../UpsellPopup/UpsellPopup';
+import { useBookingFlow, STEP_LABELS, BookingStep, BookingPreferences } from '@/hooks/useBookingFlow';
+import DateTimePicker from './DateTimePicker';
 import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 import {
   Dialog,
@@ -34,6 +34,10 @@ import {
   DialogTitle,
   Progress,
 } from '@/components/ui';
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface BookingModalProps {
   salon: Salon;
@@ -43,25 +47,27 @@ interface BookingModalProps {
   onBookingSuccess: (booking: Booking) => void;
 }
 
-interface TimeSlot {
-  time: string;
-  available: boolean;
-  status: 'available' | 'busy' | 'unavailable';
-}
+// ============================================================================
+// Helper functions
+// ============================================================================
 
-type Step = 'service' | 'professional' | 'date' | 'time' | 'details' | 'preferences' | 'payment' | 'confirm';
-
-const STEPS: Step[] = ['service', 'professional', 'date', 'time', 'details', 'preferences', 'payment', 'confirm'];
-const STEP_LABELS: Record<Step, string> = {
-  service: 'Services',
-  professional: 'Professional',
-  date: 'Date',
-  time: 'Time',
-  details: 'Details',
-  preferences: 'Preferences',
-  payment: 'Payment',
-  confirm: 'Confirm',
+// Check if service requires color selection
+const requiresColorSelection = (category?: string, name?: string): boolean => {
+  const colorKeywords = ['nail', 'manicure', 'pedicure', 'polish', 'gel'];
+  const searchText = `${category || ''} ${name || ''}`.toLowerCase();
+  return colorKeywords.some(keyword => searchText.includes(keyword));
 };
+
+// Check if service requires material selection
+const requiresMaterialSelection = (category?: string, name?: string): boolean => {
+  const materialKeywords = ['braid', 'weave', 'wig', 'extension', 'hairpiece', 'locs', 'twist'];
+  const searchText = `${category || ''} ${name || ''}`.toLowerCase();
+  return materialKeywords.some(keyword => searchText.includes(keyword));
+};
+
+// ============================================================================
+// Component
+// ============================================================================
 
 export default function BookingModal({
   salon,
@@ -70,803 +76,759 @@ export default function BookingModal({
   onClose,
   onBookingSuccess,
 }: BookingModalProps) {
-  const [currentStep, setCurrentStep] = useState<Step>(initialService ? 'professional' : 'service');
-  const [selectedService, setSelectedService] = useState<Service | null>(initialService || null);
-  const [selectedProfessional, setSelectedProfessional] = useState<TeamMember | null>(null);
-  const [useAnyProfessional, setUseAnyProfessional] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [clientPhone, setClientPhone] = useState('');
-  const [clientNotes, setClientNotes] = useState('');
-  const [isMobile, setIsMobile] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPending, startTransition] = useTransition();
-  const [slots, setSlots] = useState<TimeSlot[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [loadingTeam, setLoadingTeam] = useState(false);
-
-  // New booking flow state
-  const [bookingPreferences, setBookingPreferences] = useState<BookingPreferences | null>(null);
-  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
-  const [showUpsell, setShowUpsell] = useState(false);
-
   const { authStatus, user } = useAuth();
   const { openModal } = useAuthModal();
   const socket = useSocket();
+  const [isPending, startTransition] = useTransition();
 
-  // Fetch team members when component mounts
-  useEffect(() => {
-    const fetchTeamMembers = async () => {
-      setLoadingTeam(true);
-      try {
-        const response = await fetch(`/api/team-members/salon/${salon.id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setTeamMembers(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch team members:', error);
-      } finally {
-        setLoadingTeam(false);
-      }
-    };
-    fetchTeamMembers();
-  }, [salon.id]);
-
-  // Get visible steps based on whether initial service provided
-  const visibleSteps = useMemo(() => {
-    if (initialService) {
-      return STEPS.filter(s => s !== 'service');
-    }
-    return STEPS;
-  }, [initialService]);
-
-  // Get current step index
-  const currentStepIndex = visibleSteps.indexOf(currentStep);
-  const stepNumber = currentStepIndex + 1;
-  const totalSteps = visibleSteps.length;
-
-  // Days in month for calendar
-  const daysInMonth = useMemo(() => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const days: Date[] = [];
-
-    const startDay = firstDay.getDay();
-    for (let i = startDay - 1; i >= 0; i--) {
-      days.push(new Date(year, month, -i));
-    }
-
-    for (let day = 1; day <= lastDay.getDate(); day++) {
-      days.push(new Date(year, month, day));
-    }
-
-    const endDay = lastDay.getDay();
-    for (let day = 1; day < 7 - endDay; day++) {
-      days.push(new Date(year, month + 1, day));
-    }
-
-    return days;
-  }, [currentMonth]);
-
-  // Fetch time slots when date changes
-  useEffect(() => {
-    if (!selectedDate || !selectedService) {
-      setSlots([]);
-      return;
-    }
-
-    const fetchSlots = async () => {
-      setLoadingSlots(true);
-      try {
-        const dateString = selectedDate.toISOString().split('T')[0];
-        const response = await fetch(
-          `/api/bookings/availability/${selectedService.id}?date=${dateString}`,
-          { credentials: 'include' }
-        );
-
-        if (!response.ok) throw new Error('Failed to fetch availability');
-        const data = await response.json();
-        setSlots(data.slots || []);
-      } catch (err) {
-        console.error('Error fetching time slots:', err);
-        setSlots([]);
-      } finally {
-        setLoadingSlots(false);
-      }
-    };
-
-    fetchSlots();
-  }, [selectedService, selectedDate]);
-
-  const handleSubmit = async (e?: FormEvent) => {
-    e?.preventDefault();
-
-    if (!selectedDate || !selectedSlot || !selectedService) {
-      toast.error('Please complete all booking details.');
-      return;
-    }
-
-    if (authStatus !== 'authenticated' || !user) {
-      toast.error('You must be logged in to book.');
-      openModal('login');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const newBooking = await apiJson(`/api/bookings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          serviceId: selectedService.id,
-          bookingTime: selectedSlot,
-          clientPhone,
-          isMobile,
-          teamMemberId: useAnyProfessional ? null : selectedProfessional?.id,
-          clientNotes: clientNotes.trim() || null,
-          // New booking fields
-          colorSelection: bookingPreferences?.colorSelection || null,
-          materialSelection: bookingPreferences?.materialSelection || null,
-          depositPaid: paymentDetails?.amountToPay === 0 || (paymentDetails?.amountToPay && paymentDetails.amountToPay > 0),
-          useCashback: paymentDetails?.useCashback || false,
-          cashbackUsed: paymentDetails?.cashbackUsed || 0,
-        }),
-      }) as Booking;
-
-      if (socket) {
+  // Use the booking flow hook
+  const booking = useBookingFlow({
+    salon,
+    services,
+    initialService,
+    onBookingSuccess: (newBooking) => {
+      // Send socket notification
+      if (socket && booking.state.selectedService) {
         socket.emit('newBooking', {
           bookingId: newBooking.id,
           salonOwnerId: salon.ownerId,
-          message: `New booking for ${selectedService.title} from ${user.firstName}.`,
+          message: `New booking for ${booking.state.selectedService.title} from ${user?.firstName}.`,
         });
       }
-
-      toast.success('Booking request sent successfully!');
-
-      // Check if service is braiding-related for upsell popup
-      const serviceName = (selectedService.title || selectedService.name || '').toLowerCase();
-      const isBraidingService = ['braid', 'cornrow', 'twist', 'loc', 'extension', 'weave'].some(
-        (term) => serviceName.includes(term)
-      );
-      setShowUpsell(isBraidingService);
-
-      // Generate ICS file
-      try {
-        const start = new Date(newBooking.bookingTime);
-        const dt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-        const end = new Date(start.getTime() + (selectedService.duration || 60) * 60000);
-        const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//StylrSA//Booking//EN\nBEGIN:VEVENT\nUID:${newBooking.id}@stylrsa\nDTSTAMP:${dt(new Date())}\nDTSTART:${dt(start)}\nDTEND:${dt(end)}\nSUMMARY:${selectedService.title || 'Salon Service'} at ${salon.name}\nDESCRIPTION:Booking via Stylr SA\nLOCATION:${salon.address || salon.city + ', ' + salon.province}\nEND:VEVENT\nEND:VCALENDAR`;
-        const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${selectedService.title || 'service'}-${start.toISOString().slice(0, 10)}.ics`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } catch { }
-
       startTransition(() => {
         onBookingSuccess(newBooking);
       });
-    } catch (error: any) {
-      toast.error(toFriendlyMessage(error, 'Could not send booking request. Please try again.'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    onClose,
+  });
 
-  const goToStep = (step: Step) => {
-    // Only allow going to completed steps or current step
-    const targetIndex = visibleSteps.indexOf(step);
-    if (targetIndex <= currentStepIndex) {
-      setCurrentStep(step);
-    }
-  };
+  // Local state for preferences (since we combined steps)
+  const [colorSelection, setColorSelection] = useState('');
+  const [materialSelection, setMaterialSelection] = useState<BookingPreferences['materialSelection']>(null);
 
-  const goNext = () => {
-    const nextIndex = currentStepIndex + 1;
-    if (nextIndex < visibleSteps.length) {
-      setCurrentStep(visibleSteps[nextIndex]);
-    }
-  };
+  // Computed values for preferences step integration
+  const showColorInput = booking.state.selectedService && requiresColorSelection(
+    (booking.state.selectedService as any).category?.name,
+    booking.state.selectedService.title || booking.state.selectedService.name
+  );
+  const showMaterialOptions = booking.state.selectedService && requiresMaterialSelection(
+    (booking.state.selectedService as any).category?.name,
+    booking.state.selectedService.title || booking.state.selectedService.name
+  );
 
-  const goBack = () => {
-    const prevIndex = currentStepIndex - 1;
-    if (prevIndex >= 0) {
-      setCurrentStep(visibleSteps[prevIndex]);
-    } else {
-      onClose();
-    }
-  };
+  // ---------------------------------------------------------------------------
+  // Handlers
+  // ---------------------------------------------------------------------------
 
-  const canProceed = () => {
-    switch (currentStep) {
-      case 'service':
-        return !!selectedService;
-      case 'professional':
-        return true; // Always can proceed - "Any professional" is default
-      case 'date':
-        return !!selectedDate;
-      case 'time':
-        return !!selectedSlot;
-      case 'details':
-        return clientPhone.length >= 10;
-      case 'preferences':
-        return true; // Preferences are optional - user can skip
-      case 'payment':
-        return !!paymentDetails; // Ensure payment step is acknowledged
-      case 'confirm':
-        return true;
-      default:
-        return true;
-    }
-  };
+  const handleSubmit = () => {
+    // Generate WhatsApp message with booking details
+    const service = booking.state.selectedService;
+    if (!service || !booking.state.selectedDate || !booking.state.selectedSlot) return;
 
-  const formatTime = (isoString: string) => {
-    const date = new Date(isoString);
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
+    const depositAmount = booking.depositAmount;
+    const bookingDate = booking.state.selectedDate.toLocaleDateString('en-ZA', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
     });
-  };
+    const bookingTime = booking.formatTime(booking.state.selectedSlot);
 
-  const formatDuration = (mins: number, minDuration?: number | null, maxDuration?: number | null) => {
-    // If we have min/max duration range
-    if (minDuration && maxDuration && minDuration !== maxDuration) {
-      const formatMins = (m: number) => {
-        if (m < 60) return `${m} mins`;
-        const hours = Math.floor(m / 60);
-        const mins = m % 60;
-        if (mins === 0) return `${hours} hr${hours > 1 ? 's' : ''}`;
-        return `${hours} hr${hours > 1 ? 's' : ''}, ${mins} mins`;
-      };
-      return `${formatMins(minDuration)} - ${formatMins(maxDuration)}`;
+    // Build WhatsApp message
+    let message = `*New Booking Request via StylrSA*\n`;
+    message += `📍 *Booked from:* www.stylrsa.co.za\n\n`;
+    message += `*Service:* ${service.title || service.name}\n`;
+    message += `*Client Name:* ${booking.state.clientName}\n`;
+    message += `*Phone:* ${booking.state.clientPhone}\n`;
+    message += `*Date:* ${bookingDate}\n`;
+    message += `*Time:* ${bookingTime}\n`;
+    message += `*Total Cost:* R${booking.totalCost.toFixed(2)}\n`;
+    message += `*Deposit Required:* R${depositAmount.toFixed(2)} (50%)\n\n`;
+
+    if (booking.state.isMobile) {
+      message += `*Service Type:* Mobile Service\n`;
     }
 
-    // Single duration
-    if (mins < 60) return `${mins} mins`;
-    const hours = Math.floor(mins / 60);
-    const minutes = mins % 60;
-    if (minutes === 0) return `${hours} hr${hours > 1 ? 's' : ''}`;
-    return `${hours} hr${hours > 1 ? 's' : ''}, ${minutes} mins`;
+    if (booking.state.clientNotes) {
+      message += `*Notes:* ${booking.state.clientNotes}\n`;
+    }
+
+    if (colorSelection) {
+      message += `*Color Choice:* ${colorSelection}\n`;
+    }
+
+    if (materialSelection) {
+      const materialText = materialSelection === 'HAVE_OWN' ? 'Bringing own' :
+        materialSelection === 'BUY_SALON' ? 'From salon' : 'Shop on platform';
+      message += `*Material:* ${materialText}\n`;
+    }
+
+    message += `\n*Reference Number:* ${booking.state.clientName}\n\n`;
+
+    if (salon.bankName && salon.accountNumber) {
+      message += `*Banking Details for Deposit:*\n`;
+      message += `Bank: ${salon.bankName}\n`;
+      message += `Account Holder: ${salon.accountHolder || salon.name}\n`;
+      message += `Account Number: ${salon.accountNumber}\n`;
+      if (salon.branchCode) {
+        message += `Branch Code: ${salon.branchCode}\n`;
+      }
+      message += `Reference: ${booking.state.clientName}\n\n`;
+    }
+
+    if (salon.bookingMessage) {
+      message += `\n${salon.bookingMessage}`;
+    }
+
+    // Encode message for WhatsApp URL
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappNumber = salon.whatsapp || salon.phoneNumber || '';
+    const cleanNumber = whatsappNumber.replace(/[^0-9]/g, '');
+
+    // Open WhatsApp
+    const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+
+    // Close modal after sending
+    setTimeout(() => {
+      onClose();
+    }, 500);
   };
 
-  const isToday = (date: Date) => {
-    const today = new Date();
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    );
+  // ---------------------------------------------------------------------------
+  // Render helpers
+  // ---------------------------------------------------------------------------
+
+  const getStepIcon = (step: BookingStep, isCompleted: boolean) => {
+    if (isCompleted) return <FaCheck />;
+
+    switch (step) {
+      case 'details':
+        return <FaUser />;
+      case 'date':
+        return <FaCalendarAlt />;
+      case 'time':
+        return <FaClock />;
+      case 'confirm':
+        return <FaCheck />;
+      default:
+        return <FaCheck />;
+    }
   };
 
-  const isPast = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const checkDate = new Date(date);
-    checkDate.setHours(0, 0, 0, 0);
-    return checkDate < today;
-  };
-
-  const isSelected = (date: Date) => {
-    if (!selectedDate) return false;
-    return (
-      date.getDate() === selectedDate.getDate() &&
-      date.getMonth() === selectedDate.getMonth() &&
-      date.getFullYear() === selectedDate.getFullYear()
-    );
-  };
-
-  const totalCost = selectedService
-    ? selectedService.price + (isMobile && salon.mobileFee ? salon.mobileFee : 0)
-    : 0;
-
-  const availableSlots = slots.filter((s) => s.available);
-
-  // Render breadcrumbs
   const renderBreadcrumbs = () => (
     <div className={styles.breadcrumbs}>
-      {visibleSteps.map((step, index) => {
-        const isCompleted = index < currentStepIndex;
-        const isActive = index === currentStepIndex;
+      {booking.visibleSteps.map((step, index) => {
+        const isCompleted = index < booking.currentStepIndex;
+        const isActive = index === booking.currentStepIndex;
         return (
-          <span key={step}>
-            {index > 0 && <span className={styles.breadcrumbSeparator}>›</span>}
-            <span
-              className={`${styles.breadcrumbItem} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
-              onClick={() => goToStep(step)}
-            >
-              {isCompleted && <FaCheck />}
-              {STEP_LABELS[step]}
-            </span>
-          </span>
+          <div
+            key={step}
+            className={`${styles.breadcrumbItem} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
+            onClick={() => booking.goToStep(step)}
+          >
+            {getStepIcon(step, isCompleted)}
+            <span>{STEP_LABELS[step]}</span>
+          </div>
         );
       })}
     </div>
   );
 
-  // Use Shadcn Dialog instead of createPortal
-  return (
-    <>
-      <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="sm:max-w-[500px] md:max-w-[600px] max-h-[90vh] overflow-hidden p-0 gap-0">
-          {/* Visually hidden title for accessibility */}
-          <DialogTitle className="sr-only">Book Appointment at {salon.name}</DialogTitle>
-
-          {/* Header */}
-          <div className={styles.header}>
-            <button className={styles.backButton} onClick={goBack} aria-label="Go back">
-              <FaChevronLeft />
-            </button>
-            <div className={styles.headerContent}>
-              <h2>Book Appointment</h2>
-              <span className={styles.salonName}>{salon.name}</span>
+  const renderStepContent = () => {
+    switch (booking.state.step) {
+      // -----------------------------------------------------------------------
+      // Step 1: Service Selection
+      // -----------------------------------------------------------------------
+      case 'service':
+        return (
+          <div className={styles.stepContent}>
+            <h3 className={styles.stepTitle}>Select a Service</h3>
+            <p className={styles.stepSubtitle}>Choose the service you'd like to book</p>
+            <div className={styles.serviceList}>
+              {services.map((svc) => (
+                <button
+                  key={svc.id}
+                  className={`${styles.serviceCard} ${booking.state.selectedService?.id === svc.id ? styles.selected : ''}`}
+                  onClick={() => booking.selectService(svc)}
+                >
+                  <div className={styles.serviceInfo}>
+                    <span className={styles.serviceName}>{svc.title || svc.name}</span>
+                    <span className={styles.serviceDuration}>
+                      <FaClock /> {booking.formatDuration(svc.duration, svc.durationMin, svc.durationMax)}
+                    </span>
+                  </div>
+                  <span className={styles.servicePrice}>R{svc.price}</span>
+                  {booking.state.selectedService?.id === svc.id && (
+                    <span className={styles.checkmark}>
+                      <FaCheck />
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
-            {/* Close button handled by Dialog, but we keep for styling consistency */}
           </div>
+        );
 
-          {/* Breadcrumbs */}
-          {renderBreadcrumbs()}
+      // -----------------------------------------------------------------------
+      // Step 2: Professional Selection
+      // -----------------------------------------------------------------------
+      case 'professional':
+        return (
+          <div className={styles.stepContent}>
+            <h3 className={styles.stepTitle}>
+              <FaUsers /> Choose a Professional
+              <span className={styles.optionalBadge}>Optional</span>
+            </h3>
 
-          {/* Progress indicator */}
-          <div className="px-4 py-2">
-            <Progress value={(stepNumber / totalSteps) * 100} className="h-2" />
-            <span className="text-xs text-muted-foreground mt-1 block text-center">
-              Step {stepNumber} of {totalSteps}
-            </span>
-          </div>
-
-          {/* Content */}
-          <div className={styles.content}>
-            {/* Step 1: Select Service */}
-            {currentStep === 'service' && (
-              <div className={styles.stepContent}>
-                <h3 className={styles.stepTitle}>Select a Service</h3>
-                <div className={styles.serviceList}>
-                  {services.map((svc) => (
-                    <button
-                      key={svc.id}
-                      className={`${styles.serviceCard} ${selectedService?.id === svc.id ? styles.selected : ''}`}
-                      onClick={() => setSelectedService(svc)}
-                    >
-                      <div className={styles.serviceInfo}>
-                        <span className={styles.serviceName}>{svc.title || svc.name}</span>
-                        <span className={styles.serviceDuration}>
-                          <FaClock /> {formatDuration(svc.duration, (svc as any).durationMin, (svc as any).durationMax)}
-                        </span>
-                      </div>
-                      <span className={styles.servicePrice}>R{svc.price}</span>
-                      {selectedService?.id === svc.id && (
-                        <span className={styles.checkmark}>
-                          <FaCheck />
-                        </span>
-                      )}
-                    </button>
-                  ))}
+            <div className={styles.professionalList}>
+              {/* "Any Professional" option */}
+              <button
+                className={`${styles.anyProfessionalCard} ${booking.state.useAnyProfessional ? styles.selected : ''}`}
+                onClick={() => booking.setUseAnyProfessional(true)}
+              >
+                <div className={styles.anyProfessionalIcon}>
+                  <FaUsers />
                 </div>
-              </div>
-            )}
+                <div className={styles.anyProfessionalInfo}>
+                  <h4>Any Professional</h4>
+                  <p>We'll assign the best available stylist</p>
+                </div>
+                {booking.state.useAnyProfessional && (
+                  <span className={styles.checkmark}>
+                    <FaCheck />
+                  </span>
+                )}
+              </button>
 
-            {/* Step 2: Select Professional */}
-            {currentStep === 'professional' && (
-              <div className={styles.stepContent}>
-                <h3 className={styles.stepTitle}>
-                  <FaUsers /> Choose a Professional
-                  <span className={styles.optionalBadge}>Optional</span>
-                </h3>
-
-                <div className={styles.professionalList}>
-                  {/* "Any Professional" option */}
+              {/* Team Members */}
+              {booking.loadingTeam ? (
+                <div className={styles.loadingSlots}>
+                  <LoadingSpinner size="md" inline text="Loading team..." />
+                </div>
+              ) : (
+                booking.teamMembers.map((member) => (
                   <button
-                    className={`${styles.anyProfessionalCard} ${useAnyProfessional ? styles.selected : ''}`}
-                    onClick={() => {
-                      setUseAnyProfessional(true);
-                      setSelectedProfessional(null);
-                    }}
+                    key={member.id}
+                    className={`${styles.professionalCard} ${!booking.state.useAnyProfessional && booking.state.selectedProfessional?.id === member.id ? styles.selected : ''}`}
+                    onClick={() => booking.selectProfessional(member)}
                   >
-                    <div className={styles.anyProfessionalIcon}>
-                      <FaUsers />
+                    <div className={styles.professionalAvatar}>
+                      {member.image ? (
+                        <Image
+                          src={member.image}
+                          alt={member.name}
+                          fill
+                          style={{ objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <FaUser />
+                      )}
                     </div>
-                    <div className={styles.anyProfessionalInfo}>
-                      <h4>Any Professional</h4>
-                      <p>We'll assign the best available stylist</p>
+                    <div className={styles.professionalInfo}>
+                      <h4 className={styles.professionalName}>{member.name}</h4>
+                      <p className={styles.professionalRole}>{member.role}</p>
+                      {member.specialties && member.specialties.length > 0 && (
+                        <div className={styles.professionalSpecialties}>
+                          {member.specialties.slice(0, 3).map((s, i) => (
+                            <span key={i} className={styles.specialtyTag}>{s}</span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {useAnyProfessional && (
+                    {!booking.state.useAnyProfessional && booking.state.selectedProfessional?.id === member.id && (
                       <span className={styles.checkmark}>
                         <FaCheck />
                       </span>
                     )}
                   </button>
+                ))
+              )}
+            </div>
+          </div>
+        );
 
-                  {/* Team Members */}
-                  {loadingTeam ? (
-                    <div className={styles.loadingSlots}>
-                      <LoadingSpinner size="md" inline text="Loading team..." />
-                    </div>
-                  ) : (
-                    teamMembers.map((member) => (
-                      <button
-                        key={member.id}
-                        className={`${styles.professionalCard} ${!useAnyProfessional && selectedProfessional?.id === member.id ? styles.selected : ''}`}
-                        onClick={() => {
-                          setUseAnyProfessional(false);
-                          setSelectedProfessional(member);
-                        }}
-                      >
-                        <div className={styles.professionalAvatar}>
-                          {member.image ? (
-                            <Image
-                              src={member.image}
-                              alt={member.name}
-                              fill
-                              style={{ objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <FaUser />
-                          )}
-                        </div>
-                        <div className={styles.professionalInfo}>
-                          <h4 className={styles.professionalName}>{member.name}</h4>
-                          <p className={styles.professionalRole}>{member.role}</p>
-                          {member.specialties && member.specialties.length > 0 && (
-                            <div className={styles.professionalSpecialties}>
-                              {member.specialties.slice(0, 3).map((s, i) => (
-                                <span key={i} className={styles.specialtyTag}>{s}</span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        {!useAnyProfessional && selectedProfessional?.id === member.id && (
-                          <span className={styles.checkmark}>
-                            <FaCheck />
-                          </span>
-                        )}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
+      // -----------------------------------------------------------------------
+      // Step 2: Date Selection
+      // -----------------------------------------------------------------------
+      case 'date':
+        return (
+          <div className={styles.stepContent}>
+            <h3 className={styles.stepTitle}>
+              <FaCalendarAlt /> Select a Date
+            </h3>
+            <p className={styles.stepSubtitle}>Choose your preferred appointment date</p>
 
-            {/* Step 3: Select Date */}
-            {currentStep === 'date' && (
-              <div className={styles.stepContent}>
-                <h3 className={styles.stepTitle}>
-                  <FaCalendarAlt /> Pick a Date
-                </h3>
-                <div className={styles.calendar}>
-                  <div className={styles.calendarHeader}>
-                    <button
-                      onClick={() =>
-                        setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1))
-                      }
-                      className={styles.navButton}
-                    >
-                      <FaChevronLeft />
-                    </button>
-                    <span className={styles.monthYear}>
-                      {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                    </span>
-                    <button
-                      onClick={() =>
-                        setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1))
-                      }
-                      className={styles.navButton}
-                    >
-                      <FaChevronRight />
-                    </button>
-                  </div>
-                  <div className={styles.weekDays}>
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                      <span key={i} className={styles.weekDay}>
-                        {day}
-                      </span>
-                    ))}
-                  </div>
-                  <div className={styles.daysGrid}>
-                    {daysInMonth.map((date, index) => {
-                      const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => {
-                            setSelectedDate(date);
-                            setSelectedSlot(null);
-                          }}
-                          disabled={isPast(date)}
-                          className={`
-                            ${styles.day}
-                            ${!isCurrentMonth ? styles.otherMonth : ''}
-                            ${isPast(date) ? styles.past : ''}
-                            ${isSelected(date) ? styles.selectedDay : ''}
-                            ${isToday(date) ? styles.today : ''}
-                          `}
-                        >
-                          {date.getDate()}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
+            <DateTimePicker
+              selectedDate={booking.state.selectedDate}
+              selectedSlot={booking.state.selectedSlot}
+              onDateChange={booking.selectDate}
+              onSlotChange={booking.selectSlot}
+              availableSlots={booking.availableSlots}
+              loadingSlots={booking.loadingSlots}
+              monthAvailability={booking.monthAvailability}
+              loadingMonthAvailability={booking.loadingMonthAvailability}
+              onRefresh={booking.refreshSlots}
+              formatTime={booking.formatTime}
+              mode="date"
+            />
+          </div>
+        );
 
-            {/* Step 4: Select Time */}
-            {currentStep === 'time' && (
-              <div className={styles.stepContent}>
-                <h3 className={styles.stepTitle}>
-                  <FaClock /> Choose a Time
-                </h3>
-                {selectedDate && (
-                  <p className={styles.selectedDateLabel}>
-                    {selectedDate.toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
-                )}
-                {loadingSlots ? (
-                  <div className={styles.loadingSlots}>
-                    <LoadingSpinner size="md" inline text="Loading available times..." />
-                  </div>
-                ) : availableSlots.length > 0 ? (
-                  <div className={styles.timeGrid}>
-                    {availableSlots.map((slot) => (
-                      <button
-                        key={slot.time}
-                        className={`${styles.timeSlot} ${selectedSlot === slot.time ? styles.selectedSlot : ''}`}
-                        onClick={() => setSelectedSlot(slot.time)}
-                      >
-                        {formatTime(slot.time)}
-                        {selectedSlot === slot.time && <FaCheck className={styles.slotCheck} />}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className={styles.noSlots}>
-                    <p>No available times for this date.</p>
-                    <button className={styles.linkButton} onClick={() => goToStep('date')}>
-                      Choose another date
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+      // -----------------------------------------------------------------------
+      // Step 3: Time Selection
+      // -----------------------------------------------------------------------
+      case 'time':
+        return (
+          <div className={styles.stepContent}>
+            <h3 className={styles.stepTitle}>
+              <FaClock /> Select a Time
+            </h3>
+            <p className={styles.stepSubtitle}>
+              {booking.state.selectedDate?.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </p>
 
-            {/* Step 5: Your Details */}
-            {currentStep === 'details' && (
-              <div className={styles.stepContent}>
-                <h3 className={styles.stepTitle}>
-                  <FaUser /> Your Details
-                </h3>
-                <div className={styles.formGroup}>
-                  <label htmlFor="phone">Contact Number</label>
+            <DateTimePicker
+              selectedDate={booking.state.selectedDate}
+              selectedSlot={booking.state.selectedSlot}
+              onDateChange={booking.selectDate}
+              onSlotChange={booking.selectSlot}
+              availableSlots={booking.availableSlots}
+              loadingSlots={booking.loadingSlots}
+              monthAvailability={booking.monthAvailability}
+              loadingMonthAvailability={booking.loadingMonthAvailability}
+              onRefresh={booking.refreshSlots}
+              formatTime={booking.formatTime}
+              mode="time"
+              selectedTimePeriod={booking.state.selectedTimePeriod}
+              onTimePeriodChange={booking.selectTimePeriod}
+            />
+          </div>
+        );
+
+      // -----------------------------------------------------------------------
+      // Step 4: Details & Preferences (COMBINED STEP)
+      // -----------------------------------------------------------------------
+      case 'details':
+        return (
+          <div className={styles.stepContent}>
+            <h3 className={styles.stepTitle}>
+              <FaUser /> Your Details
+            </h3>
+            <p className={styles.stepSubtitle}>We'll use this to confirm your appointment</p>
+
+            {/* Full Name */}
+            <div className={styles.formGroup}>
+              <label htmlFor="name">Full Name *</label>
+              <input
+                type="text"
+                id="name"
+                value={booking.state.clientName}
+                onChange={(e) => booking.setClientName(e.target.value)}
+                placeholder="Enter your full name"
+                className={styles.input}
+                required
+              />
+            </div>
+
+            {/* Contact Details */}
+            <div className={styles.formGroup}>
+              <label htmlFor="phone">Phone Number *</label>
+              <input
+                type="tel"
+                id="phone"
+                value={booking.state.clientPhone}
+                onChange={(e) => booking.setClientPhone(e.target.value)}
+                placeholder="e.g., 082 123 4567"
+                className={styles.input}
+                required
+              />
+              <span className={styles.hint}>We'll send booking confirmation to this number</span>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="notes">Notes for your appointment (optional)</label>
+              <textarea
+                id="notes"
+                value={booking.state.clientNotes}
+                onChange={(e) => booking.setClientNotes(e.target.value)}
+                placeholder="Any specific requests or preferences..."
+                className={styles.textarea}
+                rows={3}
+              />
+            </div>
+
+            {/* Mobile Service Option */}
+            {salon.bookingType !== 'ONSITE' && (
+              <div className={styles.mobileOption}>
+                <label className={styles.checkboxLabel}>
                   <input
-                    type="tel"
-                    id="phone"
-                    value={clientPhone}
-                    onChange={(e) => setClientPhone(e.target.value)}
-                    placeholder="e.g., 082 123 4567"
-                    className={styles.input}
-                    required
+                    type="checkbox"
+                    checked={booking.state.isMobile}
+                    onChange={(e) => booking.setIsMobile(e.target.checked)}
+                    disabled={salon.bookingType === 'MOBILE'}
                   />
-                  <span className={styles.hint}>We'll send booking confirmation to this number</span>
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label htmlFor="notes">Notes for your appointment (optional)</label>
-                  <textarea
-                    id="notes"
-                    value={clientNotes}
-                    onChange={(e) => setClientNotes(e.target.value)}
-                    placeholder="Any specific requests or preferences..."
-                    className={styles.textarea}
-                    rows={3}
-                  />
-                </div>
-
-                {salon.bookingType !== 'ONSITE' && (
-                  <div className={styles.mobileOption}>
-                    <label className={styles.checkboxLabel}>
-                      <input
-                        type="checkbox"
-                        checked={isMobile}
-                        onChange={(e) => setIsMobile(e.target.checked)}
-                        disabled={salon.bookingType === 'MOBILE'}
-                      />
-                      <FaMobile />
-                      <span>Request mobile service</span>
-                      {salon.mobileFee && (
-                        <span className={styles.mobileFee}>+R{salon.mobileFee.toFixed(2)}</span>
-                      )}
-                    </label>
-                  </div>
-                )}
+                  <FaMobile />
+                  <span>Request mobile service</span>
+                  {salon.mobileFee && (
+                    <span className={styles.mobileFee}>+R{salon.mobileFee.toFixed(2)}</span>
+                  )}
+                </label>
               </div>
             )}
 
-            {/* Step 6: Preferences (Color/Material) */}
-            {currentStep === 'preferences' && selectedService && (
-              <BookingPreferencesStep
-                serviceName={selectedService.title || selectedService.name || 'Service'}
-                serviceCategory={(selectedService as any).category?.name || (selectedService as any).category?.slug}
-                salonId={salon.id}
-                onContinue={(preferences) => {
-                  setBookingPreferences(preferences);
-                  goNext();
-                }}
-                onBack={goBack}
-              />
+            {/* Color Selection (for nail services) */}
+            {showColorInput && (
+              <div className={styles.preferencesSection}>
+                <div className={styles.sectionHeader}>
+                  <FaPalette className={styles.sectionIcon} />
+                  <span>Color Preference</span>
+                  <span className={styles.optionalBadge}>Optional</span>
+                </div>
+                <input
+                  type="text"
+                  value={colorSelection}
+                  onChange={(e) => setColorSelection(e.target.value)}
+                  placeholder="e.g., French tip, Red #42, Nude pink..."
+                  className={styles.input}
+                />
+              </div>
             )}
 
-            {/* Step 7: Payment */}
-            {currentStep === 'payment' && selectedService && (
-              <BookingPaymentStep
-                servicePrice={selectedService.price + (isMobile && salon.mobileFee ? salon.mobileFee : 0)}
-                serviceName={selectedService.title || selectedService.name || 'Service'}
-                salonName={salon.name}
-                onConfirm={(details) => {
-                  setPaymentDetails(details);
-                  goNext();
-                }}
-                onBack={goBack}
-                isLoading={isLoading}
-              />
-            )}
+            {/* Material Selection (for braiding/weaving services) */}
+            {showMaterialOptions && (
+              <div className={styles.preferencesSection}>
+                <div className={styles.sectionHeader}>
+                  <FaBox className={styles.sectionIcon} />
+                  <span>Hair/Material</span>
+                </div>
+                <p className={styles.sectionDesc}>
+                  Do you have your own hair/material for this service?
+                </p>
 
-            {/* Step 8: Confirm */}
-            {currentStep === 'confirm' && selectedService && (
-              <div className={styles.stepContent}>
-                <h3 className={styles.stepTitle}>
-                  <FaCheck /> Confirm Booking
-                </h3>
-                <div className={styles.summary}>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryLabel}>Service</span>
-                    <span className={styles.summaryValue}>{selectedService.title || selectedService.name}</span>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryLabel}>Professional</span>
-                    <span className={styles.summaryValue}>
-                      {useAnyProfessional ? 'Any available' : selectedProfessional?.name}
-                    </span>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryLabel}>Date</span>
-                    <span className={styles.summaryValue}>
-                      {selectedDate?.toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryLabel}>Time</span>
-                    <span className={styles.summaryValue}>{selectedSlot && formatTime(selectedSlot)}</span>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryLabel}>Duration</span>
-                    <span className={styles.summaryValue}>
-                      {formatDuration(selectedService.duration, (selectedService as any).durationMin, (selectedService as any).durationMax)}
-                    </span>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryLabel}>Location</span>
-                    <span className={styles.summaryValue}>
-                      <FaMapMarkerAlt /> {isMobile ? 'Mobile visit' : salon.address || `${salon.city}, ${salon.province}`}
-                    </span>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryLabel}>Contact</span>
-                    <span className={styles.summaryValue}>{clientPhone}</span>
-                  </div>
-                  {clientNotes && (
-                    <div className={styles.summaryItem}>
-                      <span className={styles.summaryLabel}>Notes</span>
-                      <span className={styles.summaryValue}>{clientNotes}</span>
-                    </div>
-                  )}
-                  {bookingPreferences?.colorSelection && (
-                    <div className={styles.summaryItem}>
-                      <span className={styles.summaryLabel}>Color Choice</span>
-                      <span className={styles.summaryValue}>{bookingPreferences.colorSelection}</span>
-                    </div>
-                  )}
-                  {bookingPreferences?.materialSelection && (
-                    <div className={styles.summaryItem}>
-                      <span className={styles.summaryLabel}>Material</span>
-                      <span className={styles.summaryValue}>{bookingPreferences.materialSelection}</span>
-                    </div>
-                  )}
-                  <div className={styles.summaryDivider} />
-                  {paymentDetails && (
-                    <>
-                      <div className={styles.summaryItem}>
-                        <span className={styles.summaryLabel}>Deposit (60%)</span>
-                        <span className={styles.summaryValue}>R{paymentDetails.depositAmount.toFixed(2)}</span>
-                      </div>
-                      {paymentDetails.useCashback && paymentDetails.cashbackUsed > 0 && (
-                        <div className={styles.summaryItem}>
-                          <span className={styles.summaryLabel}>Cashback Applied</span>
-                          <span className={styles.summaryValue} style={{ color: 'var(--success)' }}>
-                            -R{paymentDetails.cashbackUsed.toFixed(2)}
-                          </span>
-                        </div>
-                      )}
-                      <div className={styles.summaryItem}>
-                        <span className={styles.summaryLabel}>Due Now</span>
-                        <span className={styles.summaryValue} style={{ fontWeight: 600 }}>
-                          R{paymentDetails.amountToPay.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className={styles.summaryDivider} />
-                    </>
-                  )}
-                  <div className={styles.summaryTotal}>
-                    <span>Total</span>
-                    <span className={styles.totalPrice}>R{totalCost.toFixed(2)}</span>
-                  </div>
+                <div className={styles.materialOptions}>
+                  <button
+                    type="button"
+                    className={`${styles.materialOption} ${materialSelection === 'HAVE_OWN' ? styles.selected : ''}`}
+                    onClick={() => setMaterialSelection('HAVE_OWN')}
+                  >
+                    <FaCheck className={styles.optionIcon} />
+                    <span>I have my own</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`${styles.materialOption} ${materialSelection === 'BUY_SALON' ? styles.selected : ''}`}
+                    onClick={() => setMaterialSelection('BUY_SALON')}
+                  >
+                    <FaBox className={styles.optionIcon} />
+                    <span>Use salon's</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`${styles.materialOption} ${materialSelection === 'BUY_PLATFORM' ? styles.selected : ''}`}
+                    onClick={() => setMaterialSelection('BUY_PLATFORM')}
+                  >
+                    <FaShoppingCart className={styles.optionIcon} />
+                    <span>Shop on platform</span>
+                  </button>
                 </div>
 
-                {/* Cancellation Policy */}
-                {(salon as any).cancellationPolicy && (
-                  <div className={styles.cancellationPolicy}>
-                    <div className={styles.cancellationPolicyHeader}>
-                      <FaExclamationTriangle /> Cancellation Policy
-                    </div>
-                    <p className={styles.cancellationPolicyText}>
-                      {(salon as any).cancellationPolicy}
-                    </p>
+                {materialSelection === 'BUY_PLATFORM' && (
+                  <div className={styles.platformNote}>
+                    <FaInfoCircle />
+                    <span>
+                      After booking, we'll suggest products from our marketplace that match your service.
+                    </span>
                   </div>
                 )}
               </div>
             )}
           </div>
+        );
 
-          {/* Footer */}
-          <div className={styles.footer}>
-            {currentStep === 'confirm' ? (
-              <button
-                className={styles.primaryButton}
-                onClick={() => handleSubmit()}
-                disabled={isLoading || isPending}
-              >
-                {isLoading ? 'Sending...' : isPending ? 'Finalising...' : 'Confirm Booking'}
-              </button>
-            ) : (
-              <button
-                className={styles.primaryButton}
-                onClick={goNext}
-                disabled={!canProceed()}
-              >
-                Continue <FaChevronRight />
-              </button>
+      // -----------------------------------------------------------------------
+      // Step 5: Confirm & Pay (COMBINED STEP)
+      // -----------------------------------------------------------------------
+      case 'confirm':
+        return (
+          <div className={styles.stepContent}>
+            <h3 className={styles.stepTitle}>
+              <FaCheck /> Confirm Booking
+            </h3>
+
+            <div className={styles.summary}>
+              {/* Service */}
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Service</span>
+                <span className={styles.summaryValue}>
+                  {booking.state.selectedService?.title || booking.state.selectedService?.name}
+                </span>
+              </div>
+
+              {/* Professional */}
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Professional</span>
+                <span className={styles.summaryValue}>
+                  {booking.state.useAnyProfessional ? 'Any available' : booking.state.selectedProfessional?.name}
+                </span>
+              </div>
+
+              {/* Date & Time */}
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Date & Time</span>
+                <span className={styles.summaryValue}>
+                  {booking.state.selectedDate?.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                  })}{' '}
+                  at {booking.state.selectedSlot && booking.formatTime(booking.state.selectedSlot)}
+                </span>
+              </div>
+
+              {/* Duration */}
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Duration</span>
+                <span className={styles.summaryValue}>
+                  {booking.state.selectedService && booking.formatDuration(
+                    booking.state.selectedService.duration,
+                    booking.state.selectedService.durationMin,
+                    booking.state.selectedService.durationMax
+                  )}
+                </span>
+              </div>
+
+              {/* Location */}
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Location</span>
+                <span className={styles.summaryValue}>
+                  <FaMapMarkerAlt />{' '}
+                  {booking.state.isMobile ? 'Mobile visit' : salon.address || `${salon.city}, ${salon.province}`}
+                </span>
+              </div>
+
+              {/* Client Name */}
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Client Name</span>
+                <span className={styles.summaryValue}>{booking.state.clientName}</span>
+              </div>
+
+              {/* Contact */}
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Phone Number</span>
+                <span className={styles.summaryValue}>{booking.state.clientPhone}</span>
+              </div>
+
+              {/* Notes */}
+              {booking.state.clientNotes && (
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Notes</span>
+                  <span className={styles.summaryValue}>{booking.state.clientNotes}</span>
+                </div>
+              )}
+
+              {/* Color Selection */}
+              {colorSelection && (
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Color Choice</span>
+                  <span className={styles.summaryValue}>{colorSelection}</span>
+                </div>
+              )}
+
+              {/* Material Selection */}
+              {materialSelection && (
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Material</span>
+                  <span className={styles.summaryValue}>
+                    {materialSelection === 'HAVE_OWN' ? 'Bringing own' :
+                      materialSelection === 'BUY_SALON' ? 'From salon' : 'Shop on platform'}
+                  </span>
+                </div>
+              )}
+
+              <div className={styles.summaryDivider} />
+
+              {/* Payment Summary */}
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Service Price</span>
+                <span className={styles.summaryValue}>R{booking.totalCost.toFixed(2)}</span>
+              </div>
+
+              <div className={`${styles.summaryItem} ${styles.highlight}`}>
+                <span className={styles.summaryLabel}>Deposit Required (50%)</span>
+                <span className={styles.summaryValue}>R{booking.depositAmount.toFixed(2)}</span>
+              </div>
+
+              <div className={styles.summaryDivider} />
+
+              <div className={styles.summaryTotal}>
+                <span>Total</span>
+                <span className={styles.totalPrice}>R{booking.totalCost.toFixed(2)}</span>
+              </div>
+
+              <div className={styles.depositNote}>
+                <FaInfoCircle />
+                <span>
+                  A 50% deposit (R{booking.depositAmount.toFixed(2)}) is required to confirm your booking.
+                  The remaining R{(booking.totalCost - booking.depositAmount).toFixed(2)} is due at the appointment.
+                </span>
+              </div>
+            </div>
+
+            {/* Banking Details */}
+            {(salon.bankName && salon.accountNumber) && (
+              <div className={styles.bankingDetails}>
+                <h4 className={styles.bankingDetailsTitle}>Banking Details for Deposit</h4>
+                <div className={styles.bankingInfo}>
+                  <div className={styles.bankingItem}>
+                    <span className={styles.bankingLabel}>Bank:</span>
+                    <span className={styles.bankingValue}>{salon.bankName}</span>
+                  </div>
+                  <div className={styles.bankingItem}>
+                    <span className={styles.bankingLabel}>Account Holder:</span>
+                    <span className={styles.bankingValue}>{salon.accountHolder || salon.name}</span>
+                  </div>
+                  <div className={styles.bankingItem}>
+                    <span className={styles.bankingLabel}>Account Number:</span>
+                    <span className={styles.bankingValue}>{salon.accountNumber}</span>
+                  </div>
+                  {salon.branchCode && (
+                    <div className={styles.bankingItem}>
+                      <span className={styles.bankingLabel}>Branch Code:</span>
+                      <span className={styles.bankingValue}>{salon.branchCode}</span>
+                    </div>
+                  )}
+                  <div className={`${styles.bankingItem} ${styles.reference}`}>
+                    <span className={styles.bankingLabel}>Reference:</span>
+                    <span className={styles.bankingValue}><strong>{booking.state.clientName}</strong></span>
+                  </div>
+                </div>
+                <div className={styles.bankingNote}>
+                  <FaInfoCircle />
+                  <span>Use your name as reference when making the deposit</span>
+                </div>
+              </div>
+            )}
+
+            {/* Custom Booking Message */}
+            {salon.bookingMessage && (
+              <div className={styles.bookingMessage}>
+                <p>{salon.bookingMessage}</p>
+              </div>
+            )}
+
+            {/* Cancellation Policy */}
+            {salon.cancellationPolicy && (
+              <div className={styles.cancellationPolicy}>
+                <div className={styles.cancellationPolicyHeader}>
+                  <FaExclamationTriangle /> Cancellation Policy
+                </div>
+                <p className={styles.cancellationPolicyText}>
+                  {salon.cancellationPolicy}
+                </p>
+              </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        );
 
-      <UpsellPopup
-        isOpen={showUpsell}
-        onClose={() => setShowUpsell(false)}
-        serviceName={selectedService?.title || selectedService?.name || ''}
-        salonId={salon.id}
-        onProductSelect={(product) => {
-          window.open(`/marketplace?product=${product.id}`, '_blank');
-          setShowUpsell(false);
-        }}
-      />
-    </>
+      default:
+        return null;
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Main render
+  // ---------------------------------------------------------------------------
+
+  return (
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[500px] md:max-w-[600px] h-[90vh] overflow-hidden p-0 gap-0 flex flex-col">
+        {/* Visually hidden title for accessibility */}
+        <DialogTitle className="sr-only">Book Appointment at {salon.name}</DialogTitle>
+
+        {/* Header */}
+        <div className={styles.header}>
+          <button className={styles.backButton} onClick={booking.goBack} aria-label="Go back">
+            <FaChevronLeft />
+          </button>
+          <div className={styles.headerContent}>
+            <h2>Book Appointment</h2>
+            <span className={styles.salonName}>{salon.name}</span>
+          </div>
+        </div>
+
+        {/* Booking Summary */}
+        {booking.state.selectedService && (
+          <div className={styles.bookingSummary}>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Treatments:</span>
+              <span className={styles.summaryValue}>1 selected</span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Total:</span>
+              <span className={styles.summaryValue}>R{booking.totalCost.toFixed(2)}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Breadcrumbs */}
+        {renderBreadcrumbs()}
+
+        {/* Breadcrumbs already provide step indication */}
+
+        {/* Error Display */}
+        {booking.error && (
+          <div className={styles.errorBanner}>
+            <FaExclamationTriangle className={styles.errorIcon} />
+            <span className={styles.errorMessage}>{booking.error}</span>
+            <button
+              className={styles.errorClose}
+              onClick={booking.clearError}
+              aria-label="Dismiss error"
+            >
+              <FaTimes />
+            </button>
+          </div>
+        )}
+
+        {/* Content */}
+        <div className={styles.content} key={booking.state.step}>
+          {renderStepContent()}
+        </div>
+
+        {/* Footer */}
+        <div className={styles.footer}>
+          {/* Back button - show when not on first step */}
+          {booking.state.step !== 'details' && (
+            <button
+              className={styles.secondaryButton}
+              onClick={booking.goBack}
+            >
+              <FaChevronLeft /> Back
+            </button>
+          )}
+
+          {/* Continue or WhatsApp button */}
+          {booking.state.step === 'confirm' ? (
+            <button
+              className={`${styles.primaryButton} ${styles.whatsappButton}`}
+              onClick={handleSubmit}
+            >
+              <FaWhatsapp /> Send Booking via WhatsApp
+            </button>
+          ) : (
+            <button
+              className={styles.primaryButton}
+              onClick={booking.goNext}
+              disabled={!booking.canProceed}
+            >
+              Continue <FaChevronRight />
+            </button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
