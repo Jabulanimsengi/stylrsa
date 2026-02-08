@@ -105,42 +105,42 @@ export const PROVINCES: Record<string, ProvinceInfo> = {
         keywords: ['hair salon near me Diepsloot', 'beauty salon Diepsloot', 'barbershop Diepsloot'],
       },
 
-      // Northern Suburbs
-      {
-        slug: 'fourways',
-        name: 'Fourways',
-        province: 'Gauteng',
-        description: 'Find premium salons in Fourways. Book at top hair salons, nail studios, spas, and beauty centers in Fourways and surrounding areas.',
-        keywords: ['hair salon near me Fourways', 'spa near me Fourways', 'nail salon Fourways', 'beauty salon Fourways'],
-      },
-      {
-        slug: 'midrand',
-        name: 'Midrand',
-        province: 'Gauteng',
-        description: 'Discover salons in Midrand. Book at quality hair salons, nail studios, and spas between Johannesburg and Pretoria.',
-        keywords: ['hair salon near me Midrand', 'nail salon Midrand', 'spa near me Midrand', 'beauty salon Midrand'],
-      },
-      {
-        slug: 'randburg',
-        name: 'Randburg',
-        province: 'Gauteng',
-        description: 'Find top salons in Randburg. Book at hair salons, nail studios, spas, and barbershops.',
-        keywords: ['hair salon near me Randburg', 'nail salon Randburg', 'spa Randburg', 'beauty salon Randburg'],
-      },
-      {
-        slug: 'roodepoort',
-        name: 'Roodepoort',
-        province: 'Gauteng',
-        description: 'Discover salons in Roodepoort. Book at hair salons, nail studios, and beauty centers in the West Rand.',
-        keywords: ['hair salon near me Roodepoort', 'nail salon Roodepoort', 'beauty salon Roodepoort', 'West Rand salons'],
-      },
-      {
-        slug: 'krugersdorp',
-        name: 'Krugersdorp',
-        province: 'Gauteng',
-        description: 'Find salons in Krugersdorp. Book at local hair salons, nail studios, and barbershops in the West Rand.',
-        keywords: ['hair salon near me Krugersdorp', 'nail salon Krugersdorp', 'beauty salon Krugersdorp'],
-      },
+      //       // Northern Suburbs
+      //       {
+      //         slug: 'fourways',
+      //         name: 'Fourways',
+      //         province: 'Gauteng',
+      //         description: 'Find premium salons in Fourways. Book at top hair salons, nail studios, spas, and beauty centers in Fourways and surrounding areas.',
+      //         keywords: ['hair salon near me Fourways', 'spa near me Fourways', 'nail salon near me Fourways', 'beauty salon Fourways'],
+      //       },
+      //       {
+      //         slug: 'midrand',
+      //         name: 'Midrand',
+      //         province: 'Gauteng',
+      //         description: 'Discover salons in Midrand. Book at quality hair salons, nail studios, and spas between Johannesburg and Pretoria.',
+      //         keywords: ['hair salon near me Midrand', 'nail salon Midrand', 'spa near me Midrand', 'beauty salon Midrand'],
+      //       },
+      //       {
+      //         slug: 'randburg',
+      //         name: 'Randburg',
+      //         province: 'Gauteng',
+      //         description: 'Find top salons in Randburg. Book at hair salons, nail studios, spas, and barbershops.',
+      //         keywords: ['hair salon near me Randburg', 'nail salon Randburg', 'spa Randburg', 'beauty salon Randburg'],
+      //       },
+      //       {
+      //         slug: 'roodepoort',
+      //         name: 'Roodepoort',
+      //         province: 'Gauteng',
+      //         description: 'Discover salons in Roodepoort. Book at hair salons, nail studios, and beauty centers in the West Rand.',
+      //         keywords: ['hair salon near me Roodepoort', 'nail salon Roodepoort', 'beauty salon Roodepoort', 'West Rand salons'],
+      //       },
+      //       {
+      //         slug: 'krugersdorp',
+      //         name: 'Krugersdorp',
+      //         province: 'Gauteng',
+      //         description: 'Find salons in Krugersdorp. Book at local hair salons, nail studios, and barbershops in the West Rand.',
+      //         keywords: ['hair salon near me Krugersdorp', 'nail salon Krugersdorp', 'beauty salon Krugersdorp'],
+      //       },
 
       // East Rand
       {
