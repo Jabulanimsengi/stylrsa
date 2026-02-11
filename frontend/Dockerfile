@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies with reduced memory usage
-RUN npm ci --maxsockets 1
+RUN npm ci --maxsockets 1 --legacy-peer-deps
 
 # Copy source code
 COPY . .
