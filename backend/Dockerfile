@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 # Install dependencies including devDependencies for build
-RUN npm ci
+RUN npm ci --maxsockets 1
 
 # Builder stage
 FROM base AS builder
