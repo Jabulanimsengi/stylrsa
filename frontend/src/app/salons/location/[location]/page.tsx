@@ -27,8 +27,18 @@ async function getInitialSalons(provinceName: string) {
     }
 }
 
-// Pre-build only 9 province pages
-const PROVINCES = ['gauteng', 'western-cape', 'kwazulu-natal', 'eastern-cape', 'mpumalanga', 'limpopo', 'north-west', 'free-state', 'northern-cape'];
+// Pre-build province pages (All 9 Provinces)
+const PROVINCES = [
+    'gauteng',
+    'western-cape',
+    'north-west',
+    'kwazulu-natal',
+    'eastern-cape',
+    'free-state',
+    'mpumalanga',
+    'limpopo',
+    'northern-cape'
+];
 
 export async function generateStaticParams() {
     return PROVINCES.map(location => ({ location }));
