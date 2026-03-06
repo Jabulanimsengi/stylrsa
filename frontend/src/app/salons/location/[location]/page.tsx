@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import LocationPageClient from './LocationPageClient';
-import { getProvinceInfo } from '@/lib/locationData';
+import { getProvinceInfo, findCityBySlug } from '@/lib/locationData';
 
 interface PageProps {
     params: Promise<{
@@ -49,13 +49,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const provinceInfo = getProvinceInfo(location);
 
     if (!provinceInfo) {
+        // Check if it is a city and redirect in the component, here just return basic 404 metadata or let the page handle it
+        // The page component will handle the redirect, so we can return fallback metadata here
+        const cityData = findCityBySlug(location);
+        if (cityData) {
+            return {
+                title: 'Redirecting...',
+                description: 'Redirecting to city page...',
+            };
+        }
+
         return {
             title: 'Location Not Found | Stylr SA',
             description: 'The location you are looking for could not be found.',
         };
     }
 
-    const title = `Best Hair Salons & Spas in ${provinceInfo.name} | Stylr SA`;
+    const title = provinceInfo.metaTitle || `Best Hair Salons & Spas in ${provinceInfo.name} | Stylr SA`;
     const description = provinceInfo.description;
     const canonicalUrl = `https://www.stylrsa.co.za/salons/location/${location}`;
 
@@ -87,6 +97,12 @@ export default async function LocationPage({ params }: PageProps) {
     const provinceInfo = getProvinceInfo(location);
 
     if (!provinceInfo) {
+        // If not a province, check if it's a city and redirect
+        const cityData = findCityBySlug(location);
+        if (cityData) {
+            permanentRedirect(`/salons/location/${cityData.provinceSlug}/${cityData.city.slug}`);
+        }
+
         notFound();
     }
 

@@ -484,6 +484,7 @@ export class AdminService {
       GROWTH: { visibilityWeight: 3, maxListings: 15, priceCents: 19900 },
       PRO: { visibilityWeight: 4, maxListings: 27, priceCents: 29900 },
       ELITE: { visibilityWeight: 5, maxListings: 9999, priceCents: 49900 },
+      PREMIUM: { visibilityWeight: 5, maxListings: 9999, priceCents: 39900 },
     };
     type PlanPartial = {
       visibilityWeight?: number | null;
@@ -497,7 +498,7 @@ export class AdminService {
         : planCode;
     const isValidPlan =
       !!normalizedPlan &&
-      ['FREE', 'STARTER', 'ESSENTIAL', 'GROWTH', 'PRO', 'ELITE'].includes(
+      ['FREE', 'STARTER', 'ESSENTIAL', 'GROWTH', 'PRO', 'ELITE', 'PREMIUM'].includes(
         normalizedPlan,
       );
     let plan: PlanPartial | null = null;
@@ -575,6 +576,7 @@ export class AdminService {
       GROWTH: { visibilityWeight: 3, maxListings: 15, priceCents: 19900 },
       PRO: { visibilityWeight: 4, maxListings: 27, priceCents: 29900 },
       ELITE: { visibilityWeight: 5, maxListings: 9999, priceCents: 49900 },
+      PREMIUM: { visibilityWeight: 5, maxListings: 9999, priceCents: 39900 },
     };
     type SellerPlanPartial = {
       visibilityWeight?: number | null;
@@ -587,7 +589,7 @@ export class AdminService {
         : planCode;
     const isValidPlan =
       !!normalizedPlan &&
-      ['FREE', 'STARTER', 'ESSENTIAL', 'GROWTH', 'PRO', 'ELITE'].includes(
+      ['FREE', 'STARTER', 'ESSENTIAL', 'GROWTH', 'PRO', 'ELITE', 'PREMIUM'].includes(
         normalizedPlan,
       );
     let plan: SellerPlanPartial | null = null;

@@ -8,7 +8,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 export const metadata: Metadata = {
   title: 'Stylr SA - Book Beauty & Wellness Services Near You',
   description: 'Book beauty & wellness services near you. Browse salons, spas, and beauty professionals. Read reviews and book online instantly.',
-  keywords: 'salon booking South Africa, beauty services, hair salon, nail salon, spa, makeup artist, braiding, barbershop, wellness, Johannesburg, Cape Town, Durban, Pretoria',
+  keywords: 'salon booking South Africa, beauty services, hair salon, nail salon, spa, makeup artist, braiding, barbershop, wellness, Johannesburg, Cape Town, Pretoria, Sandton, Gauteng, Western Cape',
   alternates: {
     canonical: siteUrl,
   },
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
 
 // Fetch initial data server-side
 async function getInitialData() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_ORIGIN || 'http://localhost:5000';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_ORIGIN || 'http://127.0.0.1:5000';
   const isBuildPhase = process.env.IS_BUILD_PHASE === 'true' || process.env.NEXT_PHASE === 'phase-production-build';
 
   // Only skip fetching during build time when API is localhost
@@ -50,6 +50,7 @@ async function getInitialData() {
     };
   }
 
+  console.log('Fetching initial data from:', apiUrl);
   try {
     // Fetch salon data in parallel for faster loading
     const [featuredSalonsRes, allSalonsRes, availableNowRes, mobileSalonsRes] = await Promise.all([
@@ -75,6 +76,9 @@ async function getInitialData() {
       ? await featuredSalonsRes.json()
       : [];
 
+    if (!featuredSalonsRes.ok) console.error('Featured salons fetch failed:', featuredSalonsRes.status);
+    if (!allSalonsRes.ok) console.error('All salons fetch failed:', allSalonsRes.status);
+
     const allSalonsData = allSalonsRes.ok
       ? await allSalonsRes.json()
       : { salons: [] };
@@ -86,6 +90,13 @@ async function getInitialData() {
     const mobileSalonsData = mobileSalonsRes.ok
       ? await mobileSalonsRes.json()
       : { salons: [] };
+
+    console.log('Fetched salons counts:', {
+      featured: Array.isArray(featuredSalonsData) ? featuredSalonsData.length : 0,
+      all: (allSalonsData.salons || allSalonsData || []).length,
+      available: (availableNowData.salons || availableNowData || []).length,
+      mobile: (mobileSalonsData.salons || mobileSalonsData || []).length
+    });
 
     return {
       featuredSalons: Array.isArray(featuredSalonsData) ? featuredSalonsData : [],
@@ -127,6 +138,7 @@ export default async function HomePage() {
     image: `${siteUrl}/logo-transparent.png`,
     description: 'South Africa\'s premier platform for discovering and booking beauty services. Connect with top-rated salons, hair stylists, braiders, nail technicians, makeup artists, and wellness professionals across South Africa.',
     foundingDate: '2024',
+    // Force cache invalidation
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'ZA',

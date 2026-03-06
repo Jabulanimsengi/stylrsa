@@ -56,7 +56,7 @@ export default function TestimonialsPage() {
             "As someone with a busy schedule, being able to book appointments online and get instant confirmation is a game-changer. Plus, the reviews are always accurate."
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
-            <em>— Sipho N., Durban</em>
+            <em>— Sipho N., Midrand</em>
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export default function TestimonialsPage() {
             "The automated reminders and deposit system have nearly eliminated no-shows at my salon. My schedule is always full, and clients appreciate the convenience of booking online."
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
-            <em>— Grace T., Salon Owner, Port Elizabeth</em>
+            <em>— Grace T., Salon Owner, Stellenbosch</em>
           </p>
         </div>
 
@@ -100,7 +100,7 @@ export default function TestimonialsPage() {
             "I started doing nails from home as a side business. Within six months of joining Stylr SA, I had so many bookings that I opened my own studio. The platform gave me the visibility I needed to grow."
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
-            <em>— Zinhle M., Nail Technician, Bloemfontein</em>
+            <em>— Zinhle M., Nail Technician, Centurion</em>
           </p>
         </div>
 

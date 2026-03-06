@@ -241,63 +241,85 @@
     padding: 0 1rem;
   }
 
-  .skeletonCard {
-    width: calc(100% / 1.35 - 10px);
-    min-width: unset;
-    height: 240px;
+  @media (max-width: 768px) {
+    .skeletonCard {
+      width: calc(100% / 1.35 - 10px);
+      min-width: unset;
+      height: 240px;
+    }
+
+    .skeletonCard::before {
+      height: 155px;
+    }
   }
 
-  .skeletonCard::before {
-    height: 155px;
+  @media (max-width: 480px) {
+    .header {
+      padding: 0 0.75rem;
+      margin-bottom: 0.625rem;
+    }
+
+    .title h2 {
+      font-size: 1.1rem;
+    }
+
+    .viewAll {
+      font-size: 0.75rem;
+      padding: 0.35rem 0.65rem;
+    }
+
+    .skeletonCard {
+      height: 220px;
+    }
+
+    .skeletonCard::before {
+      height: 140px;
+    }
+
+    .container {
+      min-height: 220px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .header {
+      padding: 0 0.625rem;
+    }
+
+    .title h2 {
+      font-size: 1rem;
+    }
+
+    .skeletonCard {
+      height: 200px;
+    }
+
+    .skeletonCard::before {
+      height: 125px;
+    }
+
+    .container {
+      min-height: 200px;
+    }
+  }
+}
+
+/* This closes the main @media (max-width: 768px) block */
+
+/* Swiper Slide Initial State - Matches Swiper breakpoints */
+.slide {
+  margin-right: 20px;
+  /* Default Desktop */
+}
+
+@media (max-width: 768px) {
+  .slide {
+    margin-right: 18px;
   }
 }
 
 @media (max-width: 480px) {
-  .header {
-    padding: 0 0.75rem;
-    margin-bottom: 0.625rem;
-  }
-
-  .title h2 {
-    font-size: 1.1rem;
-  }
-
-  .viewAll {
-    font-size: 0.75rem;
-    padding: 0.35rem 0.65rem;
-  }
-
-  .skeletonCard {
-    height: 220px;
-  }
-
-  .skeletonCard::before {
-    height: 140px;
-  }
-
-  .container {
-    min-height: 220px;
-  }
-}
-
-@media (max-width: 400px) {
-  .header {
-    padding: 0 0.625rem;
-  }
-
-  .title h2 {
-    font-size: 1rem;
-  }
-
-  .skeletonCard {
-    height: 200px;
-  }
-
-  .skeletonCard::before {
-    height: 125px;
-  }
-
-  .container {
-    min-height: 200px;
+  .slide {
+    margin-right: 16px;
   }
 }

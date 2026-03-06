@@ -27,19 +27,11 @@ const JOB_CATEGORIES = [
 const PROVINCES = [
     { name: 'Gauteng', slug: 'gauteng' },
     { name: 'Western Cape', slug: 'western-cape' },
-    { name: 'KwaZulu-Natal', slug: 'kwazulu-natal' },
-    { name: 'Eastern Cape', slug: 'eastern-cape' },
-    { name: 'Free State', slug: 'free-state' },
-    { name: 'Limpopo', slug: 'limpopo' },
-    { name: 'Mpumalanga', slug: 'mpumalanga' },
-    { name: 'North West', slug: 'north-west' },
-    { name: 'Northern Cape', slug: 'northern-cape' },
 ];
 
 const POPULAR_CITIES = [
     { name: 'Johannesburg', slug: 'johannesburg' },
     { name: 'Cape Town', slug: 'cape-town' },
-    { name: 'Durban', slug: 'durban' },
     { name: 'Pretoria', slug: 'pretoria' },
     { name: 'Sandton', slug: 'sandton' },
     { name: 'Soweto', slug: 'soweto' },
@@ -139,8 +131,8 @@ export default function JobsPage() {
                             you with top salons and spas across the country.
                         </p>
                         <p className="text-gray-600 mb-4">
-                            Browse thousands of job listings in Johannesburg, Cape Town, Durban, Pretoria, and 
-                            cities across all nine provinces. Find full-time positions, part-time work, 
+                            Browse thousands of job listings in Johannesburg, Cape Town, Pretoria, Sandton, and
+                            cities across Gauteng and the Western Cape. Find full-time positions, part-time work,
                             rent-a-chair opportunities, and freelance gigs.
                         </p>
                     </div>

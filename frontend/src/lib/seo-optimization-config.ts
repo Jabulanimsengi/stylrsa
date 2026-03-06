@@ -115,15 +115,12 @@ export const META_DESCRIPTION_LIMITS = {
  */
 export const PRIORITY_CITIES = [
     { name: 'Pretoria', province: 'Gauteng', impressions: 997 },
-    { name: 'Durban', province: 'KwaZulu-Natal', impressions: 959 },
     { name: 'Sandton', province: 'Gauteng', impressions: 832 },
     { name: 'Randburg', province: 'Gauteng', impressions: 798 },
     { name: 'Johannesburg', province: 'Gauteng', impressions: 687 },
     { name: 'Centurion', province: 'Gauteng', impressions: 454 },
     { name: 'Kempton Park', province: 'Gauteng', impressions: 432 },
-    { name: 'East London', province: 'Eastern Cape', impressions: 384 },
     { name: 'Cape Town', province: 'Western Cape', impressions: 356 },
-    { name: 'Port Elizabeth', province: 'Eastern Cape', impressions: 324 },
 ];
 
 /**

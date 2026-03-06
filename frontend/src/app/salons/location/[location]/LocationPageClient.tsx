@@ -20,23 +20,15 @@ import PageNav from '@/components/PageNav';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import MobileSearch from '@/components/MobileSearch/MobileSearch';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
-import { PROVINCES } from '@/lib/locationData';
+import { PROVINCES, Province, City } from '@/lib/locationData';
 import { getSalonUrl } from '@/utils/salonUrl';
 import EmptyState from '@/components/EmptyState/EmptyState';
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
 
-interface ProvinceInfo {
-  slug: string;
-  name: string;
-  description: string;
-  keywords: string[];
-  cities: Array<{ slug: string; name: string }>;
-}
-
 interface LocationPageClientProps {
   initialSalons?: SalonWithFavorite[];
-  provinceInfo?: ProvinceInfo;
+  provinceInfo?: Province | City;
 }
 
 function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPageClientProps) {
@@ -50,10 +42,14 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
   const { openModal } = useAuthModal();
 
   const locationInfo = provinceInfo || PROVINCES[locationSlug] || {
-    slug: 'south-africa', name: 'South Africa',
+    slug: 'south-africa',
+    name: 'South Africa',
     description: 'Find the best salons and beauty professionals in South Africa',
-    keywords: ['South Africa salons'], cities: []
-  };
+    metaTitle: 'Salons in South Africa',
+    metaDescription: 'Find salons in South Africa',
+    keywords: ['South Africa salons'],
+    // cities property might be missing if fallback isn't typed strictly as Province
+  } as Province; // Cast fallback to Province for simplicity, or handle generic object
 
   const fetchSalons = useCallback(async (additionalFilters: FilterValues) => {
     setIsLoading(true);
@@ -111,6 +107,10 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
       toast.error('Could not update favorites. Please try again.');
       setSalons(originalSalons);
     }
+  };
+
+  const isProvince = (loc: Province | City): loc is Province => {
+    return (loc as Province).cities !== undefined;
   };
 
   return (
@@ -178,6 +178,11 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
           Popular Searches in {locationInfo.name}
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+          {isProvince(locationInfo) && locationInfo.cities.slice(0, 12).map((city) => (
+            <Link key={city.slug} href={`/salons/location/${city.slug}`} className={styles.seoLink}>
+              Salons in {city.name}
+            </Link>
+          ))}
           <Link href={`/hair-salon/${locationInfo.slug}`} className={styles.seoLink}>Hair Salons in {locationInfo.name}</Link>
           <Link href={`/nail-salon/${locationInfo.slug}`} className={styles.seoLink}>Nail Salons in {locationInfo.name}</Link>
           <Link href={`/barbershop/${locationInfo.slug}`} className={styles.seoLink}>Barbershops in {locationInfo.name}</Link>

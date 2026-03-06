@@ -724,11 +724,12 @@ enum ProductOrderStatus {
 
 enum PlanCode {
   FREE
-  STARTER
-  ESSENTIAL
-  GROWTH
-  PRO
-  ELITE
+  STARTER    // Legacy - grandfathered
+  ESSENTIAL  // Legacy - grandfathered
+  GROWTH     // Legacy - grandfathered
+  PRO        // Legacy - grandfathered
+  ELITE      // Legacy - grandfathered
+  PREMIUM    // Single paid plan R399/month
 }
 
 enum PlanPaymentStatus {

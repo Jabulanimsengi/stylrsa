@@ -10,7 +10,18 @@ COPY package*.json ./
 RUN npm ci --maxsockets 1 --legacy-peer-deps
 
 # Copy source code
+# Copy source code
 COPY . .
+
+# Build arguments for Next.js public variables (must be present at build time)
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_SITE_URL
+ARG NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+ARG NEXT_PUBLIC_CLOUDINARY_API_KEY
+ARG NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+ARG NEXT_PUBLIC_GA_MEASUREMENT_ID
+ARG NEXT_PUBLIC_SENTRY_DSN
+
 
 # Build with memory limit for low-RAM VMs
 ENV NODE_OPTIONS="--max-old-space-size=1024"

@@ -67,7 +67,7 @@
 /* Success Toast - Green with subtle gradient */
 .Toastify__toast--success {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%),
-              linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 250, 250, 0.98) 100%) !important;
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 250, 250, 0.98) 100%) !important;
   color: #065f46 !important;
   border-left: 4px solid #10b981 !important;
   animation: successPulse 0.6s ease-out !important;
@@ -90,7 +90,7 @@
 /* Error Toast - Using app's primary color #F51957 */
 .Toastify__toast--error {
   background: linear-gradient(135deg, rgba(245, 25, 87, 0.1) 0%, rgba(245, 25, 87, 0.05) 100%),
-              linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 250, 250, 0.98) 100%) !important;
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 250, 250, 0.98) 100%) !important;
   color: #991b1b !important;
   border-left: 4px solid #F51957 !important;
 }
@@ -98,7 +98,7 @@
 /* Info Toast - Blue with subtle gradient */
 .Toastify__toast--info {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%),
-              linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 250, 250, 0.98) 100%) !important;
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 250, 250, 0.98) 100%) !important;
   color: #1e40af !important;
   border-left: 4px solid #3b82f6 !important;
 }
@@ -106,7 +106,7 @@
 /* Warning Toast - Amber with subtle gradient */
 .Toastify__toast--warning {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%),
-              linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 250, 250, 0.98) 100%) !important;
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 250, 250, 0.98) 100%) !important;
   color: #92400e !important;
   border-left: 4px solid #f59e0b !important;
 }
@@ -137,6 +137,7 @@
 
 /* Tablet positioning - Slightly narrower */
 @media (min-width: 481px) and (max-width: 768px) {
+
   .Toastify__toast-container--top-right,
   .Toastify__toast-container--bottom-right {
     right: 16px !important;
@@ -173,7 +174,8 @@
   .Toastify__toast-container--bottom-right,
   .Toastify__toast-container--bottom-left,
   .Toastify__toast-container--bottom-center {
-    bottom: calc(80px + 16px) !important;  /* Account for mobile navigation bar + spacing */
+    bottom: calc(80px + 16px) !important;
+    /* Account for mobile navigation bar + spacing */
     top: auto !important;
   }
 
@@ -324,22 +326,37 @@
 
 @layer base {
   :root {
-    /* Apple-inspired Primary Colors - Black/White/Grey */
-    --color-primary: #1D1D1F;           /* Apple's signature dark grey */
-    --color-primary-hover: #000000;     /* Pure black on hover */
-    --color-primary-strong: #000000;    /* Pure black for strong emphasis */
-    --color-primary-soft: #F5F5F7;      /* Light grey background */
-    --color-secondary: #86868B;         /* Muted grey for secondary elements */
-    --color-secondary-strong: #6E6E73;  /* Darker grey */
-    --color-surface: #FFFFFF;           /* Pure white backgrounds */
-    --color-surface-subtle: #FBFBFD;    /* Off-white for subtle separation */
-    --color-surface-elevated: #FFFFFF;  /* White for cards */
-    --color-border: #E8E8ED;            /* Very light grey borders */
-    --color-border-strong: #D2D2D7;     /* Slightly darker borders */
-    --color-text-strong: #1D1D1F;       /* Near-black text */
-    --color-text-muted: #86868B;        /* Grey secondary text */
-    --color-text-inverse: #FFFFFF;      /* White text on dark backgrounds */
-    --color-accent: #0071E3;            /* Apple blue for interactive accents (optional) */
+    /* Pure Black Primary Colors */
+    --color-primary: #000000;
+    /* Pure black */
+    --color-primary-hover: #1a1a1a;
+    /* Very dark grey on hover */
+    --color-primary-strong: #000000;
+    /* Pure black for strong emphasis */
+    --color-primary-soft: #F5F5F7;
+    /* Light grey background */
+    --color-secondary: #86868B;
+    /* Muted grey for secondary elements */
+    --color-secondary-strong: #6E6E73;
+    /* Darker grey */
+    --color-surface: #FFFFFF;
+    /* Pure white backgrounds */
+    --color-surface-subtle: #FBFBFD;
+    /* Off-white for subtle separation */
+    --color-surface-elevated: #FFFFFF;
+    /* White for cards */
+    --color-border: #E8E8ED;
+    /* Very light grey borders */
+    --color-border-strong: #D2D2D7;
+    /* Slightly darker borders */
+    --color-text-strong: #1D1D1F;
+    /* Near-black text */
+    --color-text-muted: #86868B;
+    /* Grey secondary text */
+    --color-text-inverse: #FFFFFF;
+    /* White text on dark backgrounds */
+    --color-accent: #0071E3;
+    /* Apple blue for interactive accents (optional) */
     --color-success-bg: #d1f4e0;
     --color-success-text: #0d5028;
     --color-error-bg: #ffe5e5;
@@ -389,12 +406,18 @@
     --space-4xl: 6rem;
     /* 96px */
     /* Border Radius - Apple-style rounded corners */
-    --radius-xs: 0.5rem;    /* 8px - small elements */
-    --radius-sm: 0.75rem;   /* 12px - buttons, inputs */
-    --radius-md: 1rem;      /* 16px - cards */
-    --radius-lg: 1.25rem;   /* 20px - modals, sheets */
-    --radius-xl: 1.5rem;    /* 24px - large containers */
-    --radius-full: 999px;   /* Pill buttons */
+    --radius-xs: 0.5rem;
+    /* 8px - small elements */
+    --radius-sm: 0.75rem;
+    /* 12px - buttons, inputs */
+    --radius-md: 1rem;
+    /* 16px - cards */
+    --radius-lg: 1.25rem;
+    /* 20px - modals, sheets */
+    --radius-xl: 1.5rem;
+    /* 24px - large containers */
+    --radius-full: 999px;
+    /* Pill buttons */
 
     /* Typography - Apple SF Pro-like system fonts */
     --font-family-base: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
@@ -536,12 +559,12 @@
 
     /* shadcn/ui semantic variables (HSL values without hsl() wrapper) */
     --background: 0 0% 100%;
-    --foreground: 240 10% 15%;
+    --foreground: 0 0% 0%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 15%;
+    --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 15%;
-    --primary: 240 3% 12%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
     --primary-foreground: 0 0% 100%;
     --secondary: 240 4% 54%;
     --secondary-foreground: 0 0% 100%;
@@ -559,21 +582,36 @@
 
   [data-theme='dark'] {
     /* Apple-inspired Dark Mode - Pure black with subtle greys */
-    --color-primary: #F5F5F7;           /* Light text on dark */
-    --color-primary-hover: #FFFFFF;     /* Pure white on hover */
-    --color-primary-strong: #FFFFFF;    /* Pure white for emphasis */
-    --color-primary-soft: #1D1D1F;      /* Dark grey background */
-    --color-secondary: #98989D;         /* Light grey for secondary */
-    --color-secondary-strong: #AEAEB2;  /* Lighter grey */
-    --color-surface: #000000;           /* Pure black background */
-    --color-surface-subtle: #1D1D1F;    /* Dark grey for cards */
-    --color-surface-elevated: #2C2C2E;  /* Lighter dark grey */
-    --color-border: #38383A;            /* Subtle border in dark mode */
-    --color-border-strong: #48484A;     /* Slightly lighter border */
-    --color-text-strong: #F5F5F7;       /* Off-white text */
-    --color-text-muted: #98989D;        /* Muted grey text */
-    --color-text-inverse: #000000;      /* Black text on light backgrounds */
-    --color-accent: #0A84FF;            /* Apple blue for dark mode */
+    --color-primary: #F5F5F7;
+    /* Light text on dark */
+    --color-primary-hover: #FFFFFF;
+    /* Pure white on hover */
+    --color-primary-strong: #FFFFFF;
+    /* Pure white for emphasis */
+    --color-primary-soft: #1D1D1F;
+    /* Dark grey background */
+    --color-secondary: #98989D;
+    /* Light grey for secondary */
+    --color-secondary-strong: #AEAEB2;
+    /* Lighter grey */
+    --color-surface: #000000;
+    /* Pure black background */
+    --color-surface-subtle: #1D1D1F;
+    /* Dark grey for cards */
+    --color-surface-elevated: #2C2C2E;
+    /* Lighter dark grey */
+    --color-border: #38383A;
+    /* Subtle border in dark mode */
+    --color-border-strong: #48484A;
+    /* Slightly lighter border */
+    --color-text-strong: #F5F5F7;
+    /* Off-white text */
+    --color-text-muted: #98989D;
+    /* Muted grey text */
+    --color-text-inverse: #000000;
+    /* Black text on light backgrounds */
+    --color-accent: #0A84FF;
+    /* Apple blue for dark mode */
     --color-success-bg: #13524b;
     --color-success-text: #81f3e2;
     --color-error-bg: #55222d;
@@ -887,7 +925,8 @@
 .btn {
   @apply inline-flex items-center justify-center font-medium border-2 border-transparent;
   padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-full);  /* Pill-shaped buttons */
+  border-radius: var(--radius-full);
+  /* Pill-shaped buttons */
   cursor: pointer;
   text-decoration: none;
   text-align: center;
@@ -929,31 +968,31 @@ a.btn-secondary:visited {
 }
 
 .btn-primary {
-  @apply text-white;
-  background-color: var(--color-primary);  /* Solid black, no gradient */
-  border-color: var(--color-primary);
+  color: #ffffff !important;
+  background-color: #000000 !important;
+  border-color: #000000 !important;
   position: relative;
   overflow: hidden;
 }
 
 .btn-primary:hover {
-  background-color: var(--color-primary-hover);  /* Pure black */
-  color: white;
-  border-color: var(--color-primary-hover);
-  transform: scale(1.02);  /* Subtle scale instead of translate */
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+  border-color: #1a1a1a !important;
+  transform: scale(1.02);
   opacity: 0.9;
 }
 
 .btn-primary:active {
-  background-color: var(--color-primary-strong);
-  color: white;
-  border-color: var(--color-primary-strong);
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
   transform: scale(0.98);
   opacity: 1;
 }
 
 .btn-primary:disabled {
-  @apply cursor-not-allowed;
+  cursor: not-allowed;
   background-color: var(--color-primary-soft);
   color: var(--color-text-muted);
   border-color: var(--color-primary-soft);

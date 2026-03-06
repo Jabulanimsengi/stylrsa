@@ -50,17 +50,10 @@ export default function CreateCandidateProfile() {
         { value: 'BEAUTY_THERAPIST', label: 'Beauty Therapist' },
     ];
 
-    // All provinces
+    // All provinces (service areas)
     const PROVINCES = [
         'Gauteng',
         'Western Cape',
-        'KwaZulu-Natal',
-        'Eastern Cape',
-        'Free State',
-        'Limpopo',
-        'Mpumalanga',
-        'North West',
-        'Northern Cape',
     ];
 
     // Privacy Settings

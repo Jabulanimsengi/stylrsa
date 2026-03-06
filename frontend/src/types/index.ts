@@ -1,6 +1,6 @@
 // frontend/src/types/index.ts
 
-export type PlanCode = 'FREE' | 'STARTER' | 'ESSENTIAL' | 'GROWTH' | 'PRO' | 'ELITE';
+export type PlanCode = 'FREE' | 'STARTER' | 'ESSENTIAL' | 'GROWTH' | 'PRO' | 'ELITE' | 'PREMIUM';
 export type PlanPaymentStatus =
   | 'PENDING_SELECTION'
   | 'AWAITING_PROOF'

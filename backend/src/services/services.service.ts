@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { slugify } from '../common/slug.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -58,6 +59,34 @@ export class ServicesService {
     };
 
     const service = await this.prisma.service.create({ data: createData });
+
+    // Auto-create SEO Keyword for this service
+    try {
+      const keywordSlug = slugify(service.title);
+      // Check if keyword exists
+      const existingKeyword = await this.prisma.seoKeyword.findUnique({
+        where: { slug: keywordSlug },
+      });
+
+      if (!existingKeyword) {
+        // Create new keyword
+        await this.prisma.seoKeyword.create({
+          data: {
+            keyword: service.title,
+            slug: keywordSlug,
+            category: 'Service', // Default to generic Service category
+            priority: 5, // High priority for actual services
+            searchVolume: 100, // Default estimate
+            difficulty: 30,
+            variations: [service.title + ' near me', 'best ' + service.title],
+          },
+        });
+        console.log(`[ServicesService] Auto-created SEO keyword: ${service.title} (${keywordSlug})`);
+      }
+    } catch (error) {
+      // Don't fail the service creation if SEO keyword fails (it might be a duplicate slug race condition)
+      console.warn(`[ServicesService] Failed to auto-create SEO keyword for ${service.title}:`, error.message);
+    }
 
     const admins = await this.prisma.user.findMany({
       where: { role: 'ADMIN' },
@@ -122,10 +151,41 @@ export class ServicesService {
           : dto.categoryId,
     };
 
-    return this.prisma.service.update({
+    const updatedService = await this.prisma.service.update({
       where: { id },
       data: updateData,
     });
+
+    // Auto-create SEO Keyword if title changed
+    if (dto.title) {
+      try {
+        const keywordSlug = slugify(dto.title);
+        // Check if keyword exists
+        const existingKeyword = await this.prisma.seoKeyword.findUnique({
+          where: { slug: keywordSlug },
+        });
+
+        if (!existingKeyword) {
+          // Create new keyword
+          await this.prisma.seoKeyword.create({
+            data: {
+              keyword: dto.title,
+              slug: keywordSlug,
+              category: 'Service',
+              priority: 5,
+              searchVolume: 100,
+              difficulty: 30,
+              variations: [dto.title + ' near me', 'best ' + dto.title],
+            },
+          });
+          console.log(`[ServicesService] Auto-created SEO keyword on update: ${dto.title} (${keywordSlug})`);
+        }
+      } catch (error) {
+        console.warn(`[ServicesService] Failed to auto-create SEO keyword on update for ${dto.title}:`, error.message);
+      }
+    }
+
+    return updatedService;
   }
 
   async remove(user: any, id: string) {
@@ -404,14 +464,34 @@ export class ServicesService {
 
   async autocomplete(q: string) {
     if (!q || String(q).trim().length === 0) {
-      return [] as {
-        id: string;
-        title: string;
-        salon?: { id: string; name: string };
-      }[];
+      return { venues: [], services: [] };
     }
-    const results = await this.prisma.service.findMany({
-      where: { title: { contains: String(q), mode: 'insensitive' } },
+
+    const searchTerm = String(q).trim();
+
+    // 1. Find matching Approved Salons (Venues)
+    const venues = await this.prisma.salon.findMany({
+      where: {
+        name: { contains: searchTerm, mode: 'insensitive' },
+        approvalStatus: 'APPROVED',
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        city: true,
+      },
+      take: 4,
+    });
+
+    // 2. Find matching Services of Approved Salons
+    const rawServices = await this.prisma.service.findMany({
+      where: {
+        title: { contains: searchTerm, mode: 'insensitive' },
+        salon: {
+          approvalStatus: 'APPROVED'
+        }
+      },
       select: {
         id: true,
         title: true,
@@ -421,10 +501,18 @@ export class ServicesService {
       distinct: ['title'],
       orderBy: { title: 'asc' },
     });
-    return results.map((r) => ({
+
+    // We just return distinct service titles, and maybe keeping one salon as an example
+    // but the frontend primarily needs the title to search /services?service=TITLE
+    const services = rawServices.map((r) => ({
       id: r.id,
       title: r.title,
       salon: r.salon,
     }));
+
+    return {
+      venues,
+      services: services.slice(0, 5) // Limit distinct services to 5
+    };
   }
 }

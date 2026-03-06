@@ -1,44 +1,46 @@
-/* Container holds both placeholder and visible text */
-.typingContainer {
-    display: inline-block;
+/* Modern, sleek text gradient and block cursor typing styles */
+.wrapper {
+    display: inline-flex;
+    align-items: center;
     position: relative;
-    vertical-align: baseline;
-}
-
-/* Invisible placeholder reserves space for longest word */
-.placeholder {
-    visibility: hidden;
-    display: inline-block;
+    z-index: 20;
     white-space: nowrap;
+    /* Prevent horizontal text shifting (dancing) when typing inside a centered container */
+    min-width: 9em;
+    text-align: left;
+    justify-content: flex-start;
 }
 
-/* Visible typing text positioned absolutely on top of placeholder */
-.typingText {
-    position: absolute;
-    left: 0;
-    top: 0;
+.text {
+    font-weight: 800;
+    color: #1D1D1F;
     display: inline-block;
-    color: #fff !important;
-    font-weight: inherit;
-    white-space: nowrap;
 }
 
+/* Modern solid block cursor */
 .cursor {
     display: inline-block;
+    width: 6px;
+    /* Block width */
+    height: 1.1em;
+    /* Matches text height closely */
+    background-color: #1D1D1F;
+    /* Solid black */
+    border-radius: 2px;
     margin-left: 2px;
-    animation: blink 1s infinite;
-    color: var(--color-primary);
-    font-weight: 400;
+    animation: blink 1s step-end infinite;
+    transform: translateY(2px);
+    /* Slight visual alignment tweak */
 }
 
 @keyframes blink {
+
     0%,
-    49% {
+    100% {
         opacity: 1;
     }
 
-    50%,
-    100% {
+    50% {
         opacity: 0;
     }
 }

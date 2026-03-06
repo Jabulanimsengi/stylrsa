@@ -369,22 +369,25 @@ Whether you need a quick appointment or want to browse multiple options, our pla
     // Generate schema markup
     const schemaMarkup = {
         '@context': 'https://schema.org',
-        '@type': 'Service',
+        '@type': 'ItemList',
         name: `${keywordName} in ${locationName}`,
         description: metaDescription,
-        areaServed: {
-            '@type': 'City',
-            name: locationName,
-            containedInPlace: {
-                '@type': 'AdministrativeArea',
-                name: provinceName,
-            },
-        },
-        provider: {
-            '@type': 'Organization',
-            name: 'Stylr SA',
-            url: 'https://www.stylrsa.co.za',
-        },
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "item": {
+                    "@type": "LocalBusiness",
+                    "name": `Top Rated ${keywordName} Salons in ${locationName}`,
+                    "address": {
+                        "@type": "PostalAddress",
+                        "addressLocality": locationName,
+                        "addressRegion": provinceName,
+                        "addressCountry": "ZA"
+                    }
+                }
+            }
+        ]
     };
 
     return {
@@ -408,5 +411,91 @@ Whether you need a quick appointment or want to browse multiple options, our pla
         },
         relatedServices: [],
         nearbyLocations: [],
+    };
+}
+
+/**
+ * Generate national SEO page content for top-level keyword pages (e.g. /hair-salon)
+ * Prevents cannibalization with provincial pages by focusing on South Africa as a whole.
+ */
+export function generateNationalSeoPageContent(keyword: string) {
+    const keywordName = slugToName(keyword);
+    const locationName = "South Africa";
+
+    // Generate H1 heading
+    const h1 = `Best ${keywordName} in ${locationName}`;
+
+    // Generate meta title and description
+    const metaTitle = `Top ${keywordName} in ${locationName} | Book Online | Stylr SA`;
+    const metaDescription = `Find the best ${keywordName.toLowerCase()} services across ${locationName}. Browse top-rated salons nationwide, compare prices, read reviews and book online. Stylr SA - South Africa's beauty marketplace.`;
+
+    // Generate intro text
+    const introText = `Looking for expert ${keywordName.toLowerCase()} services in ${locationName}? Stylr SA connects you with the highest-rated beauty professionals and salons offering ${keywordName.toLowerCase()} nationwide.
+
+Whether you are in Johannesburg, Cape Town, Durban, or anywhere else in the country, our platform makes it easy to find, compare, and book the best ${keywordName.toLowerCase()} services. All providers are verified and reviewed by real customers.`;
+
+    // Generate H2 headings
+    const h2Headings = [
+        `Why Choose ${keywordName} Services on Stylr SA?`,
+        `How to Book ${keywordName} Anywhere in South Africa`,
+        `Popular ${keywordName} Styles and Trends`,
+        `Average ${keywordName} Prices Nationwide`,
+    ];
+
+    // Generate schema markup for a national directory page
+    const schemaMarkup = {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: `Best ${keywordName} in ${locationName}`,
+        description: metaDescription,
+        itemListElement: [
+            // Placeholder for top provinces to signal national relevance
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "url": `https://www.stylrsa.co.za/${keyword}/gauteng`,
+                "name": `${keywordName} in Gauteng`
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "url": `https://www.stylrsa.co.za/${keyword}/western-cape`,
+                "name": `${keywordName} in Western Cape`
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "url": `https://www.stylrsa.co.za/${keyword}/kwazulu-natal`,
+                "name": `${keywordName} in KwaZulu-Natal`
+            }
+        ]
+    };
+
+    return {
+        h1,
+        metaTitle,
+        metaDescription,
+        introText,
+        h2Headings,
+        schemaMarkup,
+        serviceCount: 0,
+        salonCount: 0,
+        avgPrice: null,
+        keyword: {
+            keyword: keywordName,
+            slug: keyword,
+        },
+        location: {
+            name: locationName,
+            province: locationName,
+            slug: 'south-africa',
+        },
+        relatedServices: [],
+        nearbyLocations: [
+            { label: `${keywordName} in Gauteng`, url: `/${keyword}/gauteng` },
+            { label: `${keywordName} in Western Cape`, url: `/${keyword}/western-cape` },
+            { label: `${keywordName} in KwaZulu-Natal`, url: `/${keyword}/kwazulu-natal` },
+            { label: `${keywordName} in Eastern Cape`, url: `/${keyword}/eastern-cape` }
+        ],
     };
 }

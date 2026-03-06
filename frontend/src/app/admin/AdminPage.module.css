@@ -87,16 +87,22 @@
 }
 
 .listItem {
-  background-color: var(--color-surface-elevated);
+  background-color: var(--color-surface-elevated, #ffffff);
   padding: 1.5rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  border-radius: 12px;
+  border: 1px solid var(--color-border, #e5e5e5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.listItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
 }
 
 .info h4 {
@@ -369,34 +375,48 @@
 
 /* ===== ADMIN SIDEBAR LAYOUT ===== */
 
-/* Metrics Overview */
+/* Admin Sidebar Area (now matches Salon redesign for consistency inside actual Page logic if needed) */
 .metricsOverview {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .metricCard {
-  background: var(--color-surface-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 1rem;
-  text-align: center;
+  background: var(--color-surface-elevated, #ffffff);
+  border: 1px solid var(--color-border, #e5e5e5);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+}
+
+.metricCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
 }
 
 .metricLabel {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  color: var(--color-text-muted, #666);
   margin-bottom: 0.25rem;
 }
 
 .metricValue {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: var(--color-text-strong);
+  color: var(--color-text-strong, #111);
+  line-height: 1.2;
 }
 
 .metricValue.urgent {
@@ -622,16 +642,18 @@
 
 /* ===== COLLAPSIBLE REQUEST ITEMS ===== */
 .collapsibleItem {
-  background-color: var(--color-surface-elevated);
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-border);
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  background-color: var(--color-surface-elevated, #ffffff);
+  border-radius: 12px;
+  border: 1px solid var(--color-border, #e5e5e5);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
   overflow: hidden;
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  margin-bottom: 1rem;
 }
 
 .collapsibleItem:hover {
-  box-shadow: 0 2px 6px 0 rgb(0 0 0 / 0.1);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
 }
 
 .collapsibleHeader {

@@ -34,7 +34,6 @@ const MAJOR_CITIES = [
     { location: 'gauteng', city: 'pretoria' },
     { location: 'gauteng', city: 'sandton' },
     { location: 'western-cape', city: 'cape-town' },
-    { location: 'kwazulu-natal', city: 'durban' },
 ];
 
 export async function generateStaticParams() {

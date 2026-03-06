@@ -35,10 +35,17 @@ export default function Footer() {
       }
     ],
     "priceRange": "R",
-    "areaServed": {
-      "@type": "Country",
-      "name": "South Africa"
-    },
+    "areaServed": [
+      { "@type": "State", "name": "Gauteng", "containedInPlace": { "@type": "Country", "name": "South Africa" } },
+      { "@type": "State", "name": "Western Cape", "containedInPlace": { "@type": "Country", "name": "South Africa" } },
+      { "@type": "State", "name": "KwaZulu-Natal", "containedInPlace": { "@type": "Country", "name": "South Africa" } },
+      { "@type": "State", "name": "Eastern Cape", "containedInPlace": { "@type": "Country", "name": "South Africa" } },
+      { "@type": "State", "name": "Free State", "containedInPlace": { "@type": "Country", "name": "South Africa" } },
+      { "@type": "State", "name": "Mpumalanga", "containedInPlace": { "@type": "Country", "name": "South Africa" } },
+      { "@type": "State", "name": "Limpopo", "containedInPlace": { "@type": "Country", "name": "South Africa" } },
+      { "@type": "State", "name": "North West", "containedInPlace": { "@type": "Country", "name": "South Africa" } },
+      { "@type": "State", "name": "Northern Cape", "containedInPlace": { "@type": "Country", "name": "South Africa" } }
+    ],
     "sameAs": []
   };
 
@@ -113,6 +120,9 @@ export default function Footer() {
               <li><Link href="/salons/location/eastern-cape">Eastern Cape</Link></li>
               <li><Link href="/salons/location/free-state">Free State</Link></li>
               <li><Link href="/salons/location/mpumalanga">Mpumalanga</Link></li>
+              <li><Link href="/salons/location/limpopo">Limpopo</Link></li>
+              <li><Link href="/salons/location/north-west">North West</Link></li>
+              <li><Link href="/salons/location/northern-cape">Northern Cape</Link></li>
             </ul>
           </div>
 

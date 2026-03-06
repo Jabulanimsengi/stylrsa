@@ -1,10 +1,9 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import {
-  getTopKeywords,
-  getProvinces,
   getSeoPageByUrl,
 } from '@/lib/seo-api';
+import { generateLocalSeoPageContent, SEO_KEYWORDS } from '@/lib/seo-generation';
 
 interface PageProps {
   params: Promise<{
@@ -19,7 +18,7 @@ export const revalidate = 86400; // Cache for 24 hours
 
 // Top priority keywords and provinces to pre-build
 const PRIORITY_KEYWORDS = ['hair-salon', 'nail-salon', 'braiding', 'barbershop', 'spa'];
-const PRIORITY_PROVINCES = ['gauteng', 'western-cape', 'kwazulu-natal'];
+const PRIORITY_PROVINCES = ['gauteng', 'western-cape'];
 
 /**
  * Generate static params for crucial pages only (~15 pages)
@@ -36,7 +35,7 @@ export async function generateStaticParams() {
 }
 
 /**
- * Generate metadata from cached SEO data
+ * Generate metadata from cached SEO data or local fallback
  */
 export async function generateMetadata({
   params,
@@ -57,44 +56,81 @@ export async function generateMetadata({
     };
   }
 
-  const url = `/${keyword}/${province}`;
-
-  const cachedPage = await getSeoPageByUrl(url);
-
-  if (!cachedPage) {
+  if (!SEO_KEYWORDS.includes(keyword)) {
     return {
-      title: 'Service Not Found | Stylr SA',
-      description: 'The service you are looking for could not be found.',
+      title: 'Not Found',
+      robots: { index: false, follow: false },
     };
   }
 
+  const url = `/${keyword}/${province}`;
   const canonicalUrl = `https://www.stylrsa.co.za${url}`;
 
+  // Try API first
+  try {
+    const cachedPage = await getSeoPageByUrl(url);
+    if (cachedPage) {
+      return {
+        title: cachedPage.metaTitle,
+        description: cachedPage.metaDescription,
+        alternates: {
+          canonical: canonicalUrl,
+        },
+        openGraph: {
+          title: cachedPage.metaTitle,
+          description: cachedPage.metaDescription,
+          type: 'website',
+          url: canonicalUrl,
+          siteName: 'Stylr SA',
+          locale: 'en_ZA',
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title: cachedPage.metaTitle,
+          description: cachedPage.metaDescription,
+          site: '@stylrsa',
+        },
+      };
+    }
+  } catch (error) {
+    // Fall through to local generation
+  }
+
+  // Generate metadata from local data as fallback
+  const localPage = generateLocalSeoPageContent(keyword, province);
+  if (localPage) {
+    return {
+      title: localPage.metaTitle,
+      description: localPage.metaDescription,
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      openGraph: {
+        title: localPage.metaTitle,
+        description: localPage.metaDescription,
+        type: 'website',
+        url: canonicalUrl,
+        siteName: 'Stylr SA',
+        locale: 'en_ZA',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: localPage.metaTitle,
+        description: localPage.metaDescription,
+        site: '@stylrsa',
+      },
+    };
+  }
+
   return {
-    title: cachedPage.metaTitle,
-    description: cachedPage.metaDescription,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    openGraph: {
-      title: cachedPage.metaTitle,
-      description: cachedPage.metaDescription,
-      type: 'website',
-      url: canonicalUrl,
-      siteName: 'Stylr SA',
-      locale: 'en_ZA',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: cachedPage.metaTitle,
-      description: cachedPage.metaDescription,
-      site: '@stylrsa',
-    },
+    title: 'Service | Stylr SA',
+    description: 'Browse services and book your appointment online.',
   };
 }
 
 /**
  * Keyword + Province SEO landing page
+ * Uses backend API data when available, falls back to local generation
  */
 export default async function KeywordProvincePage({ params }: PageProps) {
   const { keyword, province } = await params;
@@ -110,17 +146,33 @@ export default async function KeywordProvincePage({ params }: PageProps) {
     notFound();
   }
 
+  // Check if this is a valid SEO keyword
+  if (!SEO_KEYWORDS.includes(keyword)) {
+    notFound();
+  }
+
   const url = `/${keyword}/${province}`;
+  let pageData: any = null;
 
-  // Fetch cached page data
-  const cachedPage = await getSeoPageByUrl(url);
+  // Try to get cached page from API first
+  try {
+    pageData = await getSeoPageByUrl(url);
+  } catch (error) {
+    // API unavailable, will use local fallback
+  }
 
-  if (!cachedPage) {
+  // Fall back to local generation if API doesn't have the data
+  if (!pageData) {
+    pageData = generateLocalSeoPageContent(keyword, province);
+  }
+
+  // If still no data (invalid province), return 404
+  if (!pageData) {
     notFound();
   }
 
   // Parse schema markup
-  const schemaMarkup = cachedPage.schemaMarkup;
+  const schemaMarkup = pageData.schemaMarkup;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -143,37 +195,37 @@ export default async function KeywordProvincePage({ params }: PageProps) {
           <li>/</li>
           <li>
             <a href={`/${keyword}`} className="hover:text-primary">
-              {cachedPage.keyword?.keyword || keyword}
+              {pageData.keyword?.keyword || keyword}
             </a>
           </li>
           <li>/</li>
           <li className="text-gray-900 font-medium">
-            {cachedPage.location?.name || province}
+            {pageData.location?.name || province}
           </li>
         </ol>
       </nav>
 
       {/* H1 Heading */}
-      <h1 className="text-4xl font-bold mb-6">{cachedPage.h1}</h1>
+      <h1 className="text-4xl font-bold mb-6">{pageData.h1}</h1>
 
       {/* Stats Bar */}
       <div className="flex flex-wrap gap-4 mb-8 p-4 bg-gray-50 rounded-lg">
         <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-primary">
-            {cachedPage.serviceCount}
+            {pageData.serviceCount}
           </span>
           <span className="text-gray-600">Services Available</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-primary">
-            {cachedPage.salonCount}
+            {pageData.salonCount}
           </span>
           <span className="text-gray-600">Verified Salons</span>
         </div>
-        {cachedPage.avgPrice && (
+        {pageData.avgPrice && (
           <div className="flex items-center gap-2">
             <span className="text-2xl font-bold text-primary">
-              R{Number(cachedPage.avgPrice).toFixed(0)}
+              R{Number(pageData.avgPrice).toFixed(0)}
             </span>
             <span className="text-gray-600">Average Price</span>
           </div>
@@ -182,7 +234,7 @@ export default async function KeywordProvincePage({ params }: PageProps) {
 
       {/* Intro Text */}
       <div className="prose max-w-none mb-8">
-        {cachedPage.introText.split('\n\n').map((paragraph: string, index: number) => (
+        {pageData.introText.split('\n\n').map((paragraph: string, index: number) => (
           <p key={index} className="mb-4 text-gray-700 leading-relaxed">
             {paragraph}
           </p>
@@ -190,24 +242,23 @@ export default async function KeywordProvincePage({ params }: PageProps) {
       </div>
 
       {/* H2 Sections */}
-      {cachedPage.h2Headings.map((heading: string, index: number) => (
+      {pageData.h2Headings.map((heading: string, index: number) => (
         <section key={index} className="mb-8">
           <h2 className="text-2xl font-bold mb-4">{heading}</h2>
           <div className="text-gray-700">
-            {/* Content will be added in task 5 */}
             <p>Content for {heading}</p>
           </div>
         </section>
       ))}
 
       {/* Related Services */}
-      {cachedPage.relatedServices && cachedPage.location && (
+      {pageData.relatedServices && pageData.relatedServices.length > 0 && pageData.location && (
         <section className="mb-8">
           <h2 className="text-2xl font-bold mb-4">
-            Related Services in {cachedPage.location.name}
+            Related Services in {pageData.location.name}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {cachedPage.relatedServices.map((service: any, index: number) => (
+            {pageData.relatedServices.map((service: any, index: number) => (
               <a
                 key={index}
                 href={service.url}
@@ -221,13 +272,13 @@ export default async function KeywordProvincePage({ params }: PageProps) {
       )}
 
       {/* Nearby Locations */}
-      {cachedPage.nearbyLocations && cachedPage.keyword && (
+      {pageData.nearbyLocations && pageData.nearbyLocations.length > 0 && pageData.keyword && (
         <section className="mb-8">
           <h2 className="text-2xl font-bold mb-4">
-            {cachedPage.keyword.keyword} in Other Cities
+            {pageData.keyword.keyword} in Other Cities
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {cachedPage.nearbyLocations.map((location: any, index: number) => (
+            {pageData.nearbyLocations.map((location: any, index: number) => (
               <a
                 key={index}
                 href={location.url}
@@ -243,15 +294,15 @@ export default async function KeywordProvincePage({ params }: PageProps) {
       {/* CTA Section */}
       <section className="mt-12 p-8 bg-primary/10 rounded-lg text-center">
         <h2 className="text-2xl font-bold mb-4">
-          Ready to Book {cachedPage.keyword?.keyword || keyword} in{' '}
-          {cachedPage.location?.name || province}?
+          Ready to Book {pageData.keyword?.keyword || keyword} in{' '}
+          {pageData.location?.name || province}?
         </h2>
         <p className="text-gray-700 mb-6">
-          Browse {cachedPage.serviceCount} verified services and book your
+          Browse {pageData.serviceCount} verified services and book your
           appointment online today.
         </p>
         <a
-          href={`/services?province=${cachedPage.location?.name || province}`}
+          href="/services"
           className="inline-block px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
         >
           Browse All Services

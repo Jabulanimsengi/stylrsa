@@ -46,7 +46,7 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
   const [, startTransition] = useTransition();
   // Auth is optional - non-logged-in users can still view featured salons
   const { authStatus } = useAuth() || { authStatus: 'unauthenticated' };
-  const { openModal } = useAuthModal() || { openModal: () => {} };
+  const { openModal } = useAuthModal() || { openModal: () => { } };
   const prevRef = useRef<HTMLButtonElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -263,6 +263,7 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
           {salons.map((salon) => (
             <SwiperSlide
               key={salon.id}
+              className={styles.slide}
               style={{
                 width: isMobile ? 'calc(100% / 1.35 - 10px)' : 'calc((100% - 48px) / 4.1)',
                 minHeight: isMobile ? '240px' : '280px',

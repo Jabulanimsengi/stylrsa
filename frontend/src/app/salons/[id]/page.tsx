@@ -51,16 +51,11 @@ const fetchSalonWithTimeout = async (url: string, timeoutMs = 5000): Promise<Sal
 };
 
 async function getSalon(id: string): Promise<Salon | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BASE_PATH;
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BASE_PATH || process.env.NEXT_PUBLIC_API_ORIGIN || 'http://127.0.0.1:5000';
   const isBuildPhase = process.env.IS_BUILD_PHASE === 'true' || process.env.NEXT_PHASE === 'phase-production-build';
 
   // Only skip fetching during build time when API is localhost
   if (isBuildPhase && (!baseUrl || baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1'))) {
-    return null;
-  }
-
-  if (!baseUrl) {
-    console.error('ERROR: NEXT_PUBLIC_API_URL or NEXT_PUBLIC_BASE_PATH is not set.');
     return null;
   }
 

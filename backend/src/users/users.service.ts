@@ -9,7 +9,7 @@ import { UpdateSellerPlanDto } from './dto/update-seller-plan.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EventsGateway } from '../events/events.gateway';
 
-type PlanCode = 'FREE' | 'STARTER' | 'ESSENTIAL' | 'GROWTH' | 'PRO' | 'ELITE';
+type PlanCode = 'FREE' | 'STARTER' | 'ESSENTIAL' | 'GROWTH' | 'PRO' | 'ELITE' | 'PREMIUM';
 type PlanPaymentStatus =
   | 'PENDING_SELECTION'
   | 'AWAITING_PROOF'
@@ -27,6 +27,7 @@ const PLAN_FALLBACKS: Record<
   ELITE: { visibilityWeight: 5, maxListings: 9999, priceCents: 29900 }, // R299/month
   ESSENTIAL: { visibilityWeight: 2, maxListings: 7, priceCents: 9900 },
   GROWTH: { visibilityWeight: 3, maxListings: 15, priceCents: 19900 },
+  PREMIUM: { visibilityWeight: 5, maxListings: 9999, priceCents: 39900 },
 };
 
 @Injectable()

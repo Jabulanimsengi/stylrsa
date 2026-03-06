@@ -761,9 +761,152 @@
     margin-top: 4px;
   }
 
+  /* ── Existing last rule ─────────────────────────────── */
   .salonCard.compact .promotedLabel {
     font-size: 0.55rem;
     padding: 2px 5px;
     margin-top: 4px;
   }
+}
+
+/* ═══════════════════════════════════════════════════════
+   TRUST-SIGNAL ADDITIONS
+   ═══════════════════════════════════════════════════════ */
+
+/* Open / Closed badge — bottom-left overlay on image */
+.availabilityBadge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.openBadge {
+  background: rgba(16, 185, 129, 0.9);
+  color: #fff;
+}
+
+.closedBadge {
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.availabilityDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.openBadge .availabilityDot {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+/* Visual star row under salon name */
+.starRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.starFilled {
+  color: #f59e0b;
+  font-size: 0.72rem;
+}
+
+.starEmpty {
+  color: #d1d5db;
+  font-size: 0.72rem;
+}
+
+.starCount {
+  font-size: 0.7rem;
+  color: var(--color-text-muted, #888);
+  margin-left: 3px;
+}
+
+/* Category tag chips */
+.categoryTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.categoryTag {
+  display: inline-block;
+  padding: 2px 7px;
+  background: var(--color-surface-subtle, #f5f5f5);
+  color: var(--color-text-muted, #666);
+  border-radius: 50px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid var(--color-border, #e8e8e8);
+}
+
+/* Card footer: price chip + distance */
+.cardFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+  flex-wrap: wrap;
+}
+
+.startingPrice {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-primary, #c2228a);
+}
+
+/* Heart beat on favourite toggle */
+@keyframes heartPop {
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.4);
+  }
+
+  70% {
+    transform: scale(0.9);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.favoriteButton.favorited {
+  animation: heartPop 0.35s ease;
 }

@@ -56,6 +56,8 @@ import {
   EmptyState,
 } from '@/components/ui';
 import StatusBadge from '@/components/StatusBadge';
+import RejectReasonModal from '@/components/RejectReasonModal/RejectReasonModal';
+
 
 export default function AdminPage() {
   const { data: session } = useSession();
@@ -112,6 +114,12 @@ export default function AdminPage() {
   const [updatingSellerPlanId, setUpdatingSellerPlanId] = useState<string | null>(null);
   // Collapsible items - track which items are expanded
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  // Reject Promotion modal state
+  const [rejectPromoModalOpen, setRejectPromoModalOpen] = useState(false);
+  const [rejectingPromotionId, setRejectingPromotionId] = useState<string | null>(null);
+  const [isRejectingPromo, setIsRejectingPromo] = useState(false);
+
 
   // Computed: Count salons with pending payment verification
   const pendingPaymentSalons = useMemo(() => allSalons.filter(s => s.planPaymentStatus === 'PROOF_SUBMITTED'), [allSalons]);
@@ -681,13 +689,17 @@ export default function AdminPage() {
       router.push('/login');
       return;
     }
+    // Open modal to collect reason
+    setRejectingPromotionId(promotionId);
+    setRejectPromoModalOpen(true);
+  };
 
-    const reason = window.prompt('Enter reason for rejection (optional):');
-    if (reason === null) return; // User cancelled
-
+  const confirmRejectPromotion = async (reason: string) => {
+    if (!rejectingPromotionId) return;
+    setIsRejectingPromo(true);
     try {
       const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
-      const res = await fetch(`/api/promotions/${promotionId}/reject`, {
+      const res = await fetch(`/api/promotions/${rejectingPromotionId}/reject`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         credentials: 'include',
@@ -700,11 +712,16 @@ export default function AdminPage() {
       }
 
       toast.success('Promotion rejected');
-      setPendingPromotions(pendingPromotions.filter(p => p.id !== promotionId));
+      setPendingPromotions(pendingPromotions.filter(p => p.id !== rejectingPromotionId));
     } catch (error) {
       toast.error(toFriendlyMessage(error, 'Failed to reject promotion'));
+    } finally {
+      setIsRejectingPromo(false);
+      setRejectPromoModalOpen(false);
+      setRejectingPromotionId(null);
     }
   };
+
 
   const confirmDeleteSalon = async () => {
     if (!deletingSalon || isDeleting) return;
@@ -906,1263 +923,1279 @@ export default function AdminPage() {
   };
 
   return (
-    <AdminLayout
-      currentView={view}
-      onViewChange={handleViewChange}
-      pendingCounts={pendingCounts}
-    >
-      {/* Dashboard View */}
-      {view === 'dashboard' && (
-        <AdminDashboard
-          metrics={dashboardMetrics}
-          onNavigate={handleViewChange}
-        />
-      )}
+    <>
+      {/* Reject Promotion Modal */}
+      <RejectReasonModal
+        isOpen={rejectPromoModalOpen}
+        title="Reject Promotion"
+        subtitle="Provide a reason for rejecting this promotion. This will be shared with the salon owner."
+        placeholder="e.g. Misleading discount, invalid service listed..."
+        required={false}
+        onConfirm={confirmRejectPromotion}
+        onCancel={() => { setRejectPromoModalOpen(false); setRejectingPromotionId(null); }}
+        isLoading={isRejectingPromo}
+        confirmLabel="Reject Promotion"
+      />
 
-      <div className={styles.list}>
-        {view === 'salons' && (
-          <>
-            {/* Filter and bulk actions bar */}
-            <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-              <input
-                type="text"
-                value={salonFilter}
-                onChange={e => setSalonFilter(e.target.value)}
-                placeholder="Filter by name, email, city..."
-                className={styles.searchInput}
-                style={{ minWidth: '200px', maxWidth: '300px' }}
-              />
-              {pendingSalons.length > 0 && (
-                <>
-                  <input type="checkbox" checked={selSalons.size === filteredPendingSalons.length && filteredPendingSalons.length > 0} onChange={e => setSelSalons(e.target.checked ? new Set(filteredPendingSalons.map(s => s.id)) : new Set())} />
-                  <span>Select all ({filteredPendingSalons.length})</span>
-                  <button className={styles.approveButton} disabled={selSalons.size === 0} onClick={() => bulkUpdate('salon', Array.from(selSalons), 'APPROVED')}>Approve selected</button>
-                  <button className={styles.rejectButton} disabled={selSalons.size === 0} onClick={() => bulkUpdate('salon', Array.from(selSalons), 'REJECTED')}>Reject selected</button>
-                </>
-              )}
-            </div>
-            {filteredPendingSalons.length > 0 ? filteredPendingSalons.map((salon) => {
-              const planCode = (salon.planCode ?? 'FREE') as PlanCode;
-              const plan = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
-              const amountDue =
-                typeof salon.planPriceCents === 'number'
-                  ? formatRand(salon.planPriceCents)
-                  : plan.price;
-              const paymentStatus = (salon.planPaymentStatus ??
-                'PENDING_SELECTION') as PlanPaymentStatus;
-              const isFree = planCode === 'FREE';
-              const proofSubmittedAt = salon.planProofSubmittedAt
-                ? new Date(salon.planProofSubmittedAt).toLocaleString('en-ZA')
-                : null;
-              const verifiedAt = salon.planVerifiedAt
-                ? new Date(salon.planVerifiedAt).toLocaleString('en-ZA')
-                : null;
-              const isUpdating = updatingSalonPlanId === salon.id;
-              const reference = salon.planPaymentReference ?? salon.name;
-              const isExpanded = expandedItems.has(salon.id);
-              const location = [salon.city, salon.province].filter(Boolean).join(', ') || 'Location not set';
+      <AdminLayout
+        currentView={view}
+        onViewChange={handleViewChange}
+        pendingCounts={pendingCounts}
+      >
 
-              return (
-                <div key={salon.id} className={styles.collapsibleItem}>
-                  {/* Collapsible Header - always visible */}
-                  <div
-                    className={styles.collapsibleHeader}
-                    onClick={() => toggleExpanded(salon.id)}
-                  >
-                    <div className={styles.collapsibleHeaderLeft}>
-                      <input
-                        type="checkbox"
-                        className={styles.collapsibleCheckbox}
-                        checked={selSalons.has(salon.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => {
-                          const ns = new Set(selSalons);
-                          if (e.target.checked) ns.add(salon.id);
-                          else ns.delete(salon.id);
-                          setSelSalons(ns);
-                        }}
-                      />
-                      <span className={styles.collapsibleName} title={salon.name}>{salon.name}</span>
-                      <span className={styles.collapsibleLocation} title={location}>{location}</span>
-                    </div>
-                    <div className={styles.collapsibleHeaderRight}>
-                      <span className={`${styles.collapsibleStatus} ${isFree ? styles.free : styles.pending}`}>
-                        {isFree ? 'FREE' : 'Pending'}
-                      </span>
-                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
-                    </div>
-                  </div>
-
-                  {/* Collapsible Content - shown when expanded */}
-                  {isExpanded && (
-                    <div className={styles.collapsibleContent}>
-                      <div className={styles.info}>
-                        <h4>{salon.name}</h4>
-                        <p>Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email})</p>
-                        <div className={styles.planInfo}>
-                          <div className={styles.planInfoRow}>
-                            <span><strong>Package:</strong> {plan.name}</span>
-                            <span><strong>Amount due:</strong> {isFree ? 'R0' : amountDue}</span>
-                            <span>
-                              <strong>Status:</strong>{' '}
-                              {isFree ? (
-                                <span className={`${styles.planBadge} ${styles[`planStatus_verified`]}`}>No payment required</span>
-                              ) : (
-                                <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`}>
-                                  {PLAN_PAYMENT_LABELS[paymentStatus]}
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                          {!isFree && (
-                            <>
-                              <div className={styles.planInfoRow}>
-                                <span>
-                                  <strong>Reference:</strong>{' '}
-                                  <code className={styles.planReference}>{reference}</code>
-                                  <button
-                                    type="button"
-                                    className={styles.copyButton}
-                                    onClick={() => copyToClipboard(reference, 'Reference copied')}
-                                  >
-                                    Copy
-                                  </button>
-                                </span>
-                                {proofSubmittedAt && <span>Proof submitted: {proofSubmittedAt}</span>}
-                                {verifiedAt && <span>Verified on: {verifiedAt}</span>}
-                              </div>
-                              <div className={styles.planAdminActions}>
-                                <button
-                                  type="button"
-                                  className={styles.approveButton}
-                                  onClick={() => updateSalonPaymentStatus(salon.id, 'VERIFIED')}
-                                  disabled={isUpdating || paymentStatus === 'VERIFIED'}
-                                >
-                                  {isUpdating && paymentStatus !== 'VERIFIED' ? 'Saving…' : 'Mark verified'}
-                                </button>
-                                <button
-                                  type="button"
-                                  className={styles.approveButton}
-                                  onClick={() => updateSalonPaymentStatus(salon.id, 'PROOF_SUBMITTED')}
-                                  disabled={isUpdating || paymentStatus === 'PROOF_SUBMITTED'}
-                                >
-                                  {isUpdating && paymentStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof received'}
-                                </button>
-                                <button
-                                  type="button"
-                                  className={styles.rejectButton}
-                                  onClick={() => updateSalonPaymentStatus(salon.id, 'AWAITING_PROOF')}
-                                  disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
-                                >
-                                  {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Awaiting proof'}
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className={styles.actions}>
-                        <Link href={`/dashboard?ownerId=${salon.owner.id}`} className="btn btn-secondary">View Dashboard</Link>
-                        <button onClick={() => handleUpdateStatus('salon', salon.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
-                        <button onClick={() => handleUpdateStatus('salon', salon.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            }) : <p>No pending salons.</p>}
-          </>
+        {/* Dashboard View */}
+        {view === 'dashboard' && (
+          <AdminDashboard
+            metrics={dashboardMetrics}
+            onNavigate={handleViewChange}
+          />
         )}
 
-        {view === 'all-salons' && (
-          <>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name/email/plan" style={{ padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8, minWidth: 260 }} />
-              <button className={styles.approveButton} onClick={() => {
-                const name = window.prompt('Save current search as view name:');
-                if (!name) return;
-                const next = [...savedViews, { name, query: search }];
-                setSavedViews(next);
-                try { localStorage.setItem('admin-saved-views', JSON.stringify(next)); } catch { }
-              }}>Save view</button>
-              {savedViews.length > 0 && (
-                <select onChange={e => setSearch(savedViews.find(v => v.name === e.target.value)?.query ?? '')} defaultValue="">
-                  <option value="" disabled>Load view…</option>
-                  {savedViews.map(v => <option key={v.name} value={v.name}>{v.name}</option>)}
-                </select>
-              )}
-            </div>
-            {filteredAllSalons.length > 0 ? filteredAllSalons.map(salon => (
-              <div key={salon.id} className={styles.listItem}>
-                <div className={styles.info}>
-                  <h4>{salon.name}</h4>
-                  <p>Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email}) | Status: {salon.approvalStatus}</p>
-                  <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    {editingSalonId !== salon.id ? (
-                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span><strong>Package:</strong> {salon.planCode ?? '—'}</span>
-                        <span><strong>Visibility:</strong> {salon.visibilityWeight ?? '—'}</span>
-                        <span><strong>Max listings:</strong> {salon.maxListings ?? '—'}</span>
-                        <span><strong>Featured until:</strong> {salon.featuredUntil ? new Date(salon.featuredUntil).toLocaleString() : '—'}</span>
-                        <button
-                          className={styles.approveButton}
-                          onClick={() => {
-                            setEditingSalonId(salon.id);
-                            setDraftPlan((salon.planCode ?? 'STARTER').toUpperCase());
-                            setDraftWeight(String(salon.visibilityWeight ?? ''));
-                            setDraftMax(String(salon.maxListings ?? ''));
-                            setDraftFeatured(salon.featuredUntil ? new Date(salon.featuredUntil).toISOString().slice(0, 16) : '');
+        <div className={styles.list}>
+          {view === 'salons' && (
+            <>
+              {/* Filter and bulk actions bar */}
+              <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  value={salonFilter}
+                  onChange={e => setSalonFilter(e.target.value)}
+                  placeholder="Filter by name, email, city..."
+                  className={styles.searchInput}
+                  style={{ minWidth: '200px', maxWidth: '300px' }}
+                />
+                {pendingSalons.length > 0 && (
+                  <>
+                    <input type="checkbox" checked={selSalons.size === filteredPendingSalons.length && filteredPendingSalons.length > 0} onChange={e => setSelSalons(e.target.checked ? new Set(filteredPendingSalons.map(s => s.id)) : new Set())} />
+                    <span>Select all ({filteredPendingSalons.length})</span>
+                    <button className={styles.approveButton} disabled={selSalons.size === 0} onClick={() => bulkUpdate('salon', Array.from(selSalons), 'APPROVED')}>Approve selected</button>
+                    <button className={styles.rejectButton} disabled={selSalons.size === 0} onClick={() => bulkUpdate('salon', Array.from(selSalons), 'REJECTED')}>Reject selected</button>
+                  </>
+                )}
+              </div>
+              {filteredPendingSalons.length > 0 ? filteredPendingSalons.map((salon) => {
+                const planCode = (salon.planCode ?? 'FREE') as PlanCode;
+                const plan = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
+                const amountDue =
+                  typeof salon.planPriceCents === 'number'
+                    ? formatRand(salon.planPriceCents)
+                    : plan.price;
+                const paymentStatus = (salon.planPaymentStatus ??
+                  'PENDING_SELECTION') as PlanPaymentStatus;
+                const isFree = planCode === 'FREE';
+                const proofSubmittedAt = salon.planProofSubmittedAt
+                  ? new Date(salon.planProofSubmittedAt).toLocaleString('en-ZA')
+                  : null;
+                const verifiedAt = salon.planVerifiedAt
+                  ? new Date(salon.planVerifiedAt).toLocaleString('en-ZA')
+                  : null;
+                const isUpdating = updatingSalonPlanId === salon.id;
+                const reference = salon.planPaymentReference ?? salon.name;
+                const isExpanded = expandedItems.has(salon.id);
+                const location = [salon.city, salon.province].filter(Boolean).join(', ') || 'Location not set';
+
+                return (
+                  <div key={salon.id} className={styles.collapsibleItem}>
+                    {/* Collapsible Header - always visible */}
+                    <div
+                      className={styles.collapsibleHeader}
+                      onClick={() => toggleExpanded(salon.id)}
+                    >
+                      <div className={styles.collapsibleHeaderLeft}>
+                        <input
+                          type="checkbox"
+                          className={styles.collapsibleCheckbox}
+                          checked={selSalons.has(salon.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            const ns = new Set(selSalons);
+                            if (e.target.checked) ns.add(salon.id);
+                            else ns.delete(salon.id);
+                            setSelSalons(ns);
                           }}
-                        >Edit</button>
+                        />
+                        <span className={styles.collapsibleName} title={salon.name}>{salon.name}</span>
+                        <span className={styles.collapsibleLocation} title={location}>{location}</span>
                       </div>
-                    ) : (
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <label>Package</label>
-                        <select value={draftPlan} onChange={e => setDraftPlan(e.target.value)} style={{ padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }}>
-                          {APP_PLANS.map((plan) => (
-                            <option key={plan.code} value={plan.code}>
-                              {plan.name} ({plan.visibilityWeight}x visibility)
-                            </option>
-                          ))}
-                        </select>
-                        <label>Weight</label>
-                        <input value={draftWeight} onChange={e => setDraftWeight(e.target.value)} type="number" min={1} placeholder="visibility" style={{ width: 90, padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
-                        <label>Max listings</label>
-                        <input value={draftMax} onChange={e => setDraftMax(e.target.value)} type="number" min={1} placeholder="max" style={{ width: 90, padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
-                        <label>Featured until</label>
-                        <input value={draftFeatured} onChange={e => setDraftFeatured(e.target.value)} type="datetime-local" style={{ padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
-                        <button
-                          className={styles.approveButton}
-                          onClick={async () => {
-                            // Start with explicit new plans, but also allow whatever is in APP_PLANS dynamic list
-                            const allowedPlans = APP_PLANS.map(p => p.code);
-                            const normalizedPlan = (draftPlan ?? '').toUpperCase();
-                            const visibilityWeight = Number(draftWeight);
-                            const maxListings = Number(draftMax);
-                            const featuredUntil = draftFeatured;
-                            const body: Record<string, unknown> = {};
-                            if (allowedPlans.includes(normalizedPlan as typeof allowedPlans[number])) {
-                              body.planCode = normalizedPlan;
-                            }
-                            if (!Number.isNaN(visibilityWeight) && draftWeight !== '') body.visibilityWeight = visibilityWeight;
-                            if (!Number.isNaN(maxListings) && draftMax !== '') body.maxListings = maxListings;
-                            // Always send featuredUntil to allow clearing on server (null when empty)
-                            body.featuredUntil = featuredUntil ? new Date(featuredUntil).toISOString() : null;
-                            const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
-                            const r = await fetch(`/api/admin/salons/${salon.id}/plan`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...authHeaders }, credentials: 'include', body: JSON.stringify(body) });
-                            if (r.ok) {
-                              const updated = await r.json();
-                              toast.success('Visibility updated');
-                              // Trust server response to avoid client drift
-                              setAllSalons(prev => prev.map(s => s.id === salon.id ? {
-                                ...s,
-                                planCode: (updated?.planCode ?? body.planCode ?? s.planCode) as typeof s.planCode,
-                                visibilityWeight: updated?.visibilityWeight ?? (body.visibilityWeight as number | undefined) ?? s.visibilityWeight,
-                                maxListings: updated?.maxListings ?? (body.maxListings as number | undefined) ?? s.maxListings,
-                                featuredUntil: updated?.featuredUntil ?? (body.featuredUntil as string | null) ?? null,
-                              } : s));
-                              setEditingSalonId(null);
-                              // Re-fetch from server to ensure persistence and avoid stale UI
-                              try {
-                                const allRes = await fetch(`/api/admin/salons/all?ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' as any, headers: authHeaders });
-                                if (allRes.ok) {
-                                  const fresh = ensureArray<PendingSalon>(await allRes.json());
-                                  setAllSalons(fresh);
-                                }
-                              } catch { }
-                            } else {
-                              const errText = await r.text().catch(() => '');
-                              toast.error(`Failed to update (${r.status}). ${errText}`);
-                            }
-                          }}
-                        >Save</button>
-                        <button className={styles.rejectButton} onClick={() => setEditingSalonId(null)}>Cancel</button>
+                      <div className={styles.collapsibleHeaderRight}>
+                        <span className={`${styles.collapsibleStatus} ${isFree ? styles.free : styles.pending}`}>
+                          {isFree ? 'FREE' : 'Pending'}
+                        </span>
+                        <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                      </div>
+                    </div>
+
+                    {/* Collapsible Content - shown when expanded */}
+                    {isExpanded && (
+                      <div className={styles.collapsibleContent}>
+                        <div className={styles.info}>
+                          <h4>{salon.name}</h4>
+                          <p>Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email})</p>
+                          <div className={styles.planInfo}>
+                            <div className={styles.planInfoRow}>
+                              <span><strong>Package:</strong> {plan.name}</span>
+                              <span><strong>Amount due:</strong> {isFree ? 'R0' : amountDue}</span>
+                              <span>
+                                <strong>Status:</strong>{' '}
+                                {isFree ? (
+                                  <span className={`${styles.planBadge} ${styles[`planStatus_verified`]}`}>No payment required</span>
+                                ) : (
+                                  <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`}>
+                                    {PLAN_PAYMENT_LABELS[paymentStatus]}
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                            {!isFree && (
+                              <>
+                                <div className={styles.planInfoRow}>
+                                  <span>
+                                    <strong>Reference:</strong>{' '}
+                                    <code className={styles.planReference}>{reference}</code>
+                                    <button
+                                      type="button"
+                                      className={styles.copyButton}
+                                      onClick={() => copyToClipboard(reference, 'Reference copied')}
+                                    >
+                                      Copy
+                                    </button>
+                                  </span>
+                                  {proofSubmittedAt && <span>Proof submitted: {proofSubmittedAt}</span>}
+                                  {verifiedAt && <span>Verified on: {verifiedAt}</span>}
+                                </div>
+                                <div className={styles.planAdminActions}>
+                                  <button
+                                    type="button"
+                                    className={styles.approveButton}
+                                    onClick={() => updateSalonPaymentStatus(salon.id, 'VERIFIED')}
+                                    disabled={isUpdating || paymentStatus === 'VERIFIED'}
+                                  >
+                                    {isUpdating && paymentStatus !== 'VERIFIED' ? 'Saving…' : 'Mark verified'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={styles.approveButton}
+                                    onClick={() => updateSalonPaymentStatus(salon.id, 'PROOF_SUBMITTED')}
+                                    disabled={isUpdating || paymentStatus === 'PROOF_SUBMITTED'}
+                                  >
+                                    {isUpdating && paymentStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof received'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={styles.rejectButton}
+                                    onClick={() => updateSalonPaymentStatus(salon.id, 'AWAITING_PROOF')}
+                                    disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
+                                  >
+                                    {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Awaiting proof'}
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className={styles.actions}>
+                          <Link href={`/dashboard?ownerId=${salon.owner.id}`} className="btn btn-secondary">View Dashboard</Link>
+                          <button onClick={() => handleUpdateStatus('salon', salon.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
+                          <button onClick={() => handleUpdateStatus('salon', salon.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
+                        </div>
                       </div>
                     )}
                   </div>
-                </div>
-                <div className={styles.actions}>
-                  <Link href={`/dashboard?ownerId=${salon.owner.id}`} className="btn btn-secondary">View Dashboard</Link>
-                  <button
-                    className={salon.isVerified ? styles.approveButton : styles.rejectButton}
-                    onClick={async () => {
-                      const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
-                      try {
-                        const r = await fetch(`/api/admin/salons/${salon.id}/verification`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json', ...authHeaders },
-                          credentials: 'include',
-                        });
-                        if (r.ok) {
-                          const updated = await r.json();
-                          toast.success(`Salon ${updated.isVerified ? 'verified' : 'unverified'}`);
-                          setAllSalons(prev => prev.map(s => s.id === salon.id ? { ...s, isVerified: updated.isVerified } : s));
-                          // Re-fetch to ensure consistency
-                          try {
-                            const allRes = await fetch(`/api/admin/salons/all?ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' as any, headers: authHeaders });
-                            if (allRes.ok) {
-                              const fresh = ensureArray<PendingSalon>(await allRes.json());
-                              setAllSalons(fresh);
-                            }
-                          } catch { }
-                        } else {
-                          const errText = await r.text().catch(() => '');
-                          toast.error(`Failed to update verification (${r.status}). ${errText}`);
-                        }
-                      } catch (error) {
-                        toast.error('Error updating verification');
-                      }
-                    }}
-                    title={salon.isVerified ? 'Remove verification' : 'Verify service provider'}
-                  >
-                    {salon.isVerified ? '✓ Verified' : 'Verify'}
-                  </button>
-                  <button
-                    className={styles.rejectButton}
-                    onClick={() => openDeleteSalonModal(salon)}
-                    title="Delete provider profile"
-                  >Delete Profile</button>
-                </div>
-              </div>
-            )) : <p>No salons found.</p>}
-          </>
-        )}
+                );
+              }) : <p>No pending salons.</p>}
+            </>
+          )}
 
-        {view === 'featured-salons' && (
-          <>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h3 style={{ marginBottom: '1rem' }}>Currently Featured Salons</h3>
-              {featuredSalons.length > 0 ? (
-                featuredSalons.map((salon) => (
-                  <div key={salon.id} className={styles.listItem}>
-                    <div className={styles.info}>
-                      <h4>{salon.name}</h4>
-                      <p>{salon.city}, {salon.province}</p>
-                      <p style={{ fontSize: '0.875rem', color: '#666' }}>
-                        Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email})
-                      </p>
-                      <p style={{ fontSize: '0.875rem', color: '#666' }}>
-                        Featured until: {salon.featuredUntil ? new Date(salon.featuredUntil).toLocaleDateString() : 'N/A'}
-                      </p>
-                    </div>
-                    <div className={styles.actions}>
-                      <button
-                        onClick={() => unfeatureSalon(salon.id)}
-                        className={styles.rejectButton}
-                      >
-                        Unfeature
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p>No salons are currently featured.</p>
-              )}
-            </div>
-
-            <div>
-              <h3 style={{ marginBottom: '1rem' }}>Feature a Salon</h3>
-              <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <label>
-                  Duration (days):
-                  <select
-                    value={featureDuration}
-                    onChange={(e) => setFeatureDuration(Number(e.target.value))}
-                    style={{ marginLeft: '0.5rem', padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }}
-                  >
-                    <option value={7}>7 days</option>
-                    <option value={14}>14 days</option>
-                    <option value={30}>30 days</option>
-                    <option value={60}>60 days</option>
-                    <option value={90}>90 days</option>
+          {view === 'all-salons' && (
+            <>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name/email/plan" style={{ padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8, minWidth: 260 }} />
+                <button className={styles.approveButton} onClick={() => {
+                  const name = window.prompt('Save current search as view name:');
+                  if (!name) return;
+                  const next = [...savedViews, { name, query: search }];
+                  setSavedViews(next);
+                  try { localStorage.setItem('admin-saved-views', JSON.stringify(next)); } catch { }
+                }}>Save view</button>
+                {savedViews.length > 0 && (
+                  <select onChange={e => setSearch(savedViews.find(v => v.name === e.target.value)?.query ?? '')} defaultValue="">
+                    <option value="" disabled>Load view…</option>
+                    {savedViews.map(v => <option key={v.name} value={v.name}>{v.name}</option>)}
                   </select>
-                </label>
+                )}
               </div>
-              {availableSalons.length > 0 ? (
-                availableSalons.map((salon) => (
-                  <div key={salon.id} className={styles.listItem}>
-                    <div className={styles.info}>
-                      <h4>{salon.name}</h4>
-                      <p>{salon.city}, {salon.province}</p>
-                      <p style={{ fontSize: '0.875rem', color: '#666' }}>
-                        Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email})
-                      </p>
-                      <p style={{ fontSize: '0.875rem', color: '#666' }}>
-                        Plan: {salon.planCode || 'N/A'}
-                      </p>
-                    </div>
-                    <div className={styles.actions}>
-                      <button
-                        onClick={() => featureSalon(salon.id, featureDuration)}
-                        className={styles.approveButton}
-                      >
-                        Feature for {featureDuration} days
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p>No approved salons available to feature.</p>
-              )}
-            </div>
-          </>
-        )}
-
-        {view === 'deleted-salons' && (
-          deletedSalons.length > 0 ? deletedSalons.map((row: any) => (
-            <div key={row.id} className={styles.listItem}>
-              <div className={styles.info}>
-                <h4>{row.salon?.name ?? 'Unknown name'}</h4>
-                <p>Deleted at: {row.deletedAt ? new Date(row.deletedAt).toLocaleString() : ''} {row.reason ? `| Reason: ${row.reason}` : ''}</p>
-              </div>
-              <div className={styles.actions}>
-                <button className={styles.approveButton} onClick={() => restoreDeletedSalon(row.id)}>Restore</button>
-              </div>
-            </div>
-          )) : <p>No deleted profiles.</p>
-        )}
-        {view === 'all-sellers' && (
-          <>
-            {/* Filter bar for sellers */}
-            <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-              <input
-                type="text"
-                value={sellerFilter}
-                onChange={e => setSellerFilter(e.target.value)}
-                placeholder="Filter by name, email, business..."
-                className={styles.searchInput}
-                style={{ minWidth: '200px', maxWidth: '300px' }}
-              />
-              <span style={{ color: '#666', fontSize: '0.85rem' }}>Showing {filteredAllSellers.length} of {allSellers.length}</span>
-            </div>
-            {filteredAllSellers.length > 0 ? filteredAllSellers.map((seller) => {
-              const planCode = (seller.sellerPlanCode ?? 'FREE') as PlanCode;
-              const plan = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
-              const amountDue =
-                typeof seller.sellerPlanPriceCents === 'number'
-                  ? formatRand(seller.sellerPlanPriceCents)
-                  : plan.price;
-              const paymentStatus = (seller.sellerPlanPaymentStatus ?? 'PENDING_SELECTION') as PlanPaymentStatus;
-              const proofSubmittedAt = seller.sellerPlanProofSubmittedAt
-                ? new Date(seller.sellerPlanProofSubmittedAt).toLocaleString('en-ZA')
-                : null;
-              const verifiedAt = seller.sellerPlanVerifiedAt
-                ? new Date(seller.sellerPlanVerifiedAt).toLocaleString('en-ZA')
-                : null;
-              const reference = seller.sellerPlanPaymentReference ?? seller.email;
-              const isUpdating = updatingSellerPlanId === seller.id;
-              const approvalStatus = (seller.sellerApprovalStatus ?? 'PENDING') as ApprovalStatus;
-              const businessName = seller.sellerBusinessName || 'Not set up';
-              const profileSubmittedAt = seller.sellerProfileSubmittedAt
-                ? new Date(seller.sellerProfileSubmittedAt).toLocaleString('en-ZA')
-                : null;
-              const isExpanded = expandedItems.has(`seller-${seller.id}`);
-              const sellerName = `${seller.firstName || ''} ${seller.lastName || ''}`.trim() || seller.email;
-              const isFree = planCode === 'FREE';
-
-              return (
-                <div key={seller.id} className={styles.collapsibleItem}>
-                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`seller-${seller.id}`)}>
-                    <div className={styles.collapsibleHeaderLeft}>
-                      <span className={styles.collapsibleName} title={sellerName}>{sellerName}</span>
-                      <span className={styles.collapsibleLocation} title={businessName}>{businessName}</span>
-                    </div>
-                    <div className={styles.collapsibleHeaderRight}>
-                      <span className={`${styles.collapsibleStatus} ${styles[approvalStatus.toLowerCase()]}`}>
-                        {approvalStatus}
-                      </span>
-                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
-                    </div>
-                  </div>
-                  {isExpanded && (
-                    <div className={styles.collapsibleContent}>
-                      <div className={styles.info}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                          <div>
-                            <h4>{seller.firstName} {seller.lastName}</h4>
-                            <p>Email: {seller.email}</p>
-                          </div>
-                          {(approvalStatus === 'PENDING' || approvalStatus === 'REJECTED') && (
-                            <span className={`${styles.statusBadge} ${styles[approvalStatus.toLowerCase()]}`}>
-                              Profile: {approvalStatus}
-                            </span>
-                          )}
-                        </div>
-
-                        <div style={{ background: '#f5f5f5', padding: '0.75rem', borderRadius: '8px', marginBottom: '0.75rem', fontSize: '0.9rem' }}>
-                          <p><strong>Business:</strong> {businessName}</p>
-                          <p><strong>Contact:</strong> {seller.sellerContactPerson} | {seller.sellerContactPhone}</p>
-                          <p><strong>Address:</strong> {seller.sellerPhysicalAddress}</p>
-                          <p><strong>Service Areas:</strong> {seller.sellerProvincesServed?.join(', ') || 'None'}</p>
-                          {profileSubmittedAt && <p style={{ marginTop: '0.25rem', color: '#666' }}>Updated: {profileSubmittedAt}</p>}
-
-                          {approvalStatus === 'PENDING' && (
-                            <div className={styles.actions} style={{ marginTop: '0.5rem' }}>
-                              <button
-                                className={styles.approveButton}
-                                onClick={() => updateSellerApprovalStatus(seller.id, 'APPROVED')}
-                              >
-                                Approve Profile
-                              </button>
-                              <button
-                                className={styles.rejectButton}
-                                onClick={() => updateSellerApprovalStatus(seller.id, 'REJECTED')}
-                              >
-                                Reject Profile
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        <p>Products: {seller.productsCount ?? 0} (Pending: {seller.pendingProductsCount ?? 0})</p>
-
-                        <div className={styles.planInfo}>
-                          <div className={styles.planInfoRow}>
-                            <span><strong>Package:</strong> {plan.name}</span>
-                            <span><strong>Amount due:</strong> {amountDue}</span>
-                            <span>
-                              <strong>Payment:</strong>{' '}
-                              <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`}>
-                                {PLAN_PAYMENT_LABELS[paymentStatus]}
-                              </span>
-                            </span>
-                          </div>
-                          <div className={styles.planInfoRow}>
-                            <span>
-                              <strong>Reference:</strong>{' '}
-                              <code className={styles.planReference}>{reference}</code>
-                              <button
-                                type="button"
-                                className={styles.copyButton}
-                                onClick={() => copyToClipboard(reference, 'Reference copied')}
-                              >
-                                Copy
-                              </button>
-                            </span>
-                            {proofSubmittedAt && <span>Proof submitted: {proofSubmittedAt}</span>}
-                            {verifiedAt && <span>Verified on: {verifiedAt}</span>}
-                          </div>
-                          <div className={styles.planAdminActions}>
-                            <button
-                              type="button"
-                              className={styles.approveButton}
-                              onClick={() => updateSellerPaymentStatus(seller.id, 'VERIFIED')}
-                              disabled={isUpdating || paymentStatus === 'VERIFIED'}
-                            >
-                              {isUpdating && paymentStatus !== 'VERIFIED' ? 'Saving…' : 'Mark Payment Verified'}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.approveButton}
-                              onClick={() => updateSellerPaymentStatus(seller.id, 'PROOF_SUBMITTED')}
-                              disabled={isUpdating || paymentStatus === 'PROOF_SUBMITTED'}
-                            >
-                              {isUpdating && paymentStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof Received'}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.rejectButton}
-                              onClick={() => updateSellerPaymentStatus(seller.id, 'AWAITING_PROOF')}
-                              disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
-                            >
-                              {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Unverify Payment'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                      <div className={styles.actions}>
-                        <button
-                          onClick={() => openDeleteSellerModal(seller.id, `${seller.firstName} ${seller.lastName}`.trim() || seller.email)}
-                          className={styles.rejectButton}
-                          title="Delete seller"
-                        >
-                          Delete Seller
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            }) : <p>No sellers found.</p>}
-          </>
-        )}
-
-        {view === 'services' && (
-          <>
-            {/* Filter and bulk actions bar */}
-            <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-              <input
-                type="text"
-                value={serviceFilter}
-                onChange={e => setServiceFilter(e.target.value)}
-                placeholder="Filter by service title or salon..."
-                className={styles.searchInput}
-                style={{ minWidth: '200px', maxWidth: '300px' }}
-              />
-              {pendingServices.length > 0 && (
-                <>
-                  <input type="checkbox" checked={selServices.size === filteredPendingServices.length && filteredPendingServices.length > 0} onChange={e => setSelServices(e.target.checked ? new Set(filteredPendingServices.map(s => s.id)) : new Set())} />
-                  <span>Select all ({filteredPendingServices.length})</span>
-                  <button className={styles.approveButton} disabled={selServices.size === 0} onClick={() => bulkUpdate('service', Array.from(selServices), 'APPROVED')}>Approve selected</button>
-                  <button className={styles.rejectButton} disabled={selServices.size === 0} onClick={() => bulkUpdate('service', Array.from(selServices), 'REJECTED')}>Reject selected</button>
-                </>
-              )}
-            </div>
-            {filteredPendingServices.length > 0 ? filteredPendingServices.map(service => {
-              const isExpanded = expandedItems.has(service.id);
-              return (
-                <div key={service.id} className={styles.collapsibleItem}>
-                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(service.id)}>
-                    <div className={styles.collapsibleHeaderLeft}>
-                      <input
-                        type="checkbox"
-                        className={styles.collapsibleCheckbox}
-                        checked={selServices.has(service.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => {
-                          const ns = new Set(selServices);
-                          if (e.target.checked) ns.add(service.id);
-                          else ns.delete(service.id);
-                          setSelServices(ns);
-                        }}
-                      />
-                      <span className={styles.collapsibleName} title={service.title}>{service.title}</span>
-                      <span className={styles.collapsibleLocation}>{service.salon?.name || 'Unknown Salon'}</span>
-                    </div>
-                    <div className={styles.collapsibleHeaderRight}>
-                      <span className={`${styles.collapsibleStatus} ${styles.pending}`}>Pending</span>
-                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
-                    </div>
-                  </div>
-                  {isExpanded && (
-                    <div className={styles.collapsibleContent}>
-                      <div className={styles.info}>
-                        <h4>{service.title}</h4>
-                        <p>Salon: {service.salon?.name || 'Unknown'}</p>
-                        {service.description && <p style={{ color: '#666', fontSize: '0.9rem' }}>{service.description}</p>}
-                        {service.price != null && <p><strong>Price:</strong> R{service.price.toFixed(2)}</p>}
-                        {service.duration != null && <p><strong>Duration:</strong> {service.duration} min</p>}
-                      </div>
-                      <div className={styles.actions}>
-                        <button onClick={() => handleUpdateStatus('service', service.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
-                        <button onClick={() => handleUpdateStatus('service', service.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            }) : <p>No pending services.</p>}
-          </>
-        )}
-
-        {view === 'reviews' && (
-          <>
-            {/* Filter and bulk actions bar */}
-            <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-              <input
-                type="text"
-                value={reviewFilter}
-                onChange={e => setReviewFilter(e.target.value)}
-                placeholder="Filter by reviewer, salon, comment..."
-                className={styles.searchInput}
-                style={{ minWidth: '200px', maxWidth: '300px' }}
-              />
-              {pendingReviews.length > 0 && (
-                <>
-                  <input type="checkbox" checked={selReviews.size === filteredPendingReviews.length && filteredPendingReviews.length > 0} onChange={e => setSelReviews(e.target.checked ? new Set(filteredPendingReviews.map(s => s.id)) : new Set())} />
-                  <span>Select all ({filteredPendingReviews.length})</span>
-                  <button className={styles.approveButton} disabled={selReviews.size === 0} onClick={() => bulkUpdate('review', Array.from(selReviews), 'APPROVED')}>Approve selected</button>
-                  <button className={styles.rejectButton} disabled={selReviews.size === 0} onClick={() => bulkUpdate('review', Array.from(selReviews), 'REJECTED')}>Reject selected</button>
-                </>
-              )}
-            </div>
-            {filteredPendingReviews.length > 0 ? filteredPendingReviews.map(review => {
-              const isExpanded = expandedItems.has(review.id);
-              const truncatedComment = review.comment?.length > 40 ? `${review.comment.slice(0, 40)}...` : review.comment;
-              return (
-                <div key={review.id} className={styles.collapsibleItem}>
-                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(review.id)}>
-                    <div className={styles.collapsibleHeaderLeft}>
-                      <input
-                        type="checkbox"
-                        className={styles.collapsibleCheckbox}
-                        checked={selReviews.has(review.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => {
-                          const ns = new Set(selReviews);
-                          if (e.target.checked) ns.add(review.id);
-                          else ns.delete(review.id);
-                          setSelReviews(ns);
-                        }}
-                      />
-                      <span className={styles.collapsibleName} title={review.author?.firstName}>{review.author?.firstName || 'Anonymous'} ({review.rating}★)</span>
-                      <span className={styles.collapsibleLocation} title={review.salon?.name}>{review.salon?.name || 'Unknown Salon'}</span>
-                    </div>
-                    <div className={styles.collapsibleHeaderRight}>
-                      <span className={`${styles.collapsibleStatus} ${styles.pending}`}>Pending</span>
-                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
-                    </div>
-                  </div>
-                  {isExpanded && (
-                    <div className={styles.collapsibleContent}>
-                      <div className={styles.info}>
-                        <h4>"{review.comment}" ({review.rating} ★)</h4>
-                        <p>By: {review.author?.firstName || 'Anonymous'} | For Salon: {review.salon?.name || 'Unknown'}</p>
-                        {review.createdAt && <p style={{ color: '#666', fontSize: '0.85rem' }}>Submitted: {new Date(review.createdAt).toLocaleString()}</p>}
-                      </div>
-                      <div className={styles.actions}>
-                        <button onClick={() => handleUpdateStatus('review', review.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
-                        <button onClick={() => handleUpdateStatus('review', review.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            }) : <p>No pending reviews.</p>}
-          </>
-        )}
-
-        {view === 'products' && (
-          <>
-            {/* Filter and bulk actions bar */}
-            <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-              <input
-                type="text"
-                value={productFilter}
-                onChange={e => setProductFilter(e.target.value)}
-                placeholder="Filter by product name or seller..."
-                className={styles.searchInput}
-                style={{ minWidth: '200px', maxWidth: '300px' }}
-              />
-              {pendingProducts.length > 0 && (
-                <>
-                  <input type="checkbox" checked={selProducts.size === filteredPendingProducts.length && filteredPendingProducts.length > 0} onChange={e => setSelProducts(e.target.checked ? new Set(filteredPendingProducts.map(s => s.id)) : new Set())} />
-                  <span>Select all ({filteredPendingProducts.length})</span>
-                  <button className={styles.approveButton} disabled={selProducts.size === 0} onClick={() => bulkUpdate('product', Array.from(selProducts), 'APPROVED')}>Approve selected</button>
-                  <button className={styles.rejectButton} disabled={selProducts.size === 0} onClick={() => bulkUpdate('product', Array.from(selProducts), 'REJECTED')}>Reject selected</button>
-                </>
-              )}
-            </div>
-            {filteredPendingProducts.length > 0 ? filteredPendingProducts.map((product) => {
-              const sellerPlanCode = (product.seller.sellerPlanCode ?? 'FREE') as PlanCode;
-              const plan = PLAN_BY_CODE[sellerPlanCode] ?? APP_PLANS[0];
-              const planAmount =
-                typeof product.seller.sellerPlanPriceCents === 'number'
-                  ? formatRand(product.seller.sellerPlanPriceCents)
-                  : plan.price;
-              const sellerStatus = (product.seller.sellerPlanPaymentStatus ??
-                'PENDING_SELECTION') as PlanPaymentStatus;
-              const proofSubmittedAt = product.seller.sellerPlanProofSubmittedAt
-                ? new Date(product.seller.sellerPlanProofSubmittedAt).toLocaleString('en-ZA')
-                : null;
-              const sellerVerifiedAt = product.seller.sellerPlanVerifiedAt
-                ? new Date(product.seller.sellerPlanVerifiedAt).toLocaleString('en-ZA')
-                : null;
-              const isSellerUpdating = updatingSellerPlanId === product.seller.id;
-              const sellerReference =
-                product.seller.sellerPlanPaymentReference ??
-                `${product.seller.firstName} ${product.seller.lastName}`.trim();
-              const isExpanded = expandedItems.has(product.id);
-              const isFree = sellerPlanCode === 'FREE';
-              const sellerName = `${product.seller.firstName || ''} ${product.seller.lastName || ''}`.trim() || 'Unknown Seller';
-              return (
-                <div key={product.id} className={styles.collapsibleItem}>
-                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(product.id)}>
-                    <div className={styles.collapsibleHeaderLeft}>
-                      <input
-                        type="checkbox"
-                        className={styles.collapsibleCheckbox}
-                        checked={selProducts.has(product.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => {
-                          const ns = new Set(selProducts);
-                          if (e.target.checked) ns.add(product.id);
-                          else ns.delete(product.id);
-                          setSelProducts(ns);
-                        }}
-                      />
-                      <span className={styles.collapsibleName} title={product.name}>{product.name}</span>
-                      <span className={styles.collapsibleLocation} title={sellerName}>{sellerName}</span>
-                    </div>
-                    <div className={styles.collapsibleHeaderRight}>
-                      <span className={`${styles.collapsibleStatus} ${isFree ? styles.free : styles.pending}`}>
-                        {isFree ? 'FREE' : 'Pending'}
-                      </span>
-                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
-                    </div>
-                  </div>
-                  {isExpanded && (
-                    <div className={styles.collapsibleContent}>
-                      <div className={styles.info}>
-                        <h4>{product.name}</h4>
-                        <p>Seller: {sellerName}</p>
-                        <div className={styles.planInfo}>
-                          <div className={styles.planInfoRow}>
-                            <span><strong>Package:</strong> {plan.name}</span>
-                            <span><strong>Amount due:</strong> {planAmount}</span>
-                            <span>
-                              <strong>Status:</strong>{' '}
-                              <span className={`${styles.planBadge} ${styles[`planStatus_${sellerStatus.toLowerCase()}`]}`}>
-                                {PLAN_PAYMENT_LABELS[sellerStatus]}
-                              </span>
-                            </span>
-                          </div>
-                          <div className={styles.planInfoRow}>
-                            <span>
-                              <strong>Reference:</strong>{' '}
-                              <code className={styles.planReference}>{sellerReference}</code>
-                              <button
-                                type="button"
-                                className={styles.copyButton}
-                                onClick={() => copyToClipboard(sellerReference, 'Reference copied')}
-                              >
-                                Copy
-                              </button>
-                            </span>
-                            {proofSubmittedAt && <span>Proof submitted: {proofSubmittedAt}</span>}
-                            {sellerVerifiedAt && <span>Verified on: {sellerVerifiedAt}</span>}
-                          </div>
-                          <div className={styles.planAdminActions}>
-                            <button
-                              type="button"
-                              className={styles.approveButton}
-                              onClick={() => updateSellerPaymentStatus(product.seller.id, 'VERIFIED')}
-                              disabled={isSellerUpdating || sellerStatus === 'VERIFIED'}
-                            >
-                              {isSellerUpdating && sellerStatus !== 'VERIFIED' ? 'Saving…' : 'Mark verified'}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.approveButton}
-                              onClick={() => updateSellerPaymentStatus(product.seller.id, 'PROOF_SUBMITTED')}
-                              disabled={isSellerUpdating || sellerStatus === 'PROOF_SUBMITTED'}
-                            >
-                              {isSellerUpdating && sellerStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof received'}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.rejectButton}
-                              onClick={() => updateSellerPaymentStatus(product.seller.id, 'AWAITING_PROOF')}
-                              disabled={isSellerUpdating || sellerStatus === 'AWAITING_PROOF'}
-                            >
-                              {isSellerUpdating && sellerStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Awaiting proof'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                      <div className={styles.actions}>
-                        <button onClick={() => handleUpdateStatus('product', product.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
-                        <button onClick={() => handleUpdateStatus('product', product.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
-                        <button onClick={() => openDeleteSellerModal(product.seller.id, sellerName || product.seller.id)} className={styles.rejectButton} title="Delete seller">Delete Seller</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            }) : <p>No pending products.</p>}
-          </>
-        )}
-
-        {view === 'pending-payments' && (
-          <>
-            <div style={{ marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Pending Payment Verification</h2>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-                Salons that have submitted payment proof and are awaiting admin verification.
-              </p>
-            </div>
-            {pendingPaymentSalons.length > 0 ? pendingPaymentSalons.map((salon) => {
-              const planCode = (salon.planCode ?? 'FREE') as PlanCode;
-              const plan = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
-              const planAmount =
-                typeof salon.planPriceCents === 'number'
-                  ? formatRand(salon.planPriceCents)
-                  : plan.price;
-              const paymentStatus = (salon.planPaymentStatus ?? 'PENDING_SELECTION') as PlanPaymentStatus;
-              const proofSubmittedAt = salon.planProofSubmittedAt
-                ? new Date(salon.planProofSubmittedAt).toLocaleString('en-ZA')
-                : null;
-              const verifiedAt = salon.planVerifiedAt
-                ? new Date(salon.planVerifiedAt).toLocaleString('en-ZA')
-                : null;
-              const isUpdating = updatingSalonPlanId === salon.id;
-              const paymentReference = salon.planPaymentReference ?? salon.name;
-
-              return (
-                <div key={salon.id} className={styles.listItem} style={{ background: 'var(--color-surface-elevated)', padding: '1.5rem', borderRadius: '12px', marginBottom: '1rem' }}>
+              {filteredAllSalons.length > 0 ? filteredAllSalons.map(salon => (
+                <div key={salon.id} className={styles.listItem}>
                   <div className={styles.info}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-                      <div>
-                        <h4 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>{salon.name}</h4>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-                          {salon.city}, {salon.province}
-                        </p>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                          Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email})
-                        </p>
-                      </div>
-                      <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-                        {PLAN_PAYMENT_LABELS[paymentStatus]}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', padding: '1rem', background: 'var(--color-surface)', borderRadius: '8px', marginBottom: '1rem' }}>
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Plan</div>
-                        <div style={{ fontSize: '1rem', fontWeight: 600 }}>{plan.name}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Amount Due</div>
-                        <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-primary)' }}>{planAmount}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Payment Reference</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <code style={{ fontSize: '0.85rem', fontWeight: 600, padding: '0.25rem 0.5rem', background: '#f3f4f6', borderRadius: '4px' }}>{paymentReference}</code>
+                    <h4>{salon.name}</h4>
+                    <p>Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email}) | Status: {salon.approvalStatus}</p>
+                    <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      {editingSalonId !== salon.id ? (
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span><strong>Package:</strong> {salon.planCode ?? '—'}</span>
+                          <span><strong>Visibility:</strong> {salon.visibilityWeight ?? '—'}</span>
+                          <span><strong>Max listings:</strong> {salon.maxListings ?? '—'}</span>
+                          <span><strong>Featured until:</strong> {salon.featuredUntil ? new Date(salon.featuredUntil).toLocaleString() : '—'}</span>
                           <button
-                            type="button"
-                            onClick={() => copyToClipboard(paymentReference, 'Reference copied')}
-                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                          >
-                            Copy
-                          </button>
+                            className={styles.approveButton}
+                            onClick={() => {
+                              setEditingSalonId(salon.id);
+                              setDraftPlan((salon.planCode ?? 'STARTER').toUpperCase());
+                              setDraftWeight(String(salon.visibilityWeight ?? ''));
+                              setDraftMax(String(salon.maxListings ?? ''));
+                              setDraftFeatured(salon.featuredUntil ? new Date(salon.featuredUntil).toISOString().slice(0, 16) : '');
+                            }}
+                          >Edit</button>
                         </div>
-                      </div>
-                      {proofSubmittedAt && (
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Proof Submitted</div>
-                          <div style={{ fontSize: '0.85rem' }}>{proofSubmittedAt}</div>
+                      ) : (
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <label>Package</label>
+                          <select value={draftPlan} onChange={e => setDraftPlan(e.target.value)} style={{ padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }}>
+                            {APP_PLANS.map((plan) => (
+                              <option key={plan.code} value={plan.code}>
+                                {plan.name} ({plan.visibilityWeight}x visibility)
+                              </option>
+                            ))}
+                          </select>
+                          <label>Weight</label>
+                          <input value={draftWeight} onChange={e => setDraftWeight(e.target.value)} type="number" min={1} placeholder="visibility" style={{ width: 90, padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
+                          <label>Max listings</label>
+                          <input value={draftMax} onChange={e => setDraftMax(e.target.value)} type="number" min={1} placeholder="max" style={{ width: 90, padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
+                          <label>Featured until</label>
+                          <input value={draftFeatured} onChange={e => setDraftFeatured(e.target.value)} type="datetime-local" style={{ padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
+                          <button
+                            className={styles.approveButton}
+                            onClick={async () => {
+                              // Start with explicit new plans, but also allow whatever is in APP_PLANS dynamic list
+                              const allowedPlans = APP_PLANS.map(p => p.code);
+                              const normalizedPlan = (draftPlan ?? '').toUpperCase();
+                              const visibilityWeight = Number(draftWeight);
+                              const maxListings = Number(draftMax);
+                              const featuredUntil = draftFeatured;
+                              const body: Record<string, unknown> = {};
+                              if (allowedPlans.includes(normalizedPlan as typeof allowedPlans[number])) {
+                                body.planCode = normalizedPlan;
+                              }
+                              if (!Number.isNaN(visibilityWeight) && draftWeight !== '') body.visibilityWeight = visibilityWeight;
+                              if (!Number.isNaN(maxListings) && draftMax !== '') body.maxListings = maxListings;
+                              // Always send featuredUntil to allow clearing on server (null when empty)
+                              body.featuredUntil = featuredUntil ? new Date(featuredUntil).toISOString() : null;
+                              const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
+                              const r = await fetch(`/api/admin/salons/${salon.id}/plan`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...authHeaders }, credentials: 'include', body: JSON.stringify(body) });
+                              if (r.ok) {
+                                const updated = await r.json();
+                                toast.success('Visibility updated');
+                                // Trust server response to avoid client drift
+                                setAllSalons(prev => prev.map(s => s.id === salon.id ? {
+                                  ...s,
+                                  planCode: (updated?.planCode ?? body.planCode ?? s.planCode) as typeof s.planCode,
+                                  visibilityWeight: updated?.visibilityWeight ?? (body.visibilityWeight as number | undefined) ?? s.visibilityWeight,
+                                  maxListings: updated?.maxListings ?? (body.maxListings as number | undefined) ?? s.maxListings,
+                                  featuredUntil: updated?.featuredUntil ?? (body.featuredUntil as string | null) ?? null,
+                                } : s));
+                                setEditingSalonId(null);
+                                // Re-fetch from server to ensure persistence and avoid stale UI
+                                try {
+                                  const allRes = await fetch(`/api/admin/salons/all?ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' as any, headers: authHeaders });
+                                  if (allRes.ok) {
+                                    const fresh = ensureArray<PendingSalon>(await allRes.json());
+                                    setAllSalons(fresh);
+                                  }
+                                } catch { }
+                              } else {
+                                const errText = await r.text().catch(() => '');
+                                toast.error(`Failed to update (${r.status}). ${errText}`);
+                              }
+                            }}
+                          >Save</button>
+                          <button className={styles.rejectButton} onClick={() => setEditingSalonId(null)}>Cancel</button>
                         </div>
                       )}
                     </div>
-
-                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                      <button
-                        type="button"
-                        onClick={() => updateSalonPaymentStatus(salon.id, 'VERIFIED')}
-                        disabled={isUpdating || paymentStatus === 'VERIFIED'}
-                        style={{
-                          padding: '0.75rem 1.5rem',
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          background: paymentStatus === 'VERIFIED' ? '#d1d5db' : '#10b981',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: paymentStatus === 'VERIFIED' ? 'not-allowed' : 'pointer',
-                          opacity: isUpdating ? 0.6 : 1
-                        }}
-                      >
-                        {isUpdating && paymentStatus !== 'VERIFIED' ? 'Verifying...' : paymentStatus === 'VERIFIED' ? '✓ Verified' : '✓ Verify Payment'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => updateSalonPaymentStatus(salon.id, 'AWAITING_PROOF')}
-                        disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
-                        style={{
-                          padding: '0.75rem 1.5rem',
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          background: '#ef4444',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: isUpdating ? 'not-allowed' : 'pointer',
-                          opacity: isUpdating ? 0.6 : 1
-                        }}
-                      >
-                        {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving...' : '✗ Reject / Request Re-submission'}
-                      </button>
-                      <Link
-                        href={`/dashboard?ownerId=${salon.owner.id}`}
-                        style={{
-                          padding: '0.75rem 1.5rem',
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          background: 'var(--color-surface)',
-                          color: 'var(--color-text-strong)',
-                          border: '1px solid var(--color-border)',
-                          borderRadius: '8px',
-                          textDecoration: 'none',
-                          display: 'inline-block'
-                        }}
-                      >
-                        View Dashboard
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              );
-            }) : (
-              <div style={{ textAlign: 'center', padding: '3rem 1rem', background: 'var(--color-surface-elevated)', borderRadius: '12px' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✓</div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem' }}>All payments verified!</h3>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>There are no pending payment verifications at the moment.</p>
-              </div>
-            )}
-          </>
-        )}
-
-        {view === 'promotions' && (
-          <>
-            {pendingPromotions.length > 0 ? pendingPromotions.map((promo) => {
-              const isService = Boolean(promo.service);
-              const item = isService ? promo.service : promo.product;
-              const itemName = isService ? item?.title : item?.name;
-              const providerName = isService
-                ? promo.service?.salon?.name
-                : `${promo.product?.seller?.firstName || ''} ${promo.product?.seller?.lastName || ''}`.trim();
-              const endDate = new Date(promo.endDate);
-              const daysLeft = Math.ceil((endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-
-              return (
-                <div key={promo.id} className={styles.listItem}>
-                  <div className={styles.info}>
-                    <h4>{itemName}</h4>
-                    <p>
-                      <strong>Provider:</strong> {providerName || 'Unknown'} | <strong>Type:</strong> {isService ? 'Service' : 'Product'}
-                    </p>
-                    <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                      <span>
-                        <strong>Original:</strong>{' '}
-                        <span style={{ textDecoration: 'line-through', color: '#ef4444' }}>
-                          R{promo.originalPrice.toFixed(2)}
-                        </span>
-                      </span>
-                      <span>
-                        <strong>Promotional:</strong>{' '}
-                        <span style={{ color: '#10b981', fontWeight: 600 }}>
-                          R{promo.promotionalPrice.toFixed(2)}
-                        </span>
-                      </span>
-                      <span>
-                        <strong>Discount:</strong>{' '}
-                        <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>
-                          {promo.discountPercentage}% OFF
-                        </span>
-                      </span>
-                    </div>
-                    <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-                      <strong>Duration:</strong> {new Date(promo.startDate).toLocaleDateString()} → {new Date(promo.endDate).toLocaleDateString()}
-                      {' '}({daysLeft > 0 ? `${daysLeft} days` : 'Expired'})
-                    </p>
                   </div>
                   <div className={styles.actions}>
+                    <Link href={`/dashboard?ownerId=${salon.owner.id}`} className="btn btn-secondary">View Dashboard</Link>
                     <button
-                      onClick={() => handleApprovePromotion(promo.id)}
-                      className={styles.approveButton}
+                      className={salon.isVerified ? styles.approveButton : styles.rejectButton}
+                      onClick={async () => {
+                        const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
+                        try {
+                          const r = await fetch(`/api/admin/salons/${salon.id}/verification`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', ...authHeaders },
+                            credentials: 'include',
+                          });
+                          if (r.ok) {
+                            const updated = await r.json();
+                            toast.success(`Salon ${updated.isVerified ? 'verified' : 'unverified'}`);
+                            setAllSalons(prev => prev.map(s => s.id === salon.id ? { ...s, isVerified: updated.isVerified } : s));
+                            // Re-fetch to ensure consistency
+                            try {
+                              const allRes = await fetch(`/api/admin/salons/all?ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' as any, headers: authHeaders });
+                              if (allRes.ok) {
+                                const fresh = ensureArray<PendingSalon>(await allRes.json());
+                                setAllSalons(fresh);
+                              }
+                            } catch { }
+                          } else {
+                            const errText = await r.text().catch(() => '');
+                            toast.error(`Failed to update verification (${r.status}). ${errText}`);
+                          }
+                        } catch (error) {
+                          toast.error('Error updating verification');
+                        }
+                      }}
+                      title={salon.isVerified ? 'Remove verification' : 'Verify service provider'}
                     >
-                      Approve
+                      {salon.isVerified ? '✓ Verified' : 'Verify'}
                     </button>
                     <button
-                      onClick={() => handleRejectPromotion(promo.id)}
                       className={styles.rejectButton}
+                      onClick={() => openDeleteSalonModal(salon)}
+                      title="Delete provider profile"
+                    >Delete Profile</button>
+                  </div>
+                </div>
+              )) : <p>No salons found.</p>}
+            </>
+          )}
+
+          {view === 'featured-salons' && (
+            <>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <h3 style={{ marginBottom: '1rem' }}>Currently Featured Salons</h3>
+                {featuredSalons.length > 0 ? (
+                  featuredSalons.map((salon) => (
+                    <div key={salon.id} className={styles.listItem}>
+                      <div className={styles.info}>
+                        <h4>{salon.name}</h4>
+                        <p>{salon.city}, {salon.province}</p>
+                        <p style={{ fontSize: '0.875rem', color: '#666' }}>
+                          Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email})
+                        </p>
+                        <p style={{ fontSize: '0.875rem', color: '#666' }}>
+                          Featured until: {salon.featuredUntil ? new Date(salon.featuredUntil).toLocaleDateString() : 'N/A'}
+                        </p>
+                      </div>
+                      <div className={styles.actions}>
+                        <button
+                          onClick={() => unfeatureSalon(salon.id)}
+                          className={styles.rejectButton}
+                        >
+                          Unfeature
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p>No salons are currently featured.</p>
+                )}
+              </div>
+
+              <div>
+                <h3 style={{ marginBottom: '1rem' }}>Feature a Salon</h3>
+                <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <label>
+                    Duration (days):
+                    <select
+                      value={featureDuration}
+                      onChange={(e) => setFeatureDuration(Number(e.target.value))}
+                      style={{ marginLeft: '0.5rem', padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }}
                     >
-                      Reject
-                    </button>
-                  </div>
+                      <option value={7}>7 days</option>
+                      <option value={14}>14 days</option>
+                      <option value={30}>30 days</option>
+                      <option value={60}>60 days</option>
+                      <option value={90}>90 days</option>
+                    </select>
+                  </label>
                 </div>
-              );
-            }) : <p>No pending promotions.</p>}
-          </>
-        )}
+                {availableSalons.length > 0 ? (
+                  availableSalons.map((salon) => (
+                    <div key={salon.id} className={styles.listItem}>
+                      <div className={styles.info}>
+                        <h4>{salon.name}</h4>
+                        <p>{salon.city}, {salon.province}</p>
+                        <p style={{ fontSize: '0.875rem', color: '#666' }}>
+                          Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email})
+                        </p>
+                        <p style={{ fontSize: '0.875rem', color: '#666' }}>
+                          Plan: {salon.planCode || 'N/A'}
+                        </p>
+                      </div>
+                      <div className={styles.actions}>
+                        <button
+                          onClick={() => featureSalon(salon.id, featureDuration)}
+                          className={styles.approveButton}
+                        >
+                          Feature for {featureDuration} days
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p>No approved salons available to feature.</p>
+                )}
+              </div>
+            </>
+          )}
 
-        {view === 'media' && (
-          <AdminMediaReview />
-        )}
-
-        {view === 'trends' && (
-          <AdminTrendsManager />
-        )}
-
-        {view === 'salon-trendz' && (
-          <AdminSalonTrendzManager />
-        )}
-        {view === 'blogs' && (
-          <AdminBlogManager />
-        )}
-
-        {view === 'top10-requests' && (
-          top10Requests.length > 0 ? top10Requests.map((req: any) => {
-            const isExpanded = expandedItems.has(`req-${req.id}`);
-            const statusColor = req.status === 'PENDING' ? '#f59e0b' : req.status === 'CONTACTED' ? '#3b82f6' : req.status === 'MATCHED' ? '#10b981' : '#6b7280';
-            return (
-              <div key={req.id} className={styles.collapsibleItem}>
-                <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`req-${req.id}`)}>
-                  <div className={styles.collapsibleHeaderLeft}>
-                    <span className={styles.collapsibleName} title={req.fullName}>{req.fullName}</span>
-                    <span className={styles.collapsibleLocation} title={req.location}>{req.location}</span>
-                  </div>
-                  <div className={styles.collapsibleHeaderRight}>
-                    <span className={styles.collapsibleStatus} style={{ backgroundColor: `${statusColor}20`, color: statusColor }}>{req.status}</span>
-                    <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
-                  </div>
+          {view === 'deleted-salons' && (
+            deletedSalons.length > 0 ? deletedSalons.map((row: any) => (
+              <div key={row.id} className={styles.listItem}>
+                <div className={styles.info}>
+                  <h4>{row.salon?.name ?? 'Unknown name'}</h4>
+                  <p>Deleted at: {row.deletedAt ? new Date(row.deletedAt).toLocaleString() : ''} {row.reason ? `| Reason: ${row.reason}` : ''}</p>
                 </div>
-                {isExpanded && (
-                  <div className={styles.collapsibleContent}>
+                <div className={styles.actions}>
+                  <button className={styles.approveButton} onClick={() => restoreDeletedSalon(row.id)}>Restore</button>
+                </div>
+              </div>
+            )) : <p>No deleted profiles.</p>
+          )}
+          {view === 'all-sellers' && (
+            <>
+              {/* Filter bar for sellers */}
+              <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  value={sellerFilter}
+                  onChange={e => setSellerFilter(e.target.value)}
+                  placeholder="Filter by name, email, business..."
+                  className={styles.searchInput}
+                  style={{ minWidth: '200px', maxWidth: '300px' }}
+                />
+                <span style={{ color: '#666', fontSize: '0.85rem' }}>Showing {filteredAllSellers.length} of {allSellers.length}</span>
+              </div>
+              {filteredAllSellers.length > 0 ? filteredAllSellers.map((seller) => {
+                const planCode = (seller.sellerPlanCode ?? 'FREE') as PlanCode;
+                const plan = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
+                const amountDue =
+                  typeof seller.sellerPlanPriceCents === 'number'
+                    ? formatRand(seller.sellerPlanPriceCents)
+                    : plan.price;
+                const paymentStatus = (seller.sellerPlanPaymentStatus ?? 'PENDING_SELECTION') as PlanPaymentStatus;
+                const proofSubmittedAt = seller.sellerPlanProofSubmittedAt
+                  ? new Date(seller.sellerPlanProofSubmittedAt).toLocaleString('en-ZA')
+                  : null;
+                const verifiedAt = seller.sellerPlanVerifiedAt
+                  ? new Date(seller.sellerPlanVerifiedAt).toLocaleString('en-ZA')
+                  : null;
+                const reference = seller.sellerPlanPaymentReference ?? seller.email;
+                const isUpdating = updatingSellerPlanId === seller.id;
+                const approvalStatus = (seller.sellerApprovalStatus ?? 'PENDING') as ApprovalStatus;
+                const businessName = seller.sellerBusinessName || 'Not set up';
+                const profileSubmittedAt = seller.sellerProfileSubmittedAt
+                  ? new Date(seller.sellerProfileSubmittedAt).toLocaleString('en-ZA')
+                  : null;
+                const isExpanded = expandedItems.has(`seller-${seller.id}`);
+                const sellerName = `${seller.firstName || ''} ${seller.lastName || ''}`.trim() || seller.email;
+                const isFree = planCode === 'FREE';
+
+                return (
+                  <div key={seller.id} className={styles.collapsibleItem}>
+                    <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`seller-${seller.id}`)}>
+                      <div className={styles.collapsibleHeaderLeft}>
+                        <span className={styles.collapsibleName} title={sellerName}>{sellerName}</span>
+                        <span className={styles.collapsibleLocation} title={businessName}>{businessName}</span>
+                      </div>
+                      <div className={styles.collapsibleHeaderRight}>
+                        <span className={`${styles.collapsibleStatus} ${styles[approvalStatus.toLowerCase()]}`}>
+                          {approvalStatus}
+                        </span>
+                        <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                      </div>
+                    </div>
+                    {isExpanded && (
+                      <div className={styles.collapsibleContent}>
+                        <div className={styles.info}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                            <div>
+                              <h4>{seller.firstName} {seller.lastName}</h4>
+                              <p>Email: {seller.email}</p>
+                            </div>
+                            {(approvalStatus === 'PENDING' || approvalStatus === 'REJECTED') && (
+                              <span className={`${styles.statusBadge} ${styles[approvalStatus.toLowerCase()]}`}>
+                                Profile: {approvalStatus}
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ background: '#f5f5f5', padding: '0.75rem', borderRadius: '8px', marginBottom: '0.75rem', fontSize: '0.9rem' }}>
+                            <p><strong>Business:</strong> {businessName}</p>
+                            <p><strong>Contact:</strong> {seller.sellerContactPerson} | {seller.sellerContactPhone}</p>
+                            <p><strong>Address:</strong> {seller.sellerPhysicalAddress}</p>
+                            <p><strong>Service Areas:</strong> {seller.sellerProvincesServed?.join(', ') || 'None'}</p>
+                            {profileSubmittedAt && <p style={{ marginTop: '0.25rem', color: '#666' }}>Updated: {profileSubmittedAt}</p>}
+
+                            {approvalStatus === 'PENDING' && (
+                              <div className={styles.actions} style={{ marginTop: '0.5rem' }}>
+                                <button
+                                  className={styles.approveButton}
+                                  onClick={() => updateSellerApprovalStatus(seller.id, 'APPROVED')}
+                                >
+                                  Approve Profile
+                                </button>
+                                <button
+                                  className={styles.rejectButton}
+                                  onClick={() => updateSellerApprovalStatus(seller.id, 'REJECTED')}
+                                >
+                                  Reject Profile
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          <p>Products: {seller.productsCount ?? 0} (Pending: {seller.pendingProductsCount ?? 0})</p>
+
+                          <div className={styles.planInfo}>
+                            <div className={styles.planInfoRow}>
+                              <span><strong>Package:</strong> {plan.name}</span>
+                              <span><strong>Amount due:</strong> {amountDue}</span>
+                              <span>
+                                <strong>Payment:</strong>{' '}
+                                <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`}>
+                                  {PLAN_PAYMENT_LABELS[paymentStatus]}
+                                </span>
+                              </span>
+                            </div>
+                            <div className={styles.planInfoRow}>
+                              <span>
+                                <strong>Reference:</strong>{' '}
+                                <code className={styles.planReference}>{reference}</code>
+                                <button
+                                  type="button"
+                                  className={styles.copyButton}
+                                  onClick={() => copyToClipboard(reference, 'Reference copied')}
+                                >
+                                  Copy
+                                </button>
+                              </span>
+                              {proofSubmittedAt && <span>Proof submitted: {proofSubmittedAt}</span>}
+                              {verifiedAt && <span>Verified on: {verifiedAt}</span>}
+                            </div>
+                            <div className={styles.planAdminActions}>
+                              <button
+                                type="button"
+                                className={styles.approveButton}
+                                onClick={() => updateSellerPaymentStatus(seller.id, 'VERIFIED')}
+                                disabled={isUpdating || paymentStatus === 'VERIFIED'}
+                              >
+                                {isUpdating && paymentStatus !== 'VERIFIED' ? 'Saving…' : 'Mark Payment Verified'}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.approveButton}
+                                onClick={() => updateSellerPaymentStatus(seller.id, 'PROOF_SUBMITTED')}
+                                disabled={isUpdating || paymentStatus === 'PROOF_SUBMITTED'}
+                              >
+                                {isUpdating && paymentStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof Received'}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.rejectButton}
+                                onClick={() => updateSellerPaymentStatus(seller.id, 'AWAITING_PROOF')}
+                                disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
+                              >
+                                {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Unverify Payment'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <div className={styles.actions}>
+                          <button
+                            onClick={() => openDeleteSellerModal(seller.id, `${seller.firstName} ${seller.lastName}`.trim() || seller.email)}
+                            className={styles.rejectButton}
+                            title="Delete seller"
+                          >
+                            Delete Seller
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }) : <p>No sellers found.</p>}
+            </>
+          )}
+
+          {view === 'services' && (
+            <>
+              {/* Filter and bulk actions bar */}
+              <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  value={serviceFilter}
+                  onChange={e => setServiceFilter(e.target.value)}
+                  placeholder="Filter by service title or salon..."
+                  className={styles.searchInput}
+                  style={{ minWidth: '200px', maxWidth: '300px' }}
+                />
+                {pendingServices.length > 0 && (
+                  <>
+                    <input type="checkbox" checked={selServices.size === filteredPendingServices.length && filteredPendingServices.length > 0} onChange={e => setSelServices(e.target.checked ? new Set(filteredPendingServices.map(s => s.id)) : new Set())} />
+                    <span>Select all ({filteredPendingServices.length})</span>
+                    <button className={styles.approveButton} disabled={selServices.size === 0} onClick={() => bulkUpdate('service', Array.from(selServices), 'APPROVED')}>Approve selected</button>
+                    <button className={styles.rejectButton} disabled={selServices.size === 0} onClick={() => bulkUpdate('service', Array.from(selServices), 'REJECTED')}>Reject selected</button>
+                  </>
+                )}
+              </div>
+              {filteredPendingServices.length > 0 ? filteredPendingServices.map(service => {
+                const isExpanded = expandedItems.has(service.id);
+                return (
+                  <div key={service.id} className={styles.collapsibleItem}>
+                    <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(service.id)}>
+                      <div className={styles.collapsibleHeaderLeft}>
+                        <input
+                          type="checkbox"
+                          className={styles.collapsibleCheckbox}
+                          checked={selServices.has(service.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            const ns = new Set(selServices);
+                            if (e.target.checked) ns.add(service.id);
+                            else ns.delete(service.id);
+                            setSelServices(ns);
+                          }}
+                        />
+                        <span className={styles.collapsibleName} title={service.title}>{service.title}</span>
+                        <span className={styles.collapsibleLocation}>{service.salon?.name || 'Unknown Salon'}</span>
+                      </div>
+                      <div className={styles.collapsibleHeaderRight}>
+                        <span className={`${styles.collapsibleStatus} ${styles.pending}`}>Pending</span>
+                        <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                      </div>
+                    </div>
+                    {isExpanded && (
+                      <div className={styles.collapsibleContent}>
+                        <div className={styles.info}>
+                          <h4>{service.title}</h4>
+                          <p>Salon: {service.salon?.name || 'Unknown'}</p>
+                          {service.description && <p style={{ color: '#666', fontSize: '0.9rem' }}>{service.description}</p>}
+                          {service.price != null && <p><strong>Price:</strong> R{service.price.toFixed(2)}</p>}
+                          {service.duration != null && <p><strong>Duration:</strong> {service.duration} min</p>}
+                        </div>
+                        <div className={styles.actions}>
+                          <button onClick={() => handleUpdateStatus('service', service.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
+                          <button onClick={() => handleUpdateStatus('service', service.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }) : <p>No pending services.</p>}
+            </>
+          )}
+
+          {view === 'reviews' && (
+            <>
+              {/* Filter and bulk actions bar */}
+              <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  value={reviewFilter}
+                  onChange={e => setReviewFilter(e.target.value)}
+                  placeholder="Filter by reviewer, salon, comment..."
+                  className={styles.searchInput}
+                  style={{ minWidth: '200px', maxWidth: '300px' }}
+                />
+                {pendingReviews.length > 0 && (
+                  <>
+                    <input type="checkbox" checked={selReviews.size === filteredPendingReviews.length && filteredPendingReviews.length > 0} onChange={e => setSelReviews(e.target.checked ? new Set(filteredPendingReviews.map(s => s.id)) : new Set())} />
+                    <span>Select all ({filteredPendingReviews.length})</span>
+                    <button className={styles.approveButton} disabled={selReviews.size === 0} onClick={() => bulkUpdate('review', Array.from(selReviews), 'APPROVED')}>Approve selected</button>
+                    <button className={styles.rejectButton} disabled={selReviews.size === 0} onClick={() => bulkUpdate('review', Array.from(selReviews), 'REJECTED')}>Reject selected</button>
+                  </>
+                )}
+              </div>
+              {filteredPendingReviews.length > 0 ? filteredPendingReviews.map(review => {
+                const isExpanded = expandedItems.has(review.id);
+                const truncatedComment = review.comment?.length > 40 ? `${review.comment.slice(0, 40)}...` : review.comment;
+                return (
+                  <div key={review.id} className={styles.collapsibleItem}>
+                    <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(review.id)}>
+                      <div className={styles.collapsibleHeaderLeft}>
+                        <input
+                          type="checkbox"
+                          className={styles.collapsibleCheckbox}
+                          checked={selReviews.has(review.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            const ns = new Set(selReviews);
+                            if (e.target.checked) ns.add(review.id);
+                            else ns.delete(review.id);
+                            setSelReviews(ns);
+                          }}
+                        />
+                        <span className={styles.collapsibleName} title={review.author?.firstName}>{review.author?.firstName || 'Anonymous'} ({review.rating}★)</span>
+                        <span className={styles.collapsibleLocation} title={review.salon?.name}>{review.salon?.name || 'Unknown Salon'}</span>
+                      </div>
+                      <div className={styles.collapsibleHeaderRight}>
+                        <span className={`${styles.collapsibleStatus} ${styles.pending}`}>Pending</span>
+                        <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                      </div>
+                    </div>
+                    {isExpanded && (
+                      <div className={styles.collapsibleContent}>
+                        <div className={styles.info}>
+                          <h4>"{review.comment}" ({review.rating} ★)</h4>
+                          <p>By: {review.author?.firstName || 'Anonymous'} | For Salon: {review.salon?.name || 'Unknown'}</p>
+                          {review.createdAt && <p style={{ color: '#666', fontSize: '0.85rem' }}>Submitted: {new Date(review.createdAt).toLocaleString()}</p>}
+                        </div>
+                        <div className={styles.actions}>
+                          <button onClick={() => handleUpdateStatus('review', review.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
+                          <button onClick={() => handleUpdateStatus('review', review.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }) : <p>No pending reviews.</p>}
+            </>
+          )}
+
+          {view === 'products' && (
+            <>
+              {/* Filter and bulk actions bar */}
+              <div className={styles.filterBar} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  value={productFilter}
+                  onChange={e => setProductFilter(e.target.value)}
+                  placeholder="Filter by product name or seller..."
+                  className={styles.searchInput}
+                  style={{ minWidth: '200px', maxWidth: '300px' }}
+                />
+                {pendingProducts.length > 0 && (
+                  <>
+                    <input type="checkbox" checked={selProducts.size === filteredPendingProducts.length && filteredPendingProducts.length > 0} onChange={e => setSelProducts(e.target.checked ? new Set(filteredPendingProducts.map(s => s.id)) : new Set())} />
+                    <span>Select all ({filteredPendingProducts.length})</span>
+                    <button className={styles.approveButton} disabled={selProducts.size === 0} onClick={() => bulkUpdate('product', Array.from(selProducts), 'APPROVED')}>Approve selected</button>
+                    <button className={styles.rejectButton} disabled={selProducts.size === 0} onClick={() => bulkUpdate('product', Array.from(selProducts), 'REJECTED')}>Reject selected</button>
+                  </>
+                )}
+              </div>
+              {filteredPendingProducts.length > 0 ? filteredPendingProducts.map((product) => {
+                const sellerPlanCode = (product.seller.sellerPlanCode ?? 'FREE') as PlanCode;
+                const plan = PLAN_BY_CODE[sellerPlanCode] ?? APP_PLANS[0];
+                const planAmount =
+                  typeof product.seller.sellerPlanPriceCents === 'number'
+                    ? formatRand(product.seller.sellerPlanPriceCents)
+                    : plan.price;
+                const sellerStatus = (product.seller.sellerPlanPaymentStatus ??
+                  'PENDING_SELECTION') as PlanPaymentStatus;
+                const proofSubmittedAt = product.seller.sellerPlanProofSubmittedAt
+                  ? new Date(product.seller.sellerPlanProofSubmittedAt).toLocaleString('en-ZA')
+                  : null;
+                const sellerVerifiedAt = product.seller.sellerPlanVerifiedAt
+                  ? new Date(product.seller.sellerPlanVerifiedAt).toLocaleString('en-ZA')
+                  : null;
+                const isSellerUpdating = updatingSellerPlanId === product.seller.id;
+                const sellerReference =
+                  product.seller.sellerPlanPaymentReference ??
+                  `${product.seller.firstName} ${product.seller.lastName}`.trim();
+                const isExpanded = expandedItems.has(product.id);
+                const isFree = sellerPlanCode === 'FREE';
+                const sellerName = `${product.seller.firstName || ''} ${product.seller.lastName || ''}`.trim() || 'Unknown Seller';
+                return (
+                  <div key={product.id} className={styles.collapsibleItem}>
+                    <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(product.id)}>
+                      <div className={styles.collapsibleHeaderLeft}>
+                        <input
+                          type="checkbox"
+                          className={styles.collapsibleCheckbox}
+                          checked={selProducts.has(product.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            const ns = new Set(selProducts);
+                            if (e.target.checked) ns.add(product.id);
+                            else ns.delete(product.id);
+                            setSelProducts(ns);
+                          }}
+                        />
+                        <span className={styles.collapsibleName} title={product.name}>{product.name}</span>
+                        <span className={styles.collapsibleLocation} title={sellerName}>{sellerName}</span>
+                      </div>
+                      <div className={styles.collapsibleHeaderRight}>
+                        <span className={`${styles.collapsibleStatus} ${isFree ? styles.free : styles.pending}`}>
+                          {isFree ? 'FREE' : 'Pending'}
+                        </span>
+                        <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                      </div>
+                    </div>
+                    {isExpanded && (
+                      <div className={styles.collapsibleContent}>
+                        <div className={styles.info}>
+                          <h4>{product.name}</h4>
+                          <p>Seller: {sellerName}</p>
+                          <div className={styles.planInfo}>
+                            <div className={styles.planInfoRow}>
+                              <span><strong>Package:</strong> {plan.name}</span>
+                              <span><strong>Amount due:</strong> {planAmount}</span>
+                              <span>
+                                <strong>Status:</strong>{' '}
+                                <span className={`${styles.planBadge} ${styles[`planStatus_${sellerStatus.toLowerCase()}`]}`}>
+                                  {PLAN_PAYMENT_LABELS[sellerStatus]}
+                                </span>
+                              </span>
+                            </div>
+                            <div className={styles.planInfoRow}>
+                              <span>
+                                <strong>Reference:</strong>{' '}
+                                <code className={styles.planReference}>{sellerReference}</code>
+                                <button
+                                  type="button"
+                                  className={styles.copyButton}
+                                  onClick={() => copyToClipboard(sellerReference, 'Reference copied')}
+                                >
+                                  Copy
+                                </button>
+                              </span>
+                              {proofSubmittedAt && <span>Proof submitted: {proofSubmittedAt}</span>}
+                              {sellerVerifiedAt && <span>Verified on: {sellerVerifiedAt}</span>}
+                            </div>
+                            <div className={styles.planAdminActions}>
+                              <button
+                                type="button"
+                                className={styles.approveButton}
+                                onClick={() => updateSellerPaymentStatus(product.seller.id, 'VERIFIED')}
+                                disabled={isSellerUpdating || sellerStatus === 'VERIFIED'}
+                              >
+                                {isSellerUpdating && sellerStatus !== 'VERIFIED' ? 'Saving…' : 'Mark verified'}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.approveButton}
+                                onClick={() => updateSellerPaymentStatus(product.seller.id, 'PROOF_SUBMITTED')}
+                                disabled={isSellerUpdating || sellerStatus === 'PROOF_SUBMITTED'}
+                              >
+                                {isSellerUpdating && sellerStatus === 'PROOF_SUBMITTED' ? 'Saving…' : 'Proof received'}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.rejectButton}
+                                onClick={() => updateSellerPaymentStatus(product.seller.id, 'AWAITING_PROOF')}
+                                disabled={isSellerUpdating || sellerStatus === 'AWAITING_PROOF'}
+                              >
+                                {isSellerUpdating && sellerStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Awaiting proof'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <div className={styles.actions}>
+                          <button onClick={() => handleUpdateStatus('product', product.id, 'APPROVED')} className={styles.approveButton}>Approve</button>
+                          <button onClick={() => handleUpdateStatus('product', product.id, 'REJECTED')} className={styles.rejectButton}>Reject</button>
+                          <button onClick={() => openDeleteSellerModal(product.seller.id, sellerName || product.seller.id)} className={styles.rejectButton} title="Delete seller">Delete Seller</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }) : <p>No pending products.</p>}
+            </>
+          )}
+
+          {view === 'pending-payments' && (
+            <>
+              <div style={{ marginBottom: '1rem' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Pending Payment Verification</h2>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+                  Salons that have submitted payment proof and are awaiting admin verification.
+                </p>
+              </div>
+              {pendingPaymentSalons.length > 0 ? pendingPaymentSalons.map((salon) => {
+                const planCode = (salon.planCode ?? 'FREE') as PlanCode;
+                const plan = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
+                const planAmount =
+                  typeof salon.planPriceCents === 'number'
+                    ? formatRand(salon.planPriceCents)
+                    : plan.price;
+                const paymentStatus = (salon.planPaymentStatus ?? 'PENDING_SELECTION') as PlanPaymentStatus;
+                const proofSubmittedAt = salon.planProofSubmittedAt
+                  ? new Date(salon.planProofSubmittedAt).toLocaleString('en-ZA')
+                  : null;
+                const verifiedAt = salon.planVerifiedAt
+                  ? new Date(salon.planVerifiedAt).toLocaleString('en-ZA')
+                  : null;
+                const isUpdating = updatingSalonPlanId === salon.id;
+                const paymentReference = salon.planPaymentReference ?? salon.name;
+
+                return (
+                  <div key={salon.id} className={styles.listItem} style={{ background: 'var(--color-surface-elevated)', padding: '1.5rem', borderRadius: '12px', marginBottom: '1rem' }}>
                     <div className={styles.info}>
-                      <h4>{req.fullName} - {req.category}</h4>
-                      <p><strong>Service:</strong> {req.serviceNeeded}</p>
-                      <p><strong>Budget:</strong> R{req.budget} | <strong>Type:</strong> {req.serviceType === 'onsite' ? 'Mobile' : 'Visit Salon'}</p>
-                      <p><strong>Location:</strong> {req.location}</p>
-                      <p><strong>Date:</strong> {req.preferredDate ? new Date(req.preferredDate).toLocaleDateString() : 'Not specified'} {req.preferredTime ? `at ${req.preferredTime}` : ''}</p>
-                      <p><strong>Phone:</strong> <a href={`tel:${req.phone}`}>{req.phone}</a> {req.whatsapp && <> | <strong>WhatsApp:</strong> <a href={`https://wa.me/${req.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">{req.whatsapp}</a></>}</p>
-                      {req.email && <p><strong>Email:</strong> <a href={`mailto:${req.email}`}>{req.email}</a></p>}
-                      {req.styleOrLook && <p><strong>Style:</strong> {req.styleOrLook}</p>}
-                      <p style={{ opacity: 0.7, fontSize: '0.85rem' }}>Submitted: {new Date(req.createdAt).toLocaleString()}</p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+                        <div>
+                          <h4 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>{salon.name}</h4>
+                          <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
+                            {salon.city}, {salon.province}
+                          </p>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                            Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email})
+                          </p>
+                        </div>
+                        <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+                          {PLAN_PAYMENT_LABELS[paymentStatus]}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', padding: '1rem', background: 'var(--color-surface)', borderRadius: '8px', marginBottom: '1rem' }}>
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Plan</div>
+                          <div style={{ fontSize: '1rem', fontWeight: 600 }}>{plan.name}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Amount Due</div>
+                          <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-primary)' }}>{planAmount}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Payment Reference</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <code style={{ fontSize: '0.85rem', fontWeight: 600, padding: '0.25rem 0.5rem', background: '#f3f4f6', borderRadius: '4px' }}>{paymentReference}</code>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(paymentReference, 'Reference copied')}
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        </div>
+                        {proofSubmittedAt && (
+                          <div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Proof Submitted</div>
+                            <div style={{ fontSize: '0.85rem' }}>{proofSubmittedAt}</div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => updateSalonPaymentStatus(salon.id, 'VERIFIED')}
+                          disabled={isUpdating || paymentStatus === 'VERIFIED'}
+                          style={{
+                            padding: '0.75rem 1.5rem',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            background: paymentStatus === 'VERIFIED' ? '#d1d5db' : '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: paymentStatus === 'VERIFIED' ? 'not-allowed' : 'pointer',
+                            opacity: isUpdating ? 0.6 : 1
+                          }}
+                        >
+                          {isUpdating && paymentStatus !== 'VERIFIED' ? 'Verifying...' : paymentStatus === 'VERIFIED' ? '✓ Verified' : '✓ Verify Payment'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateSalonPaymentStatus(salon.id, 'AWAITING_PROOF')}
+                          disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
+                          style={{
+                            padding: '0.75rem 1.5rem',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: isUpdating ? 'not-allowed' : 'pointer',
+                            opacity: isUpdating ? 0.6 : 1
+                          }}
+                        >
+                          {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving...' : '✗ Reject / Request Re-submission'}
+                        </button>
+                        <Link
+                          href={`/dashboard?ownerId=${salon.owner.id}`}
+                          style={{
+                            padding: '0.75rem 1.5rem',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            background: 'var(--color-surface)',
+                            color: 'var(--color-text-strong)',
+                            border: '1px solid var(--color-border)',
+                            borderRadius: '8px',
+                            textDecoration: 'none',
+                            display: 'inline-block'
+                          }}
+                        >
+                          View Dashboard
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }) : (
+                <div style={{ textAlign: 'center', padding: '3rem 1rem', background: 'var(--color-surface-elevated)', borderRadius: '12px' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✓</div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem' }}>All payments verified!</h3>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>There are no pending payment verifications at the moment.</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {view === 'promotions' && (
+            <>
+              {pendingPromotions.length > 0 ? pendingPromotions.map((promo) => {
+                const isService = Boolean(promo.service);
+                const item = isService ? promo.service : promo.product;
+                const itemName = isService ? item?.title : item?.name;
+                const providerName = isService
+                  ? promo.service?.salon?.name
+                  : `${promo.product?.seller?.firstName || ''} ${promo.product?.seller?.lastName || ''}`.trim();
+                const endDate = new Date(promo.endDate);
+                const daysLeft = Math.ceil((endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+
+                return (
+                  <div key={promo.id} className={styles.listItem}>
+                    <div className={styles.info}>
+                      <h4>{itemName}</h4>
+                      <p>
+                        <strong>Provider:</strong> {providerName || 'Unknown'} | <strong>Type:</strong> {isService ? 'Service' : 'Product'}
+                      </p>
+                      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                        <span>
+                          <strong>Original:</strong>{' '}
+                          <span style={{ textDecoration: 'line-through', color: '#ef4444' }}>
+                            R{promo.originalPrice.toFixed(2)}
+                          </span>
+                        </span>
+                        <span>
+                          <strong>Promotional:</strong>{' '}
+                          <span style={{ color: '#10b981', fontWeight: 600 }}>
+                            R{promo.promotionalPrice.toFixed(2)}
+                          </span>
+                        </span>
+                        <span>
+                          <strong>Discount:</strong>{' '}
+                          <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>
+                            {promo.discountPercentage}% OFF
+                          </span>
+                        </span>
+                      </div>
+                      <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
+                        <strong>Duration:</strong> {new Date(promo.startDate).toLocaleDateString()} → {new Date(promo.endDate).toLocaleDateString()}
+                        {' '}({daysLeft > 0 ? `${daysLeft} days` : 'Expired'})
+                      </p>
                     </div>
                     <div className={styles.actions}>
-                      <select
-                        value={req.status}
-                        onChange={async (e) => {
-                          const newStatus = e.target.value;
-                          const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
-                          try {
-                            const res = await fetch(`/api/admin/top10-requests/${req.id}/status`, {
-                              method: 'PATCH',
-                              headers: { 'Content-Type': 'application/json', ...authHeaders },
-                              credentials: 'include',
-                              body: JSON.stringify({ status: newStatus }),
-                            });
-                            if (res.ok) {
-                              setTop10Requests(prev => prev.map(r => r.id === req.id ? { ...r, status: newStatus } : r));
-                              toast.success('Status updated');
-                            } else {
+                      <button
+                        onClick={() => handleApprovePromotion(promo.id)}
+                        className={styles.approveButton}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleRejectPromotion(promo.id)}
+                        className={styles.rejectButton}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                );
+              }) : <p>No pending promotions.</p>}
+            </>
+          )}
+
+          {view === 'media' && (
+            <AdminMediaReview />
+          )}
+
+          {view === 'trends' && (
+            <AdminTrendsManager />
+          )}
+
+          {view === 'salon-trendz' && (
+            <AdminSalonTrendzManager />
+          )}
+          {view === 'blogs' && (
+            <AdminBlogManager />
+          )}
+
+          {view === 'top10-requests' && (
+            top10Requests.length > 0 ? top10Requests.map((req: any) => {
+              const isExpanded = expandedItems.has(`req-${req.id}`);
+              const statusColor = req.status === 'PENDING' ? '#f59e0b' : req.status === 'CONTACTED' ? '#3b82f6' : req.status === 'MATCHED' ? '#10b981' : '#6b7280';
+              return (
+                <div key={req.id} className={styles.collapsibleItem}>
+                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`req-${req.id}`)}>
+                    <div className={styles.collapsibleHeaderLeft}>
+                      <span className={styles.collapsibleName} title={req.fullName}>{req.fullName}</span>
+                      <span className={styles.collapsibleLocation} title={req.location}>{req.location}</span>
+                    </div>
+                    <div className={styles.collapsibleHeaderRight}>
+                      <span className={styles.collapsibleStatus} style={{ backgroundColor: `${statusColor}20`, color: statusColor }}>{req.status}</span>
+                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                    </div>
+                  </div>
+                  {isExpanded && (
+                    <div className={styles.collapsibleContent}>
+                      <div className={styles.info}>
+                        <h4>{req.fullName} - {req.category}</h4>
+                        <p><strong>Service:</strong> {req.serviceNeeded}</p>
+                        <p><strong>Budget:</strong> R{req.budget} | <strong>Type:</strong> {req.serviceType === 'onsite' ? 'Mobile' : 'Visit Salon'}</p>
+                        <p><strong>Location:</strong> {req.location}</p>
+                        <p><strong>Date:</strong> {req.preferredDate ? new Date(req.preferredDate).toLocaleDateString() : 'Not specified'} {req.preferredTime ? `at ${req.preferredTime}` : ''}</p>
+                        <p><strong>Phone:</strong> <a href={`tel:${req.phone}`}>{req.phone}</a> {req.whatsapp && <> | <strong>WhatsApp:</strong> <a href={`https://wa.me/${req.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">{req.whatsapp}</a></>}</p>
+                        {req.email && <p><strong>Email:</strong> <a href={`mailto:${req.email}`}>{req.email}</a></p>}
+                        {req.styleOrLook && <p><strong>Style:</strong> {req.styleOrLook}</p>}
+                        <p style={{ opacity: 0.7, fontSize: '0.85rem' }}>Submitted: {new Date(req.createdAt).toLocaleString()}</p>
+                      </div>
+                      <div className={styles.actions}>
+                        <select
+                          value={req.status}
+                          onChange={async (e) => {
+                            const newStatus = e.target.value;
+                            const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
+                            try {
+                              const res = await fetch(`/api/admin/top10-requests/${req.id}/status`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json', ...authHeaders },
+                                credentials: 'include',
+                                body: JSON.stringify({ status: newStatus }),
+                              });
+                              if (res.ok) {
+                                setTop10Requests(prev => prev.map(r => r.id === req.id ? { ...r, status: newStatus } : r));
+                                toast.success('Status updated');
+                              } else {
+                                toast.error('Failed to update status');
+                              }
+                            } catch {
                               toast.error('Failed to update status');
                             }
-                          } catch {
-                            toast.error('Failed to update status');
-                          }
-                        }}
-                        style={{ padding: '0.5rem', borderRadius: 4 }}
-                      >
-                        <option value="PENDING">Pending</option>
-                        <option value="CONTACTED">Contacted</option>
-                        <option value="MATCHED">Matched</option>
-                        <option value="COMPLETED">Completed</option>
-                        <option value="CANCELLED">Cancelled</option>
-                      </select>
+                          }}
+                          style={{ padding: '0.5rem', borderRadius: 4 }}
+                        >
+                          <option value="PENDING">Pending</option>
+                          <option value="CONTACTED">Contacted</option>
+                          <option value="MATCHED">Matched</option>
+                          <option value="COMPLETED">Completed</option>
+                          <option value="CANCELLED">Cancelled</option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          }) : <p>No Top 10 requests yet.</p>
-        )}
-
-        {view === 'deleted-sellers' && (
-          deletedSellers.length > 0 ? deletedSellers.map((row: any) => {
-            const isExpanded = expandedItems.has(`delseller-${row.id}`);
-            const sellerName = row.seller?.firstName ? `${row.seller.firstName} ${row.seller.lastName ?? ''}`.trim() : 'Unknown seller';
-            return (
-              <div key={row.id} className={styles.collapsibleItem}>
-                <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`delseller-${row.id}`)}>
-                  <div className={styles.collapsibleHeaderLeft}>
-                    <span className={styles.collapsibleName} title={sellerName}>{sellerName}</span>
-                    <span className={styles.collapsibleLocation}>{row.deletedAt ? new Date(row.deletedAt).toLocaleDateString() : ''}</span>
-                  </div>
-                  <div className={styles.collapsibleHeaderRight}>
-                    <span className={`${styles.collapsibleStatus} ${styles.rejected}`}>Deleted</span>
-                    <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
-                  </div>
+                  )}
                 </div>
-                {isExpanded && (
-                  <div className={styles.collapsibleContent}>
-                    <div className={styles.info}>
-                      <h4>{sellerName}</h4>
-                      <p>Deleted at: {row.deletedAt ? new Date(row.deletedAt).toLocaleString() : ''}</p>
-                      {row.reason && <p><strong>Reason:</strong> {row.reason}</p>}
-                    </div>
-                    <div className={styles.actions}>
-                      <button className={styles.approveButton} onClick={() => restoreDeletedSeller(row.id)}>Restore</button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          }) : <p>No deleted sellers.</p>
-        )}
+              );
+            }) : <p>No Top 10 requests yet.</p>
+          )}
 
-        {view === 'audit' && (
-          auditLogs.length > 0 ? auditLogs.map((log: any) => {
-            const isExpanded = expandedItems.has(`audit-${log.id}`);
-            return (
-              <div key={log.id} className={styles.collapsibleItem}>
-                <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`audit-${log.id}`)}>
-                  <div className={styles.collapsibleHeaderLeft}>
-                    <span className={styles.collapsibleName} title={log.action}>{log.action}</span>
-                    <span className={styles.collapsibleLocation}>{log.targetType}</span>
+          {view === 'deleted-sellers' && (
+            deletedSellers.length > 0 ? deletedSellers.map((row: any) => {
+              const isExpanded = expandedItems.has(`delseller-${row.id}`);
+              const sellerName = row.seller?.firstName ? `${row.seller.firstName} ${row.seller.lastName ?? ''}`.trim() : 'Unknown seller';
+              return (
+                <div key={row.id} className={styles.collapsibleItem}>
+                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`delseller-${row.id}`)}>
+                    <div className={styles.collapsibleHeaderLeft}>
+                      <span className={styles.collapsibleName} title={sellerName}>{sellerName}</span>
+                      <span className={styles.collapsibleLocation}>{row.deletedAt ? new Date(row.deletedAt).toLocaleDateString() : ''}</span>
+                    </div>
+                    <div className={styles.collapsibleHeaderRight}>
+                      <span className={`${styles.collapsibleStatus} ${styles.rejected}`}>Deleted</span>
+                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
+                    </div>
                   </div>
-                  <div className={styles.collapsibleHeaderRight}>
-                    <span style={{ color: '#666', fontSize: '0.8rem' }}>{new Date(log.createdAt).toLocaleDateString()}</span>
-                    <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
-                  </div>
+                  {isExpanded && (
+                    <div className={styles.collapsibleContent}>
+                      <div className={styles.info}>
+                        <h4>{sellerName}</h4>
+                        <p>Deleted at: {row.deletedAt ? new Date(row.deletedAt).toLocaleString() : ''}</p>
+                        {row.reason && <p><strong>Reason:</strong> {row.reason}</p>}
+                      </div>
+                      <div className={styles.actions}>
+                        <button className={styles.approveButton} onClick={() => restoreDeletedSeller(row.id)}>Restore</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                {isExpanded && (
-                  <div className={styles.collapsibleContent}>
-                    <div className={styles.info}>
-                      <h4>{log.action}</h4>
-                      <p><strong>Target:</strong> {log.targetType} {log.targetId}</p>
-                      {log.reason && <p><strong>Reason:</strong> {log.reason}</p>}
-                      <p style={{ color: '#666', fontSize: '0.85rem' }}>Timestamp: {new Date(log.createdAt).toLocaleString()}</p>
+              );
+            }) : <p>No deleted sellers.</p>
+          )}
+
+          {view === 'audit' && (
+            auditLogs.length > 0 ? auditLogs.map((log: any) => {
+              const isExpanded = expandedItems.has(`audit-${log.id}`);
+              return (
+                <div key={log.id} className={styles.collapsibleItem}>
+                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`audit-${log.id}`)}>
+                    <div className={styles.collapsibleHeaderLeft}>
+                      <span className={styles.collapsibleName} title={log.action}>{log.action}</span>
+                      <span className={styles.collapsibleLocation}>{log.targetType}</span>
+                    </div>
+                    <div className={styles.collapsibleHeaderRight}>
+                      <span style={{ color: '#666', fontSize: '0.8rem' }}>{new Date(log.createdAt).toLocaleDateString()}</span>
+                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
                     </div>
                   </div>
-                )}
-              </div>
-            );
-          }) : <p>No recent admin activity.</p>
-        )}
-      </div>
+                  {isExpanded && (
+                    <div className={styles.collapsibleContent}>
+                      <div className={styles.info}>
+                        <h4>{log.action}</h4>
+                        <p><strong>Target:</strong> {log.targetType} {log.targetId}</p>
+                        {log.reason && <p><strong>Reason:</strong> {log.reason}</p>}
+                        <p style={{ color: '#666', fontSize: '0.85rem' }}>Timestamp: {new Date(log.createdAt).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            }) : <p>No recent admin activity.</p>
+          )}
+        </div>
 
-      {showDeleteModal && deleteMode === 'salon' && deletingSalon && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', color: '#000', padding: '1rem', borderRadius: 8, maxWidth: 560, width: '96%', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
-            <h3 style={{ marginTop: 0 }}>Delete Provider Profile</h3>
-            <p style={{ color: '#a00', fontWeight: 600 }}>Caution: This will remove the provider profile and all their listings from the platform. You can later restore it from Deleted Profiles.</p>
-            <p><strong>Provider:</strong> {deletingSalon.name}</p>
-            <label style={{ display: 'block', margin: '0.5rem 0' }}>Reason (required)</label>
-            <textarea value={deleteReason} onChange={e => setDeleteReason(e.target.value)} rows={4} style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 6 }} placeholder="Enter reason for deletion" />
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
-              <button className={styles.approveButton} onClick={confirmDeleteSalon} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Confirm Delete'}</button>
-              <button className={styles.rejectButton} onClick={() => { setShowDeleteModal(false); setDeletingSalon(null); }}>Cancel</button>
+        {showDeleteModal && deleteMode === 'salon' && deletingSalon && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 1000 }}>
+            <div style={{ background: '#fff', color: '#000', padding: '1rem', borderRadius: 8, maxWidth: 560, width: '96%', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
+              <h3 style={{ marginTop: 0 }}>Delete Provider Profile</h3>
+              <p style={{ color: '#a00', fontWeight: 600 }}>Caution: This will remove the provider profile and all their listings from the platform. You can later restore it from Deleted Profiles.</p>
+              <p><strong>Provider:</strong> {deletingSalon.name}</p>
+              <label style={{ display: 'block', margin: '0.5rem 0' }}>Reason (required)</label>
+              <textarea value={deleteReason} onChange={e => setDeleteReason(e.target.value)} rows={4} style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 6 }} placeholder="Enter reason for deletion" />
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+                <button className={styles.approveButton} onClick={confirmDeleteSalon} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Confirm Delete'}</button>
+                <button className={styles.rejectButton} onClick={() => { setShowDeleteModal(false); setDeletingSalon(null); }}>Cancel</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {showDeleteModal && deleteMode === 'seller' && deletingSeller && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', color: '#000', padding: '1rem', borderRadius: 8, maxWidth: 560, width: '96%', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
-            <h3 style={{ marginTop: 0 }}>Delete Seller Profile</h3>
-            <p style={{ color: '#a00', fontWeight: 600 }}>Caution: This will remove the seller account and all their products from the platform. You can restore it from Deleted Sellers.</p>
-            <p style={{ color: '#a00', fontWeight: 600 }}>Are you sure you want to proceed with deleting this product seller?</p>
-            <p><strong>Seller:</strong> {deletingSeller.name}</p>
-            <label style={{ display: 'block', margin: '0.5rem 0' }}>Reason (required)</label>
-            <textarea
-              value={deleteReason}
-              onChange={(event) => setDeleteReason(event.target.value)}
-              rows={4}
-              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 6 }}
-              placeholder="Enter reason for deletion"
-            />
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
-              <button type="button" className={styles.approveButton} onClick={confirmDeleteSeller} disabled={isDeleting}>
-                {isDeleting ? 'Deleting...' : 'Confirm Delete'}
-              </button>
-              <button
-                type="button"
-                className={styles.rejectButton}
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setDeletingSeller(null);
-                }}
-              >
-                Cancel
-              </button>
+        {showDeleteModal && deleteMode === 'seller' && deletingSeller && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 1000 }}>
+            <div style={{ background: '#fff', color: '#000', padding: '1rem', borderRadius: 8, maxWidth: 560, width: '96%', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
+              <h3 style={{ marginTop: 0 }}>Delete Seller Profile</h3>
+              <p style={{ color: '#a00', fontWeight: 600 }}>Caution: This will remove the seller account and all their products from the platform. You can restore it from Deleted Sellers.</p>
+              <p style={{ color: '#a00', fontWeight: 600 }}>Are you sure you want to proceed with deleting this product seller?</p>
+              <p><strong>Seller:</strong> {deletingSeller.name}</p>
+              <label style={{ display: 'block', margin: '0.5rem 0' }}>Reason (required)</label>
+              <textarea
+                value={deleteReason}
+                onChange={(event) => setDeleteReason(event.target.value)}
+                rows={4}
+                style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 6 }}
+                placeholder="Enter reason for deletion"
+              />
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+                <button type="button" className={styles.approveButton} onClick={confirmDeleteSeller} disabled={isDeleting}>
+                  {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.rejectButton}
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeletingSeller(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </AdminLayout>
+        )}
+      </AdminLayout>
+    </>
   );
 }

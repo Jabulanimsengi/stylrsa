@@ -11,14 +11,15 @@ import MobileSearch from '@/components/MobileSearch/MobileSearch';
 import FeaturedSalons from '@/components/FeaturedSalons';
 import ServiceCategoryCircles from '@/components/ServiceCategoryCircles/ServiceCategoryCircles';
 import SalonCarouselSection from '@/components/SalonCarouselSection';
-import TypingAnimation from '@/components/TypingAnimation/TypingAnimation';
+import dynamic from 'next/dynamic';
 
-const HERO_IMAGE = {
-  src: '/art_one.webp',
-  alt: 'Professional hair styling and beauty services at South African salons',
-  // Preload hint for LCP optimization
-  blurDataURL: 'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA='
-};
+// Disable SSR for TypingAnimation to prevent hydration mismatches and ghost double-rendering
+const TypingAnimation = dynamic(() => import('@/components/TypingAnimation/TypingAnimation'), {
+  ssr: false,
+  // Add an empty placeholder of similar size back so layout doesn't jump
+  loading: () => <span style={{ display: 'inline-block', minWidth: '9em' }}></span>
+});
+
 
 interface HomePageClientProps {
   initialFeaturedSalons: any[];
@@ -26,16 +27,6 @@ interface HomePageClientProps {
   initialAvailableNowSalons: any[];
   initialMobileSalons: any[];
 }
-
-// Value proposition phrases for typewriter animation
-const VALUE_PROP_PHRASES = [
-  "Your style destination",
-  "Your confidence boost",
-  "Your transformation hub",
-  "Your beauty sanctuary",
-  "Your wellness escape",
-  "Your self-care moment"
-];
 
 export default function HomePageClient({
   initialFeaturedSalons,
@@ -48,7 +39,11 @@ export default function HomePageClient({
 
   // Hero search autocomplete state
   const [heroSearchQuery, setHeroSearchQuery] = useState('');
-  const [heroSuggestions, setHeroSuggestions] = useState<{ id: string; title: string; salon?: string; type: 'service' | 'category'; slug?: string }[]>([]);
+  const [heroSuggestions, setHeroSuggestions] = useState<{
+    categories: { id: string; title: string; slug: string }[];
+    venues: { id: string; title: string; slug: string; city: string | null }[];
+    services: { id: string; title: string; salon?: any }[];
+  }>({ categories: [], venues: [], services: [] });
   const [showHeroSuggestions, setShowHeroSuggestions] = useState(false);
   const [isHeroSearching, setIsHeroSearching] = useState(false);
   const heroSearchRef = useRef<HTMLDivElement>(null);
@@ -95,30 +90,47 @@ export default function HomePageClient({
           .map(cat => ({
             id: `cat-${cat.slug}`,
             title: cat.name,
-            type: 'category' as const,
             slug: cat.slug
           }));
 
-        // Fetch matching services
+        // Fetch matching venues and services
         const res = await fetch(`/api/services/autocomplete?q=${encodeURIComponent(query)}`, {
           signal: controller.signal
         });
 
-        let serviceSuggestions: typeof heroSuggestions = [];
+        let venueSuggestions: typeof heroSuggestions.venues = [];
+        let serviceSuggestions: typeof heroSuggestions.services = [];
         if (res.ok) {
           const data = await res.json();
-          serviceSuggestions = (data || []).slice(0, 5).map((item: any) => ({
+          // Map backend venues to UI venues
+          venueSuggestions = (data.venues || []).map((v: any) => ({
+            id: v.id,
+            title: v.name,
+            slug: v.slug,
+            city: v.city,
+          }));
+
+          // Map backend services to UI services
+          serviceSuggestions = (data.services || []).map((item: any) => ({
             id: item.id || `suggestion-${Math.random()}`,
             title: item.title || '',
-            salon: item.salon?.name || item.salonName || undefined,
-            type: 'service' as const
+            salon: item.salon || undefined,
           })).filter((s: any) => s.title);
         }
 
-        // Combine categories first, then services
-        const allSuggestions = [...matchingCategories, ...serviceSuggestions];
+        // Combine into the state
+        const allSuggestions = {
+          categories: matchingCategories,
+          venues: venueSuggestions,
+          services: serviceSuggestions,
+        };
+
         setHeroSuggestions(allSuggestions);
-        setShowHeroSuggestions(allSuggestions.length > 0);
+        setShowHeroSuggestions(
+          matchingCategories.length > 0 ||
+          venueSuggestions.length > 0 ||
+          serviceSuggestions.length > 0
+        );
       } catch (error) {
         if (error instanceof Error && error.name !== 'AbortError') {
           console.error('Autocomplete error:', error);
@@ -176,7 +188,6 @@ export default function HomePageClient({
               alt="Hero background art"
               fill
               priority
-              quality={85}
               className={styles.heroBackgroundImage}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
               placeholder="blur"
@@ -188,10 +199,11 @@ export default function HomePageClient({
 
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle} id="hero-title">
+            The hub for&nbsp;
             <TypingAnimation
-              words={VALUE_PROP_PHRASES}
-              typingSpeed={80}
-              deletingSpeed={50}
+              words={['Hairdressers', 'Nail Techs', 'Barbers', 'Makeup Artists', 'Braiders', 'Estheticians']}
+              typingSpeed={200}
+              deletingSpeed={100}
               delayBetweenWords={2500}
             />
           </h1>
@@ -221,7 +233,7 @@ export default function HomePageClient({
                     const value = heroSearchQuery.trim();
                     if (value) {
                       setShowHeroSuggestions(false);
-                      router.push(`/services?service=${encodeURIComponent(value)}`);
+                      router.push(`/salons?service=${encodeURIComponent(value)}`);
                     }
                   }
                 }}
@@ -232,9 +244,9 @@ export default function HomePageClient({
                   const value = heroSearchQuery.trim();
                   setShowHeroSuggestions(false);
                   if (value) {
-                    router.push(`/services?service=${encodeURIComponent(value)}`);
+                    router.push(`/salons?service=${encodeURIComponent(value)}`);
                   } else {
-                    router.push('/services');
+                    router.push('/salons');
                   }
                 }}
               >
@@ -242,30 +254,84 @@ export default function HomePageClient({
               </button>
 
               {/* Autocomplete Dropdown */}
-              {showHeroSuggestions && heroSuggestions.length > 0 && (
-                <ul className={styles.heroSuggestionsList}>
-                  {heroSuggestions.map((suggestion) => (
-                    <li
-                      key={suggestion.id}
-                      className={`${styles.heroSuggestionItem} ${suggestion.type === 'category' ? styles.categorySuggestion : ''}`}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setHeroSearchQuery(suggestion.title);
-                        setShowHeroSuggestions(false);
-                        if (suggestion.type === 'category' && suggestion.slug) {
-                          router.push(`/services?category=${suggestion.slug}`);
-                        } else {
-                          router.push(`/services?service=${encodeURIComponent(suggestion.title)}`);
-                        }
-                      }}
-                    >
-                      <span className={styles.heroSuggestionTitle}>{suggestion.title}</span>
-                      {suggestion.type === 'category' && (
-                        <span className={styles.categoryBadge}>Category</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+              {showHeroSuggestions && (
+                <div className={styles.heroSuggestionsList}>
+
+                  {/* Venues Section */}
+                  {heroSuggestions.venues.length > 0 && (
+                    <div className={styles.suggestionGroup}>
+                      <div className={styles.suggestionGroupTitle}>Venues</div>
+                      <ul className={styles.suggestionGroupList}>
+                        {heroSuggestions.venues.map((venue) => (
+                          <li
+                            key={venue.id}
+                            className={styles.heroSuggestionItem}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setShowHeroSuggestions(false);
+                              router.push(`/salons/${venue.slug}`);
+                            }}
+                          >
+                            <span className={styles.suggestionIcon}>🏠</span>
+                            <div className={styles.suggestionTextWrapper}>
+                              <span className={styles.heroSuggestionTitle}>{venue.title}</span>
+                              {venue.city && <span className={styles.suggestionSubtitle}> • {venue.city}</span>}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Treatments Section */}
+                  {heroSuggestions.services.length > 0 && (
+                    <div className={styles.suggestionGroup}>
+                      <div className={styles.suggestionGroupTitle}>Treatments</div>
+                      <ul className={styles.suggestionGroupList}>
+                        {heroSuggestions.services.map((service) => (
+                          <li
+                            key={service.id}
+                            className={styles.heroSuggestionItem}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setHeroSearchQuery(service.title);
+                              setShowHeroSuggestions(false);
+                              router.push(`/salons?service=${encodeURIComponent(service.title)}`);
+                            }}
+                          >
+                            <span className={styles.suggestionIcon}>✨</span>
+                            <span className={styles.heroSuggestionTitle}>{service.title}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Categories Section */}
+                  {heroSuggestions.categories.length > 0 && (
+                    <div className={styles.suggestionGroup}>
+                      <div className={styles.suggestionGroupTitle}>Categories</div>
+                      <ul className={styles.suggestionGroupList}>
+                        {heroSuggestions.categories.map((category) => (
+                          <li
+                            key={category.id}
+                            className={`${styles.heroSuggestionItem} ${styles.categorySuggestion}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setHeroSearchQuery(category.title);
+                              setShowHeroSuggestions(false);
+                              router.push(`/salons?category=${category.slug}`);
+                            }}
+                          >
+                            <span className={styles.suggestionIcon}>🔍</span>
+                            <span className={styles.heroSuggestionTitle}>{category.title}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                </div>
               )}
             </div>
           </div>

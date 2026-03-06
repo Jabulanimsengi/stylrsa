@@ -66,7 +66,7 @@ function CreateSalonPageContent() {
     Object.fromEntries(days.map(d => [d, { open: '09:00', close: '17:00', isOpen: true }])) as Record<string, { open: string, close: string, isOpen: boolean }>
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<PlanCode | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<PlanCode>('PREMIUM');
   const [hasConfirmedPayment, setHasConfirmedPayment] = useState(false);
   const { authStatus, user } = useAuth();
   const router = useRouter();
@@ -167,16 +167,7 @@ function CreateSalonPageContent() {
   }, [loadDraft]);
 
 
-  // Get plan from URL params
-  useEffect(() => {
-    const planParam = searchParams.get('plan');
-    if (planParam) {
-      const validPlan = APP_PLANS.find(p => p.code === planParam.toUpperCase());
-      if (validPlan && validPlan.code !== 'FREE') {
-        setSelectedPlan(validPlan.code as PlanCode);
-      }
-    }
-  }, [searchParams]);
+
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -362,84 +353,37 @@ function CreateSalonPageContent() {
 
       <div className={styles.card}>
         {/* Package Selection Section */}
-        {!selectedPlan ? (
-          <div className={styles.packageSelection}>
-            <h2 className={styles.sectionTitle}>Select Your Package</h2>
-            <p className={styles.sectionSubtitle}>Choose a plan to get started. You can upgrade or downgrade anytime.</p>
-
-            <div className={styles.plansGrid}>
-              {APP_PLANS.filter(plan => plan.code !== 'FREE').map((plan) => (
-                <div
-                  key={plan.code}
-                  className={`${styles.planCard} ${selectedPlan === plan.code ? styles.planCardSelected : ''} ${plan.popular ? styles.planCardPopular : ''}`}
-                  onClick={() => setSelectedPlan(plan.code as PlanCode)}
-                >
-                  {plan.popular && (
-                    <div className={styles.popularBadge}>⭐ Most Popular</div>
-                  )}
-                  <h3 className={styles.planName}>{plan.name}</h3>
-                  <div className={styles.planPrice}>
-                    {plan.price}
-                    <span className={styles.planPriceperiod}>/month</span>
-                  </div>
-                  {plan.originalPrice && (
-                    <div className={styles.planOriginalPrice}>{plan.originalPrice}/month</div>
-                  )}
-                  <p className={styles.planDescription}>{plan.description}</p>
-                  <ul className={styles.planFeatures}>
-                    {plan.features.slice(0, 4).map((feature, idx) => (
-                      <li key={idx}>✓ {feature}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+        {/* Selected Package Banner - Always Premium */}
+        <div className={styles.selectedPackageBanner}>
+          <div className={styles.bannerContent}>
+            <h3>Selected Package: Premium</h3>
+            <p>
+              <strong>R399/month</strong> • 5x visibility boost • 0% commission on bookings
+            </p>
           </div>
-        ) : (
-          <>
-            {/* Selected Package Banner */}
-            <div className={styles.selectedPackageBanner}>
-              <div className={styles.bannerContent}>
-                <h3>Selected Package: {PLAN_BY_CODE[selectedPlan].name}</h3>
-                <p>
-                  <strong>{PLAN_BY_CODE[selectedPlan].price}/month</strong> • {PLAN_BY_CODE[selectedPlan].visibilityWeight}x visibility boost • 0% commission on bookings
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedPlan(null);
-                    setHasConfirmedPayment(false);
-                  }}
-                  className={styles.changePlanButton}
-                >
-                  Change Package
-                </button>
-              </div>
-            </div>
+        </div>
 
-            {/* WhatsApp Payment Confirmation */}
-            <div className={styles.paymentConfirmation}>
-              <h3 className={styles.sectionTitle}>Payment Confirmation</h3>
-              <div className={styles.paymentInstructions}>
-                <p><strong>Bank Transfer Details:</strong></p>
-                <p>Please transfer <strong>{PLAN_BY_CODE[selectedPlan].price}</strong> and send proof of payment to:</p>
-                <p className={styles.whatsappNumber}>
-                  <strong>WhatsApp: 078 777 0524</strong>
-                </p>
-                <p className={styles.paymentNote}>Include your salon name in the payment reference.</p>
-              </div>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={hasConfirmedPayment}
-                  onChange={(e) => setHasConfirmedPayment(e.target.checked)}
-                  className={styles.checkbox}
-                />
-                <span>I confirm that I have sent proof of payment to the WhatsApp number above</span>
-              </label>
-            </div>
-          </>
-        )}
+        {/* WhatsApp Payment Confirmation */}
+        <div className={styles.paymentConfirmation}>
+          <h3 className={styles.sectionTitle}>Payment Confirmation</h3>
+          <div className={styles.paymentInstructions}>
+            <p><strong>Bank Transfer Details:</strong></p>
+            <p>Please transfer <strong>R399</strong> and send proof of payment to:</p>
+            <p className={styles.whatsappNumber}>
+              <strong>WhatsApp: 078 777 0524</strong>
+            </p>
+            <p className={styles.paymentNote}>Include your salon name in the payment reference.</p>
+          </div>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={hasConfirmedPayment}
+              onChange={(e) => setHasConfirmedPayment(e.target.checked)}
+              className={styles.checkbox}
+            />
+            <span>I confirm that I have sent proof of payment to the WhatsApp number above</span>
+          </label>
+        </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
@@ -784,7 +728,7 @@ function CreateSalonPageContent() {
               )}
             </div>
             <button type="submit" disabled={isSubmitting} className="btn btn-primary">
-              {isSubmitting ? 'Creating...' : 'Create Salon — FREE'}
+              {isSubmitting ? 'Creating...' : 'Create Salon'}
             </button>
           </div>
         </form>

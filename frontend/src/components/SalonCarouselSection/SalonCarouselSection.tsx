@@ -202,6 +202,7 @@ function SalonCarouselSection({
                     {salonData.map((salon) => (
                         <SwiperSlide
                             key={salon.id}
+                            className={styles.slide}
                             style={{
                                 width: isMobile ? 'auto' : 'calc((100% - 60px) / 4.1)',
                                 minHeight: isMobile ? '240px' : '280px',

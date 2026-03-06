@@ -230,6 +230,24 @@
     }
 }
 
+/* Swiper Slide Initial State - Matches Swiper breakpoints */
+.slide {
+    margin-right: 20px;
+    /* > 768px */
+}
+
+@media (max-width: 768px) {
+    .slide {
+        margin-right: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .slide {
+        margin-right: 12px;
+    }
+}
+
 @media (max-width: 400px) {
     .header {
         padding: 0 0.625rem;

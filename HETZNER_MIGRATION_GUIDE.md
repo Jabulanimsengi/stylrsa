@@ -86,7 +86,7 @@ docker-compose stop backend
 docker cp backup.sql app_postgres_1:/backup.sql
 
 # Restore the database
-docker exec -it app_postgres_1 psql -U hairpros -d hairpros_db -f /backup.sql
+docker run --rm -e PGPASSWORD=14YH08r4IPQJ9RVJ postgres:17-alpine \-U hairpros -d hairpros_db -f /backup.sql
 
 # Restart backend
 docker-compose start backend

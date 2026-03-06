@@ -1,0 +1,247 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ===== VIEW TOGGLE ===== */
+.viewToggle {
+    display: flex;
+    gap: 0.375rem;
+    background: var(--color-primary-soft);
+    border-radius: var(--radius-sm);
+    padding: 0.25rem;
+    width: fit-content;
+}
+
+.toggleBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.4rem 0.875rem;
+    border-radius: calc(var(--radius-sm) - 2px);
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.toggleBtn:hover {
+    color: var(--color-text-strong);
+}
+
+.toggleBtnActive {
+    background: var(--color-surface-elevated);
+    color: var(--color-text-strong);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ===== CALENDAR GRID ===== */
+.calendarContainer {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.calendarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.875rem 1.125rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.monthTitle {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-strong);
+}
+
+.navBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.navBtn:hover {
+    background: var(--color-surface-subtle);
+    color: var(--color-text-strong);
+}
+
+.weekDaysRow {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: var(--color-surface-subtle);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.weekDayLabel {
+    text-align: center;
+    padding: 0.4rem;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.daysGrid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.dayCell {
+    min-height: 72px;
+    padding: 0.375rem;
+    border-right: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    transition: background 0.1s ease;
+}
+
+.dayCell:nth-child(7n) {
+    border-right: none;
+}
+
+.dayCellOutside {
+    background: var(--color-surface-subtle);
+    opacity: 0.5;
+}
+
+.dayCellToday {
+    background: rgba(79, 70, 229, 0.04);
+}
+
+.dayNumber {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-muted);
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dayNumberToday {
+    background: #4F46E5;
+    color: #fff;
+    font-weight: var(--font-weight-bold);
+}
+
+.dayNumberOutside {
+    color: var(--color-border-strong);
+}
+
+/* ===== BOOKING CHIPS ===== */
+.bookingChip {
+    font-size: 0.68rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    line-height: 1.4;
+    font-weight: var(--font-weight-medium);
+    transition: opacity 0.1s ease;
+}
+
+.bookingChip:hover {
+    opacity: 0.8;
+}
+
+.chipPending {
+    background: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #FDE68A;
+}
+
+.chipConfirmed {
+    background: #ECFDF5;
+    color: #065F46;
+    border: 1px solid #A7F3D0;
+}
+
+.chipCompleted {
+    background: #EEF2FF;
+    color: #3730A3;
+    border: 1px solid #C7D2FE;
+}
+
+.chipCancelled {
+    background: var(--color-surface-subtle);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    text-decoration: line-through;
+}
+
+.moreChip {
+    font-size: 0.65rem;
+    color: var(--color-text-muted);
+    padding: 0.1rem 0.4rem;
+    cursor: pointer;
+}
+
+/* ===== LEGEND ===== */
+.legend {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 1.125rem 0.875rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.legendDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+/* ===== EMPTY STATE ===== */
+.emptyCalendar {
+    padding: 2.5rem;
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+    .dayCell {
+        min-height: 48px;
+        padding: 0.25rem;
+    }
+
+    .bookingChip {
+        font-size: 0.6rem;
+        padding: 0.1rem 0.3rem;
+    }
+}

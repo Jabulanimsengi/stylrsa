@@ -1,63 +1,64 @@
-# 🚀 Deployment Guide: Cloudflare Pages Migration
+# Deploying to Coolify
 
-This guide outlines the steps to deploy the **Stylr SA** frontend to Cloudflare Pages, replacing Vercel.
+This project is configured to run on [Coolify](https://coolify.io/) using Docker Compose.
 
-## 1. Prerequisites
-- [x] **Cloudflare Account**: Ensure you have access to the Cloudflare Dashboard.
-- [x] **Git Repository**: Your code must be pushed to GitHub/GitLab.
-- [x] **Backend URL**: Your backend is running on Render (`https://stylrsa.onrender.com`).
+## Prerequisites
 
-## 2. Cloudflare Pages Setup
+1.  A server (VPS) with Coolify installed.
+2.  This repository connected to your Coolify instance.
 
-1.  Log in to the **Cloudflare Dashboard**.
-2.  Go to **Compute (Workers & Pages)** > **Pages**.
-3.  Click **Connect to Git**.
-4.  Select your repository (`hairprosdirectory` or similar).
+## Deployment Steps
 
-## 3. Build Configuration (CRITICAL)
+1.  **Go to your Coolify Dashboard**.
+2.  Select your Project -> Environment -> **+ New Resource**.
+3.  Choose **Docker Compose**.
+4.  Select your **Repository** and Branch (`main`).
+5.  **Configuration**:
+    - Coolify might auto-detect `docker-compose.yml`. You should **replace** its content with the content of `docker-compose.prod.yml`.
+    - *Alternatively, point the "Compose File Path" to `docker-compose.prod.yml` if Coolify supports that option directly, but pasting the content is safer.*
+6.  **Environment Variables**:
+    -   Go to the **Environment Variables** tab in Coolify.
+    -   Add **ALL** of the following variables (copy from your local `.env`):
+        -   **Backend & Database**:
+            -   `POSTGRES_PASSWORD` (Create a strong password)
+            -   `JWT_SECRET`
+            -   `DOMAIN_NAME` (e.g., `stylrsa.co.za` - used for API URLs)
+            -   `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+            -   `SENDGRID_API_KEY` / `RESEND_API_KEY`
+            -   `FROM_EMAIL` (e.g., `noreply@stylrsa.co.za`)
+            -   `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (Backend SSO)
+            -   `GOOGLE_CALLBACK_URL`
+            -   `VIMEO_ACCESS_TOKEN`
+        -   **Frontend (Build & Runtime)**:
+            -   `NEXT_PUBLIC_API_URL` (Set to `https://stylrsa.co.za/api` or `https://${DOMAIN_NAME}/api`)
+            -   `NEXT_PUBLIC_SITE_URL` (Set to `https://stylrsa.co.za`)
+            -   `NEXTAUTH_URL` (Set to `https://stylrsa.co.za`)
+            -   `NEXTAUTH_SECRET` (Generate a random string: `openssl rand -base64 32`)
+            -   `GOOGLE_ID`, `GOOGLE_SECRET` (For NextAuth Google Provider - same as backend ones or different client)
+            -   `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`
+            -   `NEXT_PUBLIC_CLOUDINARY_API_KEY`
+            -   `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`
+            -   `NEXT_PUBLIC_GA_MEASUREMENT_ID` (Optional)
+            -   `NEXT_PUBLIC_SENTRY_DSN` (Optional)
 
-Use the following **exact settings** to ensure OpenNext works correctly:
+    > **Important**: Coolify will inject these variables during the container build process (for `NEXT_PUBLIC_` variables) and at runtime. Ensure you paste them **before** clicking Deploy.
 
-| Setting | Value |
-| :--- | :--- |
-| **Framework Preset** | `Next.js` |
-| **Build Command** | `npm run build:cloudflare` |
-| **Build Output Directory** | `.open-next/assets` |
-| **Root Directory** | `frontend` |
+7.  **Domains**:
+    -   In the **Settings** / **General** tab for the resource.
+    -   Set **Domains** to `https://your-domain.com` (e.g., `https://stylrsa.co.za`).
+    -   Coolify will automatically generate the SSL certificate.
+    -   **Important**: If you are deploying to a specific domain, ensure `DOMAIN_NAME` env var matches it.
 
-> **⚠️ IMPORTANT**: Do NOT use `.next` as the output directory. OpenNext outputs to `.open-next/assets`.
+8.  **Deploy**:
+    -   Click **Deploy**.
+    -   The system will:
+        1.  Build the Frontend (baking in `NEXT_PUBLIC_` variables).
+        2.  Build the Backend.
+        3.  Start Postgres & Redis.
+        4.  Run Database Migrations (`npx prisma migrate deploy`).
+        5.  Start the applications.
 
-## 4. Environment Variables
+## Troubleshooting
 
-Add the following variables in **Settings > Environment variables** (Production & Preview):
-
-| Variable | Value | Description |
-| :--- | :--- | :--- |
-| `NEXT_PUBLIC_SITE_URL` | `https://www.stylrsa.co.za` | Your custom domain |
-| `NEXT_PUBLIC_API_URL` | `https://stylrsa.onrender.com` | **Must match your Render backend** |
-| `NEXT_PUBLIC_API_ORIGIN` | `https://stylrsa.onrender.com` | For Auth/SSO |
-| `NEXT_PUBLIC_CLOUDFLARE` | `true` | Flags app to use Edge-compatible logic |
-| `NODE_VERSION` | `20` | Ensure Node.js 20+ is used for build |
-
-## 5. Post-Deployment Verification
-
-After the build completes (usually 2-3 minutes):
-
-1.  **Check Homepage**: Ensure images load (Cloudinary) and content appears.
-2.  **Check SEO Pages**: Visit a service page (e.g., `/braids/gauteng/johannesburg`).
-    *   *Success*: Page loads with star ratings.
-    *   *Failure*: 500 Error (indicates Prisma/Edge issue - but we fixed this!).
-3.  **Check Auth**: Try logging in (uses `NEXT_PUBLIC_API_ORIGIN`).
-
-## 6. Troubleshooting
-
-- **500 Errors on SEO Pages**:
-    - Check if `NEXT_PUBLIC_API_URL` is set correctly.
-    - Ensure the Backend is running.
-- **Images not loading**:
-    - Check `next.config.ts` `images.remotePatterns` (we configured this).
-- **Build Fails**:
-    - Check logs. If "Prisma Client" error, ensure you are NOT importing `PrismaClient` in any client-side or edge-compatible file (we moved `aggregate-rating` to backend to solve this).
-
----
-*Generated by Antigravity Agent*
+-   **Logs**: Check the logs of the `backend` or `frontend` container if something fails.
+-   **Database**: The first deploy creates the DB volume. Data is persistent in `postgres_data`.

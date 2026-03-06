@@ -5,18 +5,11 @@ type Props = {
   params: Promise<{ location: string }>;
 };
 
-// Generate static params for all location pages
+// Generate static params for location pages (Gauteng & Western Cape only)
 export async function generateStaticParams() {
   return [
     { location: 'gauteng' },
     { location: 'western-cape' },
-    { location: 'kwazulu-natal' },
-    { location: 'eastern-cape' },
-    { location: 'mpumalanga' },
-    { location: 'limpopo' },
-    { location: 'north-west' },
-    { location: 'free-state' },
-    { location: 'northern-cape' },
   ];
 }
 
@@ -30,41 +23,6 @@ const LOCATION_INFO: Record<string, { name: string; description: string; keyword
     name: 'Western Cape',
     description: 'Discover premier salons and beauty services in the Western Cape. Book appointments at top-rated hair salons, nail salons, and spas in Cape Town, Stellenbosch, and the Garden Route.',
     keywords: 'Western Cape salons, Cape Town hair salon, Cape Town beauty salon, Western Cape spa, Cape Town nail salon, Stellenbosch salon',
-  },
-  'kwazulu-natal': {
-    name: 'KwaZulu-Natal',
-    description: 'Find the best salons and beauty professionals near you in KwaZulu-Natal. Book services at top hair salons, nail salons, and spas near me in Durban, Pietermaritzburg, Umhlanga, and the North Coast. Beauty services near you.',
-    keywords: 'salons near me KZN, hair salon near me Durban, nail salon near me Durban, spa near me Umhlanga, beauty professionals near me KwaZulu-Natal, Durban braiding salon',
-  },
-  'eastern-cape': {
-    name: 'Eastern Cape',
-    description: 'Explore top salons and beauty services in the Eastern Cape. Book appointments at the best hair salons, nail salons, and spas in Port Elizabeth, East London, and surrounding areas.',
-    keywords: 'Eastern Cape salons, Port Elizabeth hair salon, East London beauty salon, Eastern Cape spa, PE nail salon',
-  },
-  'mpumalanga': {
-    name: 'Mpumalanga',
-    description: 'Find professional salons and beauty services in Mpumalanga. Book appointments at top-rated hair salons, nail salons, and spas in Nelspruit, Witbank, and the Lowveld region.',
-    keywords: 'Mpumalanga salons, Nelspruit hair salon, Mpumalanga beauty salon, Lowveld spa, Witbank salon',
-  },
-  'limpopo': {
-    name: 'Limpopo',
-    description: 'Discover quality salons and beauty professionals in Limpopo. Book services at the best hair salons, nail salons, and spas in Polokwane, Tzaneen, and surrounding areas.',
-    keywords: 'Limpopo salons, Polokwane hair salon, Limpopo beauty salon, Polokwane spa, Tzaneen salon',
-  },
-  'north-west': {
-    name: 'North West',
-    description: 'Find top salons and beauty services in North West Province. Book appointments at the best hair salons, nail salons, and spas in Rustenburg, Mahikeng, and Potchefstroom.',
-    keywords: 'North West salons, Rustenburg hair salon, North West beauty salon, Mahikeng spa, Potchefstroom salon',
-  },
-  'free-state': {
-    name: 'Free State',
-    description: 'Explore professional salons and beauty services in the Free State. Book appointments at top-rated hair salons, nail salons, and spas in Bloemfontein, Welkom, and surrounding areas.',
-    keywords: 'Free State salons, Bloemfontein hair salon, Free State beauty salon, Bloemfontein spa, Welkom salon',
-  },
-  'northern-cape': {
-    name: 'Northern Cape',
-    description: 'Find quality salons and beauty professionals in the Northern Cape. Book services at the best hair salons, nail salons, and spas in Kimberley, Upington, and the region.',
-    keywords: 'Northern Cape salons, Kimberley hair salon, Northern Cape beauty salon, Kimberley spa, Upington salon',
   },
 };
 

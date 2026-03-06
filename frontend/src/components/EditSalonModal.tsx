@@ -551,7 +551,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                     name="province"
                     value={formData.province}
                     onChange={handleChange}
-                    placeholder="e.g., Gauteng, Western Cape, North West"
+                    placeholder="e.g., Gauteng, Western Cape"
                     className={styles.input}
                   />
                   {fieldsLocked && (

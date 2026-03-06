@@ -17,7 +17,7 @@ import { EventsGateway } from '../events/events.gateway';
 import { generateSalonSlug, isUUID } from '../common/slug.util';
 import { MailService } from '../mail/mail.service';
 
-type PlanCode = 'FREE' | 'STARTER' | 'ESSENTIAL' | 'GROWTH' | 'PRO' | 'ELITE';
+type PlanCode = 'FREE' | 'STARTER' | 'ESSENTIAL' | 'GROWTH' | 'PRO' | 'ELITE' | 'PREMIUM';
 type PlanPaymentStatus =
   | 'PENDING_SELECTION'
   | 'AWAITING_PROOF'
@@ -34,6 +34,7 @@ const PLAN_FALLBACKS: Record<
   GROWTH: { visibilityWeight: 5, maxListings: 9999, priceCents: 19900 },
   PRO: { visibilityWeight: 7, maxListings: 9999, priceCents: 29900 },
   ELITE: { visibilityWeight: 10, maxListings: 9999, priceCents: 49900 },
+  PREMIUM: { visibilityWeight: 5, maxListings: 9999, priceCents: 39900 },
 };
 
 @Injectable()
@@ -682,276 +683,281 @@ export class SalonsService {
   }
 
   async findAllApproved(filters: any, user: any) {
-    const {
-      province,
-      city,
-      service,
-      category,
-      q,
-      offersMobile,
-      sortBy,
-      openNow,
-      priceMin,
-      priceMax,
-      lat,
-      lon,
-      radius,
-    } = filters || {};
+    try {
+      const {
+        province,
+        city,
+        service,
+        category,
+        q,
+        offersMobile,
+        sortBy,
+        openNow,
+        priceMin,
+        priceMax,
+        lat,
+        lon,
+        radius,
+      } = filters || {};
 
-    const where: any = {
-      approvalStatus: 'APPROVED',
-    };
+      const where: any = {
+        approvalStatus: 'APPROVED',
+      };
 
-    if (province)
-      where.province = { equals: String(province), mode: 'insensitive' } as any;
-    if (city) {
-      where.OR = [
-        { city: { equals: String(city), mode: 'insensitive' } as any },
-        { town: { equals: String(city), mode: 'insensitive' } as any },
-      ];
-    }
-    if (offersMobile === 'true' || offersMobile === true)
-      where.offersMobile = true;
-
-    // Service-based filters
-    const servicesFilter: any = {};
-    if (service || q) {
-      servicesFilter.title = {
-        contains: String(service || q),
-        mode: 'insensitive',
-      } as any;
-    }
-    if (category) {
-      // Convert slug format to searchable terms
-      // e.g., "makeup-beauty" → search for "makeup" AND "beauty" in category name
-      // This matches slugs like "makeup-beauty" to names like "Makeup & Beauty"
-      const searchTerms = String(category).split('-').filter(term => term.length > 0);
-      if (searchTerms.length > 0) {
-        servicesFilter.AND = [
-          ...(servicesFilter.AND || []),
-          ...searchTerms.map(term => ({
-            category: {
-              name: { contains: term, mode: 'insensitive' } as any,
-            },
-          })),
+      if (province)
+        where.province = { equals: String(province), mode: 'insensitive' } as any;
+      if (city) {
+        where.OR = [
+          { city: { equals: String(city), mode: 'insensitive' } as any },
+          { town: { equals: String(city), mode: 'insensitive' } as any },
         ];
       }
-    }
-    if (priceMin || priceMax) {
-      servicesFilter.price = {};
-      if (priceMin) servicesFilter.price.gte = Number(priceMin);
-      if (priceMax) servicesFilter.price.lte = Number(priceMax);
-    }
-    if (Object.keys(servicesFilter).length > 0) {
-      where.services = { some: servicesFilter };
-    }
+      if (offersMobile === 'true' || offersMobile === true)
+        where.offersMobile = true;
 
-    let orderBy: any;
-    if (sortBy === 'rating' || sortBy === 'top_rated')
-      orderBy = { avgRating: 'desc' };
+      // Service-based filters
+      const servicesFilter: any = {};
+      if (service || q) {
+        servicesFilter.title = {
+          contains: String(service || q),
+          mode: 'insensitive',
+        } as any;
+      }
+      if (category) {
+        // Convert slug format to searchable terms
+        // e.g., "makeup-beauty" → search for "makeup" AND "beauty" in category name
+        // This matches slugs like "makeup-beauty" to names like "Makeup & Beauty"
+        const searchTerms = String(category).split('-').filter(term => term.length > 0);
+        if (searchTerms.length > 0) {
+          servicesFilter.AND = [
+            ...(servicesFilter.AND || []),
+            ...searchTerms.map(term => ({
+              category: {
+                name: { contains: term, mode: 'insensitive' } as any,
+              },
+            })),
+          ];
+        }
+      }
+      if (priceMin || priceMax) {
+        servicesFilter.price = {};
+        if (priceMin) servicesFilter.price.gte = Number(priceMin);
+        if (priceMax) servicesFilter.price.lte = Number(priceMax);
+      }
+      if (Object.keys(servicesFilter).length > 0) {
+        where.services = { some: servicesFilter };
+      }
 
-    // Fetch base list with optimized select (use pre-computed avgRating)
-    let salons = await this.prisma.salon.findMany({
-      where,
-      orderBy,
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        description: true,
-        backgroundImage: true,
-        logo: true,
-        heroImages: true,
-        province: true,
-        city: true,
-        town: true,
-        address: true,
-        latitude: true,
-        longitude: true,
-        contactEmail: true,
-        phoneNumber: true,
-        whatsapp: true,
-        website: true,
-        bookingType: true,
-        offersMobile: true,
-        mobileFee: true,
-        operatingHours: true,
-        operatingDays: true,
-        isVerified: true,
-        avgRating: true,        // Pre-computed - no need to calculate!
-        viewCount: true,
-        visibilityWeight: true,
-        featuredUntil: true,
-        createdAt: true,
-        _count: {
-          select: {
-            reviews: {
-              where: { approvalStatus: 'APPROVED' }
+      let orderBy: any;
+      if (sortBy === 'rating' || sortBy === 'top_rated')
+        orderBy = { avgRating: 'desc' };
+
+      // Fetch base list with optimized select (use pre-computed avgRating)
+      let salons = await this.prisma.salon.findMany({
+        where,
+        orderBy,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          backgroundImage: true,
+          logo: true,
+          heroImages: true,
+          province: true,
+          city: true,
+          town: true,
+          address: true,
+          latitude: true,
+          longitude: true,
+          contactEmail: true,
+          phoneNumber: true,
+          whatsapp: true,
+          website: true,
+          bookingType: true,
+          offersMobile: true,
+          mobileFee: true,
+          operatingHours: true,
+          operatingDays: true,
+          isVerified: true,
+          avgRating: true,        // Pre-computed - no need to calculate!
+          viewCount: true,
+          visibilityWeight: true,
+          featuredUntil: true,
+          createdAt: true,
+          _count: {
+            select: {
+              reviews: {
+                where: { approvalStatus: 'APPROVED' }
+              }
             }
-          }
-        },
-        // Include top 5 services for map display
-        services: {
-          where: { approvalStatus: 'APPROVED' },
-          take: 5,
-          orderBy: { createdAt: 'asc' },
-          select: {
-            id: true,
-            title: true,
-            price: true,
-            category: {
-              select: {
-                name: true
+          },
+          // Include top 5 services for map display
+          services: {
+            where: { approvalStatus: 'APPROVED' },
+            take: 5,
+            orderBy: { createdAt: 'asc' },
+            select: {
+              id: true,
+              title: true,
+              price: true,
+              category: {
+                select: {
+                  name: true
+                }
               }
             }
           }
         }
-      }
-    });
-
-    // Map to consistent response format with reviewCount from _count
-    salons = salons.map((s: any) => {
-      const { _count, ...salon } = s;
-      return {
-        ...salon,
-        avgRating: Number((salon.avgRating || 0).toFixed(1)),
-        reviewCount: _count?.reviews || 0,
-        viewCount: salon.viewCount || 0
-      };
-    });
-
-    // Derive availability from operatingHours at query-time
-    const now = new Date();
-    salons = salons.map((s: any) => ({
-      ...s,
-      isAvailableNow: isOpenNowFromHours(s.operatingHours, now),
-    }));
-
-    // Filter by availability if requested
-    if (openNow === 'true' || openNow === true) {
-      salons = salons.filter((s: any) => s.isAvailableNow);
-    }
-
-    // Default ranking by visibility score when no explicit distance/price sort
-    if (!sortBy || sortBy === 'latest') {
-      salons = salons.sort((a: any, b: any) =>
-        compareByVisibilityThenRecency(
-          {
-            visibilityWeight: a.visibilityWeight,
-            featuredUntil: a.featuredUntil,
-            createdAt: a.createdAt,
-          },
-          {
-            visibilityWeight: b.visibilityWeight,
-            featuredUntil: b.featuredUntil,
-            createdAt: b.createdAt,
-          },
-        ),
-      );
-    }
-
-    // Sort by distance in memory if requested and coordinates provided
-    if (sortBy === 'distance' && lat && lon) {
-      const R = 6371; // km
-      const toRad = (v: number) => (v * Math.PI) / 180;
-      const userLat = Number(lat);
-      const userLon = Number(lon);
-      const maxRadius = radius ? Number(radius) : null;
-
-      salons = salons
-        .map((s) => {
-          if (s.latitude == null || s.longitude == null)
-            return { ...s, __dist: Number.POSITIVE_INFINITY };
-          const dLat = toRad(s.latitude - userLat);
-          const dLon = toRad(s.longitude - userLon);
-          const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRad(userLat)) *
-            Math.cos(toRad(s.latitude)) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          const d = R * c;
-          return { ...s, __dist: d };
-        })
-        .filter((s: any) => {
-          // Filter by radius if specified
-          if (maxRadius && s.__dist !== Number.POSITIVE_INFINITY) {
-            return s.__dist <= maxRadius;
-          }
-          return true;
-        })
-        .sort((a: any, b: any) => a.__dist - b.__dist)
-        .map(({ __dist, ...rest }: any) => ({
-          ...rest,
-          distance: __dist !== Number.POSITIVE_INFINITY ? __dist : null
-        }));
-    }
-
-    // Attach favorite flag if logged-in
-    if (user) {
-      const favoriteSalons = await this.prisma.favorite.findMany({
-        where: { userId: user.id },
-        select: { salonId: true },
       });
-      const favoriteSalonIds = new Set(favoriteSalons.map((f) => f.salonId));
-      salons = salons.map((salon) => ({
-        ...salon,
-        isFavorited: favoriteSalonIds.has(salon.id),
-      }));
-    }
 
-    // Optional price sort using min service price
-    if (sortBy === 'price') {
-      const mins = await this.prisma.service.groupBy({
-        by: ['salonId'],
-        _min: { price: true },
-        where: { salonId: { in: salons.map((s) => s.id) } },
-      });
-      const minMap = new Map(mins.map((m) => [m.salonId, m._min.price ?? 0]));
-      salons = salons.sort(
-        (a, b) => Number(minMap.get(a.id) ?? 0) - Number(minMap.get(b.id) ?? 0),
-      );
-    }
-
-    // Night shift filter - salons open after 6pm (18:00)
-    if (sortBy === 'night_shift') {
-      salons = salons.filter((s: any) => {
-        const hours = s.operatingHours;
-        if (!hours) return false;
-
-        // Check if any day has closing time >= 18:00
-        const hasNightHours = (hoursData: any): boolean => {
-          if (Array.isArray(hoursData)) {
-            return hoursData.some((day: any) => {
-              const closeTime = day?.close;
-              if (!closeTime) return false;
-              const [hour] = closeTime.split(':').map(Number);
-              return hour >= 18; // Open until 6pm or later
-            });
-          }
-          if (typeof hoursData === 'object') {
-            return Object.values(hoursData).some((time: any) => {
-              if (typeof time === 'string') {
-                // Format: "09:00 - 21:00"
-                const parts = time.split('-');
-                if (parts.length >= 2) {
-                  const closeTime = parts[1].trim();
-                  const [hour] = closeTime.split(':').map(Number);
-                  return hour >= 18;
-                }
-              }
-              return false;
-            });
-          }
-          return false;
+      // Map to consistent response format with reviewCount from _count
+      salons = salons.map((s: any) => {
+        const { _count, ...salon } = s;
+        return {
+          ...salon,
+          avgRating: Number((salon.avgRating || 0).toFixed(1)),
+          reviewCount: _count?.reviews || 0,
+          viewCount: salon.viewCount || 0
         };
-
-        return hasNightHours(hours);
       });
-    }
 
-    return salons;
+      // Derive availability from operatingHours at query-time
+      const now = new Date();
+      salons = salons.map((s: any) => ({
+        ...s,
+        isAvailableNow: isOpenNowFromHours(s.operatingHours, now),
+      }));
+
+      // Filter by availability if requested
+      if (openNow === 'true' || openNow === true) {
+        salons = salons.filter((s: any) => s.isAvailableNow);
+      }
+
+      // Default ranking by visibility score when no explicit distance/price sort
+      if (!sortBy || sortBy === 'latest') {
+        salons = salons.sort((a: any, b: any) =>
+          compareByVisibilityThenRecency(
+            {
+              visibilityWeight: a.visibilityWeight,
+              featuredUntil: a.featuredUntil,
+              createdAt: a.createdAt,
+            },
+            {
+              visibilityWeight: b.visibilityWeight,
+              featuredUntil: b.featuredUntil,
+              createdAt: b.createdAt,
+            },
+          ),
+        );
+      }
+
+      // Sort by distance in memory if requested and coordinates provided
+      if (sortBy === 'distance' && lat && lon) {
+        const R = 6371; // km
+        const toRad = (v: number) => (v * Math.PI) / 180;
+        const userLat = Number(lat);
+        const userLon = Number(lon);
+        const maxRadius = radius ? Number(radius) : null;
+
+        salons = salons
+          .map((s) => {
+            if (s.latitude == null || s.longitude == null)
+              return { ...s, __dist: Number.POSITIVE_INFINITY };
+            const dLat = toRad(s.latitude - userLat);
+            const dLon = toRad(s.longitude - userLon);
+            const a =
+              Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(toRad(userLat)) *
+              Math.cos(toRad(s.latitude)) *
+              Math.sin(dLon / 2) *
+              Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const d = R * c;
+            return { ...s, __dist: d };
+          })
+          .filter((s: any) => {
+            // Filter by radius if specified
+            if (maxRadius && s.__dist !== Number.POSITIVE_INFINITY) {
+              return s.__dist <= maxRadius;
+            }
+            return true;
+          })
+          .sort((a: any, b: any) => a.__dist - b.__dist)
+          .map(({ __dist, ...rest }: any) => ({
+            ...rest,
+            distance: __dist !== Number.POSITIVE_INFINITY ? __dist : null
+          }));
+      }
+
+      // Attach favorite flag if logged-in
+      if (user) {
+        const favoriteSalons = await this.prisma.favorite.findMany({
+          where: { userId: user.id },
+          select: { salonId: true },
+        });
+        const favoriteSalonIds = new Set(favoriteSalons.map((f) => f.salonId));
+        salons = salons.map((salon) => ({
+          ...salon,
+          isFavorited: favoriteSalonIds.has(salon.id),
+        }));
+      }
+
+      // Optional price sort using min service price
+      if (sortBy === 'price') {
+        const mins = await this.prisma.service.groupBy({
+          by: ['salonId'],
+          _min: { price: true },
+          where: { salonId: { in: salons.map((s) => s.id) } },
+        });
+        const minMap = new Map(mins.map((m) => [m.salonId, m._min.price ?? 0]));
+        salons = salons.sort(
+          (a, b) => Number(minMap.get(a.id) ?? 0) - Number(minMap.get(b.id) ?? 0),
+        );
+      }
+
+      // Night shift filter - salons open after 6pm (18:00)
+      if (sortBy === 'night_shift') {
+        salons = salons.filter((s: any) => {
+          const hours = s.operatingHours;
+          if (!hours) return false;
+
+          // Check if any day has closing time >= 18:00
+          const hasNightHours = (hoursData: any): boolean => {
+            if (Array.isArray(hoursData)) {
+              return hoursData.some((day: any) => {
+                const closeTime = day?.close;
+                if (!closeTime) return false;
+                const [hour] = closeTime.split(':').map(Number);
+                return hour >= 18; // Open until 6pm or later
+              });
+            }
+            if (typeof hoursData === 'object') {
+              return Object.values(hoursData).some((time: any) => {
+                if (typeof time === 'string') {
+                  // Format: "09:00 - 21:00"
+                  const parts = time.split('-');
+                  if (parts.length >= 2) {
+                    const closeTime = parts[1].trim();
+                    const [hour] = closeTime.split(':').map(Number);
+                    return hour >= 18;
+                  }
+                }
+                return false;
+              });
+            }
+            return false;
+          };
+
+          return hasNightHours(hours);
+        });
+      }
+
+      return salons;
+    } catch (error) {
+      console.error('findAllApproved DB error, returning empty list:', error?.message || error);
+      return [];
+    }
   }
 
   findNearby(lat: number, lon: number) {
@@ -960,61 +966,66 @@ export class SalonsService {
   }
 
   async findFeatured(user?: any) {
-    const now = new Date();
-    const where: any = {
-      approvalStatus: 'APPROVED',
-      featuredUntil: {
-        gte: now,
-      },
-    };
-
-    let salons = await this.prisma.salon.findMany({
-      where,
-      orderBy: [
-        { visibilityWeight: 'desc' },
-        { createdAt: 'desc' },
-      ],
-      take: 12, // Limit to 12 featured salons
-      include: {
-        reviews: {
-          where: { approvalStatus: 'APPROVED' },
-          select: { rating: true }
-        }
-      }
-    });
-
-    // Calculate average rating and review count for each salon
-    salons = salons.map((s: any) => {
-      const approvedReviews = s.reviews || [];
-      const reviewCount = approvedReviews.length;
-      const avgRating = reviewCount > 0
-        ? approvedReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount
-        : 0;
-
-      // Remove the reviews array to keep response lean, keep only aggregated data
-      const { reviews, ...salon } = s;
-      return {
-        ...salon,
-        avgRating: Number(avgRating.toFixed(1)),
-        reviewCount,
-        viewCount: salon.viewCount || 0
+    try {
+      const now = new Date();
+      const where: any = {
+        approvalStatus: 'APPROVED',
+        featuredUntil: {
+          gte: now,
+        },
       };
-    });
 
-    // Attach favorite flag if logged-in
-    if (user) {
-      const favoriteSalons = await this.prisma.favorite.findMany({
-        where: { userId: user.id },
-        select: { salonId: true },
+      let salons = await this.prisma.salon.findMany({
+        where,
+        orderBy: [
+          { visibilityWeight: 'desc' },
+          { createdAt: 'desc' },
+        ],
+        take: 12, // Limit to 12 featured salons
+        include: {
+          reviews: {
+            where: { approvalStatus: 'APPROVED' },
+            select: { rating: true }
+          }
+        }
       });
-      const favoriteSalonIds = new Set(favoriteSalons.map((f) => f.salonId));
-      salons = salons.map((salon) => ({
-        ...salon,
-        isFavorited: favoriteSalonIds.has(salon.id),
-      }));
-    }
 
-    return salons;
+      // Calculate average rating and review count for each salon
+      salons = salons.map((s: any) => {
+        const approvedReviews = s.reviews || [];
+        const reviewCount = approvedReviews.length;
+        const avgRating = reviewCount > 0
+          ? approvedReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount
+          : 0;
+
+        // Remove the reviews array to keep response lean, keep only aggregated data
+        const { reviews, ...salon } = s;
+        return {
+          ...salon,
+          avgRating: Number(avgRating.toFixed(1)),
+          reviewCount,
+          viewCount: salon.viewCount || 0
+        };
+      });
+
+      // Attach favorite flag if logged-in
+      if (user) {
+        const favoriteSalons = await this.prisma.favorite.findMany({
+          where: { userId: user.id },
+          select: { salonId: true },
+        });
+        const favoriteSalonIds = new Set(favoriteSalons.map((f) => f.salonId));
+        salons = salons.map((salon) => ({
+          ...salon,
+          isFavorited: favoriteSalonIds.has(salon.id),
+        }));
+      }
+
+      return salons;
+    } catch (error) {
+      console.error('findFeatured DB error, returning empty list:', error?.message || error);
+      return [];
+    }
   }
 
   async findRecommended(user: any) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './TypingAnimation.module.css';
 
 interface TypingAnimationProps {
@@ -11,83 +11,72 @@ interface TypingAnimationProps {
 }
 
 export default function TypingAnimation({
-    words,
+    words = [],
     typingSpeed = 100,
     deletingSpeed = 50,
     delayBetweenWords = 2000,
 }: TypingAnimationProps) {
-    const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [currentText, setCurrentText] = useState('');
+    const [wordIndex, setWordIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [isPaused, setIsPaused] = useState(false);
-
-    // Find the longest word to reserve space and prevent layout shift
-    const longestWord = useMemo(() => {
-        return words.reduce((longest, word) => 
-            word.length > longest.length ? word : longest, ''
-        );
-    }, [words]);
+    const [isInitialDelay, setIsInitialDelay] = useState(false);
 
     useEffect(() => {
-        if (words.length === 0) return;
+        if (!words || words.length === 0) return;
 
-        const currentWord = words[currentWordIndex];
+        let timeoutId: NodeJS.Timeout;
 
         const handleTyping = () => {
-            if (isPaused) {
+            const fullWord = words[wordIndex % words.length];
+
+            if (isInitialDelay) {
+                // Done waiting, now let's start deleting
+                setIsInitialDelay(false);
+                timeoutId = setTimeout(handleTyping, deletingSpeed);
                 return;
             }
 
-            if (!isDeleting) {
-                // Typing forward
-                if (currentText.length < currentWord.length) {
-                    setCurrentText(currentWord.substring(0, currentText.length + 1));
+            if (isDeleting) {
+                // Delete one character
+                setCurrentText(prev => prev.slice(0, -1));
+
+                if (currentText === '') {
+                    // Done deleting, move to next word and start typing
+                    setIsDeleting(false);
+                    setWordIndex(prev => prev + 1);
+                    timeoutId = setTimeout(handleTyping, typingSpeed);
                 } else {
-                    // Finished typing current word, pause then start deleting
-                    setIsPaused(true);
-                    setTimeout(() => {
-                        setIsPaused(false);
-                        setIsDeleting(true);
-                    }, delayBetweenWords);
+                    // Continue deleting
+                    timeoutId = setTimeout(handleTyping, deletingSpeed);
                 }
             } else {
-                // Deleting backward
-                if (currentText.length > 0) {
-                    setCurrentText(currentText.substring(0, currentText.length - 1));
+                // Type one character
+                setCurrentText(fullWord.slice(0, currentText.length + 1));
+
+                if (currentText === fullWord) {
+                    // Done typing, wait then start deleting
+                    setIsDeleting(true);
+                    timeoutId = setTimeout(handleTyping, delayBetweenWords);
                 } else {
-                    // Finished deleting, move to next word
-                    setIsDeleting(false);
-                    setCurrentWordIndex((prevIndex) => (prevIndex + 1) % words.length);
+                    // Continue typing
+                    timeoutId = setTimeout(handleTyping, typingSpeed);
                 }
             }
         };
 
-        const speed = isDeleting ? deletingSpeed : typingSpeed;
-        const timer = setTimeout(handleTyping, speed);
+        const startDelay = isInitialDelay ? delayBetweenWords : (isDeleting ? deletingSpeed : typingSpeed);
+        // Initialize the typing cycle
+        timeoutId = setTimeout(handleTyping, startDelay);
 
-        return () => clearTimeout(timer);
-    }, [
-        currentText,
-        currentWordIndex,
-        isDeleting,
-        isPaused,
-        words,
-        typingSpeed,
-        deletingSpeed,
-        delayBetweenWords,
-    ]);
+        return () => clearTimeout(timeoutId);
+    }, [currentText, isDeleting, isInitialDelay, wordIndex, words, typingSpeed, deletingSpeed, delayBetweenWords]);
+
+    if (!words || words.length === 0) return null;
 
     return (
-        <span className={styles.typingContainer}>
-            {/* Invisible placeholder to reserve space for longest word */}
-            <span className={styles.placeholder} aria-hidden="true">
-                {longestWord}
-            </span>
-            {/* Visible typing text positioned on top */}
-            <span className={styles.typingText}>
-                {currentText}
-                <span className={styles.cursor}>|</span>
-            </span>
+        <span className={styles.wrapper}>
+            <span className={styles.text}>{currentText}</span>
+            <span className={styles.cursor} />
         </span>
     );
 }

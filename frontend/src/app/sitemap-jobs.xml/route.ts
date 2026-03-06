@@ -18,17 +18,10 @@ const JOB_ROLES = [
   'spa-therapist',
 ];
 
-// South African provinces
+// South African provinces (Gauteng & Western Cape only)
 const PROVINCES = [
   { slug: 'gauteng', name: 'Gauteng' },
   { slug: 'western-cape', name: 'Western Cape' },
-  { slug: 'kwazulu-natal', name: 'KwaZulu-Natal' },
-  { slug: 'eastern-cape', name: 'Eastern Cape' },
-  { slug: 'free-state', name: 'Free State' },
-  { slug: 'limpopo', name: 'Limpopo' },
-  { slug: 'mpumalanga', name: 'Mpumalanga' },
-  { slug: 'north-west', name: 'North West' },
-  { slug: 'northern-cape', name: 'Northern Cape' },
 ];
 
 // Major cities per province
@@ -41,28 +34,6 @@ const CITIES: Record<string, string[]> = {
   'western-cape': [
     'cape-town', 'stellenbosch', 'somerset-west', 'paarl', 'george',
     'bellville', 'durbanville', 'claremont', 'sea-point', 'camps-bay',
-  ],
-  'kwazulu-natal': [
-    'durban', 'pietermaritzburg', 'umhlanga', 'ballito', 'pinetown',
-    'westville', 'newcastle', 'richards-bay',
-  ],
-  'eastern-cape': [
-    'gqeberha', 'east-london', 'mthatha', 'grahamstown', 'uitenhage',
-  ],
-  'free-state': [
-    'bloemfontein', 'welkom', 'sasolburg', 'bethlehem', 'kroonstad',
-  ],
-  limpopo: [
-    'polokwane', 'tzaneen', 'mokopane', 'thohoyandou', 'lephalale',
-  ],
-  mpumalanga: [
-    'mbombela', 'witbank', 'secunda', 'middelburg', 'standerton',
-  ],
-  'north-west': [
-    'rustenburg', 'potchefstroom', 'klerksdorp', 'mahikeng', 'brits',
-  ],
-  'northern-cape': [
-    'kimberley', 'upington', 'springbok', 'de-aar',
   ],
 };
 

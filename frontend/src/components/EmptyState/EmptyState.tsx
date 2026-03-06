@@ -168,9 +168,6 @@ export default function EmptyState({
             <Link href="/salons/location/western-cape" className={styles.suggestionLink}>
               Western Cape
             </Link>
-            <Link href="/salons/location/kwazulu-natal" className={styles.suggestionLink}>
-              KwaZulu-Natal
-            </Link>
           </div>
         </div>
       )}

@@ -14,16 +14,9 @@ import { ApprovalStatus } from '@/types';
 
 const DRAFT_STORAGE_KEY = 'seller-profile-draft';
 
-// South African provinces
+// South African provinces (service areas)
 const SA_PROVINCES = [
-    'Eastern Cape',
-    'Free State',
     'Gauteng',
-    'KwaZulu-Natal',
-    'Limpopo',
-    'Mpumalanga',
-    'North West',
-    'Northern Cape',
     'Western Cape',
 ];
 

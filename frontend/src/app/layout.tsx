@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     // Quality indicators
     'top-rated salon', 'certified beauty professionals', 'expert stylists', 'professional beauty services',
     // Locations
-    'South Africa', 'Johannesburg', 'Cape Town', 'Durban', 'Pretoria', 'Sandton', 'Rosebank',
+    'South Africa', 'Johannesburg', 'Cape Town', 'Pretoria', 'Sandton', 'Rosebank', 'Gauteng', 'Western Cape',
     // Action keywords
     'book premium salon', 'luxury beauty appointments', 'exclusive spa booking'
   ],

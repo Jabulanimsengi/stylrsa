@@ -2,6 +2,7 @@
 
 'use client';
 
+
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import Image from 'next/image';
 import {
@@ -29,6 +30,18 @@ import PromotionModal from '@/components/PromotionModal';
 import CreatePromotionModal from '@/components/CreatePromotionModal';
 import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
 import { FaTrash, FaEdit, FaPlus, FaCamera } from 'react-icons/fa';
+import {
+  FiCalendar,
+  FiScissors,
+  FiTag,
+  FiImage,
+  FiStar,
+  FiCreditCard,
+  FiClock,
+  FiSettings,
+  FiUsers,
+  FiBriefcase,
+} from 'react-icons/fi';
 import Link from 'next/link';
 import PageNav from '@/components/PageNav';
 import { useAuth } from '@/hooks/useAuth';
@@ -51,6 +64,15 @@ import {
 } from '@/components/ui';
 import StatusBadge from '@/components/StatusBadge';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
+import DashboardKPIRow from '@/components/DashboardKPIRow/DashboardKPIRow';
+import BookingCalendar from '@/components/BookingCalendar/BookingCalendar';
+import DashboardSidebar from '@/components/DashboardSidebar/DashboardSidebar';
+import ServicesTab from '@/components/ServicesTab/ServicesTab';
+import PromotionsTab from '@/components/PromotionsTab/PromotionsTab';
+import GalleryTab from '@/components/GalleryTab/GalleryTab';
+
+
+
 
 type DashboardBooking = Booking & {
   user: { firstName: string; lastName: string };
@@ -78,31 +100,31 @@ const NAV_SECTIONS = [
   {
     label: 'Business',
     items: [
-      { id: 'bookings', label: 'Bookings' },
-      { id: 'services', label: 'Services' },
-      { id: 'promotions', label: 'Promotions' },
+      { id: 'bookings', label: 'Bookings', icon: FiCalendar },
+      { id: 'services', label: 'Services', icon: FiScissors },
+      { id: 'promotions', label: 'Promotions', icon: FiTag },
     ],
   },
   {
     label: 'Content',
     items: [
-      { id: 'gallery', label: 'Gallery' },
-      { id: 'reviews', label: 'Reviews' },
+      { id: 'gallery', label: 'Gallery', icon: FiImage },
+      { id: 'reviews', label: 'Reviews', icon: FiStar },
     ],
   },
   {
     label: 'Settings',
     items: [
-      { id: 'package', label: 'Package & Billing' },
-      { id: 'availability', label: 'Availability' },
-      { id: 'booking-settings', label: 'Booking Settings' },
+      { id: 'package', label: 'Package & Billing', icon: FiCreditCard },
+      { id: 'availability', label: 'Availability', icon: FiClock },
+      { id: 'booking-settings', label: 'Booking Settings', icon: FiSettings },
     ],
   },
   {
     label: 'Team',
     items: [
-      { id: 'team', label: 'Team Members' },
-      { id: 'jobs', label: 'Job Postings' },
+      { id: 'team', label: 'Team Members', icon: FiUsers },
+      { id: 'jobs', label: 'Job Postings', icon: FiBriefcase },
     ],
   },
 ];
@@ -399,19 +421,10 @@ function DashboardPageContent() {
     setIsTogglingAvailability(true);
     try {
       const updated = await apiJson(`/api/salons/mine/availability?ownerId=${ownerId}`, { method: 'PATCH' }) as Salon;
-      // Use React's batching to update state safely
-      setSalon(prev => {
-        if (!prev) return updated;
-        return updated;
-      });
-      // Defer toast to avoid DOM manipulation conflicts
-      setTimeout(() => {
-        toast.success(updated.isAvailableNow ? 'Marked as available' : 'Marked as unavailable');
-      }, 0);
+      setSalon(updated);
+      toast.success(updated.isAvailableNow ? 'Marked as available' : 'Marked as unavailable');
     } catch (e: any) {
-      setTimeout(() => {
-        toast.error(toFriendlyMessage(e, 'Could not update availability'));
-      }, 0);
+      toast.error(toFriendlyMessage(e, 'Could not update availability'));
     } finally {
       setIsTogglingAvailability(false);
     }
@@ -548,50 +561,60 @@ function DashboardPageContent() {
 
   const renderBookingCard = (booking: DashboardBooking) => {
     const bookingDate = new Date(booking.bookingTime);
+    const dateStr = bookingDate.toLocaleDateString('en-ZA', { weekday: 'short', month: 'short', day: 'numeric' });
+    const timeStr = bookingDate.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
     return (
       <div key={booking.id} className={styles.bookingCard} data-status={booking.status}>
-        <div className={styles.bookingHeader}>
-          <div>
-            <h4 className={styles.bookingServiceTitle}>{booking.service.title}</h4>
-            <p className={styles.bookingCustomerName}>{booking.user.firstName} {booking.user.lastName}</p>
+        {/* Left: info */}
+        <div className={styles.bookingInfo}>
+          <div className={styles.bookingTopRow}>
+            <span className={styles.bookingServiceTitle}>{booking.service.title}</span>
+            <span className={`${styles.bookingStatusBadge} ${styles[`status${booking.status.charAt(0) + booking.status.slice(1).toLowerCase()}`]}`}>
+              {booking.status}
+            </span>
           </div>
-          <span className={`${styles.bookingStatusBadge} ${styles[`status${booking.status.charAt(0) + booking.status.slice(1).toLowerCase()}`]}`}>
-            {booking.status}
-          </span>
+          <div className={styles.bookingMeta}>
+            <span className={styles.bookingMetaItem}>{booking.user.firstName} {booking.user.lastName}</span>
+            <span className={styles.bookingMetaDot}>·</span>
+            <span className={styles.bookingMetaItem}>{dateStr}</span>
+            <span className={styles.bookingMetaDot}>·</span>
+            <span className={styles.bookingMetaItem}>{timeStr}</span>
+            {booking.clientPhone && (
+              <>
+                <span className={styles.bookingMetaDot}>·</span>
+                <span className={styles.bookingMetaItem}>{booking.clientPhone}</span>
+              </>
+            )}
+          </div>
         </div>
-        <div className={styles.bookingDetails}>
-          <div className={styles.bookingDetailItem}>
-            <strong>Date:</strong>
-            <span>{bookingDate.toLocaleDateString('en-ZA', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</span>
-          </div>
-          <div className={styles.bookingDetailItem}>
-            <strong>Time:</strong>
-            <span>{bookingDate.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}</span>
-          </div>
-          {booking.clientPhone && (
-            <div className={styles.bookingDetailItem}>
-              <strong>Phone:</strong>
-              <span>{booking.clientPhone}</span>
-            </div>
-          )}
-        </div>
+        {/* Right: actions */}
         <div className={styles.bookingActions}>
           {booking.status === 'PENDING' && (
             <>
-              <button onClick={() => handleBookingStatusUpdate(booking.id, 'CONFIRMED')} className={styles.confirmButton}>Accept Booking</button>
-              <button onClick={() => handleBookingStatusUpdate(booking.id, 'DECLINED')} className={styles.declineButton}>Decline Booking</button>
+              <Button size="sm" variant="default" onClick={() => handleBookingStatusUpdate(booking.id, 'CONFIRMED')}>
+                Accept
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => handleBookingStatusUpdate(booking.id, 'DECLINED')}
+                style={{ color: 'var(--color-error-text)', borderColor: 'var(--color-error-text)' }}>
+                Decline
+              </Button>
             </>
           )}
           {booking.status === 'CONFIRMED' && (
-            <button onClick={() => setBookingToComplete(booking.id)} className={styles.completeButton}>Mark as Completed</button>
+            <Button size="sm" variant="secondary" onClick={() => setBookingToComplete(booking.id)}>
+              Complete
+            </Button>
           )}
           {['COMPLETED', 'DECLINED', 'CANCELLED'].includes(booking.status) && (
-            <p className={styles.bookingStatusText}>{booking.status === 'COMPLETED' ? 'Service completed' : booking.status === 'DECLINED' ? 'Booking declined' : 'Booking cancelled'}</p>
+            <span className={styles.bookingStatusText}>
+              {booking.status === 'COMPLETED' ? 'Completed' : booking.status === 'DECLINED' ? 'Declined' : 'Cancelled'}
+            </span>
           )}
         </div>
       </div>
     );
   };
+
 
   return (
     <>
@@ -631,20 +654,23 @@ function DashboardPageContent() {
             <span className={`${styles.statusValue} ${salon.isAvailableNow ? styles.statusAvailable : styles.statusUnavailable}`}>
               {salon.isAvailableNow ? 'Available' : 'Unavailable'}
             </span>
-            <button
-              onClick={toggleAvailability}
-              disabled={isTogglingAvailability}
-              className={styles.toggleSwitch}
-              aria-label="Toggle availability"
-              style={{ opacity: isTogglingAvailability ? 0.6 : 1, cursor: isTogglingAvailability ? 'not-allowed' : 'pointer' }}
-            >
-              <span className={`${styles.toggleSlider} ${salon.isAvailableNow ? styles.toggleActive : ''}`}>
-                <span className={styles.toggleKnob}></span>
-              </span>
-              <span className={styles.toggleLabel}>
-                {salon.isAvailableNow ? 'ON' : 'OFF'}
-              </span>
-            </button>
+            <div className={styles.availabilitySwitchRow}>
+              <span className={styles.availabilitySwitchOffLabel}>OFF</span>
+              <label
+                className={styles.switch}
+                aria-label="Toggle availability"
+                style={{ opacity: isTogglingAvailability ? 0.6 : 1, cursor: isTogglingAvailability ? 'not-allowed' : 'pointer' }}
+              >
+                <input
+                  type="checkbox"
+                  checked={!!salon.isAvailableNow}
+                  onChange={toggleAvailability}
+                  disabled={isTogglingAvailability}
+                />
+                <span className={styles.slider}></span>
+              </label>
+              <span className={styles.availabilitySwitchOnLabel}>ON</span>
+            </div>
           </div>
         </div>
 
@@ -658,274 +684,136 @@ function DashboardPageContent() {
           </button>
         </div>
 
-        {/* Payment Notice */}
-        {planStatus !== 'VERIFIED' && (
-          <Alert variant="warning" title="Payment Required" className="mb-4">
-            <p className="mb-3">
-              Pay <strong>{planDetails.price}</strong> to <strong>{BANK_DETAILS.bank}</strong>, account <strong>{BANK_DETAILS.accountNumber}</strong>.
-              Please make an instant payment to allow us to track the payment fast. Use <strong>{planReference}</strong> as reference. WhatsApp proof to <strong>{BANK_DETAILS.whatsapp}</strong>.
-            </p>
-            <div className="flex gap-2 flex-wrap">
-              <Button variant="outline" size="sm" onClick={handleCopyReference}>Copy Reference</Button>
-              {planStatus !== 'PROOF_SUBMITTED' && (
-                <LoadingButton
-                  size="sm"
-                  loading={isPlanUpdating}
-                  loadingText="Saving..."
-                  onClick={() => handlePlanProofUpdate(true)}
-                >
-                  I sent proof
-                </LoadingButton>
-              )}
-            </div>
-          </Alert>
-        )}
+
+        {/* KPI Metrics Row */}
+        <DashboardKPIRow
+          data={{
+            totalBookings: bookings.length,
+            pendingBookings: pendingBookings.length,
+            completedBookings: bookings.filter(b => b.status === 'COMPLETED').length,
+            avgRating: salon.avgRating ?? null,
+            reviewCount: salon.reviewCount ?? 0,
+            servicesCount: services.length,
+            profileComplete: [
+              !!salon.name,
+              !!salon.description,
+              !!salon.address,
+              !!salon.city,
+              !!salon.phoneNumber,
+              services.length > 0,
+              !!salon.coverImage || (salon.gallery && salon.gallery.length > 0),
+            ].filter(Boolean).length * Math.round(100 / 7),
+          }}
+          onCardClick={(tab) => setActiveMainTab(tab as TabId)}
+        />
 
         {/* Main Layout with Sidebar */}
         <div className={styles.dashboardLayout}>
-          {/* Mobile Nav Header with Hamburger */}
-          <div className={styles.mobileNavHeader}>
-            <div className={styles.mobileNavHeaderContent}>
-              <button
-                className={`${styles.mobileNavToggle} ${mobileNavOpen ? styles.hamburgerOpen : ''}`}
-                onClick={() => setMobileNavOpen(!mobileNavOpen)}
-                aria-label={mobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
-                aria-expanded={mobileNavOpen}
-              >
-                <span className={styles.hamburgerIcon}>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </span>
-                <span>Menu</span>
-              </button>
-              <span className={styles.currentTabLabel}>
-                {NAV_SECTIONS.flatMap(s => s.items).find(i => i.id === activeMainTab)?.label || 'Dashboard'}
-              </span>
-            </div>
-          </div>
-
-          {/* Backdrop for mobile sidebar */}
-          <div
-            className={`${styles.sidebarBackdrop} ${mobileNavOpen ? styles.sidebarBackdropVisible : ''}`}
-            onClick={() => setMobileNavOpen(false)}
-            aria-hidden="true"
+          {/* Sidebar Navigation */}
+          <DashboardSidebar
+            sections={NAV_SECTIONS}
+            activeTab={activeMainTab}
+            onTabChange={(id) => setActiveMainTab(id as TabId)}
+            mobileNavOpen={mobileNavOpen}
+            onMobileNavToggle={() => setMobileNavOpen(prev => !prev)}
+            salonName={salon?.name}
+            pendingBookingsCount={pendingBookings.length}
           />
-
-          {/* Sidebar Navigation - Slide-in Drawer */}
-          <aside
-            className={`${styles.sidebar} ${mobileNavOpen ? styles.sidebarOpen : ''}`}
-            role="navigation"
-            aria-label="Dashboard navigation"
-          >
-            {/* Close button for mobile */}
-            <button
-              className={styles.sidebarCloseBtn}
-              onClick={() => setMobileNavOpen(false)}
-              aria-label="Close navigation menu"
-            >
-              ✕
-            </button>
-
-            {NAV_SECTIONS.map((section) => (
-              <div key={section.label} className={styles.navSection}>
-                <h3 className={styles.navSectionTitle}>{section.label}</h3>
-                <ul className={styles.navList}>
-                  {section.items.map((item) => (
-                    <li key={item.id}>
-                      <button
-                        onClick={() => { setActiveMainTab(item.id as TabId); setMobileNavOpen(false); }}
-                        className={`${styles.navItem} ${activeMainTab === item.id ? styles.navItemActive : ''}`}
-                      >
-                        {item.label}
-                        {item.id === 'bookings' && pendingBookings.length > 0 && (
-                          <span className={styles.navBadge}>{pendingBookings.length}</span>
-                        )}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </aside>
 
           {/* Main Content */}
           <main className={styles.mainContent}>
+
             {/* Bookings Tab */}
             {activeMainTab === 'bookings' && (
               <div className={styles.contentCard}>
                 <div className={styles.cardHeader}>
                   <h3 className={styles.cardTitle}>Bookings</h3>
                 </div>
-                <div className={styles.tabs}>
-                  <button onClick={() => setActiveBookingTab('pending')} className={`${styles.tabButton} ${activeBookingTab === 'pending' ? styles.activeTab : ''}`}>Pending ({pendingBookings.length})</button>
-                  <button onClick={() => setActiveBookingTab('confirmed')} className={`${styles.tabButton} ${activeBookingTab === 'confirmed' ? styles.activeTab : ''}`}>Confirmed ({confirmedBookings.length})</button>
-                  <button onClick={() => setActiveBookingTab('past')} className={`${styles.tabButton} ${activeBookingTab === 'past' ? styles.activeTab : ''}`}>Past ({pastBookings.length})</button>
-                </div>
-                <div className={styles.list}>
-                  {activeBookingTab === 'pending' && (
-                    pendingBookings.length > 0 ? pendingBookings.map(renderBookingCard) : (
-                      <div className={styles.emptyState}>
-                        <h3 className={styles.emptyStateTitle}>No Pending Bookings</h3>
-                        <p className={styles.emptyStateMessage}>
-                          You're all caught up! New booking requests will appear here when customers book your services.
-                        </p>
+                <BookingCalendar
+                  bookings={bookings as any[]}
+                  onBookingClick={(b) => {
+                    // Scroll / focus the matching booking card in list view
+                    // The toggle will switch back to list automatically if needed
+                  }}
+                  renderListView={() => (
+                    <>
+                      <div className={styles.tabs}>
+                        <button onClick={() => setActiveBookingTab('pending')} className={`${styles.tabButton} ${activeBookingTab === 'pending' ? styles.activeTab : ''}`}>Pending ({pendingBookings.length})</button>
+                        <button onClick={() => setActiveBookingTab('confirmed')} className={`${styles.tabButton} ${activeBookingTab === 'confirmed' ? styles.activeTab : ''}`}>Confirmed ({confirmedBookings.length})</button>
+                        <button onClick={() => setActiveBookingTab('past')} className={`${styles.tabButton} ${activeBookingTab === 'past' ? styles.activeTab : ''}`}>Past ({pastBookings.length})</button>
                       </div>
-                    )
-                  )}
-                  {activeBookingTab === 'confirmed' && (
-                    confirmedBookings.length > 0 ? confirmedBookings.map(renderBookingCard) : (
-                      <div className={styles.emptyState}>
-                        <h3 className={styles.emptyStateTitle}>No Confirmed Bookings</h3>
-                        <p className={styles.emptyStateMessage}>
-                          Once you accept booking requests, they will appear here.
-                        </p>
+                      <div className={styles.list}>
+                        {activeBookingTab === 'pending' && (
+                          pendingBookings.length > 0 ? pendingBookings.map(renderBookingCard) : (
+                            <div className={styles.emptyState}>
+                              <h3 className={styles.emptyStateTitle}>No Pending Bookings</h3>
+                              <p className={styles.emptyStateMessage}>
+                                You're all caught up! New booking requests will appear here when customers book your services.
+                              </p>
+                            </div>
+                          )
+                        )}
+                        {activeBookingTab === 'confirmed' && (
+                          confirmedBookings.length > 0 ? confirmedBookings.map(renderBookingCard) : (
+                            <div className={styles.emptyState}>
+                              <h3 className={styles.emptyStateTitle}>No Confirmed Bookings</h3>
+                              <p className={styles.emptyStateMessage}>
+                                Once you accept booking requests, they will appear here.
+                              </p>
+                            </div>
+                          )
+                        )}
+                        {activeBookingTab === 'past' && (
+                          pastBookings.length > 0 ? pastBookings.map(renderBookingCard) : (
+                            <div className={styles.emptyState}>
+                              <h3 className={styles.emptyStateTitle}>No Past Bookings</h3>
+                              <p className={styles.emptyStateMessage}>
+                                Completed, declined, and cancelled bookings will appear here for your records.
+                              </p>
+                            </div>
+                          )
+                        )}
                       </div>
-                    )
+                    </>
                   )}
-                  {activeBookingTab === 'past' && (
-                    pastBookings.length > 0 ? pastBookings.map(renderBookingCard) : (
-                      <div className={styles.emptyState}>
-                        <h3 className={styles.emptyStateTitle}>No Past Bookings</h3>
-                        <p className={styles.emptyStateMessage}>
-                          Completed, declined, and cancelled bookings will appear here for your records.
-                        </p>
-                      </div>
-                    )
-                  )}
-                </div>
+                />
               </div>
             )}
 
             {/* Services Tab */}
             {activeMainTab === 'services' && (
-              <div className={styles.contentCard}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle}>Services</h3>
-                  <button onClick={openServiceModalToAdd} className={styles.addButton}>Add Service</button>
-                </div>
-                <div className={styles.list}>
-                  {services.length > 0 ? services.map((service) => (
-                    <div key={service.id} className={styles.listItem}>
-                      <div className={styles.serviceMainInfo}>
-                        <span className={styles.serviceTitle}>{service.title}</span>
-                        <span className={styles.servicePriceInline}>R{service.price.toFixed(2)}</span>
-                      </div>
-                      <div className={styles.serviceActionsCompact}>
-                        <span className={`${styles.statusIcon} ${getStatusClass(service.approvalStatus || 'PENDING')}`} title={service.approvalStatus}>
-                          {service.approvalStatus === 'APPROVED' && '✓'}
-                          {service.approvalStatus === 'PENDING' && '○'}
-                          {service.approvalStatus === 'REJECTED' && '✕'}
-                        </span>
-                        <button onClick={() => openServiceModalToEdit(service)} className={styles.editButton} aria-label="Edit service">
-                          <FaEdit />
-                        </button>
-                        <button onClick={() => handleDeleteClick(service.id, 'service')} className={styles.deleteButton} aria-label="Delete service">
-                          <FaTrash />
-                        </button>
-                      </div>
-                    </div>
-                  )) : (
-                    <div className={styles.emptyState}>
-                      <h3 className={styles.emptyStateTitle}>No Services Yet</h3>
-                      <p className={styles.emptyStateMessage}>
-                        Start by adding your first service. Services are what customers will book from your salon.
-                      </p>
-                      <button onClick={openServiceModalToAdd} className={styles.emptyStateAction}>
-                        Add Your First Service
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <ServicesTab
+                services={services}
+                onAddService={openServiceModalToAdd}
+                onEditService={openServiceModalToEdit}
+                onDeleteService={(id) => handleDeleteClick(id, 'service')}
+              />
             )}
+
 
             {/* Promotions Tab */}
             {activeMainTab === 'promotions' && (
-              <div className={styles.contentCard}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle}>Promotions</h3>
-                </div>
-                <h4 className={styles.sectionHeading}>Active Promotions</h4>
-                <div className={styles.list}>
-                  {promotions.active.length > 0 ? promotions.active.map((promo: any) => {
-                    const item = promo.service || promo.product;
-                    const itemName = promo.service ? item?.title : item?.name;
-                    const daysLeft = Math.ceil((new Date(promo.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                    return (
-                      <div key={promo.id} className={styles.listItem}>
-                        <div>
-                          <p><strong>{itemName}</strong></p>
-                          <p className={styles.promoDetails}>
-                            <span className={styles.promoPricing}>
-                              <span className={styles.promoOriginalPrice}>R{promo.originalPrice.toFixed(2)}</span>
-                              <span>→</span>
-                              <span className={styles.promoDiscountedPrice}>R{promo.promotionalPrice.toFixed(2)}</span>
-                              <span>({promo.discountPercentage}% off)</span>
-                            </span>
-                          </p>
-                          <p className={styles.promoDuration}>{daysLeft > 0 ? `${daysLeft} days left` : 'Expired'}</p>
-                        </div>
-                        <div className={styles.actions}>
-                          <span className={`${styles.statusBadge} ${getStatusClass(promo.approvalStatus)}`}>{promo.approvalStatus}</span>
-                          <button onClick={() => handleDeleteClick(promo.id, 'promotion')} className={styles.deleteButton}><FaTrash /></button>
-                        </div>
-                      </div>
-                    );
-                  }) : (
-                    <div className={styles.emptyState}>
-                      <h3 className={styles.emptyStateTitle}>No Active Promotions</h3>
-                      <p className={styles.emptyStateMessage}>
-                        Create promotions for your services to attract more customers with special offers and discounts.
-                      </p>
-                    </div>
-                  )}
-                </div>
-                {promotions.expired.length > 0 && (
-                  <>
-                    <h4 className={styles.sectionHeadingTop}>Expired Promotions</h4>
-                    <div className={styles.list}>
-                      {promotions.expired.map((promo: any) => (
-                        <div key={promo.id} className={styles.listItem}>
-                          <p><strong>{promo.service?.title || promo.product?.name}</strong> - Was {promo.discountPercentage}% off</p>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+              <PromotionsTab
+                activePromotions={promotions.active}
+                expiredPromotions={promotions.expired}
+                onDelete={(id) => handleDeleteClick(id, 'promotion')}
+                getStatusClass={getStatusClass}
+              />
             )}
+
 
             {/* Reviews Tab */}
             {activeMainTab === 'reviews' && <ReviewsTab />}
 
             {/* Gallery Tab */}
             {activeMainTab === 'gallery' && (
-              <div className={styles.contentCard}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle}>Gallery</h3>
-                  <button onClick={() => setIsGalleryModalOpen(true)} className={styles.addButton}>Add Image</button>
-                </div>
-                <div className={styles.galleryGrid}>
-                  {galleryImages.length > 0 ? galleryImages.map((image) => (
-                    <div key={image.id} className={styles.galleryItem}>
-                      <Image src={image.imageUrl} alt={image.caption || 'Gallery'} className={styles.galleryItemImage} fill sizes="(max-width: 768px) 33vw, 160px" />
-                      <button onClick={() => handleDeleteClick(image.id, 'gallery')} className={styles.deleteButton}><FaTrash /></button>
-                    </div>
-                  )) : (
-                    <div className={styles.emptyState}>
-                      <h3 className={styles.emptyStateTitle}>Your Gallery is Empty</h3>
-                      <p className={styles.emptyStateMessage}>
-                        Upload photos to showcase your work and attract more customers. Images help clients see the quality of your services.
-                      </p>
-                      <button onClick={() => setIsGalleryModalOpen(true)} className={styles.emptyStateAction}>
-                        Upload Your First Image
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <GalleryTab
+                images={galleryImages}
+                onAddImage={() => setIsGalleryModalOpen(true)}
+                onDeleteImage={(id) => handleDeleteClick(id, 'gallery')}
+              />
             )}
+
 
 
 
@@ -935,7 +823,7 @@ function DashboardPageContent() {
                 <div className={styles.cardHeader}>
                   <h3 className={styles.cardTitle}>Availability</h3>
                 </div>
-                <AvailabilityManager salonId={salon.id} />
+                <AvailabilityManager salonId={salon.id} operatingHours={salon.operatingHours as any} />
               </div>
             )}
 
@@ -1019,11 +907,10 @@ function DashboardPageContent() {
                       <div className={styles.planPrice}>
                         {planDetails.price}{planCode !== 'FREE' && <span className={styles.planPriceUnit}>/month</span>}
                       </div>
-                      <div className={`${styles.planStatusBadgeBox} ${
-                        planStatus === 'VERIFIED' ? styles.planStatusVerified :
+                      <div className={`${styles.planStatusBadgeBox} ${planStatus === 'VERIFIED' ? styles.planStatusVerified :
                         planStatus === 'PROOF_SUBMITTED' ? styles.planStatusProofSubmitted :
-                        styles.planStatusAwaiting
-                      }`}>
+                          styles.planStatusAwaiting
+                        }`}>
                         {PLAN_PAYMENT_LABELS[planStatus]}
                       </div>
                     </div>

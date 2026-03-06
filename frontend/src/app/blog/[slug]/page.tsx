@@ -85,15 +85,15 @@ const articles = {
       }
     ]
   },
-  'mens-grooming-durban': {
-    title: 'The Modern Man\'s Guide to Barbering: Fades, Beards, and More in Durban',
-    description: 'Gents, it\'s time to level up your grooming game. A visit to the barber is no longer just a quick trim; it\'s an experience. In a city like Durban, where the lifestyle is all about looking fresh, a sharp cut is non-negotiable. From a precision fade to a perfectly sculpted beard, we\'re breaking down the services you should be booking to look your best.',
+  'mens-grooming-johannesburg': {
+    title: 'The Modern Man\'s Guide to Barbering: Fades, Beards, and More in Johannesburg',
+    description: 'Gents, it\'s time to level up your grooming game. A visit to the barber is no longer just a quick trim; it\'s an experience. In a city like Johannesburg, where the lifestyle is all about looking sharp, a fresh cut is non-negotiable. From a precision fade to a perfectly sculpted beard, we\'re breaking down the services you should be booking to look your best.',
     category: 'Men\'s Grooming',
     readTime: '7 min read',
     content: [
       {
         heading: 'The Fade: This is the cornerstone of modern barbering',
-        content: 'It\'s a smooth transition from short hair at the sides to longer hair on top. Taper Fade: A subtle fade, usually just at the temples and neckline. Professional and clean. Skin Fade: Bold and sharp. The hair fades all the way down to the skin. Burst Fade: A popular style in Durban, the fade "bursts" around the ear, leaving length at the back.'
+        content: 'It\'s a smooth transition from short hair at the sides to longer hair on top. Taper Fade: A subtle fade, usually just at the temples and neckline. Professional and clean. Skin Fade: Bold and sharp. The hair fades all the way down to the skin. Burst Fade: A popular style in Johannesburg, the fade "bursts" around the ear, leaving length at the back.'
       },
       {
         heading: 'The Hot Towel Shave',
@@ -109,7 +109,7 @@ const articles = {
       },
       {
         heading: 'Find Your Go-To Barber on Stylr SA',
-        content: 'The relationship with your barber is built on trust. We help you find the one. Search for "Barber" in the main search bar or select the "Barbering" category. Filter by your area, from Umhlanga to the Berea. Look at their Video Gallery. Many barbers post videos of their fade transitions and cuts. Check their services list for combos and hot towel shaves. Read the reviews to see what other guys are saying about their skills. Ready for a fresh cut?'
+        content: 'The relationship with your barber is built on trust. We help you find the one. Search for "Barber" in the main search bar or select the "Barbering" category. Filter by your area, from Sandton to Soweto. Look at their Video Gallery. Many barbers post videos of their fade transitions and cuts. Check their services list for combos and hot towel shaves. Read the reviews to see what other guys are saying about their skills. Ready for a fresh cut?'
       }
     ]
   },

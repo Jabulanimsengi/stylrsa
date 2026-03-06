@@ -5,7 +5,7 @@ import styles from './blog.module.css';
 export const metadata: Metadata = {
   title: 'Stylr SA Blog - Beauty & Wellness Tips for South Africans',
   description: 'Expert guides on protective hairstyles, nail trends, men\'s grooming, skincare, massage benefits, and wedding makeup. Discover local beauty tips tailored for South African climate and lifestyle.',
-  keywords: 'protective hairstyles, knotless braids, box braids, Cape Town nail trends, men\'s grooming Durban, highveld skincare, wedding makeup Gauteng, massage benefits, local beauty products, matric dance prep, Stylr SA blog',
+  keywords: 'protective hairstyles, knotless braids, box braids, Cape Town nail trends, men\'s grooming Johannesburg, highveld skincare, wedding makeup Gauteng, massage benefits, local beauty products, matric dance prep, Stylr SA blog',
   openGraph: {
     title: 'Stylr SA Blog - Beauty & Wellness Tips for South Africans',
     description: 'Expert guides on protective hairstyles, nail trends, men\'s grooming, skincare, massage benefits, and wedding makeup. Discover local beauty tips.',
@@ -49,9 +49,9 @@ const blogPosts = [
     featured: true,
   },
   {
-    id: 'mens-grooming-durban',
-    title: 'The Modern Man\'s Guide to Barbering: Fades, Beards, and More in Durban',
-    description: 'Learn about different fade styles, hot towel shaves, and beard sculpting. Find your go-to barber in Durban for that fresh, sharp look.',
+    id: 'mens-grooming-johannesburg',
+    title: 'The Modern Man\'s Guide to Barbering: Fades, Beards, and More in Johannesburg',
+    description: 'Learn about different fade styles, hot towel shaves, and beard sculpting. Find your go-to barber in Johannesburg for that fresh, sharp look.',
     category: 'Men\'s Grooming',
     readTime: '7 min read',
     featured: false,

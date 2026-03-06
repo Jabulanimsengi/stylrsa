@@ -19,8 +19,8 @@ export const revalidate = 86400; // Cache for 24 hours
 
 // Top priority keywords to pre-build
 const PRIORITY_KEYWORDS = ['hair-salon', 'nail-salon', 'braiding', 'barbershop', 'spa'];
-const PRIORITY_PROVINCES = ['gauteng', 'western-cape', 'kwazulu-natal'];
-const PRIORITY_CITIES = ['johannesburg', 'pretoria', 'cape-town', 'durban', 'sandton'];
+const PRIORITY_PROVINCES = ['gauteng', 'western-cape'];
+const PRIORITY_CITIES = ['johannesburg', 'pretoria', 'cape-town', 'sandton'];
 
 /**
  * Generate static params for crucial pages only (~75 pages)

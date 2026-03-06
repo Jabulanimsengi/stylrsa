@@ -65,34 +65,182 @@ const NEARBY_CITIES: Record<string, { city: string; province: string }[]> = {
 
     // KwaZulu-Natal
     'durban': [
-        { city: 'pinetown', province: 'kwazulu-natal' },
         { city: 'umhlanga', province: 'kwazulu-natal' },
-        { city: 'chatsworth', province: 'kwazulu-natal' },
-        { city: 'phoenix', province: 'kwazulu-natal' },
         { city: 'amanzimtoti', province: 'kwazulu-natal' },
+        { city: 'ballito', province: 'kwazulu-natal' },
+        { city: 'pietermaritzburg', province: 'kwazulu-natal' },
+        { city: 'pinetown', province: 'kwazulu-natal' },
     ],
     'pietermaritzburg': [
-        { city: 'howick', province: 'kwazulu-natal' },
-        { city: 'hilton', province: 'kwazulu-natal' },
         { city: 'durban', province: 'kwazulu-natal' },
-        { city: 'ladysmith', province: 'kwazulu-natal' },
-        { city: 'greytown', province: 'kwazulu-natal' },
+        { city: 'pinetown', province: 'kwazulu-natal' },
+        { city: 'ballito', province: 'kwazulu-natal' },
+        { city: 'umhlanga', province: 'kwazulu-natal' },
+        { city: 'newcastle', province: 'kwazulu-natal' },
+    ],
+    'umhlanga': [
+        { city: 'durban', province: 'kwazulu-natal' },
+        { city: 'ballito', province: 'kwazulu-natal' },
+        { city: 'pinetown', province: 'kwazulu-natal' },
+        { city: 'amanzimtoti', province: 'kwazulu-natal' },
+        { city: 'pietermaritzburg', province: 'kwazulu-natal' },
+    ],
+    'ballito': [
+        { city: 'umhlanga', province: 'kwazulu-natal' },
+        { city: 'durban', province: 'kwazulu-natal' },
+        { city: 'pietermaritzburg', province: 'kwazulu-natal' },
+        { city: 'pinetown', province: 'kwazulu-natal' },
+        { city: 'newcastle', province: 'kwazulu-natal' },
+    ],
+    'newcastle': [
+        { city: 'pietermaritzburg', province: 'kwazulu-natal' },
+        { city: 'durban', province: 'kwazulu-natal' },
+        { city: 'ballito', province: 'kwazulu-natal' },
+        { city: 'umhlanga', province: 'kwazulu-natal' },
+        { city: 'pinetown', province: 'kwazulu-natal' },
     ],
 
     // Eastern Cape
-    'port-elizabeth': [
-        { city: 'uitenhage', province: 'eastern-cape' },
-        { city: 'despatch', province: 'eastern-cape' },
-        { city: 'jeffreys-bay', province: 'eastern-cape' },
-        { city: 'colchester', province: 'eastern-cape' },
-        { city: 'grahamstown', province: 'eastern-cape' },
-    ],
     'east-london': [
-        { city: 'bhisho', province: 'eastern-cape' },
+        { city: 'port-elizabeth', province: 'eastern-cape' },
         { city: 'king-williams-town', province: 'eastern-cape' },
-        { city: 'gonubie', province: 'eastern-cape' },
-        { city: 'mdantsane', province: 'eastern-cape' },
-        { city: 'beacon-bay', province: 'eastern-cape' },
+        { city: 'mthatha', province: 'eastern-cape' },
+        { city: 'grahamstown', province: 'eastern-cape' },
+        { city: 'jeffreys-bay', province: 'eastern-cape' },
+    ],
+    'port-elizabeth': [
+        { city: 'jeffreys-bay', province: 'eastern-cape' },
+        { city: 'grahamstown', province: 'eastern-cape' },
+        { city: 'east-london', province: 'eastern-cape' },
+        { city: 'king-williams-town', province: 'eastern-cape' },
+        { city: 'mthatha', province: 'eastern-cape' },
+    ],
+    'mthatha': [
+        { city: 'east-london', province: 'eastern-cape' },
+        { city: 'king-williams-town', province: 'eastern-cape' },
+        { city: 'port-elizabeth', province: 'eastern-cape' },
+        { city: 'grahamstown', province: 'eastern-cape' },
+        { city: 'jeffreys-bay', province: 'eastern-cape' },
+    ],
+    'jeffreys-bay': [
+        { city: 'port-elizabeth', province: 'eastern-cape' },
+        { city: 'grahamstown', province: 'eastern-cape' },
+        { city: 'east-london', province: 'eastern-cape' },
+        { city: 'king-williams-town', province: 'eastern-cape' },
+        { city: 'mthatha', province: 'eastern-cape' },
+    ],
+
+    // Free State
+    'bloemfontein': [
+        { city: 'welkom', province: 'free-state' },
+        { city: 'kroonstad', province: 'free-state' },
+        { city: 'bethlehem', province: 'free-state' },
+        { city: 'sasolburg', province: 'free-state' },
+    ],
+    'welkom': [
+        { city: 'bloemfontein', province: 'free-state' },
+        { city: 'kroonstad', province: 'free-state' },
+        { city: 'bethlehem', province: 'free-state' },
+        { city: 'sasolburg', province: 'free-state' },
+    ],
+    'kroonstad': [
+        { city: 'bloemfontein', province: 'free-state' },
+        { city: 'welkom', province: 'free-state' },
+        { city: 'sasolburg', province: 'free-state' },
+        { city: 'bethlehem', province: 'free-state' },
+    ],
+
+    // Mpumalanga
+    'nelspruit': [
+        { city: 'white-river', province: 'mpumalanga' },
+        { city: 'barberton', province: 'mpumalanga' },
+        { city: 'middelburg', province: 'mpumalanga' },
+        { city: 'secunda', province: 'mpumalanga' },
+        { city: 'emalahleni', province: 'mpumalanga' },
+    ],
+    'emalahleni': [
+        { city: 'middelburg', province: 'mpumalanga' },
+        { city: 'secunda', province: 'mpumalanga' },
+        { city: 'nelspruit', province: 'mpumalanga' },
+        { city: 'white-river', province: 'mpumalanga' },
+        { city: 'barberton', province: 'mpumalanga' },
+    ],
+    'middelburg': [
+        { city: 'emalahleni', province: 'mpumalanga' },
+        { city: 'secunda', province: 'mpumalanga' },
+        { city: 'nelspruit', province: 'mpumalanga' },
+        { city: 'white-river', province: 'mpumalanga' },
+        { city: 'barberton', province: 'mpumalanga' },
+    ],
+    'secunda': [
+        { city: 'emalahleni', province: 'mpumalanga' },
+        { city: 'middelburg', province: 'mpumalanga' },
+        { city: 'nelspruit', province: 'mpumalanga' },
+        { city: 'white-river', province: 'mpumalanga' },
+        { city: 'barberton', province: 'mpumalanga' },
+    ],
+
+    // Limpopo
+    'polokwane': [
+        { city: 'tzaneen', province: 'limpopo' },
+        { city: 'mokopane', province: 'limpopo' },
+        { city: 'thohoyandou', province: 'limpopo' },
+        { city: 'louis-trichardt', province: 'limpopo' },
+        { city: 'lephalale', province: 'limpopo' },
+    ],
+    'tzaneen': [
+        { city: 'polokwane', province: 'limpopo' },
+        { city: 'mokopane', province: 'limpopo' },
+        { city: 'thohoyandou', province: 'limpopo' },
+        { city: 'louis-trichardt', province: 'limpopo' },
+        { city: 'musina', province: 'limpopo' },
+    ],
+    'mokopane': [
+        { city: 'polokwane', province: 'limpopo' },
+        { city: 'tzaneen', province: 'limpopo' },
+        { city: 'louis-trichardt', province: 'limpopo' },
+        { city: 'lephalale', province: 'limpopo' },
+        { city: 'thohoyandou', province: 'limpopo' },
+    ],
+
+    // North West
+    'rustenburg': [
+        { city: 'brits', province: 'north-west' },
+        { city: 'potchefstroom', province: 'north-west' },
+        { city: 'klerksdorp', province: 'north-west' },
+        { city: 'mahikeng', province: 'north-west' },
+    ],
+    'potchefstroom': [
+        { city: 'klerksdorp', province: 'north-west' },
+        { city: 'rustenburg', province: 'north-west' },
+        { city: 'brits', province: 'north-west' },
+        { city: 'mahikeng', province: 'north-west' },
+    ],
+    'klerksdorp': [
+        { city: 'potchefstroom', province: 'north-west' },
+        { city: 'rustenburg', province: 'north-west' },
+        { city: 'mahikeng', province: 'north-west' },
+        { city: 'brits', province: 'north-west' },
+    ],
+    'mahikeng': [
+        { city: 'rustenburg', province: 'north-west' },
+        { city: 'potchefstroom', province: 'north-west' },
+        { city: 'klerksdorp', province: 'north-west' },
+        { city: 'brits', province: 'north-west' },
+    ],
+
+    // Northern Cape
+    'kimberley': [
+        { city: 'upington', province: 'northern-cape' },
+        { city: 'kuruman', province: 'northern-cape' },
+        { city: 'de-aar', province: 'northern-cape' },
+        { city: 'springbok', province: 'northern-cape' },
+    ],
+    'upington': [
+        { city: 'kimberley', province: 'northern-cape' },
+        { city: 'springbok', province: 'northern-cape' },
+        { city: 'kuruman', province: 'northern-cape' },
+        { city: 'de-aar', province: 'northern-cape' },
     ],
 };
 
@@ -153,8 +301,8 @@ export function formatProvinceName(provinceSlug: string): string {
         'kwazulu-natal': 'KwaZulu-Natal',
         'eastern-cape': 'Eastern Cape',
         'free-state': 'Free State',
-        'limpopo': 'Limpopo',
         'mpumalanga': 'Mpumalanga',
+        'limpopo': 'Limpopo',
         'north-west': 'North West',
         'northern-cape': 'Northern Cape',
     };
@@ -266,8 +414,29 @@ export function getFooterLocationLinks(): Record<string, { label: string; url: s
             { label: 'Umhlanga Salons', url: '/salons/location/kwazulu-natal/umhlanga' },
         ],
         'Eastern Cape': [
-            { label: 'Port Elizabeth Salons', url: '/salons/location/eastern-cape/port-elizabeth' },
             { label: 'East London Salons', url: '/salons/location/eastern-cape/east-london' },
+            { label: 'Port Elizabeth Salons', url: '/salons/location/eastern-cape/port-elizabeth' },
+            { label: 'Mthatha Salons', url: '/salons/location/eastern-cape/mthatha' },
+        ],
+        'Free State': [
+            { label: 'Bloemfontein Salons', url: '/salons/location/free-state/bloemfontein' },
+            { label: 'Welkom Salons', url: '/salons/location/free-state/welkom' },
+        ],
+        'Mpumalanga': [
+            { label: 'Nelspruit Salons', url: '/salons/location/mpumalanga/nelspruit' },
+            { label: 'Emalahleni Salons', url: '/salons/location/mpumalanga/emalahleni' },
+        ],
+        'Limpopo': [
+            { label: 'Polokwane Salons', url: '/salons/location/limpopo/polokwane' },
+            { label: 'Tzaneen Salons', url: '/salons/location/limpopo/tzaneen' },
+        ],
+        'North West': [
+            { label: 'Rustenburg Salons', url: '/salons/location/north-west/rustenburg' },
+            { label: 'Potchefstroom Salons', url: '/salons/location/north-west/potchefstroom' },
+        ],
+        'Northern Cape': [
+            { label: 'Kimberley Salons', url: '/salons/location/northern-cape/kimberley' },
+            { label: 'Upington Salons', url: '/salons/location/northern-cape/upington' },
         ],
     };
 }
