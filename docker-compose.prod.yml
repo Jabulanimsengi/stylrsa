@@ -104,7 +104,8 @@ services:
   nginx:
     image: nginx:alpine
     restart: always
-    # No ports mapped - Coolify handles ingress
+    ports:
+      - "80:80"
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
     depends_on:
