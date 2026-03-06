@@ -37,6 +37,7 @@ services:
       sh -c "npx prisma migrate deploy && node dist/src/main.js"
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-hairpros}
+      DIRECT_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-hairpros}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       PORT: 3001
