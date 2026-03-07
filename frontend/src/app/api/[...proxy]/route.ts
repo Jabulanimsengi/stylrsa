@@ -52,6 +52,23 @@ async function proxyToBackend(request: NextRequest) {
     headers.delete('x-middleware-prefetch');
     headers.delete('x-middleware-subrequest');
 
+    // Remove hop-by-hop headers that shouldn't be proxied and can crash undici (Node 18+ fetch)
+    // UND_ERR_INVALID_ARG is thrown if connection header is kept
+    const hopByHopHeaders = [
+      'connection',
+      'keep-alive',
+      'proxy-authenticate',
+      'proxy-authorization',
+      'te',
+      'trailer',
+      'transfer-encoding',
+      'upgrade',
+      'host',
+      'content-length' // Let fetch calculate the content-length
+    ];
+
+    hopByHopHeaders.forEach(header => headers.delete(header));
+
     // Explicitly read and forward cookies from Next.js cookie store
     // This is needed because App Router may not include cookies in request.headers automatically
     const cookieStore = await cookies();
