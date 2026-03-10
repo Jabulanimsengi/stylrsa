@@ -2,7 +2,7 @@
 
 import React from 'react';
 import styles from '../../app/dashboard/Dashboard.module.css';
-import { FiX, FiMenu } from 'react-icons/fi';
+import { FiX } from 'react-icons/fi';
 
 interface NavItem {
     id: string;
@@ -12,11 +12,11 @@ interface NavItem {
 
 interface NavSection {
     label: string;
-    items: NavItem[];
+    items: readonly NavItem[];
 }
 
 interface DashboardSidebarProps {
-    sections: NavSection[];
+    sections: readonly NavSection[];
     activeTab: string;
     onTabChange: (tabId: string) => void;
     mobileNavOpen: boolean;
@@ -85,7 +85,12 @@ export default function DashboardSidebar({
                             {section.items.map((item) => (
                                 <li key={item.id}>
                                     <button
-                                        onClick={() => { onTabChange(item.id); onMobileNavToggle(); }}
+                                        onClick={() => {
+                                            onTabChange(item.id);
+                                            if (mobileNavOpen) {
+                                                onMobileNavToggle();
+                                            }
+                                        }}
                                         className={`${styles.navItem} ${activeTab === item.id ? styles.navItemActive : ''}`}
                                         aria-current={activeTab === item.id ? 'page' : undefined}
                                     >
