@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import HomePageClient from './HomePageClient';
+import { getInternalBackendOrigin } from '@/lib/server/backend-origin';
 
 // Cache the homepage and revalidate in the background to keep TTFB stable.
 export const revalidate = 300;
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
 
 // Fetch initial data server-side
 async function getInitialData() {
-  const apiUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_ORIGIN || 'http://127.0.0.1:5000';
+  const apiUrl = getInternalBackendOrigin();
   const isBuildPhase = process.env.IS_BUILD_PHASE === 'true' || process.env.NEXT_PHASE === 'phase-production-build';
 
   // Only skip fetching during build time when API is localhost
