@@ -22,7 +22,7 @@ import ServiceFormModal from '@/components/ServiceFormModal';
 import SimpleServiceFormModal from '@/components/SimpleServiceFormModal';
 import EditSalonModal from '@/components/EditSalonModal';
 import { useSocket } from '@/context/SocketContext';
-import { toast } from 'react-toastify';
+import { notify } from '@/lib/notify';
 import { logger } from '@/lib/logger';
 import GalleryUploadModal from '@/components/GalleryUploadModal';
 import ProductFormModal from '@/components/ProductFormModal';
@@ -200,9 +200,9 @@ function DashboardPageContent() {
       if (!res.ok) throw new Error('Failed to update plan status');
       const updatedSalon = await res.json();
       setSalon(updatedSalon);
-      toast.success(hasProof ? 'Proof submitted. We will review shortly.' : 'Status updated.');
+      notify.success(hasProof ? 'Proof submitted. We will review shortly.' : 'Status updated.');
     } catch (err) {
-      toast.error('Could not update payment status.');
+      notify.error('Could not update payment status.');
     } finally {
       setIsPlanUpdating(false);
     }
@@ -237,12 +237,12 @@ function DashboardPageContent() {
       setPaymentReference('');
 
       if (newPlanCode === 'FREE') {
-        toast.success('Switched to FREE plan');
+        notify.success('Switched to FREE plan');
       } else {
-        toast.success(`Plan changed to ${PLAN_BY_CODE[newPlanCode].name}. Please submit payment proof.`);
+        notify.success(`Plan changed to ${PLAN_BY_CODE[newPlanCode].name}. Please submit payment proof.`);
       }
     } catch (err) {
-      toast.error('Could not change plan. Please try again.');
+      notify.error('Could not change plan. Please try again.');
     } finally {
       setIsSubmittingPlanChange(false);
     }
@@ -257,7 +257,7 @@ function DashboardPageContent() {
     setIsLoading(true);
     try {
       const salonRes = await fetch(`/api/salons/my-salon?ownerId=${ownerId}`, { credentials: 'include', cache: 'no-store' as any });
-      if (salonRes.status === 401) { toast.error('Session expired.'); router.push('/'); return; }
+      if (salonRes.status === 401) { notify.error('Session expired.'); router.push('/'); return; }
       if (salonRes.status === 404) { setSalon(null); setIsLoading(false); return; }
       if (!salonRes.ok) throw new Error('Could not fetch salon data.');
 
@@ -296,7 +296,7 @@ function DashboardPageContent() {
       if (productsRes.status === 'fulfilled') setProducts(productsRes.value as Product[]);
       if (promotionsRes.status === 'fulfilled') setPromotions((promotionsRes.value as { active: any[]; expired: any[] }) || { active: [], expired: [] });
     } catch (err: any) {
-      toast.error(toFriendlyMessage(err, 'Failed to load dashboard.'));
+      notify.error(toFriendlyMessage(err, 'Failed to load dashboard.'));
     } finally {
       setIsLoading(false);
     }
@@ -329,7 +329,7 @@ function DashboardPageContent() {
     const handler = (payload: any) => {
       if (payload?.entity === 'salon' && payload.id === salon.id) {
         fetchDashboardData();
-        toast.success('Your package has been updated');
+        notify.success('Your package has been updated');
       }
     };
     socket.on('visibility:updated', handler);
@@ -390,9 +390,9 @@ function DashboardPageContent() {
       else if (type === 'product') setProducts(products.filter(p => p.id !== id));
       else if (type === 'promotion') setPromotions({ active: promotions.active.filter(p => p.id !== id), expired: promotions.expired.filter(p => p.id !== id) });
       else if (type === 'gallery') setGalleryImages(galleryImages.filter(g => g.id !== id));
-      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted.`);
+      notify.success(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted.`);
     } catch (err: any) {
-      toast.error(toFriendlyMessage(err, 'Deletion failed'));
+      notify.error(toFriendlyMessage(err, 'Deletion failed'));
     } finally {
       setItemToDelete(null);
     }
@@ -401,7 +401,7 @@ function DashboardPageContent() {
   const handleSalonUpdate = (updatedSalon: Salon) => {
     setSalon(updatedSalon);
     setIsEditSalonModalOpen(false);
-    toast.success('Profile updated successfully!');
+    notify.success('Profile updated successfully!');
     setTimeout(() => refetchSalon(), 500);
   };
 
@@ -422,9 +422,9 @@ function DashboardPageContent() {
     try {
       const updated = await apiJson(`/api/salons/mine/availability?ownerId=${ownerId}`, { method: 'PATCH' }) as Salon;
       setSalon(updated);
-      toast.success(updated.isAvailableNow ? 'Marked as available' : 'Marked as unavailable');
+      notify.success(updated.isAvailableNow ? 'Marked as available' : 'Marked as unavailable');
     } catch (e: any) {
-      toast.error(toFriendlyMessage(e, 'Could not update availability'));
+      notify.error(toFriendlyMessage(e, 'Could not update availability'));
     } finally {
       setIsTogglingAvailability(false);
     }
@@ -441,9 +441,9 @@ function DashboardPageContent() {
       }) as Salon;
       setSalon(updated);
       setIsEditingMessage(false);
-      toast.success('Booking message saved');
+      notify.success('Booking message saved');
     } catch (e: any) {
-      toast.error(toFriendlyMessage(e, 'Failed to save'));
+      notify.error(toFriendlyMessage(e, 'Failed to save'));
     } finally {
       setIsSavingMessage(false);
     }
@@ -461,9 +461,9 @@ function DashboardPageContent() {
       }) as Salon;
       setSalon(updated);
       setIsEditingHours(false);
-      toast.success('Operating hours saved');
+      notify.success('Operating hours saved');
     } catch (e: any) {
-      toast.error(toFriendlyMessage(e, 'Failed to save'));
+      notify.error(toFriendlyMessage(e, 'Failed to save'));
     } finally {
       setIsSavingHours(false);
     }
@@ -478,7 +478,7 @@ function DashboardPageContent() {
       });
       fetchDashboardData();
     } catch (e) {
-      toast.error(toFriendlyMessage(e, 'Failed to update booking'));
+      notify.error(toFriendlyMessage(e, 'Failed to update booking'));
     }
   };
 
@@ -499,8 +499,8 @@ function DashboardPageContent() {
   const handleCopyReference = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(String(planReference));
-      toast.success('Reference copied');
-    } catch { toast.error('Unable to copy'); }
+      notify.success('Reference copied');
+    } catch { notify.error('Unable to copy'); }
   }, [planReference]);
 
   // Loading state
@@ -550,9 +550,14 @@ function DashboardPageContent() {
             <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
               Already have a salon? Your session may have expired.
             </p>
-            <button onClick={() => { logout(); router.push('/?auth=login&redirect=/dashboard'); }} className="btn btn-secondary" style={{ fontSize: '0.875rem' }}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => { logout(); router.push('/?auth=login&redirect=/dashboard'); }}
+            >
               Re-authenticate
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -679,9 +684,13 @@ function DashboardPageContent() {
           <Link href={getSalonUrl(salon)} target="_blank" className={styles.headerActionBtn}>
             View Public Profile
           </Link>
-          <button onClick={() => setIsEditSalonModalOpen(true)} className={`${styles.headerActionBtn} ${styles.headerActionBtnPrimary}`}>
+          <Button
+            type="button"
+            onClick={() => setIsEditSalonModalOpen(true)}
+            className={`${styles.headerActionBtn} ${styles.headerActionBtnPrimary}`}
+          >
             Edit Salon Profile
-          </button>
+          </Button>
         </div>
 
 
@@ -843,7 +852,9 @@ function DashboardPageContent() {
                       <div className={styles.messageDisplay}>
                         {bookingMessage}
                       </div>
-                      <button onClick={() => setIsEditingMessage(true)} className="btn btn-secondary">Edit Message</button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setIsEditingMessage(true)}>
+                        Edit Message
+                      </Button>
                     </div>
                   ) : (
                     <div>
@@ -856,8 +867,14 @@ function DashboardPageContent() {
                       />
                       <p className={styles.characterCount}>{bookingMessage.length}/200</p>
                       <div className={styles.actionButtonGroup}>
-                        <button onClick={saveBookingMessage} disabled={isSavingMessage} className="btn btn-primary">{isSavingMessage ? 'Saving...' : 'Save'}</button>
-                        {bookingMessage && <button onClick={() => setBookingMessage('')} className="btn btn-ghost">Clear</button>}
+                        <LoadingButton type="button" onClick={saveBookingMessage} loading={isSavingMessage}>
+                          Save
+                        </LoadingButton>
+                        {bookingMessage && (
+                          <Button type="button" variant="ghost" size="sm" onClick={() => setBookingMessage('')}>
+                            Clear
+                          </Button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -866,9 +883,13 @@ function DashboardPageContent() {
                   <OperatingHoursInput hours={operatingHours} onChange={setOperatingHours} />
                   <div className={styles.actionButtonGroup}>
                     {isEditingHours ? (
-                      <button onClick={saveOperatingHours} disabled={isSavingHours} className="btn btn-primary">{isSavingHours ? 'Saving...' : 'Save Hours'}</button>
+                      <LoadingButton type="button" onClick={saveOperatingHours} loading={isSavingHours}>
+                        Save Hours
+                      </LoadingButton>
                     ) : (
-                      <button onClick={() => setIsEditingHours(true)} className="btn btn-secondary">Edit Hours</button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setIsEditingHours(true)}>
+                        Edit Hours
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -1099,3 +1120,4 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
+

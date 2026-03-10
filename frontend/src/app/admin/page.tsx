@@ -33,7 +33,7 @@ import type {
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-toastify';
+import { notify } from '@/lib/notify';
 import type { Socket } from 'socket.io-client';
 import { useSession } from 'next-auth/react';
 import { APP_PLANS, PLAN_BY_CODE } from '@/constants/plans';
@@ -203,9 +203,9 @@ export default function AdminPage() {
         throw new Error('Clipboard unavailable');
       }
       await navigator.clipboard.writeText(value);
-      toast.success(successMessage);
+      notify.success(successMessage);
     } catch {
-      toast.error('Unable to copy to clipboard');
+      notify.error('Unable to copy to clipboard');
     }
   };
 
@@ -226,7 +226,7 @@ export default function AdminPage() {
       });
       if (!res.ok) {
         const msg = await res.text().catch(() => '');
-        toast.error(`Failed to update payment status (${res.status}). ${msg}`);
+        notify.error(`Failed to update payment status (${res.status}). ${msg}`);
         return;
       }
       const updated = await res.json();
@@ -268,9 +268,9 @@ export default function AdminPage() {
             : salon,
         ),
       );
-      toast.success('Payment status updated');
+      notify.success('Payment status updated');
     } catch (error) {
-      toast.error('Failed to update payment status');
+      notify.error('Failed to update payment status');
     } finally {
       setUpdatingSalonPlanId(null);
     }
@@ -293,11 +293,11 @@ export default function AdminPage() {
       });
       if (!res.ok) {
         const msg = await res.text().catch(() => '');
-        toast.error(`Failed to update seller payment (${res.status}). ${msg}`);
+        notify.error(`Failed to update seller payment (${res.status}). ${msg}`);
         return;
       }
       const updated = await res.json();
-      toast.success('Seller payment status updated');
+      notify.success('Seller payment status updated');
       setPendingProducts((prev) =>
         prev.map((product) =>
           product.seller.id === sellerId
@@ -342,7 +342,7 @@ export default function AdminPage() {
         )
       );
     } catch (error) {
-      toast.error('Failed to update seller payment status');
+      notify.error('Failed to update seller payment status');
     } finally {
       setUpdatingSellerPlanId(null);
     }
@@ -366,7 +366,7 @@ export default function AdminPage() {
         throw new Error('Failed to update approval status');
       }
       const updated = await res.json();
-      toast.success(`Seller profile ${status.toLowerCase()}`);
+      notify.success(`Seller profile ${status.toLowerCase()}`);
       setAllSellers((prev) =>
         prev.map((seller) =>
           seller.id === sellerId
@@ -379,7 +379,7 @@ export default function AdminPage() {
         )
       );
     } catch (error) {
-      toast.error('Failed to update approval status');
+      notify.error('Failed to update approval status');
     }
   };
 
@@ -396,7 +396,7 @@ export default function AdminPage() {
     if (type === 'review') setPendingReviews(prev => prev.filter(x => !ids.includes(x.id)));
     if (type === 'product') setPendingProducts(prev => prev.filter(x => !ids.includes(x.id)));
     clearSelections();
-    toast.success(`Updated ${ids.length} ${type}${ids.length > 1 ? 's' : ''}`);
+    notify.success(`Updated ${ids.length} ${type}${ids.length > 1 ? 's' : ''}`);
   };
 
   const fetchFeaturedSalons = async () => {
@@ -424,11 +424,11 @@ export default function AdminPage() {
       } else {
         const msg = await res.text().catch(() => '');
         logger.error('Failed to fetch featured salons:', { status: res.status, message: msg });
-        toast.error(`Failed to load featured salons (${res.status}): ${msg || 'Unknown error'}`);
+        notify.error(`Failed to load featured salons (${res.status}): ${msg || 'Unknown error'}`);
       }
     } catch (error) {
       logger.error('Exception fetching featured salons:', error);
-      toast.error(`Failed to load featured salons: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      notify.error(`Failed to load featured salons: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -449,17 +449,17 @@ export default function AdminPage() {
 
       if (res.ok) {
         const data = await res.json();
-        toast.success(`Salon featured for ${durationDays} days`);
+        notify.success(`Salon featured for ${durationDays} days`);
         logger.info('Salon featured successfully:', data);
         await fetchFeaturedSalons();
       } else {
         const msg = await res.text().catch(() => '');
         logger.error('Failed to feature salon:', { status: res.status, message: msg });
-        toast.error(`Failed to feature salon (${res.status}): ${msg || 'Unknown error'}`);
+        notify.error(`Failed to feature salon (${res.status}): ${msg || 'Unknown error'}`);
       }
     } catch (error) {
       logger.error('Exception featuring salon:', error);
-      toast.error(`Failed to feature salon: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      notify.error(`Failed to feature salon: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -472,14 +472,14 @@ export default function AdminPage() {
         credentials: 'include',
       });
       if (res.ok) {
-        toast.success('Salon unfeatured');
+        notify.success('Salon unfeatured');
         await fetchFeaturedSalons();
       } else {
         const msg = await res.text().catch(() => '');
-        toast.error(`Failed to unfeature salon: ${msg}`);
+        notify.error(`Failed to unfeature salon: ${msg}`);
       }
     } catch (error) {
-      toast.error('Failed to unfeature salon');
+      notify.error('Failed to unfeature salon');
     }
   };
 
@@ -533,7 +533,7 @@ export default function AdminPage() {
 
       } catch (error) {
         logger.error("Failed to fetch admin data:", error);
-        toast.error(toFriendlyMessage(error, 'Failed to load admin data. Please try again.'));
+        notify.error(toFriendlyMessage(error, 'Failed to load admin data. Please try again.'));
       } finally {
         setIsLoading(false);
       }
@@ -630,7 +630,7 @@ export default function AdminPage() {
 
     if (!res.ok) {
       const msg = await res.text().catch(() => '');
-      toast.error(`Failed to update status (${res.status}). ${msg}`);
+      notify.error(`Failed to update status (${res.status}). ${msg}`);
       return;
     }
 
@@ -677,10 +677,10 @@ export default function AdminPage() {
         throw new Error(errorData.message || 'Failed to approve promotion');
       }
 
-      toast.success('Promotion approved successfully!');
+      notify.success('Promotion approved successfully!');
       setPendingPromotions(pendingPromotions.filter(p => p.id !== promotionId));
     } catch (error) {
-      toast.error(toFriendlyMessage(error, 'Failed to approve promotion'));
+      notify.error(toFriendlyMessage(error, 'Failed to approve promotion'));
     }
   };
 
@@ -711,10 +711,10 @@ export default function AdminPage() {
         throw new Error(errorData.message || 'Failed to reject promotion');
       }
 
-      toast.success('Promotion rejected');
+      notify.success('Promotion rejected');
       setPendingPromotions(pendingPromotions.filter(p => p.id !== rejectingPromotionId));
     } catch (error) {
-      toast.error(toFriendlyMessage(error, 'Failed to reject promotion'));
+      notify.error(toFriendlyMessage(error, 'Failed to reject promotion'));
     } finally {
       setIsRejectingPromo(false);
       setRejectPromoModalOpen(false);
@@ -726,7 +726,7 @@ export default function AdminPage() {
   const confirmDeleteSalon = async () => {
     if (!deletingSalon || isDeleting) return;
     if (!deleteReason.trim()) {
-      toast.error('Please provide a reason for deletion.');
+      notify.error('Please provide a reason for deletion.');
       return;
     }
 
@@ -748,7 +748,7 @@ export default function AdminPage() {
         setShowDeleteModal(false);
         setDeletingSalon(null);
         setDeleteReason('');
-        toast.success(
+        notify.success(
           res.status === 404 ? 'Profile was already removed' : 'Profile deleted',
         );
         try {
@@ -766,10 +766,10 @@ export default function AdminPage() {
         }
       } else {
         const msg = await res.text().catch(() => '');
-        toast.error(`Failed to delete (${res.status}). ${msg}`);
+        notify.error(`Failed to delete (${res.status}). ${msg}`);
       }
     } catch (err) {
-      toast.error('Failed to delete salon.');
+      notify.error('Failed to delete salon.');
     } finally {
       setIsDeleting(false);
     }
@@ -778,7 +778,7 @@ export default function AdminPage() {
   const confirmDeleteSeller = async () => {
     if (!deletingSeller || isDeleting) return;
     if (!deleteReason.trim()) {
-      toast.error('Please provide a reason for deletion.');
+      notify.error('Please provide a reason for deletion.');
       return;
     }
 
@@ -802,7 +802,7 @@ export default function AdminPage() {
         setShowDeleteModal(false);
         setDeletingSeller(null);
         setDeleteReason('');
-        toast.success(
+        notify.success(
           res.status === 404
             ? 'Seller profile already removed'
             : 'Seller profile deleted',
@@ -822,10 +822,10 @@ export default function AdminPage() {
         }
       } else {
         const msg = await res.text().catch(() => '');
-        toast.error(`Failed to delete seller (${res.status}). ${msg}`);
+        notify.error(`Failed to delete seller (${res.status}). ${msg}`);
       }
     } catch (err) {
-      toast.error('Failed to delete seller.');
+      notify.error('Failed to delete seller.');
     } finally {
       setIsDeleting(false);
     }
@@ -839,7 +839,7 @@ export default function AdminPage() {
       headers: authHeaders,
     });
     if (res.ok) {
-      toast.success('Profile restored');
+      notify.success('Profile restored');
       try {
         const [allRes, delRes] = await Promise.all([
           fetch(`/api/admin/salons/all?ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' as any, headers: authHeaders }),
@@ -850,7 +850,7 @@ export default function AdminPage() {
       } catch { }
     } else {
       const msg = await res.text().catch(() => '');
-      toast.error(`Failed to restore (${res.status}). ${msg}`);
+      notify.error(`Failed to restore (${res.status}). ${msg}`);
     }
   };
 
@@ -862,7 +862,7 @@ export default function AdminPage() {
       headers: authHeaders,
     });
     if (res.ok) {
-      toast.success('Seller restored');
+      notify.success('Seller restored');
       try {
         const sellersRes = await fetch(`/api/admin/sellers/deleted?ts=${Date.now()}`, {
           credentials: 'include',
@@ -875,7 +875,7 @@ export default function AdminPage() {
       } catch { }
     } else {
       const msg = await res.text().catch(() => '');
-      toast.error(`Failed to restore seller (${res.status}). ${msg}`);
+      notify.error(`Failed to restore seller (${res.status}). ${msg}`);
     }
   };
 
@@ -1184,7 +1184,7 @@ export default function AdminPage() {
                               const r = await fetch(`/api/admin/salons/${salon.id}/plan`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...authHeaders }, credentials: 'include', body: JSON.stringify(body) });
                               if (r.ok) {
                                 const updated = await r.json();
-                                toast.success('Visibility updated');
+                                notify.success('Visibility updated');
                                 // Trust server response to avoid client drift
                                 setAllSalons(prev => prev.map(s => s.id === salon.id ? {
                                   ...s,
@@ -1204,7 +1204,7 @@ export default function AdminPage() {
                                 } catch { }
                               } else {
                                 const errText = await r.text().catch(() => '');
-                                toast.error(`Failed to update (${r.status}). ${errText}`);
+                                notify.error(`Failed to update (${r.status}). ${errText}`);
                               }
                             }}
                           >Save</button>
@@ -1227,7 +1227,7 @@ export default function AdminPage() {
                           });
                           if (r.ok) {
                             const updated = await r.json();
-                            toast.success(`Salon ${updated.isVerified ? 'verified' : 'unverified'}`);
+                            notify.success(`Salon ${updated.isVerified ? 'verified' : 'unverified'}`);
                             setAllSalons(prev => prev.map(s => s.id === salon.id ? { ...s, isVerified: updated.isVerified } : s));
                             // Re-fetch to ensure consistency
                             try {
@@ -1239,10 +1239,10 @@ export default function AdminPage() {
                             } catch { }
                           } else {
                             const errText = await r.text().catch(() => '');
-                            toast.error(`Failed to update verification (${r.status}). ${errText}`);
+                            notify.error(`Failed to update verification (${r.status}). ${errText}`);
                           }
                         } catch (error) {
-                          toast.error('Error updating verification');
+                          notify.error('Error updating verification');
                         }
                       }}
                       title={salon.isVerified ? 'Remove verification' : 'Verify service provider'}
@@ -2058,12 +2058,12 @@ export default function AdminPage() {
                               });
                               if (res.ok) {
                                 setTop10Requests(prev => prev.map(r => r.id === req.id ? { ...r, status: newStatus } : r));
-                                toast.success('Status updated');
+                                notify.success('Status updated');
                               } else {
-                                toast.error('Failed to update status');
+                                notify.error('Failed to update status');
                               }
                             } catch {
-                              toast.error('Failed to update status');
+                              notify.error('Failed to update status');
                             }
                           }}
                           style={{ padding: '0.5rem', borderRadius: 4 }}
@@ -2199,3 +2199,4 @@ export default function AdminPage() {
     </>
   );
 }
+

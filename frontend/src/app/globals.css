@@ -127,9 +127,27 @@
     animation: slideInRight 0.3s ease-out;
   }
 
+  .Toastify__toast-container--top-center {
+    top: 24px !important;
+    right: 24px !important;
+    left: auto !important;
+    transform: none !important;
+    width: 420px !important;
+    animation: slideInRight 0.3s ease-out;
+  }
+
   .Toastify__toast-container--bottom-right {
     bottom: 24px !important;
     right: 24px !important;
+    width: 420px !important;
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .Toastify__toast-container--bottom-center {
+    bottom: 24px !important;
+    right: 24px !important;
+    left: auto !important;
+    transform: none !important;
     width: 420px !important;
     animation: slideInRight 0.3s ease-out;
   }
@@ -139,17 +157,23 @@
 @media (min-width: 481px) and (max-width: 768px) {
 
   .Toastify__toast-container--top-right,
-  .Toastify__toast-container--bottom-right {
+  .Toastify__toast-container--bottom-right,
+  .Toastify__toast-container--top-center,
+  .Toastify__toast-container--bottom-center {
     right: 16px !important;
+    left: auto !important;
+    transform: none !important;
     width: 380px !important;
   }
 
-  .Toastify__toast-container--top-right {
+  .Toastify__toast-container--top-right,
+  .Toastify__toast-container--top-center {
     top: 16px !important;
     animation: slideInRight 0.3s ease-out;
   }
 
-  .Toastify__toast-container--bottom-right {
+  .Toastify__toast-container--bottom-right,
+  .Toastify__toast-container--bottom-center {
     bottom: 16px !important;
     animation: slideInRight 0.3s ease-out;
   }
@@ -169,6 +193,9 @@
   .Toastify__toast-container--top-center {
     top: 16px !important;
     bottom: auto !important;
+    left: 12px !important;
+    right: 12px !important;
+    transform: none !important;
   }
 
   .Toastify__toast-container--bottom-right,
@@ -177,6 +204,9 @@
     bottom: calc(80px + 16px) !important;
     /* Account for mobile navigation bar + spacing */
     top: auto !important;
+    left: 12px !important;
+    right: 12px !important;
+    transform: none !important;
   }
 
   .Toastify__toast {
