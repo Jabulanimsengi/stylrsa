@@ -54,6 +54,40 @@ export type SellerDeletionTarget = {
     name: string;
 };
 
+export type Top10RequestStatus =
+    | 'PENDING'
+    | 'CONTACTED'
+    | 'MATCHED'
+    | 'COMPLETED'
+    | 'CANCELLED';
+
+export type Top10RequestRow = {
+    id: string;
+    fullName: string;
+    category: string;
+    serviceNeeded: string;
+    budget: number;
+    serviceType: 'onsite' | 'in_salon' | string;
+    location: string;
+    preferredDate?: string | null;
+    preferredTime?: string | null;
+    phone: string;
+    whatsapp?: string | null;
+    email?: string | null;
+    styleOrLook?: string | null;
+    createdAt: string;
+    status: Top10RequestStatus;
+};
+
+export type AdminAuditLog = {
+    id: string;
+    action: string;
+    targetType: string;
+    targetId: string;
+    reason?: string | null;
+    createdAt: string;
+};
+
 export const PLAN_PAYMENT_LABELS: Record<PlanPaymentStatus, string> = {
     PENDING_SELECTION: 'Package not selected',
     AWAITING_PROOF: 'Awaiting proof of payment',

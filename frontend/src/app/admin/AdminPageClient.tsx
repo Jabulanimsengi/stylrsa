@@ -2,12 +2,11 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './AdminPage.module.css';
 import AdminLayout from './AdminLayout';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
-import { PendingSalons, AllSalons } from './components';
 import { DEFAULT_ADMIN_VIEW, getAdminPath, type AdminView } from './admin-config';
 import {
   PendingSalon,
@@ -16,19 +15,16 @@ import {
   PendingProduct,
   SellerRow,
   SellerDeletionTarget,
+  AdminAuditLog,
   PLAN_PAYMENT_LABELS,
   formatRand,
   ensureArray,
+  Top10RequestRow,
 } from './types';
 import type {
-  Salon,
-  Service,
   ApprovalStatus,
-  Review,
-  Product,
-  PlanPaymentStatus,
   PlanCode,
-  SellerSummary,
+  PlanPaymentStatus,
 } from '@/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
@@ -43,19 +39,9 @@ import AdminMediaReview from '@/components/AdminMediaReview';
 import AdminTrendsManager from '@/components/AdminTrendsManager/AdminTrendsManager';
 import AdminSalonTrendzManager from '@/components/AdminSalonTrendzManager/AdminSalonTrendzManager';
 import AdminBlogManager from '@/components/AdminBlogManager/AdminBlogManager';
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardTitle,
-  Badge,
-  Button,
-  Alert,
-  Input,
-  LoadingButton,
-  EmptyState,
-} from '@/components/ui';
-import StatusBadge from '@/components/StatusBadge';
+import AdminPendingPaymentsSection from './components/AdminPendingPaymentsSection';
+import AdminTop10RequestsSection from './components/AdminTop10RequestsSection';
+import AdminAuditSection from './components/AdminAuditSection';
 import RejectReasonModal from '@/components/RejectReasonModal/RejectReasonModal';
 
 interface AdminPageClientProps {
@@ -76,13 +62,12 @@ export default function AdminPageClient({
   const [deletedSalons, setDeletedSalons] = useState<any[]>([]);
   const [deletedSellers, setDeletedSellers] = useState<any[]>([]);
   const [allSellers, setAllSellers] = useState<SellerRow[]>([]);
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [auditLogs] = useState<AdminAuditLog[]>([]);
   const [featuredSalons, setFeaturedSalons] = useState<PendingSalon[]>([]);
   const [availableSalons, setAvailableSalons] = useState<PendingSalon[]>([]);
-  const [metrics, setMetrics] = useState<any | null>(null);
   const [featureDuration, setFeatureDuration] = useState<number>(30);
   const [view, setView] = useState<AdminView>(initialView);
-  const [top10Requests, setTop10Requests] = useState<any[]>([]);
+  const [top10Requests, setTop10Requests] = useState<Top10RequestRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   // Inline edit state for salon visibility features
@@ -408,7 +393,7 @@ export default function AdminPageClient({
     notify.success(`Updated ${ids.length} ${type}${ids.length > 1 ? 's' : ''}`);
   };
 
-  const fetchFeaturedSalons = async () => {
+  const fetchFeaturedSalons = useCallback(async () => {
     const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
 
     logger.info('Fetching featured salons management data...', { hasAuth: !!session?.backendJwt });
@@ -439,7 +424,7 @@ export default function AdminPageClient({
       logger.error('Exception fetching featured salons:', error);
       notify.error(`Failed to load featured salons: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
+  }, [session?.backendJwt]);
 
   const featureSalon = async (salonId: string, durationDays: number) => {
     const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
@@ -510,7 +495,7 @@ export default function AdminPageClient({
       try {
         const ts = Date.now();
         const noStore: RequestInit = { ...requestOptions, cache: 'no-store' } as any;
-        const [pendingSalonsRes, allSalonsRes, servicesRes, reviewsRes, productsRes, allSellersRes, deletedSalonsRes, deletedSellersRes, metricsRes, promotionsRes] = await Promise.all([
+        const [pendingSalonsRes, allSalonsRes, servicesRes, reviewsRes, productsRes, allSellersRes, deletedSalonsRes, deletedSellersRes, promotionsRes] = await Promise.all([
           fetch(`/api/admin/salons/pending?ts=${ts}`, noStore),
           fetch(`/api/admin/salons/all?ts=${ts}`, noStore),
           fetch(`/api/admin/services/pending?ts=${ts}`, noStore),
@@ -519,11 +504,10 @@ export default function AdminPageClient({
           fetch(`/api/admin/sellers/all?ts=${ts}`, noStore),
           fetch(`/api/admin/salons/deleted?ts=${ts}`, noStore),
           fetch(`/api/admin/sellers/deleted?ts=${ts}`, noStore),
-          fetch(`/api/admin/metrics?ts=${ts}`, noStore),
           fetch(`/api/promotions/admin/pending?ts=${ts}`, noStore),
         ]);
 
-        if ([pendingSalonsRes, allSalonsRes, servicesRes, reviewsRes, productsRes, allSellersRes, deletedSalonsRes, deletedSellersRes, metricsRes, promotionsRes].some(res => res.status === 401)) {
+        if ([pendingSalonsRes, allSalonsRes, servicesRes, reviewsRes, productsRes, allSellersRes, deletedSalonsRes, deletedSellersRes, promotionsRes].some(res => res.status === 401)) {
           router.push('/login');
           return;
         }
@@ -537,7 +521,6 @@ export default function AdminPageClient({
         setAllSellers(ensureArray<SellerRow>(await allSellersRes.json()));
         setDeletedSalons(ensureArray<any>(await deletedSalonsRes.json()));
         setDeletedSellers(ensureArray<any>(await deletedSellersRes.json()));
-        setMetrics(await metricsRes.json());
         setPendingPromotions(ensureArray<any>(await promotionsRes.json()));
 
       } catch (error) {
@@ -652,7 +635,7 @@ export default function AdminPageClient({
     return () => {
       cancelled = true;
     };
-  }, [session?.backendJwt, view]);
+  }, [fetchFeaturedSalons, session?.backendJwt, view]);
 
   const handleUpdateStatus = async (type: 'salon' | 'service' | 'review' | 'product', id: string, status: ApprovalStatus) => {
     if (authStatus !== 'authenticated') {
@@ -1827,144 +1810,14 @@ export default function AdminPageClient({
           )}
 
           {view === 'pending-payments' && (
-            <>
-              <div style={{ marginBottom: '1rem' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Pending Payment Verification</h2>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-                  Salons that have submitted payment proof and are awaiting admin verification.
-                </p>
-              </div>
-              {pendingPaymentSalons.length > 0 ? pendingPaymentSalons.map((salon) => {
-                const planCode = (salon.planCode ?? 'FREE') as PlanCode;
-                const plan = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
-                const planAmount =
-                  typeof salon.planPriceCents === 'number'
-                    ? formatRand(salon.planPriceCents)
-                    : plan.price;
-                const paymentStatus = (salon.planPaymentStatus ?? 'PENDING_SELECTION') as PlanPaymentStatus;
-                const proofSubmittedAt = salon.planProofSubmittedAt
-                  ? new Date(salon.planProofSubmittedAt).toLocaleString('en-ZA')
-                  : null;
-                const verifiedAt = salon.planVerifiedAt
-                  ? new Date(salon.planVerifiedAt).toLocaleString('en-ZA')
-                  : null;
-                const isUpdating = updatingSalonPlanId === salon.id;
-                const paymentReference = salon.planPaymentReference ?? salon.name;
-
-                return (
-                  <div key={salon.id} className={styles.listItem} style={{ background: 'var(--color-surface-elevated)', padding: '1.5rem', borderRadius: '12px', marginBottom: '1rem' }}>
-                    <div className={styles.info}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-                        <div>
-                          <h4 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>{salon.name}</h4>
-                          <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-                            {salon.city}, {salon.province}
-                          </p>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                            Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email})
-                          </p>
-                        </div>
-                        <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-                          {PLAN_PAYMENT_LABELS[paymentStatus]}
-                        </span>
-                      </div>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', padding: '1rem', background: 'var(--color-surface)', borderRadius: '8px', marginBottom: '1rem' }}>
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Plan</div>
-                          <div style={{ fontSize: '1rem', fontWeight: 600 }}>{plan.name}</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Amount Due</div>
-                          <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-primary)' }}>{planAmount}</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Payment Reference</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <code style={{ fontSize: '0.85rem', fontWeight: 600, padding: '0.25rem 0.5rem', background: '#f3f4f6', borderRadius: '4px' }}>{paymentReference}</code>
-                            <button
-                              type="button"
-                              onClick={() => copyToClipboard(paymentReference, 'Reference copied')}
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                            >
-                              Copy
-                            </button>
-                          </div>
-                        </div>
-                        {proofSubmittedAt && (
-                          <div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Proof Submitted</div>
-                            <div style={{ fontSize: '0.85rem' }}>{proofSubmittedAt}</div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                        <button
-                          type="button"
-                          onClick={() => updateSalonPaymentStatus(salon.id, 'VERIFIED')}
-                          disabled={isUpdating || paymentStatus === 'VERIFIED'}
-                          style={{
-                            padding: '0.75rem 1.5rem',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            background: paymentStatus === 'VERIFIED' ? '#d1d5db' : '#10b981',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            cursor: paymentStatus === 'VERIFIED' ? 'not-allowed' : 'pointer',
-                            opacity: isUpdating ? 0.6 : 1
-                          }}
-                        >
-                          {isUpdating && paymentStatus !== 'VERIFIED' ? 'Verifying...' : paymentStatus === 'VERIFIED' ? '✓ Verified' : '✓ Verify Payment'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => updateSalonPaymentStatus(salon.id, 'AWAITING_PROOF')}
-                          disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
-                          style={{
-                            padding: '0.75rem 1.5rem',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            background: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            cursor: isUpdating ? 'not-allowed' : 'pointer',
-                            opacity: isUpdating ? 0.6 : 1
-                          }}
-                        >
-                          {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving...' : '✗ Reject / Request Re-submission'}
-                        </button>
-                        <Link
-                          href={`/dashboard?ownerId=${salon.owner.id}`}
-                          style={{
-                            padding: '0.75rem 1.5rem',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            background: 'var(--color-surface)',
-                            color: 'var(--color-text-strong)',
-                            border: '1px solid var(--color-border)',
-                            borderRadius: '8px',
-                            textDecoration: 'none',
-                            display: 'inline-block'
-                          }}
-                        >
-                          View Dashboard
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }) : (
-                <div style={{ textAlign: 'center', padding: '3rem 1rem', background: 'var(--color-surface-elevated)', borderRadius: '12px' }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✓</div>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem' }}>All payments verified!</h3>
-                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>There are no pending payment verifications at the moment.</p>
-                </div>
-              )}
-            </>
+            <AdminPendingPaymentsSection
+              pendingPaymentSalons={pendingPaymentSalons}
+              updatingSalonPlanId={updatingSalonPlanId}
+              onCopyReference={copyToClipboard}
+              onUpdateSalonPaymentStatus={updateSalonPaymentStatus}
+            />
           )}
+
 
           {view === 'promotions' && (
             <>
@@ -2046,72 +1899,15 @@ export default function AdminPageClient({
           )}
 
           {view === 'top10-requests' && (
-            top10Requests.length > 0 ? top10Requests.map((req: any) => {
-              const isExpanded = expandedItems.has(`req-${req.id}`);
-              const statusColor = req.status === 'PENDING' ? '#f59e0b' : req.status === 'CONTACTED' ? '#3b82f6' : req.status === 'MATCHED' ? '#10b981' : '#6b7280';
-              return (
-                <div key={req.id} className={styles.collapsibleItem}>
-                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`req-${req.id}`)}>
-                    <div className={styles.collapsibleHeaderLeft}>
-                      <span className={styles.collapsibleName} title={req.fullName}>{req.fullName}</span>
-                      <span className={styles.collapsibleLocation} title={req.location}>{req.location}</span>
-                    </div>
-                    <div className={styles.collapsibleHeaderRight}>
-                      <span className={styles.collapsibleStatus} style={{ backgroundColor: `${statusColor}20`, color: statusColor }}>{req.status}</span>
-                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
-                    </div>
-                  </div>
-                  {isExpanded && (
-                    <div className={styles.collapsibleContent}>
-                      <div className={styles.info}>
-                        <h4>{req.fullName} - {req.category}</h4>
-                        <p><strong>Service:</strong> {req.serviceNeeded}</p>
-                        <p><strong>Budget:</strong> R{req.budget} | <strong>Type:</strong> {req.serviceType === 'onsite' ? 'Mobile' : 'Visit Salon'}</p>
-                        <p><strong>Location:</strong> {req.location}</p>
-                        <p><strong>Date:</strong> {req.preferredDate ? new Date(req.preferredDate).toLocaleDateString() : 'Not specified'} {req.preferredTime ? `at ${req.preferredTime}` : ''}</p>
-                        <p><strong>Phone:</strong> <a href={`tel:${req.phone}`}>{req.phone}</a> {req.whatsapp && <> | <strong>WhatsApp:</strong> <a href={`https://wa.me/${req.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">{req.whatsapp}</a></>}</p>
-                        {req.email && <p><strong>Email:</strong> <a href={`mailto:${req.email}`}>{req.email}</a></p>}
-                        {req.styleOrLook && <p><strong>Style:</strong> {req.styleOrLook}</p>}
-                        <p style={{ opacity: 0.7, fontSize: '0.85rem' }}>Submitted: {new Date(req.createdAt).toLocaleString()}</p>
-                      </div>
-                      <div className={styles.actions}>
-                        <select
-                          value={req.status}
-                          onChange={async (e) => {
-                            const newStatus = e.target.value;
-                            const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
-                            try {
-                              const res = await fetch(`/api/admin/top10-requests/${req.id}/status`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json', ...authHeaders },
-                                credentials: 'include',
-                                body: JSON.stringify({ status: newStatus }),
-                              });
-                              if (res.ok) {
-                                setTop10Requests(prev => prev.map(r => r.id === req.id ? { ...r, status: newStatus } : r));
-                                notify.success('Status updated');
-                              } else {
-                                notify.error('Failed to update status');
-                              }
-                            } catch {
-                              notify.error('Failed to update status');
-                            }
-                          }}
-                          style={{ padding: '0.5rem', borderRadius: 4 }}
-                        >
-                          <option value="PENDING">Pending</option>
-                          <option value="CONTACTED">Contacted</option>
-                          <option value="MATCHED">Matched</option>
-                          <option value="COMPLETED">Completed</option>
-                          <option value="CANCELLED">Cancelled</option>
-                        </select>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            }) : <p>No Top 10 requests yet.</p>
+            <AdminTop10RequestsSection
+              requests={top10Requests}
+              expandedItems={expandedItems}
+              toggleExpanded={toggleExpanded}
+              authToken={session?.backendJwt}
+              onRequestsChange={(updater) => setTop10Requests((prev) => updater(prev))}
+            />
           )}
+
 
           {view === 'deleted-sellers' && (
             deletedSellers.length > 0 ? deletedSellers.map((row: any) => {
@@ -2147,33 +1943,11 @@ export default function AdminPageClient({
           )}
 
           {view === 'audit' && (
-            auditLogs.length > 0 ? auditLogs.map((log: any) => {
-              const isExpanded = expandedItems.has(`audit-${log.id}`);
-              return (
-                <div key={log.id} className={styles.collapsibleItem}>
-                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`audit-${log.id}`)}>
-                    <div className={styles.collapsibleHeaderLeft}>
-                      <span className={styles.collapsibleName} title={log.action}>{log.action}</span>
-                      <span className={styles.collapsibleLocation}>{log.targetType}</span>
-                    </div>
-                    <div className={styles.collapsibleHeaderRight}>
-                      <span style={{ color: '#666', fontSize: '0.8rem' }}>{new Date(log.createdAt).toLocaleDateString()}</span>
-                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
-                    </div>
-                  </div>
-                  {isExpanded && (
-                    <div className={styles.collapsibleContent}>
-                      <div className={styles.info}>
-                        <h4>{log.action}</h4>
-                        <p><strong>Target:</strong> {log.targetType} {log.targetId}</p>
-                        {log.reason && <p><strong>Reason:</strong> {log.reason}</p>}
-                        <p style={{ color: '#666', fontSize: '0.85rem' }}>Timestamp: {new Date(log.createdAt).toLocaleString()}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            }) : <p>No recent admin activity.</p>
+            <AdminAuditSection
+              auditLogs={auditLogs}
+              expandedItems={expandedItems}
+              toggleExpanded={toggleExpanded}
+            />
           )}
         </div>
 
@@ -2230,4 +2004,3 @@ export default function AdminPageClient({
     </>
   );
 }
-
