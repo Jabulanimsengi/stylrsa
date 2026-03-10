@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { signIn } from 'next-auth/react';
 import styles from '../app/auth.module.css';
 import { apiFetch } from '@/lib/api';
-import { Alert, LoadingButton, Button } from '@/components/ui';
+import { Alert, LoadingButton, Button, ModalShell } from '@/components/ui';
 import { notify } from '@/lib/notify';
 
 // Define the props that this component will accept
@@ -186,33 +186,34 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
       </div>
 
       {/* Google OAuth Role Confirmation Dialog */}
-      {showGoogleConfirm && (
-        <div className={styles.confirmOverlay}>
-          <div className={styles.confirmDialog}>
-            <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>Confirm Account Type</h3>
-            <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: '#666' }}>
-              You are signing up as:
-            </p>
-            <p style={{ margin: '0 0 1.5rem', fontSize: '1rem', fontWeight: 600, color: 'var(--color-primary)' }}>
-              {ROLE_LABELS[role]}
-            </p>
-            <p style={{ margin: '0 0 1rem', fontSize: '0.8rem', color: '#888' }}>
-              This cannot be changed after signup. Please make sure you selected the correct account type above.
-            </p>
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <Button
-                variant="outline"
-                onClick={() => setShowGoogleConfirm(false)}
-              >
-                Go Back
-              </Button>
-              <Button onClick={confirmGoogleSignIn}>
-                Confirm & Continue
-              </Button>
-            </div>
-          </div>
+      <ModalShell
+        open={showGoogleConfirm}
+        onOpenChange={setShowGoogleConfirm}
+        title="Confirm Account Type"
+        description="Choose the correct account type before continuing with Google."
+        size="sm"
+      >
+        <p style={{ margin: '0 0 0.75rem', fontSize: '0.95rem', color: '#475569' }}>
+          You are signing up as:
+        </p>
+        <p style={{ margin: '0 0 1.25rem', fontSize: '1rem', fontWeight: 600, color: 'var(--color-primary)' }}>
+          {ROLE_LABELS[role]}
+        </p>
+        <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', lineHeight: 1.6, color: '#64748b' }}>
+          This account type cannot be changed automatically after signup. Confirm before continuing.
+        </p>
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+          <Button
+            variant="outline"
+            onClick={() => setShowGoogleConfirm(false)}
+          >
+            Go back
+          </Button>
+          <Button onClick={confirmGoogleSignIn}>
+            Confirm and continue
+          </Button>
         </div>
-      )}
+      </ModalShell>
     </div>
   );
 }

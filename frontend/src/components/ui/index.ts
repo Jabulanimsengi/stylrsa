@@ -152,6 +152,7 @@ export {
     DialogTitle,
     DialogDescription,
 } from './dialog';
+export { ModalShell } from './modal-shell';
 
 // AlertDialog - For confirmations
 export { AlertDialog } from './alert-dialog';
