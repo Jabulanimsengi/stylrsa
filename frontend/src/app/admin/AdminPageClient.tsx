@@ -9,13 +9,15 @@ import AdminLayout from './AdminLayout';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
 import { DEFAULT_ADMIN_VIEW, getAdminPath, type AdminView } from './admin-config';
 import {
+  AdminAuditLog,
+  DeletedSellerArchiveRow,
   PendingSalon,
+  PendingPromotionRow,
   PendingService,
   PendingReview,
   PendingProduct,
   SellerRow,
   SellerDeletionTarget,
-  AdminAuditLog,
   PLAN_PAYMENT_LABELS,
   formatRand,
   ensureArray,
@@ -42,6 +44,8 @@ import AdminBlogManager from '@/components/AdminBlogManager/AdminBlogManager';
 import AdminPendingPaymentsSection from './components/AdminPendingPaymentsSection';
 import AdminTop10RequestsSection from './components/AdminTop10RequestsSection';
 import AdminAuditSection from './components/AdminAuditSection';
+import AdminPromotionsSection from './components/AdminPromotionsSection';
+import AdminDeletedSellersSection from './components/AdminDeletedSellersSection';
 import RejectReasonModal from '@/components/RejectReasonModal/RejectReasonModal';
 
 interface AdminPageClientProps {
@@ -58,9 +62,9 @@ export default function AdminPageClient({
   const [pendingServices, setPendingServices] = useState<PendingService[]>([]);
   const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
   const [pendingProducts, setPendingProducts] = useState<PendingProduct[]>([]);
-  const [pendingPromotions, setPendingPromotions] = useState<any[]>([]);
+  const [pendingPromotions, setPendingPromotions] = useState<PendingPromotionRow[]>([]);
   const [deletedSalons, setDeletedSalons] = useState<any[]>([]);
-  const [deletedSellers, setDeletedSellers] = useState<any[]>([]);
+  const [deletedSellers, setDeletedSellers] = useState<DeletedSellerArchiveRow[]>([]);
   const [allSellers, setAllSellers] = useState<SellerRow[]>([]);
   const [auditLogs] = useState<AdminAuditLog[]>([]);
   const [featuredSalons, setFeaturedSalons] = useState<PendingSalon[]>([]);
@@ -1820,68 +1824,14 @@ export default function AdminPageClient({
 
 
           {view === 'promotions' && (
-            <>
-              {pendingPromotions.length > 0 ? pendingPromotions.map((promo) => {
-                const isService = Boolean(promo.service);
-                const item = isService ? promo.service : promo.product;
-                const itemName = isService ? item?.title : item?.name;
-                const providerName = isService
-                  ? promo.service?.salon?.name
-                  : `${promo.product?.seller?.firstName || ''} ${promo.product?.seller?.lastName || ''}`.trim();
-                const endDate = new Date(promo.endDate);
-                const daysLeft = Math.ceil((endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-
-                return (
-                  <div key={promo.id} className={styles.listItem}>
-                    <div className={styles.info}>
-                      <h4>{itemName}</h4>
-                      <p>
-                        <strong>Provider:</strong> {providerName || 'Unknown'} | <strong>Type:</strong> {isService ? 'Service' : 'Product'}
-                      </p>
-                      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                        <span>
-                          <strong>Original:</strong>{' '}
-                          <span style={{ textDecoration: 'line-through', color: '#ef4444' }}>
-                            R{promo.originalPrice.toFixed(2)}
-                          </span>
-                        </span>
-                        <span>
-                          <strong>Promotional:</strong>{' '}
-                          <span style={{ color: '#10b981', fontWeight: 600 }}>
-                            R{promo.promotionalPrice.toFixed(2)}
-                          </span>
-                        </span>
-                        <span>
-                          <strong>Discount:</strong>{' '}
-                          <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>
-                            {promo.discountPercentage}% OFF
-                          </span>
-                        </span>
-                      </div>
-                      <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-                        <strong>Duration:</strong> {new Date(promo.startDate).toLocaleDateString()} → {new Date(promo.endDate).toLocaleDateString()}
-                        {' '}({daysLeft > 0 ? `${daysLeft} days` : 'Expired'})
-                      </p>
-                    </div>
-                    <div className={styles.actions}>
-                      <button
-                        onClick={() => handleApprovePromotion(promo.id)}
-                        className={styles.approveButton}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => handleRejectPromotion(promo.id)}
-                        className={styles.rejectButton}
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  </div>
-                );
-              }) : <p>No pending promotions.</p>}
-            </>
+            <AdminPromotionsSection
+              promotions={pendingPromotions}
+              onApprovePromotion={handleApprovePromotion}
+              onRejectPromotion={handleRejectPromotion}
+            />
           )}
+
+
 
           {view === 'media' && (
             <AdminMediaReview />
@@ -1910,37 +1860,14 @@ export default function AdminPageClient({
 
 
           {view === 'deleted-sellers' && (
-            deletedSellers.length > 0 ? deletedSellers.map((row: any) => {
-              const isExpanded = expandedItems.has(`delseller-${row.id}`);
-              const sellerName = row.seller?.firstName ? `${row.seller.firstName} ${row.seller.lastName ?? ''}`.trim() : 'Unknown seller';
-              return (
-                <div key={row.id} className={styles.collapsibleItem}>
-                  <div className={styles.collapsibleHeader} onClick={() => toggleExpanded(`delseller-${row.id}`)}>
-                    <div className={styles.collapsibleHeaderLeft}>
-                      <span className={styles.collapsibleName} title={sellerName}>{sellerName}</span>
-                      <span className={styles.collapsibleLocation}>{row.deletedAt ? new Date(row.deletedAt).toLocaleDateString() : ''}</span>
-                    </div>
-                    <div className={styles.collapsibleHeaderRight}>
-                      <span className={`${styles.collapsibleStatus} ${styles.rejected}`}>Deleted</span>
-                      <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
-                    </div>
-                  </div>
-                  {isExpanded && (
-                    <div className={styles.collapsibleContent}>
-                      <div className={styles.info}>
-                        <h4>{sellerName}</h4>
-                        <p>Deleted at: {row.deletedAt ? new Date(row.deletedAt).toLocaleString() : ''}</p>
-                        {row.reason && <p><strong>Reason:</strong> {row.reason}</p>}
-                      </div>
-                      <div className={styles.actions}>
-                        <button className={styles.approveButton} onClick={() => restoreDeletedSeller(row.id)}>Restore</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            }) : <p>No deleted sellers.</p>
+            <AdminDeletedSellersSection
+              deletedSellers={deletedSellers}
+              expandedItems={expandedItems}
+              toggleExpanded={toggleExpanded}
+              onRestoreDeletedSeller={restoreDeletedSeller}
+            />
           )}
+
 
           {view === 'audit' && (
             <AdminAuditSection

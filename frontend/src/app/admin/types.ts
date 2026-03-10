@@ -88,6 +88,38 @@ export type AdminAuditLog = {
     createdAt: string;
 };
 
+export type PendingPromotionRow = {
+    id: string;
+    originalPrice: number;
+    promotionalPrice: number;
+    discountPercentage: number;
+    startDate: string;
+    endDate: string;
+    service?: {
+        title?: string | null;
+        salon?: {
+            name?: string | null;
+        } | null;
+    } | null;
+    product?: {
+        name?: string | null;
+        seller?: {
+            firstName?: string | null;
+            lastName?: string | null;
+        } | null;
+    } | null;
+};
+
+export type DeletedSellerArchiveRow = {
+    id: string;
+    deletedAt?: string | null;
+    reason?: string | null;
+    seller?: {
+        firstName?: string | null;
+        lastName?: string | null;
+    } | null;
+};
+
 export const PLAN_PAYMENT_LABELS: Record<PlanPaymentStatus, string> = {
     PENDING_SELECTION: 'Package not selected',
     AWAITING_PROOF: 'Awaiting proof of payment',
