@@ -314,7 +314,6 @@ export default function SalonsPageClient() {
                 ? '📍 Showing salons near your estimated location'
                 : '📍 Showing salons near your location';
             toast.info(message, {
-                position: 'bottom-center',
                 autoClose: 3000,
             });
         }

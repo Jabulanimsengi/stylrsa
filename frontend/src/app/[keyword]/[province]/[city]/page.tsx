@@ -5,6 +5,7 @@ import {
   getSeoPageByUrl,
 } from '@/lib/seo-api';
 import { generateLocalSeoPageContent, SEO_KEYWORDS } from '@/lib/seo-generation';
+import { hasBlockedSeoSegment } from '@/lib/seoRouteGuard';
 
 interface PageProps {
   params: Promise<{
@@ -49,13 +50,7 @@ export async function generateMetadata({
   const { keyword, province, city } = await params;
 
   // Filter out invalid paths early
-  const invalidPrefixes = ['_vercel', '_next', 'api', 'static'];
-  const invalidExtensions = ['.js', '.css', '.json', '.ico', '.png', '.jpg', '.svg', '.woff', '.woff2'];
-
-  if (
-    invalidPrefixes.includes(keyword) ||
-    invalidExtensions.some(ext => city.endsWith(ext))
-  ) {
+  if (hasBlockedSeoSegment([keyword, province, city])) {
     return {
       title: 'Not Found',
       robots: { index: false, follow: false },
@@ -136,13 +131,7 @@ export default async function KeywordProvinceCityPage({ params }: PageProps) {
   const { keyword, province, city } = await params;
 
   // Filter out invalid paths (Vercel scripts, static files, etc.)
-  const invalidPrefixes = ['_vercel', '_next', 'api', 'static'];
-  const invalidExtensions = ['.js', '.css', '.json', '.ico', '.png', '.jpg', '.svg', '.woff', '.woff2'];
-
-  if (
-    invalidPrefixes.includes(keyword) ||
-    invalidExtensions.some(ext => city.endsWith(ext))
-  ) {
+  if (hasBlockedSeoSegment([keyword, province, city])) {
     notFound();
   }
 

@@ -5,6 +5,7 @@ import {
   getSeoPageByUrl,
   getLocationById,
 } from '@/lib/seo-api';
+import { hasBlockedSeoSegment } from '@/lib/seoRouteGuard';
 
 interface PageProps {
   params: Promise<{
@@ -33,6 +34,14 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { keyword, province, city, suburb } = await params;
+
+  if (hasBlockedSeoSegment([keyword, province, city, suburb])) {
+    return {
+      title: 'Not Found',
+      robots: { index: false, follow: false },
+    };
+  }
+
   const url = `/${keyword}/${province}/${city}/${suburb}`;
 
   try {
@@ -85,6 +94,11 @@ export default async function KeywordProvinceCitySuburbPage({
   params,
 }: PageProps) {
   const { keyword, province, city, suburb } = await params;
+
+  if (hasBlockedSeoSegment([keyword, province, city, suburb])) {
+    notFound();
+  }
+
   const url = `/${keyword}/${province}/${city}/${suburb}`;
 
   try {

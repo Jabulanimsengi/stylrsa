@@ -4,6 +4,7 @@ import Script from 'next/script';
 import type { Salon } from '@/types';
 import SalonProfileClient from './SalonProfileClient';
 import { generateSalonStructuredData, generateSalonBreadcrumb } from '@/lib/salonSeoHelpers';
+import { getInternalBackendOrigin } from '@/lib/server/backend-origin';
 
 /**
  * Check if a string looks like a UUID
@@ -56,7 +57,12 @@ const fetchSalonWithTimeout = async (url: string, timeoutMs = 5000): Promise<Sal
 };
 
 async function getSalon(id: string): Promise<Salon | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BASE_PATH || process.env.NEXT_PUBLIC_API_ORIGIN || 'http://127.0.0.1:5000';
+  const baseUrl =
+    getInternalBackendOrigin() ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_BASE_PATH ||
+    process.env.NEXT_PUBLIC_API_ORIGIN ||
+    'http://127.0.0.1:5000';
   const isBuildPhase = process.env.IS_BUILD_PHASE === 'true' || process.env.NEXT_PHASE === 'phase-production-build';
 
   // Only skip fetching during build time when API is localhost
