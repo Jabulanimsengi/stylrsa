@@ -4,12 +4,10 @@
 
 
 import React, { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
 import {
   Salon,
   Service,
   ApprovalStatus,
-  Booking,
   GalleryImage,
   Product,
   Promotion,
@@ -23,13 +21,11 @@ import SimpleServiceFormModal from '@/components/SimpleServiceFormModal';
 import EditSalonModal from '@/components/EditSalonModal';
 import { useSocket } from '@/context/SocketContext';
 import { notify } from '@/lib/notify';
-import { logger } from '@/lib/logger';
 import GalleryUploadModal from '@/components/GalleryUploadModal';
 import ProductFormModal from '@/components/ProductFormModal';
 import PromotionModal from '@/components/PromotionModal';
 import CreatePromotionModal from '@/components/CreatePromotionModal';
 import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
-import { FaTrash, FaEdit, FaPlus, FaCamera } from 'react-icons/fa';
 import Link from 'next/link';
 import PageNav from '@/components/PageNav';
 import { useAuth } from '@/hooks/useAuth';
@@ -38,19 +34,12 @@ import { toFriendlyMessage } from '@/lib/errors';
 import { Skeleton } from '@/components/Skeleton/Skeleton';
 import { APP_PLANS, PLAN_BY_CODE } from '@/constants/plans';
 import ReviewsTab from '@/components/ReviewsTab/ReviewsTab';
-import OperatingHoursInput, { OperatingHours, initializeOperatingHours } from '@/components/OperatingHoursInput';
+import { OperatingHours, initializeOperatingHours } from '@/components/OperatingHoursInput';
 import AvailabilityManager from '@/components/AvailabilityManager/AvailabilityManager';
-import JobPostingForm from '@/components/JobPostingForm/JobPostingForm';
-import TeamMembers from '@/components/TeamMembers/TeamMembers';
 import { getSalonUrl } from '@/utils/salonUrl';
 import {
-  Card,
   Button,
-  Alert,
-  LoadingButton,
-  Badge,
 } from '@/components/ui';
-import StatusBadge from '@/components/StatusBadge';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import DashboardKPIRow from '@/components/DashboardKPIRow/DashboardKPIRow';
 import DashboardSidebar from '@/components/DashboardSidebar/DashboardSidebar';
@@ -58,7 +47,10 @@ import ServicesTab from '@/components/ServicesTab/ServicesTab';
 import PromotionsTab from '@/components/PromotionsTab/PromotionsTab';
 import GalleryTab from '@/components/GalleryTab/GalleryTab';
 import DashboardBookingsSection from './components/DashboardBookingsSection';
+import DashboardBookingSettingsSection from './components/DashboardBookingSettingsSection';
+import DashboardJobsSection from './components/DashboardJobsSection';
 import DashboardPackageSection from './components/DashboardPackageSection';
+import DashboardTeamSection from './components/DashboardTeamSection';
 import {
   DEFAULT_DASHBOARD_TAB,
   getDashboardPath,
@@ -768,76 +760,35 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
 
             {/* Booking Settings Tab */}
             {activeMainTab === 'booking-settings' && (
-              <div className={styles.contentCard}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle}>Booking Settings</h3>
-                </div>
-                <div className={styles.settingsSection}>
-                  <h4 className={styles.settingsSubheading}>Custom Booking Message</h4>
-                  <p className={styles.settingsDescription}>
-                    Set a message customers see before booking (e.g., booking fees, preparation requirements).
-                  </p>
-                  {!isEditingMessage && bookingMessage ? (
-                    <div>
-                      <div className={styles.messageDisplay}>
-                        {bookingMessage}
-                      </div>
-                      <Button type="button" variant="outline" size="sm" onClick={() => setIsEditingMessage(true)}>
-                        Edit Message
-                      </Button>
-                    </div>
-                  ) : (
-                    <div>
-                      <textarea
-                        value={bookingMessage}
-                        onChange={(e) => e.target.value.length <= 200 && setBookingMessage(e.target.value)}
-                        placeholder="e.g., Please arrive 10 minutes early. Booking fee: R50"
-                        rows={4}
-                        className={styles.messageTextarea}
-                      />
-                      <p className={styles.characterCount}>{bookingMessage.length}/200</p>
-                      <div className={styles.actionButtonGroup}>
-                        <LoadingButton type="button" onClick={saveBookingMessage} loading={isSavingMessage}>
-                          Save
-                        </LoadingButton>
-                        {bookingMessage && (
-                          <Button type="button" variant="ghost" size="sm" onClick={() => setBookingMessage('')}>
-                            Clear
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <h4 className={`${styles.settingsSubheading} ${styles.sectionDivider}`}>Operating Hours</h4>
-                  <OperatingHoursInput hours={operatingHours} onChange={setOperatingHours} />
-                  <div className={styles.actionButtonGroup}>
-                    {isEditingHours ? (
-                      <LoadingButton type="button" onClick={saveOperatingHours} loading={isSavingHours}>
-                        Save Hours
-                      </LoadingButton>
-                    ) : (
-                      <Button type="button" variant="outline" size="sm" onClick={() => setIsEditingHours(true)}>
-                        Edit Hours
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <DashboardBookingSettingsSection
+                bookingMessage={bookingMessage}
+                isEditingMessage={isEditingMessage}
+                isSavingMessage={isSavingMessage}
+                operatingHours={operatingHours}
+                isEditingHours={isEditingHours}
+                isSavingHours={isSavingHours}
+                onBookingMessageChange={setBookingMessage}
+                onEditMessage={() => setIsEditingMessage(true)}
+                onClearMessage={() => setBookingMessage('')}
+                onSaveMessage={saveBookingMessage}
+                onHoursChange={setOperatingHours}
+                onEditHours={() => setIsEditingHours(true)}
+                onSaveHours={saveOperatingHours}
+              />
             )}
 
             {/* Team Tab */}
             {activeMainTab === 'team' && salon && (
-              <div className={styles.contentCard}>
-                <TeamMembers salonId={salon.id} isEditable={true} />
-              </div>
+              <DashboardTeamSection salonId={salon.id} />
             )}
 
             {/* Jobs Tab */}
             {activeMainTab === 'jobs' && salon && (
-              <div className={styles.contentCard}>
-                <JobPostingForm salonId={salon.id} salonName={salon.name} salonLocation={salon.city || ''} />
-              </div>
+              <DashboardJobsSection
+                salonId={salon.id}
+                salonName={salon.name}
+                salonLocation={salon.city || ''}
+              />
             )}
 
             {/* Package Tab */}
