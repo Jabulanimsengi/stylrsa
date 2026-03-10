@@ -20,6 +20,7 @@ import {
 } from './BooksyComponents';
 import FreshaServiceList from '@/components/FreshaServiceList';
 import { getSalonUrl } from '@/utils/salonUrl';
+import SalonBookingRail from './SalonBookingRail';
 
 interface DesktopSalonProfileProps {
   salon: Salon;
@@ -38,6 +39,7 @@ interface DesktopSalonProfileProps {
   openLightbox: (images: string[], index: number) => void;
   onToggleFavorite: () => void;
   onBookServices: (selectedServices: Service[]) => void;
+  onBookNow: () => void;
 }
 
 export default function DesktopSalonProfile({
@@ -57,6 +59,7 @@ export default function DesktopSalonProfile({
   openLightbox,
   onToggleFavorite,
   onBookServices,
+  onBookNow,
 }: DesktopSalonProfileProps) {
   const galleryImageUrls = galleryImages.map((img) => img.imageUrl);
 
@@ -210,11 +213,24 @@ export default function DesktopSalonProfile({
             )}
           </div>
 
-          <SimilarSalons
-            currentSalonId={salon.id}
-            city={salon.city}
-            province={salon.province}
-          />
+          <div className={booksyStyles.booksySidebarColumn}>
+            <SalonBookingRail
+              salon={salon}
+              services={services}
+              reviewsCount={reviews.length}
+              mapsHref={mapsHref}
+              onBookNow={onBookNow}
+              onShowServices={() => setActiveSection('services-section')}
+            />
+          </div>
+
+          <div className={booksyStyles.booksyFullWidth}>
+            <SimilarSalons
+              currentSalonId={salon.id}
+              city={salon.city}
+              province={salon.province}
+            />
+          </div>
         </div>
       </div>
     </div>

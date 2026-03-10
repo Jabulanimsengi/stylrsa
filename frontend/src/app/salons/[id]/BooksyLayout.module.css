@@ -2,20 +2,19 @@
 
 /* Main Single-Column Layout (sidebar removed) */
 .booksyLayout {
-    display: block;
-    max-width: 1024px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 2rem;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 0 var(--page-inline-padding, 1.5rem);
+    align-items: start;
 }
 
 @media (max-width: 1024px) {
     .booksyLayout {
         grid-template-columns: 1fr;
         gap: 1.5rem;
-    }
-
-    .booksySidebar {
-        order: 2;
     }
 
     .heroGallery {
@@ -40,6 +39,16 @@
 /* Left Column - Main Content */
 .booksyMain {
     min-width: 0;
+}
+
+.booksySidebarColumn {
+    position: sticky;
+    top: 96px;
+    align-self: start;
+}
+
+.booksyFullWidth {
+    grid-column: 1 / -1;
 }
 
 /* Simplified Sticky Tab Navigation */

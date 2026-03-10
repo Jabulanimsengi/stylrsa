@@ -53,11 +53,12 @@ import {
 import StatusBadge from '@/components/StatusBadge';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import DashboardKPIRow from '@/components/DashboardKPIRow/DashboardKPIRow';
-import BookingCalendar from '@/components/BookingCalendar/BookingCalendar';
 import DashboardSidebar from '@/components/DashboardSidebar/DashboardSidebar';
 import ServicesTab from '@/components/ServicesTab/ServicesTab';
 import PromotionsTab from '@/components/PromotionsTab/PromotionsTab';
 import GalleryTab from '@/components/GalleryTab/GalleryTab';
+import DashboardBookingsSection from './components/DashboardBookingsSection';
+import DashboardPackageSection from './components/DashboardPackageSection';
 import {
   DEFAULT_DASHBOARD_TAB,
   getDashboardPath,
@@ -65,20 +66,7 @@ import {
   NAV_SECTIONS,
   type TabId,
 } from './dashboard-config';
-
-type DashboardBooking = Booking & {
-  user: { firstName: string; lastName: string };
-  service: { title: string };
-  status: 'PENDING' | 'CONFIRMED' | 'DECLINED' | 'COMPLETED' | 'CANCELLED';
-  clientPhone?: string;
-};
-
-const BANK_DETAILS = {
-  bank: 'Capitec Bank',
-  accountNumber: '1618097723',
-  accountHolder: 'J Msengi',
-  whatsapp: '0738021196',
-};
+import type { DashboardBooking } from './types';
 
 const PLAN_PAYMENT_LABELS: Record<PlanPaymentStatus, string> = {
   PENDING_SELECTION: 'Package not selected',
@@ -719,59 +707,15 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
 
             {/* Bookings Tab */}
             {activeMainTab === 'bookings' && (
-              <div className={styles.contentCard}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle}>Bookings</h3>
-                </div>
-                <BookingCalendar
-                  bookings={bookings as any[]}
-                  onBookingClick={(b) => {
-                    // Scroll / focus the matching booking card in list view
-                    // The toggle will switch back to list automatically if needed
-                  }}
-                  renderListView={() => (
-                    <>
-                      <div className={styles.tabs}>
-                        <button onClick={() => setActiveBookingTab('pending')} className={`${styles.tabButton} ${activeBookingTab === 'pending' ? styles.activeTab : ''}`}>Pending ({pendingBookings.length})</button>
-                        <button onClick={() => setActiveBookingTab('confirmed')} className={`${styles.tabButton} ${activeBookingTab === 'confirmed' ? styles.activeTab : ''}`}>Confirmed ({confirmedBookings.length})</button>
-                        <button onClick={() => setActiveBookingTab('past')} className={`${styles.tabButton} ${activeBookingTab === 'past' ? styles.activeTab : ''}`}>Past ({pastBookings.length})</button>
-                      </div>
-                      <div className={styles.list}>
-                        {activeBookingTab === 'pending' && (
-                          pendingBookings.length > 0 ? pendingBookings.map(renderBookingCard) : (
-                            <div className={styles.emptyState}>
-                              <h3 className={styles.emptyStateTitle}>No Pending Bookings</h3>
-                              <p className={styles.emptyStateMessage}>
-                                You're all caught up! New booking requests will appear here when customers book your services.
-                              </p>
-                            </div>
-                          )
-                        )}
-                        {activeBookingTab === 'confirmed' && (
-                          confirmedBookings.length > 0 ? confirmedBookings.map(renderBookingCard) : (
-                            <div className={styles.emptyState}>
-                              <h3 className={styles.emptyStateTitle}>No Confirmed Bookings</h3>
-                              <p className={styles.emptyStateMessage}>
-                                Once you accept booking requests, they will appear here.
-                              </p>
-                            </div>
-                          )
-                        )}
-                        {activeBookingTab === 'past' && (
-                          pastBookings.length > 0 ? pastBookings.map(renderBookingCard) : (
-                            <div className={styles.emptyState}>
-                              <h3 className={styles.emptyStateTitle}>No Past Bookings</h3>
-                              <p className={styles.emptyStateMessage}>
-                                Completed, declined, and cancelled bookings will appear here for your records.
-                              </p>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    </>
-                  )}
-                />
-              </div>
+              <DashboardBookingsSection
+                bookings={bookings}
+                pendingBookings={pendingBookings}
+                confirmedBookings={confirmedBookings}
+                pastBookings={pastBookings}
+                activeBookingTab={activeBookingTab}
+                onBookingTabChange={setActiveBookingTab}
+                renderBookingCard={renderBookingCard}
+              />
             )}
 
             {/* Services Tab */}
@@ -783,6 +727,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
                 onDeleteService={(id) => handleDeleteClick(id, 'service')}
               />
             )}
+
 
 
             {/* Promotions Tab */}
@@ -897,199 +842,22 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
 
             {/* Package Tab */}
             {activeMainTab === 'package' && (
-              <div className={styles.contentCard}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle}>Package & Billing</h3>
-                </div>
-
-                {/* Current Plan Section */}
-                <div className={styles.currentPlanSection}>
-                  <div className={styles.planHeader}>
-                    <div className={styles.planInfo}>
-                      <h4>Current Plan: {planDetails.name}</h4>
-                      <p>{planDetails.description}</p>
-                    </div>
-                    <div className={styles.planPricing}>
-                      <div className={styles.planPrice}>
-                        {planDetails.price}{planCode !== 'FREE' && <span className={styles.planPriceUnit}>/month</span>}
-                      </div>
-                      <div className={`${styles.planStatusBadgeBox} ${planStatus === 'VERIFIED' ? styles.planStatusVerified :
-                        planStatus === 'PROOF_SUBMITTED' ? styles.planStatusProofSubmitted :
-                          styles.planStatusAwaiting
-                        }`}>
-                        {PLAN_PAYMENT_LABELS[planStatus]}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className={styles.planMetricsGrid}>
-                    <div className={styles.metricCard}>
-                      <div className={styles.metricLabel}>Visibility Boost</div>
-                      <div className={styles.metricValue}>{planDetails.visibilityWeight}x</div>
-                    </div>
-                    <div className={styles.metricCard}>
-                      <div className={styles.metricLabel}>Service Listings</div>
-                      <div className={styles.metricValue}>{planDetails.maxListings}</div>
-                    </div>
-                    <div className={styles.metricCard}>
-                      <div className={styles.metricLabel}>Commission Rate</div>
-                      <div className={styles.metricValue}>{planCode === 'FREE' ? '32%' : '0%'}</div>
-                    </div>
-                  </div>
-
-                  {/* Features List */}
-                  <div className={styles.planFeaturesBox}>
-                    <h5 className={styles.featuresHeading}>Plan Features</h5>
-                    <ul className={styles.featuresList}>
-                      {planDetails.features.map((feature, idx) => (
-                        <li key={idx} className={styles.featureItem}>
-                          <span className={styles.featureCheckmark}>✓</span>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Payment Instructions for Non-Verified Plans */}
-                {planStatus !== 'VERIFIED' && planCode !== 'FREE' && (
-                  <div className={styles.paymentInstructions}>
-                    <h4 className={styles.paymentInstructionsHeading}>
-                      Complete Your Payment
-                    </h4>
-                    <div className={styles.paymentDetailsBox}>
-                      <p><strong>Bank:</strong> {BANK_DETAILS.bank}</p>
-                      <p><strong>Account Number:</strong> {BANK_DETAILS.accountNumber}</p>
-                      <p><strong>Account Holder:</strong> {BANK_DETAILS.accountHolder}</p>
-                      <p><strong>Reference:</strong> {planReference}</p>
-                      <p><strong>Amount:</strong> {planDetails.price}</p>
-                    </div>
-                    <p className={styles.paymentNote}>
-                      After payment, WhatsApp proof to <strong>{BANK_DETAILS.whatsapp}</strong>, then click "I sent proof" below.
-                    </p>
-                    <div className={styles.paymentActionsGroup}>
-                      <Button variant="outline" size="sm" onClick={handleCopyReference}>
-                        Copy Reference
-                      </Button>
-                      {planStatus !== 'PROOF_SUBMITTED' && (
-                        <LoadingButton
-                          size="sm"
-                          loading={isPlanUpdating}
-                          loadingText="Submitting..."
-                          onClick={() => handlePlanProofUpdate(true)}
-                        >
-                          I sent proof
-                        </LoadingButton>
-                      )}
-                      {planStatus === 'PROOF_SUBMITTED' && (
-                        <div className={styles.awaitingVerification}>
-                          ⏳ Awaiting admin verification (usually within 24 hours)
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Available Plans Section */}
-                <div>
-                  <h4 className={styles.availablePlansHeading}>
-                    {planCode === 'FREE' ? 'Upgrade Your Plan' : 'Change Plan'}
-                  </h4>
-                  <div className={styles.plansGrid}>
-                    {APP_PLANS.filter(plan => plan.code !== planCode).map(plan => (
-                      <div
-                        key={plan.code}
-                        className={`${styles.planCard} ${selectedPlanForUpgrade === plan.code ? styles.planCardSelected : ''}`}
-                        onClick={() => setSelectedPlanForUpgrade(plan.code)}
-                      >
-                        {plan.popular && (
-                          <div className={styles.popularBadge}>
-                            ⭐ Popular
-                          </div>
-                        )}
-                        <div className={`${styles.planCardContent} ${plan.popular ? styles.planCardContentWithBadge : ''}`}>
-                          <h5 className={styles.planCardName}>{plan.name}</h5>
-                          <div className={styles.planCardPrice}>
-                            {plan.price}{plan.code !== 'FREE' && <span className={styles.planCardPriceUnit}>/mo</span>}
-                          </div>
-                          {plan.originalPrice && (
-                            <div className={styles.planCardOriginalPrice}>
-                              {plan.originalPrice}/mo
-                            </div>
-                          )}
-                          <p className={styles.planCardDescription}>
-                            {plan.description}
-                          </p>
-                          <ul className={styles.planCardFeaturesList}>
-                            {plan.features.slice(0, 3).map((feature, idx) => (
-                              <li key={idx} className={styles.planCardFeatureItem}>
-                                <span className={styles.featureCheckmark}>✓</span>
-                                <span>{feature}</span>
-                              </li>
-                            ))}
-                          </ul>
-                          {selectedPlanForUpgrade === plan.code && (
-                            <div className={styles.selectedPlanBadge}>
-                              Selected ✓
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Confirm Plan Change */}
-                  {selectedPlanForUpgrade && (
-                    <div className={styles.confirmPlanSection}>
-                      <h5 className={styles.confirmPlanHeading}>
-                        Confirm Plan Change to {PLAN_BY_CODE[selectedPlanForUpgrade].name}
-                      </h5>
-
-                      {selectedPlanForUpgrade !== 'FREE' && (
-                        <>
-                          <p className={styles.confirmPlanDescription}>
-                            After confirming, you'll need to make a payment of <strong>{PLAN_BY_CODE[selectedPlanForUpgrade].price}</strong> to activate your new plan.
-                          </p>
-                          <div className={styles.paymentReferenceSection}>
-                            <label className={styles.paymentReferenceLabel}>
-                              Payment Reference (Optional)
-                            </label>
-                            <input
-                              type="text"
-                              value={paymentReference}
-                              onChange={(e) => setPaymentReference(e.target.value)}
-                              placeholder={salon?.name || 'Your salon name'}
-                              className={styles.paymentReferenceInput}
-                            />
-                            <p className={styles.paymentReferenceHint}>
-                              This will be used to track your payment. Leave blank to use your salon name.
-                            </p>
-                          </div>
-                        </>
-                      )}
-
-                      <div className={styles.confirmActionButtons}>
-                        <LoadingButton
-                          loading={isSubmittingPlanChange}
-                          loadingText="Changing..."
-                          onClick={() => handlePlanChange(selectedPlanForUpgrade)}
-                        >
-                          Confirm {selectedPlanForUpgrade === 'FREE' ? 'Downgrade' : 'Upgrade'}
-                        </LoadingButton>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedPlanForUpgrade(null);
-                            setPaymentReference('');
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <DashboardPackageSection
+                planCode={planCode}
+                planDetails={planDetails}
+                planStatus={planStatus}
+                planReference={planReference}
+                selectedPlanForUpgrade={selectedPlanForUpgrade}
+                paymentReference={paymentReference}
+                isPlanUpdating={isPlanUpdating}
+                isSubmittingPlanChange={isSubmittingPlanChange}
+                salonName={salon?.name}
+                onSelectPlan={setSelectedPlanForUpgrade}
+                onPaymentReferenceChange={setPaymentReference}
+                onCopyReference={handleCopyReference}
+                onPlanProofUpdate={handlePlanProofUpdate}
+                onPlanChange={handlePlanChange}
+              />
             )}
           </main>
         </div>
@@ -1099,4 +867,3 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
 }
 
 export default DashboardPageClient;
-

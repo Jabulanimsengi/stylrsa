@@ -380,6 +380,10 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
         openLightbox={openLightbox}
         onToggleFavorite={handleToggleFavorite}
         onBookServices={handleMultiServiceBook}
+        onBookNow={() => {
+          setSelectedService(null);
+          setShowBookingModal(true);
+        }}
       />
     </>
   );
