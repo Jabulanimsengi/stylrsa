@@ -120,6 +120,15 @@ export type DeletedSellerArchiveRow = {
     } | null;
 };
 
+export type DeletedSalonArchiveRow = {
+    id: string;
+    deletedAt?: string | null;
+    reason?: string | null;
+    salon?: {
+        name?: string | null;
+    } | null;
+};
+
 export const PLAN_PAYMENT_LABELS: Record<PlanPaymentStatus, string> = {
     PENDING_SELECTION: 'Package not selected',
     AWAITING_PROOF: 'Awaiting proof of payment',

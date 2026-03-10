@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import styles from '../../AdminPage.module.css';
 import { PendingSalon, ensureArray } from '../../types';
 import { APP_PLANS } from '@/constants/plans';
-import { toast } from 'react-toastify';
+import { notify } from '@/lib/notify';
 
 interface AllSalonsProps {
     salons: PendingSalon[];
@@ -41,6 +41,15 @@ export default function AllSalons({
     const authHeaders: Record<string, string> = backendJwt
         ? { Authorization: `Bearer ${backendJwt}` }
         : {};
+
+    useEffect(() => {
+        try {
+            const raw = localStorage.getItem('admin-saved-views');
+            if (raw) {
+                setSavedViews(JSON.parse(raw));
+            }
+        } catch { }
+    }, []);
 
     const handleSaveView = () => {
         const name = window.prompt('Save current search as view name:');
@@ -90,7 +99,7 @@ export default function AllSalons({
         });
 
         if (r.ok) {
-            toast.success('Visibility updated');
+            notify.success('Visibility updated');
             setEditingSalonId(null);
             // Re-fetch from server
             try {
@@ -106,7 +115,7 @@ export default function AllSalons({
             } catch { }
         } else {
             const errText = await r.text().catch(() => '');
-            toast.error(`Failed to update (${r.status}). ${errText}`);
+            notify.error(`Failed to update (${r.status}). ${errText}`);
         }
     };
 
@@ -119,7 +128,7 @@ export default function AllSalons({
             });
             if (r.ok) {
                 const updated = await r.json();
-                toast.success(`Salon ${updated.isVerified ? 'verified' : 'unverified'}`);
+                notify.success(`Salon ${updated.isVerified ? 'verified' : 'unverified'}`);
                 // Re-fetch
                 try {
                     const allRes = await fetch(`/api/admin/salons/all?ts=${Date.now()}`, {
@@ -134,10 +143,10 @@ export default function AllSalons({
                 } catch { }
             } else {
                 const errText = await r.text().catch(() => '');
-                toast.error(`Failed to update verification (${r.status}). ${errText}`);
+                notify.error(`Failed to update verification (${r.status}). ${errText}`);
             }
         } catch {
-            toast.error('Error updating verification');
+            notify.error('Error updating verification');
         }
     };
 
@@ -153,7 +162,7 @@ export default function AllSalons({
                 <button className={styles.approveButton} onClick={handleSaveView}>Save view</button>
                 {savedViews.length > 0 && (
                     <select onChange={e => handleLoadView(e.target.value)} defaultValue="">
-                        <option value="" disabled>Load view…</option>
+                        <option value="" disabled>Load view...</option>
                         {savedViews.map(v => <option key={v.name} value={v.name}>{v.name}</option>)}
                     </select>
                 )}
@@ -167,10 +176,10 @@ export default function AllSalons({
                         <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.5rem' }}>
                             {editingSalonId !== salon.id ? (
                                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                    <span><strong>Package:</strong> {salon.planCode ?? '—'}</span>
-                                    <span><strong>Visibility:</strong> {salon.visibilityWeight ?? '—'}</span>
-                                    <span><strong>Max listings:</strong> {salon.maxListings ?? '—'}</span>
-                                    <span><strong>Featured until:</strong> {salon.featuredUntil ? new Date(salon.featuredUntil).toLocaleString() : '—'}</span>
+                                    <span><strong>Package:</strong> {salon.planCode ?? '-'}</span>
+                                    <span><strong>Visibility:</strong> {salon.visibilityWeight ?? '-'}</span>
+                                    <span><strong>Max listings:</strong> {salon.maxListings ?? '-'}</span>
+                                    <span><strong>Featured until:</strong> {salon.featuredUntil ? new Date(salon.featuredUntil).toLocaleString() : '-'}</span>
                                     <button className={styles.approveButton} onClick={() => startEdit(salon)}>Edit</button>
                                 </div>
                             ) : (
@@ -202,7 +211,7 @@ export default function AllSalons({
                             onClick={() => toggleVerification(salon)}
                             title={salon.isVerified ? 'Remove verification' : 'Verify service provider'}
                         >
-                            {salon.isVerified ? '✓ Verified' : 'Verify'}
+                            {salon.isVerified ? 'Verified' : 'Verify'}
                         </button>
                         <button
                             className={styles.rejectButton}

@@ -7,9 +7,11 @@ import { useRouter } from 'next/navigation';
 import styles from './AdminPage.module.css';
 import AdminLayout from './AdminLayout';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
+import AllSalons from './components/AllSalons/AllSalons';
 import { DEFAULT_ADMIN_VIEW, getAdminPath, type AdminView } from './admin-config';
 import {
   AdminAuditLog,
+  DeletedSalonArchiveRow,
   DeletedSellerArchiveRow,
   PendingSalon,
   PendingPromotionRow,
@@ -46,6 +48,7 @@ import AdminTop10RequestsSection from './components/AdminTop10RequestsSection';
 import AdminAuditSection from './components/AdminAuditSection';
 import AdminPromotionsSection from './components/AdminPromotionsSection';
 import AdminDeletedSellersSection from './components/AdminDeletedSellersSection';
+import AdminDeletedSalonsSection from './components/AdminDeletedSalonsSection';
 import RejectReasonModal from '@/components/RejectReasonModal/RejectReasonModal';
 
 interface AdminPageClientProps {
@@ -63,7 +66,7 @@ export default function AdminPageClient({
   const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
   const [pendingProducts, setPendingProducts] = useState<PendingProduct[]>([]);
   const [pendingPromotions, setPendingPromotions] = useState<PendingPromotionRow[]>([]);
-  const [deletedSalons, setDeletedSalons] = useState<any[]>([]);
+  const [deletedSalons, setDeletedSalons] = useState<DeletedSalonArchiveRow[]>([]);
   const [deletedSellers, setDeletedSellers] = useState<DeletedSellerArchiveRow[]>([]);
   const [allSellers, setAllSellers] = useState<SellerRow[]>([]);
   const [auditLogs] = useState<AdminAuditLog[]>([]);
@@ -74,12 +77,6 @@ export default function AdminPageClient({
   const [top10Requests, setTop10Requests] = useState<Top10RequestRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  // Inline edit state for salon visibility features
-  const [editingSalonId, setEditingSalonId] = useState<string | null>(null);
-  const [draftPlan, setDraftPlan] = useState<string>('STARTER');
-  const [draftWeight, setDraftWeight] = useState<string>('');
-  const [draftMax, setDraftMax] = useState<string>('');
-  const [draftFeatured, setDraftFeatured] = useState<string>('');
   // Delete confirmation modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
@@ -87,18 +84,6 @@ export default function AdminPageClient({
   const [deletingSeller, setDeletingSeller] = useState<SellerDeletionTarget | null>(null);
   const [deleteMode, setDeleteMode] = useState<'salon' | 'seller'>('salon');
   const [isDeleting, setIsDeleting] = useState(false);
-  // Simple filters/saved views for All Salons
-  const [search, setSearch] = useState('');
-  const [savedViews, setSavedViews] = useState<{ name: string; query: string }[]>([]);
-  const filteredAllSalons = useMemo(() => allSalons.filter(s => {
-    const q = search.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      s.name.toLowerCase().includes(q) ||
-      s.owner.email.toLowerCase().includes(q) ||
-      (s.planCode ?? '').toLowerCase().includes(q)
-    );
-  }), [allSalons, search]);
   // Bulk selection state
   const [selSalons, setSelSalons] = useState<Set<string>>(new Set());
   const [selServices, setSelServices] = useState<Set<string>>(new Set());
@@ -523,9 +508,9 @@ export default function AdminPageClient({
         setPendingReviews(ensureArray<PendingReview>(await reviewsRes.json()));
         setPendingProducts(ensureArray<PendingProduct>(await productsRes.json()));
         setAllSellers(ensureArray<SellerRow>(await allSellersRes.json()));
-        setDeletedSalons(ensureArray<any>(await deletedSalonsRes.json()));
-        setDeletedSellers(ensureArray<any>(await deletedSellersRes.json()));
-        setPendingPromotions(ensureArray<any>(await promotionsRes.json()));
+        setDeletedSalons(ensureArray<DeletedSalonArchiveRow>(await deletedSalonsRes.json()));
+        setDeletedSellers(ensureArray<DeletedSellerArchiveRow>(await deletedSellersRes.json()));
+        setPendingPromotions(ensureArray<PendingPromotionRow>(await promotionsRes.json()));
 
       } catch (error) {
         logger.error("Failed to fetch admin data:", error);
@@ -536,9 +521,6 @@ export default function AdminPageClient({
     };
 
     fetchData();
-    // load saved views
-    try { const raw = localStorage.getItem('admin-saved-views'); if (raw) setSavedViews(JSON.parse(raw)); } catch { }
-
     // Realtime updates - dynamically import socket.io to reduce bundle size
     let socket: Socket | null = null;
     const initSocket = async () => {
@@ -1125,158 +1107,15 @@ export default function AdminPageClient({
           )}
 
           {view === 'all-salons' && (
-            <>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name/email/plan" style={{ padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8, minWidth: 260 }} />
-                <button className={styles.approveButton} onClick={() => {
-                  const name = window.prompt('Save current search as view name:');
-                  if (!name) return;
-                  const next = [...savedViews, { name, query: search }];
-                  setSavedViews(next);
-                  try { localStorage.setItem('admin-saved-views', JSON.stringify(next)); } catch { }
-                }}>Save view</button>
-                {savedViews.length > 0 && (
-                  <select onChange={e => setSearch(savedViews.find(v => v.name === e.target.value)?.query ?? '')} defaultValue="">
-                    <option value="" disabled>Load view…</option>
-                    {savedViews.map(v => <option key={v.name} value={v.name}>{v.name}</option>)}
-                  </select>
-                )}
-              </div>
-              {filteredAllSalons.length > 0 ? filteredAllSalons.map(salon => (
-                <div key={salon.id} className={styles.listItem}>
-                  <div className={styles.info}>
-                    <h4>{salon.name}</h4>
-                    <p>Owner: {salon.owner.firstName} {salon.owner.lastName} ({salon.owner.email}) | Status: {salon.approvalStatus}</p>
-                    <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.5rem' }}>
-                      {editingSalonId !== salon.id ? (
-                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                          <span><strong>Package:</strong> {salon.planCode ?? '—'}</span>
-                          <span><strong>Visibility:</strong> {salon.visibilityWeight ?? '—'}</span>
-                          <span><strong>Max listings:</strong> {salon.maxListings ?? '—'}</span>
-                          <span><strong>Featured until:</strong> {salon.featuredUntil ? new Date(salon.featuredUntil).toLocaleString() : '—'}</span>
-                          <button
-                            className={styles.approveButton}
-                            onClick={() => {
-                              setEditingSalonId(salon.id);
-                              setDraftPlan((salon.planCode ?? 'STARTER').toUpperCase());
-                              setDraftWeight(String(salon.visibilityWeight ?? ''));
-                              setDraftMax(String(salon.maxListings ?? ''));
-                              setDraftFeatured(salon.featuredUntil ? new Date(salon.featuredUntil).toISOString().slice(0, 16) : '');
-                            }}
-                          >Edit</button>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                          <label>Package</label>
-                          <select value={draftPlan} onChange={e => setDraftPlan(e.target.value)} style={{ padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }}>
-                            {APP_PLANS.map((plan) => (
-                              <option key={plan.code} value={plan.code}>
-                                {plan.name} ({plan.visibilityWeight}x visibility)
-                              </option>
-                            ))}
-                          </select>
-                          <label>Weight</label>
-                          <input value={draftWeight} onChange={e => setDraftWeight(e.target.value)} type="number" min={1} placeholder="visibility" style={{ width: 90, padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
-                          <label>Max listings</label>
-                          <input value={draftMax} onChange={e => setDraftMax(e.target.value)} type="number" min={1} placeholder="max" style={{ width: 90, padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
-                          <label>Featured until</label>
-                          <input value={draftFeatured} onChange={e => setDraftFeatured(e.target.value)} type="datetime-local" style={{ padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
-                          <button
-                            className={styles.approveButton}
-                            onClick={async () => {
-                              // Start with explicit new plans, but also allow whatever is in APP_PLANS dynamic list
-                              const allowedPlans = APP_PLANS.map(p => p.code);
-                              const normalizedPlan = (draftPlan ?? '').toUpperCase();
-                              const visibilityWeight = Number(draftWeight);
-                              const maxListings = Number(draftMax);
-                              const featuredUntil = draftFeatured;
-                              const body: Record<string, unknown> = {};
-                              if (allowedPlans.includes(normalizedPlan as typeof allowedPlans[number])) {
-                                body.planCode = normalizedPlan;
-                              }
-                              if (!Number.isNaN(visibilityWeight) && draftWeight !== '') body.visibilityWeight = visibilityWeight;
-                              if (!Number.isNaN(maxListings) && draftMax !== '') body.maxListings = maxListings;
-                              // Always send featuredUntil to allow clearing on server (null when empty)
-                              body.featuredUntil = featuredUntil ? new Date(featuredUntil).toISOString() : null;
-                              const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
-                              const r = await fetch(`/api/admin/salons/${salon.id}/plan`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...authHeaders }, credentials: 'include', body: JSON.stringify(body) });
-                              if (r.ok) {
-                                const updated = await r.json();
-                                notify.success('Visibility updated');
-                                // Trust server response to avoid client drift
-                                setAllSalons(prev => prev.map(s => s.id === salon.id ? {
-                                  ...s,
-                                  planCode: (updated?.planCode ?? body.planCode ?? s.planCode) as typeof s.planCode,
-                                  visibilityWeight: updated?.visibilityWeight ?? (body.visibilityWeight as number | undefined) ?? s.visibilityWeight,
-                                  maxListings: updated?.maxListings ?? (body.maxListings as number | undefined) ?? s.maxListings,
-                                  featuredUntil: updated?.featuredUntil ?? (body.featuredUntil as string | null) ?? null,
-                                } : s));
-                                setEditingSalonId(null);
-                                // Re-fetch from server to ensure persistence and avoid stale UI
-                                try {
-                                  const allRes = await fetch(`/api/admin/salons/all?ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' as any, headers: authHeaders });
-                                  if (allRes.ok) {
-                                    const fresh = ensureArray<PendingSalon>(await allRes.json());
-                                    setAllSalons(fresh);
-                                  }
-                                } catch { }
-                              } else {
-                                const errText = await r.text().catch(() => '');
-                                notify.error(`Failed to update (${r.status}). ${errText}`);
-                              }
-                            }}
-                          >Save</button>
-                          <button className={styles.rejectButton} onClick={() => setEditingSalonId(null)}>Cancel</button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className={styles.actions}>
-                    <Link href={`/dashboard?ownerId=${salon.owner.id}`} className="btn btn-secondary">View Dashboard</Link>
-                    <button
-                      className={salon.isVerified ? styles.approveButton : styles.rejectButton}
-                      onClick={async () => {
-                        const authHeaders: Record<string, string> = session?.backendJwt ? { Authorization: `Bearer ${session.backendJwt}` } : {};
-                        try {
-                          const r = await fetch(`/api/admin/salons/${salon.id}/verification`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json', ...authHeaders },
-                            credentials: 'include',
-                          });
-                          if (r.ok) {
-                            const updated = await r.json();
-                            notify.success(`Salon ${updated.isVerified ? 'verified' : 'unverified'}`);
-                            setAllSalons(prev => prev.map(s => s.id === salon.id ? { ...s, isVerified: updated.isVerified } : s));
-                            // Re-fetch to ensure consistency
-                            try {
-                              const allRes = await fetch(`/api/admin/salons/all?ts=${Date.now()}`, { credentials: 'include', cache: 'no-store' as any, headers: authHeaders });
-                              if (allRes.ok) {
-                                const fresh = ensureArray<PendingSalon>(await allRes.json());
-                                setAllSalons(fresh);
-                              }
-                            } catch { }
-                          } else {
-                            const errText = await r.text().catch(() => '');
-                            notify.error(`Failed to update verification (${r.status}). ${errText}`);
-                          }
-                        } catch (error) {
-                          notify.error('Error updating verification');
-                        }
-                      }}
-                      title={salon.isVerified ? 'Remove verification' : 'Verify service provider'}
-                    >
-                      {salon.isVerified ? '✓ Verified' : 'Verify'}
-                    </button>
-                    <button
-                      className={styles.rejectButton}
-                      onClick={() => openDeleteSalonModal(salon)}
-                      title="Delete provider profile"
-                    >Delete Profile</button>
-                  </div>
-                </div>
-              )) : <p>No salons found.</p>}
-            </>
+            <AllSalons
+              salons={allSalons}
+              onSalonsUpdate={setAllSalons}
+              onOpenDeleteModal={openDeleteSalonModal}
+              backendJwt={session?.backendJwt}
+            />
           )}
+
+
 
           {view === 'featured-salons' && (
             <>
@@ -1359,17 +1198,10 @@ export default function AdminPageClient({
           )}
 
           {view === 'deleted-salons' && (
-            deletedSalons.length > 0 ? deletedSalons.map((row: any) => (
-              <div key={row.id} className={styles.listItem}>
-                <div className={styles.info}>
-                  <h4>{row.salon?.name ?? 'Unknown name'}</h4>
-                  <p>Deleted at: {row.deletedAt ? new Date(row.deletedAt).toLocaleString() : ''} {row.reason ? `| Reason: ${row.reason}` : ''}</p>
-                </div>
-                <div className={styles.actions}>
-                  <button className={styles.approveButton} onClick={() => restoreDeletedSalon(row.id)}>Restore</button>
-                </div>
-              </div>
-            )) : <p>No deleted profiles.</p>
+            <AdminDeletedSalonsSection
+              deletedSalons={deletedSalons}
+              onRestoreDeletedSalon={restoreDeletedSalon}
+            />
           )}
           {view === 'all-sellers' && (
             <>
