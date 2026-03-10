@@ -68,6 +68,7 @@ export interface Salon {
   city: string;
   town: string;
   address?: string;
+  postalCode?: string | null;
   latitude?: number;
   longitude?: number;
   contactEmail?: string | null;

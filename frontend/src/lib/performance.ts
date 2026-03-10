@@ -136,7 +136,7 @@ export function trackPageLoad(): void {
     }
 
     // Get resource timing
-    const resources = performance.getEntriesByType('resource');
+    const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
     const imageResources = resources.filter((r) => r.initiatorType === 'img');
     const scriptResources = resources.filter((r) => r.initiatorType === 'script');
 

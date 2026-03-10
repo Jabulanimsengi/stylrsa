@@ -79,7 +79,7 @@ export default function JobPostingForm({
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const data = await apiJson(`/api/jobs/salon/${salonId}?includeInactive=true`);
+        const data = await apiJson<JobPosting[]>(`/api/jobs/salon/${salonId}?includeInactive=true`);
         setJobs(data);
       } catch (error) {
         console.error('Failed to fetch jobs:', error);
@@ -114,7 +114,7 @@ export default function JobPostingForm({
         isRemote: formData.isRemote || false,
       };
 
-      const newJob = await apiJson(`/api/jobs/salon/${salonId}`, {
+      const newJob = await apiJson<JobPosting>(`/api/jobs/salon/${salonId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -145,7 +145,7 @@ export default function JobPostingForm({
 
   const toggleJobStatus = async (job: JobPosting) => {
     try {
-      const updated = await apiJson(`/api/jobs/${job.id}`, {
+      const updated = await apiJson<JobPosting>(`/api/jobs/${job.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !job.isActive }),

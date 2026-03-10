@@ -6,7 +6,7 @@ This folder contains organized documentation for the Stylr SA project.
 
 ```
 /docs
-├── /deployment      - Deployment guides, Railway, Vercel, DNS setup
+├── /deployment      - Deployment guides, Hetzner, Docker, DNS setup
 ├── /features        - Feature implementation documentation
 ├── /fixes           - Bug fixes and troubleshooting guides
 ├── /seo             - SEO implementation and optimization
@@ -22,8 +22,7 @@ This folder contains organized documentation for the Stylr SA project.
 - [Development Guide](./guides/START_HERE.md)
 
 ### Deployment
-- [Railway Setup](./deployment/RAILWAY_SETUP_GUIDE.md)
-- [Vercel Configuration](./deployment/VERCEL_CONFIGURATION_INSTRUCTIONS.md)
+- [Hetzner Deployment](../DEPLOY.md)
 - [DNS Setup](./deployment/DNS_SETUP_HOSTAFRICA.md)
 
 ### SEO

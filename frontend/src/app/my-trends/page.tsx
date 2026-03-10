@@ -41,7 +41,7 @@ export default function MyTrendsPage() {
       } else {
         toast.error('Failed to load liked trends');
       }
-    } catch (error) {
+    } catch {
       toast.error('Error loading liked trends');
     } finally {
       setIsLoading(false);
@@ -76,7 +76,7 @@ export default function MyTrendsPage() {
 
       {likedTrends.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>❤️</div>
+          <div className={styles.emptyIcon}>Love</div>
           <h2>No Liked Trends Yet</h2>
           <p>Start exploring trends and save your favorites!</p>
           <button onClick={() => router.push('/trends')} className={styles.browseButton}>
@@ -93,4 +93,5 @@ export default function MyTrendsPage() {
     </div>
   );
 }
+
 

@@ -4,19 +4,18 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import PageNav from '@/components/PageNav';
 import PromotionCard, { Promotion, PromotionCardSkeleton } from '@/components/PromotionCard';
-import LoadingSpinner from '@/components/LoadingSpinner';
 import ImageLightbox from '@/components/ImageLightbox';
 import BookingModal from '@/components/BookingModal';
 import { Service, Salon } from '@/types';
 import styles from './promotions.module.css';
-import { toFriendlyMessage } from '@/lib/errors';
 import EmptyState from '@/components/EmptyState/EmptyState';
+
+type PromotionServiceSummary = NonNullable<Promotion['service']>;
 
 export default function PromotionsPage() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'services' | 'products'>('all');
-  const [lastFetch, setLastFetch] = useState<Date>(new Date());
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -48,7 +47,6 @@ export default function PromotionsPage() {
 
       const data = await response.json();
       setPromotions(Array.isArray(data) ? data : []);
-      setLastFetch(new Date());
     } catch (error) {
       // Only show error toast for network/server errors
       console.error('Error fetching promotions:', error);
@@ -70,9 +68,28 @@ export default function PromotionsPage() {
 
 
 
-  const handleBookNow = (salonData: any, service: any) => {
+  const handleBookNow = (salonData: Salon, service: PromotionServiceSummary) => {
     setSelectedSalon(salonData);
-    setSelectedService(service);
+    setSelectedService({
+      id: service.id,
+      title: service.title,
+      name: service.title,
+      description: '',
+      price: 0,
+      duration: 60,
+      salonId: service.salon.id,
+      createdAt: '',
+      updatedAt: '',
+      images: service.images,
+      salon: {
+        id: service.salon.id,
+        name: service.salon.name,
+        ownerId: salonData.ownerId,
+        city: service.salon.city,
+        province: service.salon.province,
+        slug: service.salon.slug,
+      },
+    } as Service);
   };
 
   const handleBookingClose = () => {
@@ -191,6 +208,7 @@ export default function PromotionsPage() {
         <BookingModal
           salon={selectedSalon}
           service={selectedService}
+          services={[selectedService]}
           onClose={handleBookingClose}
           onBookingSuccess={handleBookingSuccess}
         />

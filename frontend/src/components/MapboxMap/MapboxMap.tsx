@@ -6,7 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './MapboxMap.module.css';
 
 // Set the Mapbox access token
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 'pk.eyJ1IjoidHNha2FuaW1zZW5naSIsImEiOiJjbWo5eDBxOWswMTBwM2ZzOXRkNTNzNm5yIn0.sGUZfX9eJHmhoFIJFn_0kw';
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 
 interface MapboxMapProps {
     latitude: number;

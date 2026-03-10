@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import styles from '../info-page.module.css';
 import PageNav from '@/components/PageNav';
 
@@ -111,10 +112,10 @@ export default function TestimonialsPage() {
         
         <div className={styles.infoBlock} style={{ background: '#e3f2fd', padding: '1.5rem', borderRadius: '8px' }}>
           <p className={styles.paragraph}>
-            <strong>For Clients:</strong> <a href="/register">Sign up</a> and discover amazing local talent
+            <strong>For Clients:</strong> <Link href="/register">Sign up</Link> and discover amazing local talent
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
-            <strong>For Professionals:</strong> <a href="/create-salon">Join as a Partner</a> and grow your business
+            <strong>For Professionals:</strong> <Link href="/create-salon">Join as a Partner</Link> and grow your business
           </p>
         </div>
 

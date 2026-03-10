@@ -2,18 +2,12 @@
   "name": "thesalonhub-monorepo",
   "private": true,
   "version": "0.0.0",
-  "description": "Monorepo root to delegate Vercel builds to the frontend app.",
+  "description": "Repository root shim for repo-level scripts. Frontend owns app installs and builds.",
   "scripts": {
     "postinstall": "node scripts/install-frontend.cjs",
     "build": "npm run build --prefix frontend",
-    "build:cloudflare": "npm run build:cloudflare --prefix frontend",
-    "postbuild": "node scripts/sync-next-output.cjs",
     "start": "npm run start --prefix frontend",
     "dev": "npm run dev --prefix frontend",
     "lint": "npm run lint --prefix frontend"
-  },
-  "dependencies": {
-    "@radix-ui/react-dialog": "^1.1.15",
-    "next": "15.5.7"
   }
 }

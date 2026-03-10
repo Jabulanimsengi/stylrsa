@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import HomePageClient from './HomePageClient';
 
+// Cache the homepage and revalidate in the background to keep TTFB stable.
+export const revalidate = 300;
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 
 // Generate metadata for homepage
@@ -37,7 +40,7 @@ export const metadata: Metadata = {
 
 // Fetch initial data server-side
 async function getInitialData() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_ORIGIN || 'http://127.0.0.1:5000';
+  const apiUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_ORIGIN || 'http://127.0.0.1:5000';
   const isBuildPhase = process.env.IS_BUILD_PHASE === 'true' || process.env.NEXT_PHASE === 'phase-production-build';
 
   // Only skip fetching during build time when API is localhost
@@ -59,15 +62,15 @@ async function getInitialData() {
         next: { revalidate: 300 },
       }),
       // Fetch all salons for Featured Salons section - 30 minute revalidation
-      fetch(`${apiUrl}/api/salons/approved`, {
+      fetch(`${apiUrl}/api/salons/approved?limit=12`, {
         next: { revalidate: 1800 },
       }),
       // Fetch available now salons - 5 minute revalidation (highly dynamic)
-      fetch(`${apiUrl}/api/salons/approved?openNow=true`, {
+      fetch(`${apiUrl}/api/salons/approved?openNow=true&limit=12`, {
         next: { revalidate: 300 },
       }),
       // Fetch mobile salons - 1 hour revalidation
-      fetch(`${apiUrl}/api/salons/approved?offersMobile=true`, {
+      fetch(`${apiUrl}/api/salons/approved?offersMobile=true&limit=12`, {
         next: { revalidate: 3600 },
       }),
     ]);

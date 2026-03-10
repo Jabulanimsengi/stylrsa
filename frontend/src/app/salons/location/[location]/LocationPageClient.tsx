@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,7 +8,7 @@ import { transformCloudinary } from '@/utils/cloudinary';
 import { Salon } from '@/types';
 import styles from '../../SalonsPage.module.css';
 import { FaHeart } from 'react-icons/fa';
-import FilterBar, { type FilterValues } from '@/components/FilterBar/FilterBar';
+import { type FilterValues } from '@/components/FilterBar/FilterBar';
 import { SkeletonGroup, SkeletonCard } from '@/components/Skeleton/Skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
@@ -17,8 +17,6 @@ import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { getImageWithFallback } from '@/lib/placeholders';
 import PageNav from '@/components/PageNav';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
-import MobileSearch from '@/components/MobileSearch/MobileSearch';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import { PROVINCES, Province, City } from '@/lib/locationData';
 import { getSalonUrl } from '@/utils/salonUrl';
@@ -37,7 +35,6 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
   const [salons, setSalons] = useState<SalonWithFavorite[]>(initialSalons);
   const [isLoading, setIsLoading] = useState(initialSalons.length === 0);
   const [hasFiltered, setHasFiltered] = useState(false);
-  const isMobile = useMediaQuery('(max-width: 768px)');
   const { authStatus } = useAuth();
   const { openModal } = useAuthModal();
 
@@ -195,9 +192,5 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
 }
 
 export default function LocationPageClient(props: LocationPageClientProps) {
-  return (
-    <Suspense fallback={<SkeletonGroup count={8} className={styles.salonGrid}>{() => <SkeletonCard hasImage lines={3} />}</SkeletonGroup>}>
-      <SalonsLocationContent {...props} />
-    </Suspense>
-  );
+  return <SalonsLocationContent {...props} />;
 }

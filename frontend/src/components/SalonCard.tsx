@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useEffect, memo } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { FaHeart, FaStar } from 'react-icons/fa';
 import { transformCloudinary } from '@/utils/cloudinary';
@@ -14,9 +13,7 @@ import { getSalonUrl } from '@/utils/salonUrl';
 import styles from './SalonCard.module.css';
 import VerificationBadge from './VerificationBadge/VerificationBadge';
 import { useSalonImpression } from '@/hooks/useSalonImpression';
-
-const BLUR_DATA_URL =
-  'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDAwUBAAAAAAAAAAAAAQIDAAQRBRIhBhMiMUFR/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAZEQACAwEAAAAAAAAAAAAAAAABAgADESH/2gAMAwEAAhEDEQA/AKOm6hqF1qMUV1cSSwq2WRmJBx+VYpSlKqxYAOxP/9k=';
+import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
 
@@ -80,7 +77,7 @@ function SalonCard({
     const images: string[] = [];
     if (salon.backgroundImage) images.push(salon.backgroundImage);
     if (salon.gallery && Array.isArray(salon.gallery)) {
-      images.push(...salon.gallery.map((img: any) => img.imageUrl || img));
+      images.push(...salon.gallery.map((img) => img.imageUrl));
     }
     setLightboxImages(images);
     setIsLightboxOpen(true);
@@ -94,10 +91,10 @@ function SalonCard({
 
   const categoryTags = [...new Set(
     (salon.services ?? []).map(s => {
-      if (s.category && typeof s.category === 'object' && 'name' in s.category) {
-        return (s.category as any).name;
+      if (typeof s.category === 'string') {
+        return s.category;
       }
-      return s.category || s.title;
+      return s.title;
     }).filter(Boolean) as string[]
   )].slice(0, 3);
 
@@ -109,7 +106,7 @@ function SalonCard({
   return (
     <>
       <Link
-        ref={compact ? (impressionRef as any) : null}
+        ref={compact ? impressionRef : undefined}
         href={getSalonUrl(salon)}
         className={`${styles.salonCard} ${compact ? styles.compact : ''} ${isCardNavigating ? styles.navigating : ''}`}
         onClick={() => { setIsCardNavigating(true); setIsNavigating(true); }}
@@ -151,7 +148,7 @@ function SalonCard({
             {salon.isAvailableNow ? 'Open now' : 'Closed'}
           </div>
 
-          <Image
+          <OptimizedImage
             src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), {
               width: 600,
               quality: 'auto',
@@ -162,8 +159,7 @@ function SalonCard({
             className={styles.cardImage}
             fill
             sizes="(max-width: 479px) 45vw, (max-width: 767px) 40vw, (max-width: 1023px) 33vw, 25vw"
-            placeholder="blur"
-            blurDataURL={BLUR_DATA_URL}
+            seoContext={{ salonName: salon.name, city: salon.city }}
           />
         </div>
 

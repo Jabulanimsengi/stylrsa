@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import styles from '../info-page.module.css';
 import PageNav from '@/components/PageNav';
 
@@ -123,7 +124,7 @@ export default function CommunityPage() {
         
         <div className={styles.infoBlock} style={{ background: '#e3f2fd', padding: '1.5rem', borderRadius: '8px' }}>
           <ol className={styles.list}>
-            <li><strong>Create your profile:</strong> <a href="/register">Sign up</a> on Stylr SA</li>
+            <li><strong>Create your profile:</strong> <Link href="/register">Sign up</Link> on Stylr SA</li>
             <li><strong>Join our social channels:</strong> Follow @stylrsa on Instagram and Facebook</li>
             <li><strong>Introduce yourself:</strong> Share your story and what you do</li>
             <li><strong>Engage:</strong> Comment, share, and support fellow members</li>

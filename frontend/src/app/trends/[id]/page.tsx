@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
-import type { Metadata } from 'next';
+import React, { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
-import { FaHeart, FaEye, FaArrowLeft, FaMapMarkerAlt, FaShare, FaStar, FaPhone, FaWhatsapp } from 'react-icons/fa';
+import { FaHeart, FaEye, FaMapMarkerAlt, FaShare, FaStar, FaPhone, FaWhatsapp } from 'react-icons/fa';
 import { Trend, Salon } from '@/types';
 import { transformCloudinary } from '@/utils/cloudinary';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,6 +16,13 @@ import PageNav from '@/components/PageNav';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { getImageWithFallback } from '@/lib/placeholders';
 import { getSalonUrl } from '@/utils/salonUrl';
+import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
+
+type RecommendedSalon = Salon & {
+  distance?: number;
+  isPremium?: boolean;
+  services?: Array<{ id: string; title?: string; price?: number }>;
+};
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -33,24 +38,14 @@ export default function TrendDetailPage({ params }: PageProps) {
   const [isLiking, setIsLiking] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [recommendedSalons, setRecommendedSalons] = useState<any[]>([]);
+  const [recommendedSalons, setRecommendedSalons] = useState<RecommendedSalon[]>([]);
   const [salonsLoading, setSalonsLoading] = useState(false);
   const [showSalons, setShowSalons] = useState(false);
   const { authStatus } = useAuth();
   const { openModal } = useAuthModal();
   const { coordinates } = useGeolocation(false);
 
-  useEffect(() => {
-    fetchTrend();
-  }, [resolvedParams.id]);
-
-  useEffect(() => {
-    if (trend && showSalons) {
-      fetchRecommendedSalons();
-    }
-  }, [trend, showSalons, coordinates]);
-
-  const fetchTrend = async () => {
+  const fetchTrend = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch(`/api/trends/${resolvedParams.id}`, {
@@ -66,13 +61,13 @@ export default function TrendDetailPage({ params }: PageProps) {
         toast.error('Trend not found');
         router.push('/');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to load trend');
       router.push('/');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [resolvedParams.id, router]);
 
   const handleLike = async () => {
     if (authStatus !== 'authenticated') {
@@ -104,7 +99,7 @@ export default function TrendDetailPage({ params }: PageProps) {
       if (!res.ok) {
         throw new Error('Failed to update like status');
       }
-    } catch (error) {
+    } catch {
       // Revert on error
       setIsLiked(previousState);
       setLikeCount(previousCount);
@@ -114,7 +109,7 @@ export default function TrendDetailPage({ params }: PageProps) {
     }
   };
 
-  const fetchRecommendedSalons = async () => {
+  const fetchRecommendedSalons = useCallback(async () => {
     if (!trend) return;
     
     setSalonsLoading(true);
@@ -146,7 +141,17 @@ export default function TrendDetailPage({ params }: PageProps) {
     } finally {
       setSalonsLoading(false);
     }
-  };
+  }, [trend, resolvedParams.id, coordinates]);
+
+  useEffect(() => {
+    void fetchTrend();
+  }, [fetchTrend]);
+
+  useEffect(() => {
+    if (trend && showSalons) {
+      void fetchRecommendedSalons();
+    }
+  }, [trend, showSalons, fetchRecommendedSalons]);
 
   const handleFindSalons = async () => {
     // Track click-through
@@ -155,7 +160,7 @@ export default function TrendDetailPage({ params }: PageProps) {
         method: 'POST',
         credentials: 'include',
       });
-    } catch (error) {
+    } catch {
       console.error('Failed to track click');
     }
 
@@ -181,7 +186,7 @@ export default function TrendDetailPage({ params }: PageProps) {
         method: 'POST',
         credentials: 'include',
       });
-    } catch (error) {
+    } catch {
       console.error('Failed to track salon click');
     }
   };
@@ -207,7 +212,7 @@ export default function TrendDetailPage({ params }: PageProps) {
     try {
       await navigator.clipboard.writeText(url);
       toast.success('Link copied to clipboard!');
-    } catch (error) {
+    } catch {
       toast.error('Failed to copy link');
     }
   };
@@ -220,7 +225,7 @@ export default function TrendDetailPage({ params }: PageProps) {
   if (isLoading) {
     return (
       <div className={styles.loadingContainer}>
-        <LoadingSpinner size="large" color="primary" />
+        <LoadingSpinner size="lg" color="primary" />
       </div>
     );
   }
@@ -239,7 +244,7 @@ export default function TrendDetailPage({ params }: PageProps) {
       <div className={styles.content}>
         <div className={styles.imageSection}>
           <div className={styles.mainImage}>
-            <Image
+            <OptimizedImage
               src={transformCloudinary(trend.images[0], {
                 width: 1000,
                 quality: 'auto',
@@ -264,7 +269,7 @@ export default function TrendDetailPage({ params }: PageProps) {
                   className={styles.thumbnail}
                   onClick={() => openLightbox(index + 1)}
                 >
-                  <Image
+                  <OptimizedImage
                     src={transformCloudinary(img, {
                       width: 300,
                       height: 300,
@@ -346,7 +351,7 @@ export default function TrendDetailPage({ params }: PageProps) {
 
           {salonsLoading ? (
             <div className={styles.salonsLoading}>
-              <LoadingSpinner size="medium" color="primary" inline />
+              <LoadingSpinner size="md" color="primary" inline />
             </div>
           ) : recommendedSalons.length === 0 ? (
             <div className={styles.noSalons}>
@@ -364,7 +369,7 @@ export default function TrendDetailPage({ params }: PageProps) {
             </div>
           ) : (
             <div className={styles.salonsGrid}>
-              {recommendedSalons.map((salon: any) => (
+              {recommendedSalons.map((salon) => (
                 <Link
                   key={salon.id}
                   href={getSalonUrl(salon)}
@@ -372,7 +377,7 @@ export default function TrendDetailPage({ params }: PageProps) {
                   onClick={() => handleSalonClick(salon.id)}
                 >
                   <div className={styles.salonImage}>
-                    <Image
+                    <OptimizedImage
                       src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), {
                         width: 400,
                         height: 300,
@@ -399,18 +404,21 @@ export default function TrendDetailPage({ params }: PageProps) {
                       )}
                     </p>
 
-                    {salon.avgRating > 0 && (
+                    {(salon.avgRating ?? 0) > 0 && (
                       <div className={styles.rating}>
-                        <FaStar /> {salon.avgRating.toFixed(1)} ({salon.reviewCount} reviews)
+                        <FaStar /> {(() => {
+                          const rating = salon.avgRating ?? 0;
+                          return rating.toFixed(1);
+                        })()} ({salon.reviewCount} reviews)
                       </div>
                     )}
 
                     {salon.services && salon.services.length > 0 && (
                       <div className={styles.services}>
                         <p className={styles.servicesLabel}>Related Services:</p>
-                        {salon.services.slice(0, 2).map((service: any) => (
+                        {salon.services.slice(0, 2).map((service) => (
                           <span key={service.id} className={styles.serviceTag}>
-                            {service.title} - R{service.price}
+                            {service.title || 'Service'} - R{service.price ?? 0}
                           </span>
                         ))}
                         {salon.services.length > 2 && (

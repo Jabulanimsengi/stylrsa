@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import styles from '../info-page.module.css';
 import PageNav from '@/components/PageNav';
 
@@ -175,7 +176,7 @@ export default function AccessibilityPage() {
           <h3 className={styles.blockTitle}>Report Accessibility Issues</h3>
           <ul className={styles.list}>
             <li><strong>Email:</strong> accessibility@stylrsa.co.za</li>
-            <li><strong>Contact Form:</strong> <a href="/contact">Contact Page</a></li>
+            <li><strong>Contact Form:</strong> <Link href="/contact">Contact Page</Link></li>
             <li><strong>Phone:</strong> Available through the contact page</li>
           </ul>
           <p className={styles.paragraph}>
@@ -208,7 +209,7 @@ export default function AccessibilityPage() {
           If you are not satisfied with our response to your accessibility concern, you may escalate your complaint:
         </p>
         <ol className={styles.list}>
-          <li>Contact our Customer Support team at <a href="/support">Support Center</a></li>
+          <li>Contact our Customer Support team at <Link href="/support">Support Center</Link></li>
           <li>If unresolved, contact our Accessibility Coordinator at accessibility@stylrsa.co.za</li>
           <li>For unresolved issues, you may contact the South African Human Rights Commission</li>
         </ol>

@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import styles from '../info-page.module.css';
 import PageNav from '@/components/PageNav';
 
@@ -27,7 +28,7 @@ export default function CookiePolicyPage() {
 
         <h2 className={styles.sectionTitle}>1. Introduction</h2>
         <p className={styles.paragraph}>
-          This Cookie Policy explains how Stylr SA ("we", "us", or "our") uses cookies and similar tracking technologies on our website at stylrsa.co.za ("Platform"). This policy should be read together with our <a href="/privacy">Privacy Policy</a>.
+          This Cookie Policy explains how Stylr SA ("we", "us", or "our") uses cookies and similar tracking technologies on our website at stylrsa.co.za ("Platform"). This policy should be read together with our <Link href="/privacy">Privacy Policy</Link>.
         </p>
         <p className={styles.paragraph}>
           By using our Platform, you consent to the use of cookies as described in this policy. You can manage your cookie preferences at any time.
@@ -202,7 +203,7 @@ export default function CookiePolicyPage() {
         </p>
         <ul className={styles.list}>
           <li><strong>Email:</strong> privacy@stylrsa.co.za</li>
-          <li><strong>Website:</strong> <a href="/contact">Contact Page</a></li>
+          <li><strong>Website:</strong> <Link href="/contact">Contact Page</Link></li>
           <li><strong>Address:</strong> Stylr SA, South Africa</li>
         </ul>
 

@@ -1,5 +1,5 @@
 // Mapbox configuration and utilities
-export const MAPBOX_ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 'pk.eyJ1IjoidHNha2FuaW1zZW5naSIsImEiOiJjbWo5eDBxOWswMTBwM2ZzOXRkNTNzNm5yIn0.sGUZfX9eJHmhoFIJFn_0kw';
+export const MAPBOX_ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 
 // Mapbox Geocoding API endpoints
 const MAPBOX_GEOCODING_URL = 'https://api.mapbox.com/geocoding/v5/mapbox.places';

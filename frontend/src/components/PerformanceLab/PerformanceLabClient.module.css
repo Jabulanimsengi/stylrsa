@@ -1,0 +1,145 @@
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #fff5ef 0%, #fff 100%);
+  border: 1px solid #f0d6c7;
+}
+
+.eyebrow,
+.cardEyebrow {
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: #8a4a2a;
+}
+
+.title,
+.cardTitle {
+  margin: 0;
+  color: #1e1b18;
+}
+
+.subtitle,
+.cardMeta,
+.tableHeader p,
+.emptyState p {
+  margin: 0.75rem 0 0;
+  color: #5f564f;
+}
+
+.clearButton {
+  border: 0;
+  border-radius: 999px;
+  background: #1e1b18;
+  color: #fff;
+  padding: 0.8rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summaryCard,
+.tableCard,
+.emptyState {
+  border: 1px solid #eadfd7;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 16px 30px rgba(35, 29, 24, 0.05);
+}
+
+.summaryCard {
+  padding: 1.25rem;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.metrics dt {
+  font-size: 0.8rem;
+  color: #7b7067;
+}
+
+.metrics dd {
+  margin: 0.25rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e1b18;
+}
+
+.tableCard,
+.emptyState {
+  padding: 1.25rem;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+  margin-bottom: 1rem;
+}
+
+.tableHeader h2,
+.emptyState h2 {
+  margin: 0;
+  color: #1e1b18;
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 840px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 1px solid #f1e8e2;
+  font-size: 0.95rem;
+}
+
+.table th {
+  color: #7b7067;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    flex-direction: column;
+  }
+
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .clearButton {
+    width: 100%;
+  }
+}

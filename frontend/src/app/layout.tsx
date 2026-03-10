@@ -19,7 +19,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import AuthModalHandler from '@/components/AuthModalHandler';
 import ClientInit from '@/components/ClientInit';
 import { Suspense } from 'react';
-// Vercel analytics removed - using Cloudflare Pages
+// Analytics/runtime is handled by the self-hosted Hetzner deployment
 import SkipToContent from '@/components/SkipToContent/SkipToContent';
 import BackendStatus from '@/components/DevTools/BackendStatus';
 import EmailVerificationBannerWrapper from '@/components/EmailVerificationBannerWrapper';
@@ -125,7 +125,7 @@ export default function RootLayout({
         <link
           rel="preload"
           as="image"
-          href="/image_01.jpg"
+          href="/art_one.webp"
           fetchPriority="high"
         />
         {/* Preconnect to external domains for faster resource loading */}

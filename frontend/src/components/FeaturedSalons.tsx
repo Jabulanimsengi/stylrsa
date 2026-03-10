@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef, useTransition, memo } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
@@ -9,8 +10,6 @@ import SalonCard from './SalonCard';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
 import { toast } from 'react-toastify';
-import { toFriendlyMessage } from '@/lib/errors';
-import { logger } from '@/lib/logger';
 import { Salon } from '@/types';
 import styles from './FeaturedSalons.module.css';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -29,9 +28,9 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
   // If we have server-side data, use it immediately and mark as 'done'
   const hasServerData = initialSalons.length > 0;
   const [salons, setSalons] = useState<SalonWithFavorite[]>(initialSalons);
-  // Start as 'done' if we have server data, otherwise 'pending'
-  const [loadingState, setLoadingState] = useState<'pending' | 'loading' | 'done'>(
-    hasServerData ? 'done' : 'pending'
+  // Avoid showing a fake skeleton for sections that may legitimately be empty.
+  const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'done'>(
+    hasServerData ? 'done' : 'idle'
   );
 
   // Debug logging to help identify auth issues
@@ -59,27 +58,17 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
     router.push('/salons');
   };
 
-  const handleViewAllClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsNavigating(true);
-    router.push('/salons');
-  };
-
   const fetchFeaturedSalons = useCallback(async (showLoading = true) => {
-    // Only show loading skeleton on first fetch when we don't have data
-    if (showLoading && loadingState === 'pending') {
+    if (showLoading && salons.length > 0) {
       setLoadingState('loading');
     }
     try {
-      // Add cache-busting timestamp to force fresh data
-      const timestamp = Date.now();
       // Add timeout to prevent infinite loading (5 seconds)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const res = await fetch(`/api/salons/featured?_t=${timestamp}`, {
+      const res = await fetch('/api/salons/featured', {
         credentials: 'include',
-        cache: 'no-store' as any,
         signal: controller.signal
       });
 
@@ -90,13 +79,13 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
       }
       const data = await res.json();
       setSalons(Array.isArray(data) ? data : []);
-    } catch (error) {
+    } catch {
       // Silently fail - don't show error toast, just hide the section
       // Keep existing data if we have it
     } finally {
       setLoadingState('done');
     }
-  }, [loadingState]);
+  }, [salons.length]);
 
   useEffect(() => {
     // Only fetch client-side if we don't have server-provided data
@@ -153,7 +142,7 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
       const message = favorited ? 'Added to favorites!' : 'Removed from favorites.';
       toast.success(message);
 
-    } catch (error) {
+        } catch {
       toast.error('Could not update favorites. Please try again.');
       startTransition(() => setSalons(originalSalons));
     }
@@ -177,7 +166,7 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
   }
 
   // Show loading state during fetch - prevents invisible section
-  if (loadingState === 'loading' || loadingState === 'pending') {
+  if (loadingState === 'loading') {
     return (
       <section className={styles.section}>
         <div className={styles.header}>
@@ -204,9 +193,9 @@ function FeaturedSalons({ initialSalons = [] }: FeaturedSalonsProps) {
   return (
     <section className={styles.section}>
       <div className={styles.header}>
-        <a href="/salons" onClick={handleHeadingClick} className={styles.title}>
+        <Link href="/salons" onClick={handleHeadingClick} className={styles.title}>
           <h2>Recommended</h2>
-        </a>
+        </Link>
       </div>
 
       <div className={styles.container}>

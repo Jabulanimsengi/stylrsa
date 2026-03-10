@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { getInternalBackendOrigin } from '@/lib/server/backend-origin';
 
 export async function GET() {
   try {
@@ -15,7 +16,7 @@ export async function GET() {
     }
 
     // Forward the request to the backend with the token
-    const backendOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || 'http://localhost:5000';
+    const backendOrigin = getInternalBackendOrigin();
     
     const backendRes = await fetch(`${backendOrigin}/api/auth/status`, {
       headers: {

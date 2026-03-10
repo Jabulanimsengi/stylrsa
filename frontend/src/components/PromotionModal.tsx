@@ -45,7 +45,7 @@ export default function PromotionModal({
     setIsLoading(true);
 
     try {
-      const data = await apiJson('/api/promotions', {
+      const data = await apiJson<Promotion>('/api/promotions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

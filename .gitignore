@@ -54,6 +54,9 @@ backend/migration-data.json
 
 # Ignore test coverage reports
 /frontend/coverage/
+/frontend/playwright-report/
+/frontend/test-results/
+/frontend/tsconfig.tsbuildinfo
 
 # --- Local test data & credentials ---
 admin-login.json

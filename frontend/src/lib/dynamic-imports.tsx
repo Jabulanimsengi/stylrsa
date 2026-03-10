@@ -4,6 +4,8 @@
  */
 
 import dynamic from 'next/dynamic';
+import type { ComponentType } from 'react';
+import type { DatePickerProps } from 'react-datepicker';
 
 // Lazy load Mapbox (2.3MB) - only load when map is needed
 export const MapboxMap = dynamic(() => import('@/components/MapboxMap'), {
@@ -26,10 +28,12 @@ export const SocketProvider = dynamic(
   { ssr: false }
 );
 
-// Lazy load date picker (only on booking forms)
-export const DatePicker = dynamic(() => import('react-datepicker'), {
+export const DatePicker = dynamic<DatePickerProps>(
+  () => import('react-datepicker').then(mod => mod.default as unknown as ComponentType<DatePickerProps>),
+  {
   ssr: false,
-});
+  }
+);
 
 // Lazy load image lightbox (only when image is clicked)
 export const ImageLightbox = dynamic(() => import('@/components/ImageLightbox'), {

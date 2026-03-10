@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
   getSeoPageByUrl,
@@ -92,7 +93,7 @@ export async function generateMetadata({
         },
       };
     }
-  } catch (error) {
+  } catch {
     // Fall through to local generation
   }
 
@@ -157,7 +158,7 @@ export default async function KeywordProvincePage({ params }: PageProps) {
   // Try to get cached page from API first
   try {
     pageData = await getSeoPageByUrl(url);
-  } catch (error) {
+  } catch {
     // API unavailable, will use local fallback
   }
 
@@ -188,15 +189,11 @@ export default async function KeywordProvincePage({ params }: PageProps) {
       <nav className="mb-6 text-sm text-gray-600">
         <ol className="flex items-center space-x-2">
           <li>
-            <a href="/" className="hover:text-primary">
-              Home
-            </a>
+            <Link href="/" className="hover:text-primary">Home</Link>
           </li>
           <li>/</li>
           <li>
-            <a href={`/${keyword}`} className="hover:text-primary">
-              {pageData.keyword?.keyword || keyword}
-            </a>
+            <Link href={`/${keyword}`} className="hover:text-primary">{pageData.keyword?.keyword || keyword}</Link>
           </li>
           <li>/</li>
           <li className="text-gray-900 font-medium">
@@ -259,13 +256,13 @@ export default async function KeywordProvincePage({ params }: PageProps) {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {pageData.relatedServices.map((service: any, index: number) => (
-              <a
+              <Link
                 key={index}
                 href={service.url}
                 className="p-4 border rounded-lg hover:border-primary hover:shadow-md transition-all"
               >
                 <span className="text-sm font-medium">{service.label}</span>
-              </a>
+              </Link>
             ))}
           </div>
         </section>
@@ -279,13 +276,13 @@ export default async function KeywordProvincePage({ params }: PageProps) {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {pageData.nearbyLocations.map((location: any, index: number) => (
-              <a
+              <Link
                 key={index}
                 href={location.url}
                 className="p-4 border rounded-lg hover:border-primary hover:shadow-md transition-all"
               >
                 <span className="text-sm font-medium">{location.label}</span>
-              </a>
+              </Link>
             ))}
           </div>
         </section>
@@ -301,12 +298,12 @@ export default async function KeywordProvincePage({ params }: PageProps) {
           Browse {pageData.serviceCount} verified services and book your
           appointment online today.
         </p>
-        <a
+        <Link
           href="/services"
           className="inline-block px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
         >
           Browse All Services
-        </a>
+        </Link>
       </section>
     </div>
   );

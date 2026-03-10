@@ -8,6 +8,7 @@ type AuthStatus = 'authenticated' | 'unauthenticated' | 'loading';
 
 interface AuthContextType {
   authStatus: AuthStatus;
+  isLoading: boolean;
   user: User | null;
   login: (userData: User) => void;
   logout: () => void;
@@ -176,7 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [verifyUser]);
 
   return (
-    <AuthContext.Provider value={{ authStatus, user, login, logout, setAuthStatus, refreshAuth }}>
+    <AuthContext.Provider value={{ authStatus, isLoading: authStatus === 'loading', user, login, logout, setAuthStatus, refreshAuth }}>
       {children}
     </AuthContext.Provider>
   );

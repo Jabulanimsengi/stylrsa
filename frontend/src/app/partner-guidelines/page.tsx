@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import styles from '../info-page.module.css';
 import PageNav from '@/components/PageNav';
 
@@ -245,7 +246,7 @@ export default function PartnerGuidelinesPage() {
         </p>
         <ul className={styles.list}>
           <li><strong>Email:</strong> partners@stylrsa.co.za</li>
-          <li><strong>Website:</strong> <a href="/contact">Contact Page</a></li>
+          <li><strong>Website:</strong> <Link href="/contact">Contact Page</Link></li>
           <li><strong>Phone:</strong> Available in your Partner Dashboard</li>
         </ul>
 
@@ -255,7 +256,7 @@ export default function PartnerGuidelinesPage() {
             Start growing your beauty business with Stylr SA today! Create your free partner profile and connect with thousands of clients across South Africa.
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
-            <a href="/create-salon"><strong>→ Register as a Partner</strong></a>
+            <Link href="/create-salon"><strong>→ Register as a Partner</strong></Link>
           </p>
         </div>
       </section>

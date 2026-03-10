@@ -4,9 +4,9 @@ import { notFound } from 'next/navigation';
 import LocationsFooter from '@/components/LocationsFooter';
 
 type Props = {
-    params: {
+    params: Promise<{
         slug: string[];
-    };
+    }>;
 };
 
 function capitalize(str: string) {
@@ -14,7 +14,7 @@ function capitalize(str: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const slug = params.slug;
+    const { slug } = await params;
     const role = slug[0] ? capitalize(slug[0]) : 'Beauty Professional';
     const location = slug[slug.length - 1] ? capitalize(slug[slug.length - 1]) : 'South Africa';
 
@@ -29,8 +29,8 @@ export async function generateStaticParams() {
     return [];
 }
 
-export default function DynamicJobPage({ params }: Props) {
-    const slug = params.slug;
+export default async function DynamicJobPage({ params }: Props) {
+    const { slug } = await params;
 
     // Basic parsing logic
     // /jobs/nail-tech/sandton -> role: nail-tech, location: sandton

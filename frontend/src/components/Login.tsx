@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import styles from '../app/auth.module.css';
 import { useAuthModal } from '@/context/AuthModalContext';
@@ -116,9 +117,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         </button>
       </div>
       <p className={styles.footerText}>
-        <a href="/forgot-password" className={styles.footerLink}>
-          Forgot password?
-        </a>
+        <Link href="/forgot-password" className={styles.footerLink}>Forgot password?</Link>
         {' · '}
         <a href="#" onClick={(e) => { e.preventDefault(); switchToResendVerification(); }} className={styles.footerLink}>
           Resend verification email

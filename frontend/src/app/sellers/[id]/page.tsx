@@ -21,7 +21,6 @@ interface SellerProfile {
 export default function SellerProfilePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { user } = useAuth();
   const [seller, setSeller] = useState<SellerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);

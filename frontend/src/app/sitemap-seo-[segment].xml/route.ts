@@ -29,10 +29,11 @@ function getLocalSitemaps(): string[] {
  * PRIORITY: Backend first, then local fallback
  */
 export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ segment: string }> }
+  request: Request
 ) {
-  const { segment } = await params;
+  const { pathname } = new URL(request.url);
+  const segmentMatch = pathname.match(/sitemap-seo-(\d+)\.xml$/);
+  const segment = segmentMatch?.[1] ?? '';
   const segmentNum = parseInt(segment, 10);
 
   // Validate segment is a number
@@ -85,8 +86,9 @@ export async function GET(
     } else {
       console.error(`Backend error for segment ${segment}: ${response.status}`);
     }
-  } catch (error: any) {
-    console.warn(`Backend sitemap-seo-${segment} unavailable:`, error.message);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.warn(`Backend sitemap-seo-${segment} unavailable:`, errorMessage);
   }
 
   // Fallback to local generation

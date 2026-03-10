@@ -102,9 +102,9 @@ export default function GalleryUploadModal({ salonId, onClose, onImageAdded }: G
       // Check salon plan to enforce FREE limit client-side and avoid partial batch failures
       let allowed = files.length;
       try {
-        const salon: any = await apiJson(`/api/salons/${salonId}`);
+        const salon = await apiJson<{ planCode?: string | null }>(`/api/salons/${salonId}`);
         if (salon?.planCode === 'FREE') {
-          const existing: any[] = await apiJson(`/api/gallery/salon/${salonId}`);
+          const existing = await apiJson<GalleryImage[]>(`/api/gallery/salon/${salonId}`);
           const remaining = Math.max(0, 5 - (existing?.length ?? 0));
           if (remaining <= 0) {
             toast.error('Free plan limit reached: you already have 5 gallery images.');
@@ -127,7 +127,7 @@ export default function GalleryUploadModal({ salonId, onClose, onImageAdded }: G
       for (const { file } of toUpload) {
         const uploaded = await uploadToCloudinary(file);
         const url = uploaded.secure_url;
-        const newImage = await apiJson(`/api/gallery/salon/${salonId}`, {
+        const newImage = await apiJson<GalleryImage>(`/api/gallery/salon/${salonId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ imageUrl: url, caption: caption || null }),

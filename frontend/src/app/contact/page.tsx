@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import styles from '../info-page.module.css';
 import PageNav from '@/components/PageNav';
 
@@ -34,7 +35,7 @@ export default function ContactPage() {
             <strong>Email:</strong> <a href="mailto:info@stylrsa.co.za" className={styles.link}>info@stylrsa.co.za</a>
           </p>
           <p className={styles.paragraph}>
-            <strong>Help Center:</strong> Check our <a href="/faq" className={styles.link}>FAQ</a> for instant answers.
+            <strong>Help Center:</strong> Check our <Link href="/faq" className={styles.link}>FAQ</Link> for instant answers.
           </p>
         </div>
 
@@ -47,7 +48,7 @@ export default function ContactPage() {
             <strong>Email:</strong> <a href="mailto:info@stylrsa.co.za" className={styles.link}>info@stylrsa.co.za</a>
           </p>
           <p className={styles.paragraph}>
-            <strong>Resources:</strong> Visit our <a href="/advice" className={styles.link}>Advice Center</a> for guides and tips.
+            <strong>Resources:</strong> Visit our <Link href="/advice" className={styles.link}>Advice Center</Link> for guides and tips.
           </p>
         </div>
 

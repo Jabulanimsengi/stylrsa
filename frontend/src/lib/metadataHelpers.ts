@@ -162,7 +162,7 @@ export function generatePaginatedMetadata(
   if (pageNumber > 1) {
     metadata.alternates = {
       ...metadata.alternates,
-      // @ts-ignore - Next.js supports this but types are incomplete
+      // @ts-expect-error - Next.js supports this but types are incomplete
       prev: pageNumber === 2
         ? ensureAbsoluteUrl(basePath)
         : ensureAbsoluteUrl(`${basePath}?page=${pageNumber - 1}`),
@@ -172,7 +172,7 @@ export function generatePaginatedMetadata(
   if (pageNumber < totalPages) {
     metadata.alternates = {
       ...metadata.alternates,
-      // @ts-ignore - Next.js supports this but types are incomplete
+      // @ts-expect-error - Next.js supports this but types are incomplete
       next: ensureAbsoluteUrl(`${basePath}?page=${pageNumber + 1}`),
     };
   }
@@ -244,7 +244,11 @@ export function validateMetadata(metadata: Metadata): string[] {
   }
 
   if (metadata.title) {
-    const titleLength = typeof metadata.title === 'string' ? metadata.title.length : metadata.title.absolute?.length || 0;
+    const titleLength = typeof metadata.title === 'string'
+      ? metadata.title.length
+      : 'default' in metadata.title && typeof metadata.title.default === 'string'
+        ? metadata.title.default.length
+        : 0;
     if (titleLength > 60) {
       errors.push(`Title too long (${titleLength} chars, recommended max 60)`);
     }

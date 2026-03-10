@@ -11,6 +11,7 @@ export interface City {
   metaTitle: string;
   metaDescription: string;
   keywords: string[];
+  popularAreas?: string[];
 }
 
 export interface Province {
@@ -22,6 +23,9 @@ export interface Province {
   keywords: string[];
   cities: City[];
 }
+
+export type CityInfo = City;
+export type ProvinceInfo = Province;
 
 export interface LocationData {
   [key: string]: Province;

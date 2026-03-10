@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { transformCloudinary } from '@/utils/cloudinary';
@@ -11,7 +10,7 @@ import { Salon, Service, Booking } from '@/types';
 import styles from './SalonsPage.module.css';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { FaHeart, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import FilterBar, { type FilterValues } from '@/components/FilterBar/FilterBar';
+import { type FilterValues } from '@/components/FilterBar/FilterBar';
 import { SkeletonGroup, SkeletonCard } from '@/components/Skeleton/Skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
@@ -21,13 +20,14 @@ import { logger } from '@/lib/logger';
 import { getImageWithFallback } from '@/lib/placeholders';
 import PageNav from '@/components/PageNav';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import MobileSearch from '@/components/MobileSearch/MobileSearch';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import EmptyState from '@/components/EmptyState/EmptyState';
-import DetailedSalonCard from '@/components/DetailedSalonCard/DetailedSalonCard';
 import BookingModal from '@/components/BookingModal';
 import BookingConfirmationModal from '@/components/BookingConfirmationModal/BookingConfirmationModal';
+import { getSalonUrl } from '@/utils/salonUrl';
+import { usePagePerformance } from '@/hooks/usePagePerformance';
+import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
@@ -140,7 +140,7 @@ function ProvinceRow({
                             >
                                 {isNavigating && (
                                     <div className={styles.cardLoadingOverlay}>
-                                        <LoadingSpinner size="medium" color="white" />
+                                        <LoadingSpinner size="md" color="white" />
                                     </div>
                                 )}
                                 <button
@@ -156,7 +156,7 @@ function ProvinceRow({
                                             reviewCount={salon.reviews?.length || 0}
                                             avgRating={salon.avgRating || 0}
                                         />
-                                        <Image
+                                        <OptimizedImage
                                             src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), { width: 600, quality: 'auto', format: 'auto', crop: 'fill' })}
                                             alt={`A photo of ${salon.name}`}
                                             className={styles.cardImage}
@@ -189,6 +189,7 @@ function ProvinceRow({
 }
 
 export default function SalonsPageClient() {
+    usePagePerformance('salons_list');
     const [salons, setSalons] = useState<SalonWithFavorite[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [navigatingSalonId, setNavigatingSalonId] = useState<string | null>(null);
@@ -240,8 +241,6 @@ export default function SalonsPageClient() {
         };
     }, [searchParams, coordinates]);
 
-    const [initialFilters] = useState<SalonPageFilters>(getInitialFilters);
-
     // Group salons by province and sort by count
     const provinceGroups = useMemo((): ProvinceGroup[] => {
         const groups: Record<string, SalonWithFavorite[]> = {};
@@ -267,9 +266,6 @@ export default function SalonsPageClient() {
         setIsLoading(true);
         const query = new URLSearchParams();
 
-        // Add cache-busting timestamp
-        query.append('_t', String(Date.now()));
-
         let url = '/api/salons/approved';
         if (filters.province) query.append('province', filters.province);
         if (filters.city) query.append('city', filters.city);
@@ -294,7 +290,7 @@ export default function SalonsPageClient() {
         }
 
         try {
-            const res = await fetch(url, { credentials: 'include', cache: 'no-store' as any });
+            const res = await fetch(url, { credentials: 'include' });
             if (!res.ok) throw new Error('Failed to fetch salons');
             const data = await res.json();
             setSalons(data);
@@ -378,57 +374,17 @@ export default function SalonsPageClient() {
             const message = favorited ? 'Added to favorites!' : 'Removed from favorites.';
             toast.success(message);
 
-        } catch (error) {
+        } catch {
             toast.error('Could not update favorites. Please try again.');
             setSalons(originalSalons);
         }
     };
 
     const handleNavigate = (salon: SalonWithFavorite) => {
-        const salonUrl = `/salons/${salon.slug || salon.id}`;
+        const salonUrl = getSalonUrl(salon);
         setNavigatingSalonId(salon.id);
         router.push(salonUrl);
         setTimeout(() => setNavigatingSalonId(null), 5000);
-    };
-
-    // Handle booking service from detailed salon card
-    const handleBookService = async (service: Service) => {
-        let salonData: Salon;
-        if (!service.salon || !service.salon.name) {
-            try {
-                const res = await fetch(`/api/salons/${service.salonId}`, { credentials: 'include' });
-                if (!res.ok) throw new Error('Failed to fetch salon details');
-                salonData = await res.json();
-                service.salon = {
-                    id: salonData.id,
-                    name: salonData.name,
-                    ownerId: salonData.ownerId,
-                    city: salonData.city,
-                    province: salonData.province,
-                };
-            } catch (error) {
-                toast.error('Unable to load salon details. Please try again.');
-                return;
-            }
-        } else {
-            try {
-                const res = await fetch(`/api/salons/${service.salonId}`, { credentials: 'include' });
-                if (!res.ok) throw new Error('Failed to fetch salon details');
-                salonData = await res.json();
-            } catch (error) {
-                toast.error('Unable to load salon details. Please try again.');
-                return;
-            }
-        }
-
-        if (salonData.bookingMessage) {
-            setPendingBookingService(service);
-            setPendingSalon(salonData);
-            setShowBookingConfirmation(true);
-        } else {
-            setSelectedService(service);
-            setBookingModalOpen(true);
-        }
     };
 
     const handleBookingConfirmationAccept = () => {
@@ -447,7 +403,7 @@ export default function SalonsPageClient() {
         setPendingSalon(null);
     };
 
-    const handleBookingSuccess = (booking: Booking) => {
+    const handleBookingSuccess = (_booking: Booking) => {
         setBookingModalOpen(false);
         setSelectedService(null);
         toast.success('Booking confirmed!');
@@ -531,7 +487,7 @@ export default function SalonsPageClient() {
                             >
                                 {isNavigating && (
                                     <div className={styles.cardLoadingOverlay}>
-                                        <LoadingSpinner size="medium" color="white" />
+                                        <LoadingSpinner size="md" color="white" />
                                     </div>
                                 )}
                                 <button
@@ -547,7 +503,7 @@ export default function SalonsPageClient() {
                                             reviewCount={salon.reviews?.length || 0}
                                             avgRating={salon.avgRating || 0}
                                         />
-                                        <Image
+                                        <OptimizedImage
                                             src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), { width: 600, quality: 'auto', format: 'auto', crop: 'fill' })}
                                             alt={`A photo of ${salon.name}`}
                                             className={styles.cardImage}
@@ -592,6 +548,7 @@ export default function SalonsPageClient() {
                         province: selectedService.salon.province || '',
                     } as Salon}
                     service={selectedService}
+                    services={[selectedService]}
                     onClose={() => {
                         setBookingModalOpen(false);
                         setSelectedService(null);

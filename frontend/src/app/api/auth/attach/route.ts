@@ -9,15 +9,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing token' }, { status: 400 });
     }
     const isProduction = process.env.NODE_ENV === 'production';
-    const apiOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || '';
-    const isSecure = isProduction && apiOrigin.startsWith('https');
 
     // Don't set domain in development to avoid localhost issues
     const cookieStore = await cookies();
     cookieStore.set('access_token', token, {
       httpOnly: true,
       sameSite: 'lax',
-      secure: isSecure,
+      secure: isProduction,
       path: '/',
       maxAge: 60 * 60 * 24, // 1 day in seconds
     });

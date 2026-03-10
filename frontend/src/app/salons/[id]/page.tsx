@@ -22,27 +22,32 @@ const buildApiUrl = (base: string | undefined, path: string) => {
   return `${normalizedBase}${normalizedPath}`;
 };
 
+const SALON_REVALIDATE_SECONDS = 300;
+export const revalidate = 300;
+
 const fetchSalonWithTimeout = async (url: string, timeoutMs = 5000): Promise<Salon | null> => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    // SSR: Always fetch fresh data, no caching for real-time availability
-    const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
+    const res = await fetch(url, {
+      next: { revalidate: SALON_REVALIDATE_SECONDS },
+      signal: controller.signal,
+    });
     if (!res.ok) {
       console.warn(`[fetchSalon] Response not OK: ${res.status} from ${url}`);
       return null;
     }
     const data: Salon = await res.json();
     return data;
-  } catch (error: any) {
-    // Log specific error for debugging
-    if (error.name === 'AbortError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
       console.warn(`[fetchSalon] Request timed out after ${timeoutMs}ms: ${url}`);
-    } else if (error.code === 'ECONNREFUSED') {
+    } else if (typeof error === 'object' && error && 'code' in error && error.code === 'ECONNREFUSED') {
       console.warn(`[fetchSalon] Backend not running at: ${url}`);
     } else {
-      console.warn(`[fetchSalon] Fetch error: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown fetch error';
+      console.warn(`[fetchSalon] Fetch error: ${errorMessage}`);
     }
     return null;
   } finally {
@@ -140,13 +145,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-// ISR Configuration - Pages cached for 24 hours, regenerated in background
-export const revalidate = 86400; // Cache pages for 24 hours
-export const dynamicParams = true; // Allow dynamic routes
-
-// Note: Using ISR instead of force-dynamic to reduce serverless function invocations
-// Pages are generated on first visit and served from cache for subsequent requests
-
 export default async function SalonProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const salon = await getSalon(id);
@@ -163,15 +161,6 @@ export default async function SalonProfilePage({ params }: { params: Promise<{ i
 
   const structuredData = generateSalonStructuredData(salon);
   const breadcrumbData = generateSalonBreadcrumb(salon);
-
-  // Create UI breadcrumbs
-  const breadcrumbItems = [
-    { label: 'Home', href: '/' },
-    { label: 'Salons', href: '/salons' },
-    ...(salon.city ? [{ label: salon.city, href: `/salons?city=${encodeURIComponent(salon.city)}` }] : []),
-    ...(salon.town && salon.town !== salon.city ? [{ label: salon.town, href: `/salons?town=${encodeURIComponent(salon.town)}` }] : []),
-    { label: salon.name }
-  ];
 
   return (
     <>
@@ -190,7 +179,6 @@ export default async function SalonProfilePage({ params }: { params: Promise<{ i
       <SalonProfileClient
         initialSalon={salon}
         salonId={id}
-        breadcrumbItems={breadcrumbItems}
       />
     </>
   );

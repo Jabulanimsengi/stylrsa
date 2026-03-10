@@ -2,23 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { FaHeart, FaStar } from 'react-icons/fa';
+import { FaStar } from 'react-icons/fa';
 import { Salon } from '@/types';
 import { transformCloudinary } from '@/utils/cloudinary';
 import { getImageWithFallback } from '@/lib/placeholders';
 import { getSalonUrl } from '@/utils/salonUrl';
 import EmptyState from '@/components/EmptyState/EmptyState';
+import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import styles from './SimilarSalons.module.css';
 
 interface SimilarSalonsProps {
   currentSalonId: string;
   city?: string;
   province?: string;
-  services?: string[];
 }
 
-export default function SimilarSalons({ currentSalonId, city, province, services = [] }: SimilarSalonsProps) {
+export default function SimilarSalons({ currentSalonId, city, province }: SimilarSalonsProps) {
   const [similarSalons, setSimilarSalons] = useState<Salon[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -113,7 +112,7 @@ export default function SimilarSalons({ currentSalonId, city, province, services
                   <span>{salon.avgRating.toFixed(1)}</span>
                 </div>
               )}
-              <Image
+              <OptimizedImage
                 src={transformCloudinary(
                   getImageWithFallback(salon.backgroundImage, 'wide'),
                   { width: 400, quality: 'auto', format: 'auto', crop: 'fill' }

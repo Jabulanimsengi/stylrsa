@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import Image from 'next/image';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
     FaStar,
     FaMapMarkerAlt,
@@ -23,7 +22,6 @@ import {
     FaAward,
     FaTimes,
     FaChevronRight,
-    FaChevronLeft,
 } from 'react-icons/fa';
 import {
     Carousel,
@@ -40,6 +38,7 @@ import styles from './MobileSalonProfile.module.css';
 import MaterialsShowcase from '@/components/MaterialsShowcase/MaterialsShowcase';
 import { toast } from 'react-toastify';
 import SimilarSalons from '@/components/SimilarSalons/SimilarSalons';
+import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 
 type TabType = 'photos' | 'services' | 'details' | 'reviews';
 
@@ -163,12 +162,10 @@ export default function MobileSalonProfile({
 }: MobileSalonProfileProps) {
     const [activeTab, setActiveTab] = useState<TabType>('services');
     const [selectedServices, setSelectedServices] = useState<Service[]>([]);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isFavorited, setIsFavorited] = useState(false);
     const [showCopied, setShowCopied] = useState(false);
     const [activeCategory, setActiveCategory] = useState<string>('all');
     const tabsRef = useRef<HTMLDivElement>(null);
-    const carouselRef = useRef<HTMLDivElement>(null);
     const categoryScrollRef = useRef<HTMLDivElement>(null);
 
     // Carousel API state for tracking current slide
@@ -211,8 +208,8 @@ export default function MobileSalonProfile({
 
         services.forEach(service => {
             // Get category name from service
-            const categoryName = (service as any).category?.name || '';
-            const categorySlug = (service as any).category?.slug || (service as any).categoryId || '';
+            const categoryName = service.category || '';
+            const categorySlug = service.categoryId || '';
 
             // Determine the valid category name
             let validCategoryName = '';
@@ -315,28 +312,6 @@ export default function MobileSalonProfile({
         }
     };
 
-    // Handle carousel swipe
-    const handleSwipe = useCallback((direction: 'left' | 'right') => {
-        if (direction === 'left' && currentImageIndex < allImages.length - 1) {
-            setCurrentImageIndex(prev => prev + 1);
-        } else if (direction === 'right' && currentImageIndex > 0) {
-            setCurrentImageIndex(prev => prev - 1);
-        }
-    }, [currentImageIndex, allImages.length]);
-
-    // Touch handling for carousel
-    const touchStartX = useRef(0);
-    const handleTouchStart = (e: React.TouchEvent) => {
-        touchStartX.current = e.touches[0].clientX;
-    };
-    const handleTouchEnd = (e: React.TouchEvent) => {
-        const touchEndX = e.changedTouches[0].clientX;
-        const diff = touchStartX.current - touchEndX;
-        if (Math.abs(diff) > 50) {
-            handleSwipe(diff > 0 ? 'left' : 'right');
-        }
-    };
-
     // Copy address to clipboard
     const handleCopyAddress = async () => {
         const addressText = salon.address || [salon.town, salon.city, salon.province].filter(Boolean).join(', ');
@@ -355,7 +330,7 @@ export default function MobileSalonProfile({
                     text: `Check out ${salon.name} on Stylr SA!`,
                     url,
                 });
-            } catch (err) {
+            } catch {
                 // User cancelled or error
             }
         } else {
@@ -395,7 +370,7 @@ export default function MobileSalonProfile({
                                         onClick={() => onOpenLightbox(allImages, idx)}
                                     >
                                         <div style={{ position: 'relative', width: '100%', height: '300px' }}>
-                                            <Image
+                                            <OptimizedImage
                                                 src={transformCloudinary(img, { width: 800, quality: 'auto', format: 'auto', crop: 'fill' })}
                                                 alt={`${salon.name} photo ${idx + 1}`}
                                                 fill
@@ -560,7 +535,7 @@ export default function MobileSalonProfile({
                                         className={styles.photoItem}
                                         onClick={() => onOpenLightbox(allImages, idx)}
                                     >
-                                        <Image
+                                        <OptimizedImage
                                             src={transformCloudinary(img, { width: 400, quality: 'auto', format: 'auto', crop: 'fill' })}
                                             alt={`${salon.name} photo ${idx + 1}`}
                                             fill
@@ -619,7 +594,7 @@ export default function MobileSalonProfile({
                                                                 onOpenLightbox(service.images, 0);
                                                             }}
                                                         >
-                                                            <Image
+                                                            <OptimizedImage
                                                                 src={transformCloudinary(service.images[0], { width: 200, quality: 'auto', format: 'auto', crop: 'fill' })}
                                                                 alt={serviceName}
                                                                 fill
@@ -852,7 +827,6 @@ export default function MobileSalonProfile({
                     currentSalonId={salon.id}
                     city={salon.city}
                     province={salon.province}
-                    services={services.map(s => s.name || (s as any).title).filter(Boolean)}
                 />
             </div>
 

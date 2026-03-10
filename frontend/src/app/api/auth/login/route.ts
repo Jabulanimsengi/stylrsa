@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { getInternalBackendOrigin } from '@/lib/server/backend-origin';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const backendOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || 'http://localhost:5000';
+    const backendOrigin = getInternalBackendOrigin();
     
     console.log('[Login API] Forwarding login request to backend');
     

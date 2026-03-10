@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { getInternalBackendOrigin } from '@/lib/server/backend-origin';
 
 export async function POST() {
   try {
@@ -10,7 +11,7 @@ export async function POST() {
     
     // Also try to call backend logout to clear any server-side session
     try {
-      const backendOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || 'http://localhost:5000';
+      const backendOrigin = getInternalBackendOrigin();
       await fetch(`${backendOrigin}/api/auth/logout`, {
         method: 'POST',
       });

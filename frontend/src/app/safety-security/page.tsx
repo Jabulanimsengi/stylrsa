@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import styles from '../info-page.module.css';
 import PageNav from '@/components/PageNav';
 
@@ -152,7 +153,7 @@ export default function SafetySecurityPage() {
           <li><strong>Data rights:</strong> You can request, edit, or delete your data at any time</li>
         </ul>
         <p className={styles.paragraph}>
-          Read our full <a href="/privacy">Privacy Policy</a> for more details.
+          Read our full <Link href="/privacy">Privacy Policy</Link> for more details.
         </p>
 
         <h2 className={styles.sectionTitle}>6. Best Practices for Users</h2>
@@ -232,7 +233,7 @@ export default function SafetySecurityPage() {
         <ul className={styles.list}>
           <li><strong>Safety Email:</strong> safety@stylrsa.co.za</li>
           <li><strong>Security Issues:</strong> security@stylrsa.co.za</li>
-          <li><strong>General Support:</strong> <a href="/support">Support Center</a></li>
+          <li><strong>General Support:</strong> <Link href="/support">Support Center</Link></li>
           <li><strong>Emergency Contact:</strong> Available 24/7 in your dashboard</li>
         </ul>
 

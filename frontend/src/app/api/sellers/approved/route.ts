@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_PATH || process.env.NEXT_PUBLIC_API_URL || 'https://stylrsa-production.up.railway.app';
+    const baseUrl =
+      process.env.INTERNAL_BACKEND_URL ||
+      process.env.NEXT_PUBLIC_API_ORIGIN ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      'http://127.0.0.1:5000';
     
     // Fetch all approved products to get sellers
     const productsRes = await fetch(`${baseUrl}/api/products`, {

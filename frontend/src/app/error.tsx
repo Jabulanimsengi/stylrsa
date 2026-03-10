@@ -1,7 +1,9 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function Error({
-  error,
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string };
@@ -35,8 +37,8 @@ export default function Error({
         >
           Try Again
         </button>
-        <a 
-          href="/" 
+        <Link
+          href="/"
           style={{ 
             padding: '0.75rem 1.5rem', 
             backgroundColor: '#666', 
@@ -46,7 +48,7 @@ export default function Error({
           }}
         >
           Go Home
-        </a>
+        </Link>
       </div>
     </div>
   );

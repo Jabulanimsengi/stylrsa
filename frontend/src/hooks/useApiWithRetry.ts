@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { apiFetch, apiJson, RetryOptions } from '@/lib/api';
+import { apiJson, RetryOptions } from '@/lib/api';
 import { toast } from 'react-toastify';
 import { toFriendlyMessage } from '@/lib/errors';
 
@@ -16,9 +16,9 @@ interface UseApiOptions {
  * const { data, loading, error, execute } = useApiWithRetry();
  * await execute('/api/salons', { showRetryToast: true });
  */
-export function useApiWithRetry<T = any>(defaultOptions: UseApiOptions = {}) {
+export function useApiWithRetry<T = unknown>(defaultOptions: UseApiOptions = {}) {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<unknown>(null);
   const [data, setData] = useState<T | null>(null);
 
   const execute = useCallback(async (
@@ -34,9 +34,12 @@ export function useApiWithRetry<T = any>(defaultOptions: UseApiOptions = {}) {
 
     const customRetryOptions: RetryOptions = {
       ...opts.retryOptions,
-      shouldRetry: (error, attempt) => {
-        const shouldRetry = opts.retryOptions?.shouldRetry?.(error, attempt) 
-          ?? (!error?.statusCode || error.statusCode >= 500);
+      shouldRetry: (error: unknown, attempt: number) => {
+        const statusCode = typeof error === 'object' && error && 'statusCode' in error
+          ? Number((error as { statusCode?: number }).statusCode)
+          : undefined;
+        const shouldRetry = opts.retryOptions?.shouldRetry?.(error, attempt)
+          ?? (!statusCode || statusCode >= 500);
         
         // Show a subtle retry toast on first retry
         if (shouldRetry && attempt === 0 && opts.showRetryToast) {
@@ -62,7 +65,7 @@ export function useApiWithRetry<T = any>(defaultOptions: UseApiOptions = {}) {
       setData(result);
       setLoading(false);
       return result;
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Dismiss retry toast if it's still showing
       if (retryToastId) {
         toast.dismiss(retryToastId);

@@ -1,33 +1,24 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import Image from 'next/image';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
     FaMapMarkerAlt,
-    FaClock,
-    FaPhone,
-    FaWhatsapp,
-    FaChevronDown,
-    FaCamera,
     FaStar,
     FaTruck,
     FaDirections,
-    FaHeart,
-    FaBolt,
-    FaCheck,
     FaCheckCircle,
     FaAward,
     FaRegClock,
     FaImages,
-    FaCopy,
-    FaShare,
 } from 'react-icons/fa';
 import { Salon, GalleryImage, Review } from '@/types';
 import { transformCloudinary } from '@/utils/cloudinary';
+import { getSalonUrl } from '@/utils/salonUrl';
 import styles from './BooksyLayout.module.css';
 import VerificationBadge from '@/components/VerificationBadge/VerificationBadge';
 import MapboxMap from '@/components/MapboxMap';
+import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 
 // Helper to check if salon is currently open
 function getOpenStatus(hoursRecord: Record<string, string> | null, todayLabel: string): { isOpen: boolean; statusText: string } {
@@ -133,26 +124,23 @@ interface BooksySidebarProps {
 }
 
 export default function BooksySidebar({
-    salon,
-    galleryImages,
-    onShowAllPhotos,
-    onOpenLightbox,
-    latitude,
-    longitude,
-    mapsHref,
+    salon: _salon,
+    galleryImages: _galleryImages,
+    onShowAllPhotos: _onShowAllPhotos,
+    onOpenLightbox: _onOpenLightbox,
+    latitude: _latitude,
+    longitude: _longitude,
+    mapsHref: _mapsHref,
     hoursRecord,
     todayLabel,
-    orderedOperatingDays,
-    onBookNow,
-    isFavorited,
-    onToggleFavorite,
-    showFavoriteButton,
+    orderedOperatingDays: _orderedOperatingDays,
+    onBookNow: _onBookNow,
+    isFavorited: _isFavorited,
+    onToggleFavorite: _onToggleFavorite,
+    showFavoriteButton: _showFavoriteButton,
 }: BooksySidebarProps) {
-    const [showFullWeek, setShowFullWeek] = useState(false);
-    const [showFullAbout, setShowFullAbout] = useState(false);
-
-    // Get open status
-    const { isOpen, statusText } = getOpenStatus(hoursRecord, todayLabel);
+    void hoursRecord;
+    void todayLabel;
 
     // All sidebar content removed - features already displayed in main content
     return null;
@@ -206,12 +194,13 @@ export function HeroGallery({
                 className={styles.heroMainImage}
                 onClick={() => onOpenLightbox(allImages, 0)}
             >
-                <Image
+                <OptimizedImage
                     src={transformCloudinary(allImages[0], { width: 1200, quality: 'auto', format: 'auto', crop: 'fill' })}
                     alt={salon.name}
                     fill
                     sizes="(max-width: 1024px) 100vw, 60vw"
-                    priority
+                    eager
+                    seoContext={{ salonName: salon.name, city: salon.city }}
                 />
 
                 {/* Image count badge */}
@@ -226,11 +215,12 @@ export function HeroGallery({
                     className={styles.heroThumbnail}
                     onClick={() => onOpenLightbox(allImages, 1)}
                 >
-                    <Image
+                    <OptimizedImage
                         src={transformCloudinary(allImages[1], { width: 600, quality: 'auto', format: 'auto', crop: 'fill' })}
                         alt={`${salon.name} photo 2`}
                         fill
                         sizes="(max-width: 1024px) 50vw, 25vw"
+                        seoContext={{ salonName: salon.name, city: salon.city }}
                     />
                 </div>
             )}
@@ -241,11 +231,12 @@ export function HeroGallery({
                     className={styles.heroThumbnail}
                     onClick={() => onOpenLightbox(allImages, 2)}
                 >
-                    <Image
+                    <OptimizedImage
                         src={transformCloudinary(allImages[2], { width: 600, quality: 'auto', format: 'auto', crop: 'fill' })}
                         alt={`${salon.name} photo 3`}
                         fill
                         sizes="(max-width: 1024px) 50vw, 25vw"
+                        seoContext={{ salonName: salon.name, city: salon.city }}
                     />
 
                     {/* See all images button - only if more than 3 images */}
@@ -374,14 +365,7 @@ export function AboutSection({
     todayLabel: string;
     orderedOperatingDays: string[];
 }) {
-    const [showCopied, setShowCopied] = useState(false);
     const addressText = salon.address || `${salon.town}, ${salon.city}, ${salon.province}`;
-
-    const handleCopyAddress = async () => {
-        await navigator.clipboard.writeText(addressText);
-        setShowCopied(true);
-        setTimeout(() => setShowCopied(false), 2000);
-    };
 
     return (
         <div className={styles.aboutContent}>
@@ -588,7 +572,7 @@ export function BooksyReviewsSection({
                                 className={styles.clientPhotoItem}
                                 onClick={() => onOpenLightbox(clientPhotoUrls, idx)}
                             >
-                                <Image
+                                <OptimizedImage
                                     src={transformCloudinary(url, { width: 180, quality: 'auto', format: 'auto', crop: 'fill' })}
                                     alt={`Client photo ${idx + 1}`}
                                     fill
@@ -688,11 +672,11 @@ export function VenuesNearby({
                 {nearbySalons.slice(0, 4).map(salon => (
                     <Link
                         key={salon.id}
-                        href={`/salons/${salon.slug || salon.id}`}
+                        href={getSalonUrl(salon)}
                         className={styles.nearbyCard}
                     >
                         <div className={styles.nearbyImageWrapper}>
-                            <Image
+                            <OptimizedImage
                                 src={transformCloudinary(
                                     salon.backgroundImage || salon.logo || '/placeholder-salon.jpg',
                                     { width: 400, quality: 'auto', format: 'auto', crop: 'fill' }
@@ -700,6 +684,7 @@ export function VenuesNearby({
                                 alt={salon.name}
                                 fill
                                 sizes="(max-width: 768px) 50vw, 25vw"
+                                seoContext={{ salonName: salon.name, city: salon.city }}
                             />
                         </div>
                         <div className={styles.nearbyInfo}>

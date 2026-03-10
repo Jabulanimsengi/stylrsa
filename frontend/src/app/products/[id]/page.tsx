@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import Script from 'next/script';
 import ProductDetailClient from './ProductDetailClient';
@@ -269,7 +270,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 }}>
                     This product is currently being reviewed by our team and will be available soon. Please check back later!
                 </p>
-                <a
+                <Link
                     href="/products"
                     style={{
                         padding: '0.75rem 1.5rem',
@@ -281,7 +282,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                     }}
                 >
                     Browse Products
-                </a>
+                </Link>
             </div>
         );
     }

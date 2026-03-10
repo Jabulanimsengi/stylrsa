@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useTransition, memo } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
@@ -143,13 +144,13 @@ function SalonCarouselSection({
     return (
         <section className={styles.section}>
             <div className={styles.header}>
-                <a href={viewAllLink} onClick={handleHeadingClick} className={styles.title}>
+                <Link href={viewAllLink} onClick={handleHeadingClick} className={styles.title}>
                     <h2>{title}</h2>
-                </a>
+                </Link>
                 {showViewAll && (
-                    <a href={viewAllLink} onClick={handleViewAllClick} className={styles.viewAll}>
+                    <Link href={viewAllLink} onClick={handleViewAllClick} className={styles.viewAll}>
                         View All
-                    </a>
+                    </Link>
                 )}
             </div>
 

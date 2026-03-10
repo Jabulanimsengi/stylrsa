@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, ReactNode } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { useAuth } from '@/hooks/useAuth';
@@ -402,9 +403,9 @@ export default function ProductDashboardClient() {
           </div>
         )}
         <div style={{ marginTop: '1rem' }}>
-          <a href="/create-seller-profile" className="btn btn-secondary">
+          <Link href="/create-seller-profile" className="btn btn-secondary">
             Manage Profile &amp; Package
-          </a>
+          </Link>
         </div>
       </section>
 
@@ -424,21 +425,21 @@ export default function ProductDashboardClient() {
                 <Alert variant="info" title="Complete Your Seller Profile">
                   <p className="mb-3">Before you can add products, you need to set up your seller profile with your business details.</p>
                   <Button asChild>
-                    <a href="/create-seller-profile">Set Up Profile</a>
+                    <Link href="/create-seller-profile">Set Up Profile</Link>
                   </Button>
                 </Alert>
               ) : sellerApprovalStatus === 'PENDING' ? (
                 <Alert variant="warning" title="Profile Under Review">
                   <p className="mb-3">Your seller profile is currently being reviewed by our team. You&apos;ll be able to add products once approved.</p>
                   <Button variant="outline" asChild>
-                    <a href="/create-seller-profile">Edit Profile</a>
+                    <Link href="/create-seller-profile">Edit Profile</Link>
                   </Button>
                 </Alert>
               ) : sellerApprovalStatus === 'REJECTED' ? (
                 <Alert variant="error" title="Profile Needs Updates">
                   <p className="mb-3">Your seller profile was not approved. Please update your information and resubmit.</p>
                   <Button asChild>
-                    <a href="/create-seller-profile">Update Profile</a>
+                    <Link href="/create-seller-profile">Update Profile</Link>
                   </Button>
                 </Alert>
               ) : null}

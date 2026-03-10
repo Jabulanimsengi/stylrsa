@@ -78,7 +78,6 @@
     "speakeasy": "^2.0.0",
     "streamifier": "^0.1.1",
     "supertest": "^7.0.0",
-    "thesalonhub-monorepo": "file:..",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.3",
     "ts-node": "^10.9.1",

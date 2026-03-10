@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "clear-cache": "node -e \"const fs = require('fs'); const path = require('path'); function rmDir(dir) { if (fs.existsSync(dir)) { fs.readdirSync(dir).forEach(f => { const filePath = path.join(dir, f); fs.statSync(filePath).isDirectory() ? rmDir(filePath) : fs.unlinkSync(filePath); }); fs.rmdirSync(dir); } } rmDir('.next'); console.log('Cache cleared!');\""
   },
   "dependencies": {
@@ -56,6 +57,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.58.2",
     "@types/next-auth": "^3.13.0",
     "@types/node": "^20",
     "@types/react": "^19",

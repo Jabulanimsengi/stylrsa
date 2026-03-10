@@ -114,10 +114,7 @@ export default function MyFavoritesPage() {
       <div className={styles.container}>
         <PageNav />
         <h1 className={styles.title}>My Favorite Salons</h1>
-
-        <SkeletonGroup count={8} className={styles.salonGrid}>
-          {() => <SkeletonCard hasImage lines={3} />}
-        </SkeletonGroup>
+        <p>Checking your account...</p>
       </div>
     );
   }

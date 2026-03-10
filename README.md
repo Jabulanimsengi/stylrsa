@@ -75,8 +75,11 @@ stylr-sa/
 - Socket.io (real-time)
 
 ### Infrastructure
-- Vercel (Frontend)
-- Railway (Backend & Database)
+- Hetzner VPS
+- Docker Compose
+- NGINX
+- PostgreSQL
+- Redis
 - Cloudinary (Media)
 
 ## 📚 Documentation

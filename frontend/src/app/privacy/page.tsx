@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import styles from '../info-page.module.css';
 import PageNav from '@/components/PageNav';
 
@@ -187,7 +188,7 @@ export default function PrivacyPage() {
 
         <h2 className={styles.sectionTitle}>9. Cookies and Tracking Technologies</h2>
         <p className={styles.paragraph}>
-          We use cookies and similar technologies to enhance your experience on our Platform. For detailed information about the cookies we use and your choices, please see our <a href="/cookie-policy">Cookie Policy</a>.
+          We use cookies and similar technologies to enhance your experience on our Platform. For detailed information about the cookies we use and your choices, please see our <Link href="/cookie-policy">Cookie Policy</Link>.
         </p>
 
         <h2 className={styles.sectionTitle}>10. Third-Party Links</h2>
@@ -233,7 +234,7 @@ export default function PrivacyPage() {
         </p>
         <ul className={styles.list}>
           <li><strong>Email:</strong> privacy@stylrsa.co.za</li>
-          <li><strong>Website:</strong> <a href="/contact">Contact Page</a></li>
+          <li><strong>Website:</strong> <Link href="/contact">Contact Page</Link></li>
           <li><strong>Address:</strong> Stylr SA, South Africa</li>
         </ul>
 

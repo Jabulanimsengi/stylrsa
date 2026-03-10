@@ -201,3 +201,34 @@ export function sanitizeFilename(filename: string): string {
     .replace(/^\.+/, '') // Remove leading dots
     .substring(0, 255); // Limit length
 }
+
+export function validateFile(file: File, category: 'image' | 'video' = 'image') {
+  try {
+    if (category === 'image') {
+      validateImageFile(file);
+      return { isValid: true, sanitizedName: sanitizeFilename(file.name) };
+    }
+
+    if (!file) {
+      throw new FileValidationError('No file provided');
+    }
+    if (file.size === 0) {
+      throw new FileValidationError('File is empty');
+    }
+    return { isValid: true, sanitizedName: sanitizeFilename(file.name) };
+  } catch (error) {
+    return {
+      isValid: false,
+      error: error instanceof Error ? error.message : 'Invalid file',
+    };
+  }
+}
+
+export const fileValidation = {
+  validateFile,
+  validateImageFile,
+  validateImageFiles,
+  validateAndReadImageFile,
+  isValidImageByContent,
+  sanitizeFilename,
+};

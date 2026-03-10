@@ -43,8 +43,8 @@ async function fetchCsrfToken(): Promise<string> {
     }
 
     const data = await response.json();
-    csrfToken = data.csrfToken;
-    return csrfToken;
+    csrfToken = typeof data.csrfToken === 'string' ? data.csrfToken : '';
+    return csrfToken ?? '';
   } catch (error) {
     console.warn('CSRF token fetch error (app will continue without CSRF):', error);
     // Return empty string instead of throwing
@@ -66,7 +66,7 @@ export async function getCsrfToken(): Promise<string> {
   const cookieToken = getCsrfTokenFromCookie();
   if (cookieToken) {
     csrfToken = cookieToken;
-    return csrfToken;
+    return cookieToken;
   }
 
   // If already fetching, return the pending promise

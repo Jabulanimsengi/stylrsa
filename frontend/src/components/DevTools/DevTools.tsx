@@ -36,6 +36,7 @@ const MAX_LOGS = 50;
 const POSITION_KEY = 'devtools-position';
 
 export default function DevTools() {
+  const isDevelopment = process.env.NODE_ENV === 'development';
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'health' | 'logs' | 'env' | 'seo'>('health');
   const [health, setHealth] = useState<HealthStatus>({
@@ -56,13 +57,9 @@ export default function DevTools() {
   const dragRef = useRef<{ startX: number; startY: number; startPosX: number; startPosY: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Only show in development
-  if (process.env.NODE_ENV !== 'development') {
-    return null;
-  }
-
   // Load saved position
   useEffect(() => {
+    if (!isDevelopment) return;
     try {
       const saved = localStorage.getItem(POSITION_KEY);
       if (saved) {
@@ -70,14 +67,15 @@ export default function DevTools() {
         setPosition(parsed);
       }
     } catch {}
-  }, []);
+  }, [isDevelopment]);
 
   // Save position when it changes
   useEffect(() => {
+    if (!isDevelopment) return;
     try {
       localStorage.setItem(POSITION_KEY, JSON.stringify(position));
     } catch {}
-  }, [position]);
+  }, [isDevelopment, position]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -91,6 +89,7 @@ export default function DevTools() {
   };
 
   useEffect(() => {
+    if (!isDevelopment) return;
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -120,7 +119,7 @@ export default function DevTools() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging]);
+  }, [isDevelopment, isDragging]);
 
   const checkHealth = useCallback(async () => {
     setIsChecking(true);
@@ -156,14 +155,16 @@ export default function DevTools() {
           errorMessage: `HTTP ${res.status}`,
         }));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorName = error instanceof Error ? error.name : '';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setHealth(prev => ({
         ...prev,
         backend: 'disconnected',
         database: 'disconnected',
         latency: null,
         lastCheck: new Date(),
-        errorMessage: error.name === 'AbortError' ? 'Timeout' : error.message,
+        errorMessage: errorName === 'AbortError' ? 'Timeout' : errorMessage,
       }));
     } finally {
       setIsChecking(false);
@@ -197,8 +198,8 @@ export default function DevTools() {
         const data = await res.json();
         setSeoStats(data);
       }
-    } catch (error: any) {
-      if (error.name !== 'AbortError') {
+    } catch (error: unknown) {
+      if (!(error instanceof Error) || error.name !== 'AbortError') {
         console.error('Failed to fetch SEO stats:', error);
       }
     } finally {
@@ -208,13 +209,15 @@ export default function DevTools() {
 
   // Load SEO stats when tab is opened (only once)
   useEffect(() => {
+    if (!isDevelopment) return;
     if (activeTab === 'seo' && !seoStats && !isSeoLoading) {
       fetchSeoStats();
     }
-  }, [activeTab]); // Removed dependencies to prevent re-fetching
+  }, [activeTab, fetchSeoStats, isDevelopment, isSeoLoading, seoStats]);
 
   // Intercept fetch for logging
   useEffect(() => {
+    if (!isDevelopment) return;
     const originalFetch = window.fetch;
     
     window.fetch = async (...args) => {
@@ -249,12 +252,13 @@ export default function DevTools() {
         ));
 
         return res;
-      } catch (error: any) {
+      } catch (error: unknown) {
         const duration = Date.now() - startTime;
+        const message = error instanceof Error ? error.message : 'Unknown error';
         
         setApiLogs(prev => prev.map(log => 
           log.id === logId 
-            ? { ...log, status: 'error', duration, error: error.message }
+            ? { ...log, status: 'error', duration, error: message }
             : log
         ));
 
@@ -265,7 +269,11 @@ export default function DevTools() {
     return () => {
       window.fetch = originalFetch;
     };
-  }, []);
+  }, [isDevelopment]);
+
+  if (!isDevelopment) {
+    return null;
+  }
 
   const copyLogs = async () => {
     const logsText = apiLogs.map(log => 

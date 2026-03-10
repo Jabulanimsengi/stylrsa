@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { transformCloudinary } from '@/utils/cloudinary';
@@ -9,8 +9,8 @@ import BookingConfirmationModal from './BookingConfirmationModal/BookingConfirma
 import { toast } from 'react-toastify';
 import { getSalonUrl } from '@/utils/salonUrl';
 import { Card, CardContent, Badge, Button } from '@/components/ui';
-import { cn } from '@/lib/utils';
 import { FaClock } from 'react-icons/fa';
+import type { Salon } from '@/types';
 
 const DEFAULT_PLACEHOLDER_IMAGE =
   'data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid slice"%3E%3Cdefs%3E%3ClinearGradient id="g" x1="0" x2="1" y1="0" y2="1"%3E%3Cstop offset="0%25" stop-color="%23f3f4f6"/%3E%3Cstop offset="100%25" stop-color="%23d1d5db"/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="600" height="400" fill="url(%23g)"/%3E%3Cg fill="%239ca3af" font-family="Arial, sans-serif" font-size="28" font-weight="600" text-anchor="middle"%3E%3Ctext x="50%25" y="52%25"%3ENo Image%3C/text%3E%3C/g%3E%3C/svg%3E';
@@ -46,10 +46,12 @@ export interface Promotion {
   };
 }
 
+type PromotionService = NonNullable<Promotion['service']>;
+type PromotionProduct = NonNullable<Promotion['product']>;
 interface PromotionCardProps {
   promotion: Promotion;
   onImageClick?: (images: string[], startIndex: number) => void;
-  onBookNow?: (salonData: any, service: any) => void;
+  onBookNow?: (salonData: Salon, service: PromotionService) => void;
 }
 
 function calculateTimeRemaining(endDate: string): string {
@@ -75,25 +77,27 @@ export default function PromotionCard({ promotion, onImageClick, onBookNow }: Pr
   const router = useRouter();
   const [isLoadingBooking, setIsLoadingBooking] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [salonData, setSalonData] = useState<any>(null);
+  const [salonData, setSalonData] = useState<Salon | null>(null);
 
   const isService = Boolean(promotion.service);
-  const item = isService ? promotion.service : promotion.product;
+  const serviceItem = promotion.service;
+  const productItem = promotion.product;
+  const item = isService ? serviceItem : productItem;
 
   if (!item) return null;
 
-  const title = isService ? item.title : (item as any).name;
+  const title = isService ? serviceItem!.title : productItem!.name;
   const images = item.images || [];
   const primaryImage = images[0];
 
-  const salonId = isService ? (item as any).salon?.id : undefined;
-  const salonName = isService ? (item as any).salon?.name : undefined;
+  const salonId = isService ? serviceItem?.salon?.id : undefined;
+  const salonName = isService ? serviceItem?.salon?.name : undefined;
   const sellerName = !isService
-    ? `${(item as any).seller?.firstName || ''} ${(item as any).seller?.lastName || ''}`.trim()
+    ? `${productItem?.seller?.firstName || ''} ${productItem?.seller?.lastName || ''}`.trim()
     : undefined;
 
   const locationParts = isService
-    ? [(item as any).salon?.city, (item as any).salon?.province].filter(Boolean)
+    ? [serviceItem?.salon?.city, serviceItem?.salon?.province].filter(Boolean)
     : [];
   const location = locationParts.length ? locationParts.join(', ') : '';
 
@@ -145,7 +149,7 @@ export default function PromotionCard({ promotion, onImageClick, onBookNow }: Pr
     }
   };
 
-  const handleConfirmationAccept = useCallback(() => {
+  const handleConfirmationAccept = () => {
     setShowConfirmation(false);
     setIsLoadingBooking(false);
 
@@ -156,13 +160,13 @@ export default function PromotionCard({ promotion, onImageClick, onBookNow }: Pr
       setSalonData(null);
       router.push(linkHref);
     }
-  }, [linkHref, router, onBookNow, salonData, promotion.service]);
+  };
 
-  const handleConfirmationClose = useCallback(() => {
+  const handleConfirmationClose = () => {
     setShowConfirmation(false);
     setSalonData(null);
     setIsLoadingBooking(false);
-  }, []);
+  };
 
   return (
     <>
@@ -243,7 +247,7 @@ export default function PromotionCard({ promotion, onImageClick, onBookNow }: Pr
         onClose={handleConfirmationClose}
         onAccept={handleConfirmationAccept}
         salonName={salonData?.name || ''}
-        salonLogo={salonData?.backgroundImage}
+        salonLogo={salonData?.backgroundImage || undefined}
         message={salonData?.bookingMessage || ''}
       />
     </>

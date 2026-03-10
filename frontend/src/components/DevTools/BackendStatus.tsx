@@ -4,16 +4,13 @@ import { useState, useEffect } from 'react';
 import styles from './BackendStatus.module.css';
 
 export default function BackendStatus() {
+  const isDevelopment = process.env.NODE_ENV === 'development';
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  // Only show in development
-  if (process.env.NODE_ENV !== 'development') {
-    return null;
-  }
-
   const checkConnection = async () => {
+    if (!isDevelopment) return;
     setIsChecking(true);
     try {
       const controller = new AbortController();
@@ -30,9 +27,10 @@ export default function BackendStatus() {
       }
       
       setIsConnected(res.ok);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       if (process.env.NODE_ENV === 'development') {
-        console.log('[DevTools] Health check error:', error.message);
+        console.log('[DevTools] Health check error:', message);
       }
       setIsConnected(false);
     } finally {
@@ -41,6 +39,7 @@ export default function BackendStatus() {
   };
 
   useEffect(() => {
+    if (!isDevelopment) return;
     // Delay initial check to let the app settle
     const initialCheck = setTimeout(checkConnection, 1500);
     const interval = setInterval(checkConnection, 10000);
@@ -48,7 +47,11 @@ export default function BackendStatus() {
       clearTimeout(initialCheck);
       clearInterval(interval);
     };
-  }, []);
+  }, [isDevelopment]);
+
+  if (!isDevelopment) {
+    return null;
+  }
 
   // Don't show if connected, still checking initial, or dismissed
   if (isConnected === null || isConnected || dismissed) {

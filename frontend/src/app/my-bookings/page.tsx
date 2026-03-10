@@ -12,6 +12,7 @@ import { Skeleton, SkeletonGroup } from '@/components/Skeleton/Skeleton';
 import PageNav from '@/components/PageNav';
 import { Button, EmptyState, StarRating } from '@/components/ui';
 import StatusBadge from '@/components/StatusBadge';
+import { getSalonUrl } from '@/utils/salonUrl';
 
 // FIX 1: Create a more detailed Booking type that matches the actual API response data
 // This includes the full salon and service objects, and optional review/totalCost fields.
@@ -218,7 +219,7 @@ export default function MyBookingsPage() {
                     <Button variant="secondary" onClick={() => setReviewingBookingId(booking.id)}>
                       Leave a Review
                     </Button>
-                    <Button onClick={() => router.push(`/salons/${booking.salon.slug || booking.salonId}?serviceId=${booking.serviceId}`)}>
+                    <Button onClick={() => router.push(`${getSalonUrl(booking.salon)}?serviceId=${booking.serviceId}`)}>
                       Book Again
                     </Button>
                   </div>
@@ -226,7 +227,7 @@ export default function MyBookingsPage() {
                   <div style={{ marginTop: '1rem' }}>
                     <Button
                       variant="secondary"
-                      onClick={() => router.push(`/salons/${booking.salon.slug || booking.salonId}`)}
+                      onClick={() => router.push(getSalonUrl(booking.salon))}
                     >
                       Try Another Time
                     </Button>

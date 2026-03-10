@@ -161,7 +161,7 @@ function TeamMemberModal({
 
     try {
       if (editingMember) {
-        const updated = await apiJson(`/api/team-members/${editingMember.id}`, {
+        const updated = await apiJson<TeamMember>(`/api/team-members/${editingMember.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -169,7 +169,7 @@ function TeamMemberModal({
         onSave(updated, false);
         toast.success('Team member updated');
       } else {
-        const newMember = await apiJson(`/api/team-members/salon/${salonId}`, {
+        const newMember = await apiJson<TeamMember>(`/api/team-members/salon/${salonId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -305,7 +305,7 @@ export default function TeamMembers({ salonId, isEditable = false }: TeamMembers
     let isMounted = true;
     const fetchMembers = async () => {
       try {
-        const data = await apiJson(`/api/team-members/salon/${salonId}${isEditable ? '?includeInactive=true' : ''}`);
+        const data = await apiJson<TeamMember[]>(`/api/team-members/salon/${salonId}${isEditable ? '?includeInactive=true' : ''}`);
         if (isMounted) setMembers(data);
       } catch (error) {
         console.error('Failed to fetch team members:', error);

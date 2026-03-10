@@ -143,7 +143,7 @@ export default function DetailedSalonCard({ salon, onToggleFavorite, onBook }: D
                 <div key={service.id} className={styles.serviceItem}>
                   <div className={styles.serviceInfo}>
                     <h3 className={styles.serviceName}>{service.name}</h3>
-                    {service.offersMobile && (
+                    {salon.offersMobile && (
                       <div className={styles.serviceMobileBadge}>
                         <FaCar /> Mobile service
                       </div>
@@ -153,7 +153,7 @@ export default function DetailedSalonCard({ salon, onToggleFavorite, onBook }: D
                     <span className={styles.servicePrice}>
                       R{service.price?.toFixed(2) || '0.00'}
                     </span>
-                    <span className={styles.serviceDuration}>{service.durationMinutes || 60}min</span>
+                    <span className={styles.serviceDuration}>{service.duration || service.durationMin || 60}min</span>
                     <button
                       className={styles.bookButton}
                       onClick={(e) => handleBookService(e, service)}

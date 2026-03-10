@@ -8,9 +8,10 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './SalonMapView.module.css';
 import Link from 'next/link';
 import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
+import { getSalonUrl } from '@/utils/salonUrl';
 
-// Set Mapbox access token (same token as lib/mapbox.ts)
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 'pk.eyJ1IjoidHNha2FuaW1zZW5naSIsImEiOiJjbWo5eDBxOWswMTBwM2ZzOXRkNTNzNm5yIn0.sGUZfX9eJHmhoFIJFn_0kw';
+// Set Mapbox access token from runtime env only.
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
 interface Salon {
@@ -302,7 +303,7 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
                         ? calculateDistance(userLocation.lat, userLocation.lon, salon.latitude, salon.longitude)
                         : undefined;
                     const distanceStr = formatDistance(distanceKm);
-                    const salonUrl = `/salons/${salon.slug || salon.id}`;
+                    const salonUrl = getSalonUrl(salon);
 
                     // Get unique service categories
                     const serviceCategories = salon.services
@@ -558,7 +559,7 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
                                 return (
                                     <Link
                                         key={salon.id}
-                                        href={`/salons/${salon.slug || salon.id}`}
+                                        href={getSalonUrl(salon)}
                                         className={styles.salonListItem}
                                     >
                                         <div className={styles.salonListInfo}>

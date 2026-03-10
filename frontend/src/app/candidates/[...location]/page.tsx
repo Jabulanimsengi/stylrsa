@@ -3,9 +3,9 @@ import { Metadata } from 'next';
 import LocationsFooter from '@/components/LocationsFooter';
 
 type Props = {
-    params: {
+    params: Promise<{
         location: string[];
-    };
+    }>;
 };
 
 function capitalize(str: string) {
@@ -13,7 +13,7 @@ function capitalize(str: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const location = params.location;
+    const { location } = await params;
     const locationName = location[location.length - 1] ? capitalize(location[location.length - 1]) : 'South Africa';
     const province = location[0] ? capitalize(location[0]) : '';
 
@@ -36,8 +36,8 @@ export async function generateStaticParams() {
     return [];
 }
 
-export default function CandidatesLocationPage({ params }: Props) {
-    const location = params.location;
+export default async function CandidatesLocationPage({ params }: Props) {
+    const { location } = await params;
     const locationName = location[location.length - 1] ? capitalize(location[location.length - 1]) : 'South Africa';
     const province = location[0] ? capitalize(location[0]) : '';
     const isProvincePage = location.length === 1;

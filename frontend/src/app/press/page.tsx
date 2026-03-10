@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import styles from '../info-page.module.css';
 import PageNav from '@/components/PageNav';
 
@@ -85,7 +86,7 @@ export default function PressPage() {
           <ul className={styles.list}>
             <li><strong>Email:</strong> press@stylrsa.co.za</li>
             <li><strong>General Inquiries:</strong> hello@stylrsa.co.za</li>
-            <li><strong>Website:</strong> <a href="/contact">Contact Page</a></li>
+            <li><strong>Website:</strong> <Link href="/contact">Contact Page</Link></li>
           </ul>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
             We typically respond to media inquiries within 24-48 hours.

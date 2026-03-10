@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { cookies } from "next/headers";
+import { getInternalBackendOrigin } from "@/lib/server/backend-origin";
 
 const handler = NextAuth({
   providers: [
@@ -31,7 +32,7 @@ const handler = NextAuth({
             cookieStore.delete('oauth_signup_role');
           } catch {}
 
-          const backendOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || "http://localhost:5000";
+          const backendOrigin = getInternalBackendOrigin();
           console.log('[NextAuth] Calling backend SSO at:', `${backendOrigin}/api/auth/sso`);
           
           const r = await fetch(`${backendOrigin}/api/auth/sso`, {

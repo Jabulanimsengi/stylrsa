@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import styles from './CreateSellerProfile.module.css';
@@ -318,9 +319,9 @@ export default function CreateSellerProfilePage() {
                     {isApproved && (
                         <p>
                             Your profile is approved! You can now{' '}
-                            <a href="/product-dashboard" style={{ color: 'inherit', fontWeight: 600 }}>
+                            <Link href="/product-dashboard" style={{ color: 'inherit', fontWeight: 600 }}>
                                 add products to your store
-                            </a>
+                            </Link>
                             .
                         </p>
                     )}

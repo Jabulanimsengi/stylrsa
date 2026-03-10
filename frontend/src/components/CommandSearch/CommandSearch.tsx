@@ -9,10 +9,10 @@ import {
     CommandEmpty,
     CommandGroup,
     CommandItem,
-    CommandShortcut,
     Kbd,
 } from '@/components/ui';
 import { FaSearch, FaCut, FaStore, FaShoppingBag, FaChartLine, FaMapMarkerAlt } from 'react-icons/fa';
+import { getSalonUrl } from '@/utils/salonUrl';
 
 interface SearchResult {
     id: string;
@@ -22,12 +22,33 @@ interface SearchResult {
     url: string;
 }
 
+type SalonSearchMatch = {
+    id: string;
+    name: string;
+    city?: string | null;
+    province?: string | null;
+    slug?: string | null;
+};
+
+type ServiceSearchMatch = {
+    id: string;
+    title?: string | null;
+    name?: string | null;
+    salon?: {
+        id?: string;
+        name?: string | null;
+        slug?: string | null;
+        city?: string | null;
+        province?: string | null;
+    } | null;
+};
+
 const QUICK_LINKS = [
     { title: 'Find Salons', url: '/salons', icon: FaStore },
-    { title: 'Browse Services', url: '/search', icon: FaCut },
+    { title: 'Browse Services', url: '/services', icon: FaCut },
     { title: 'Shop Products', url: '/marketplace', icon: FaShoppingBag },
     { title: 'View Trends', url: '/trends', icon: FaChartLine },
-    { title: 'Near Me', url: '/search?nearMe=true', icon: FaMapMarkerAlt },
+    { title: 'Near Me', url: '/salons/near-me', icon: FaMapMarkerAlt },
 ];
 
 export function CommandSearch() {
@@ -69,20 +90,25 @@ export function CommandSearch() {
 
             // Combine results
             const searchResults: SearchResult[] = [
-                ...salonData.slice(0, 3).map((s: any) => ({
+                ...salonData.slice(0, 3).map((s: SalonSearchMatch) => ({
                     id: s.id,
                     type: 'salon' as const,
                     title: s.name,
                     subtitle: [s.city, s.province].filter(Boolean).join(', '),
-                    url: `/salon/${s.slug || s.id}`,
+                    url: getSalonUrl(s),
                 })),
-                ...serviceData.slice(0, 3).map((s: any) => ({
-                    id: s.id,
-                    type: 'service' as const,
-                    title: s.title || s.name,
-                    subtitle: s.salon?.name,
-                    url: s.salon ? `/salon/${s.salon.slug || s.salon.id}` : '/search',
-                })),
+                ...serviceData.slice(0, 3).map((s: ServiceSearchMatch) => {
+                    const serviceSalon = s.salon;
+                    return {
+                        id: s.id,
+                        type: 'service' as const,
+                        title: s.title || s.name,
+                        subtitle: serviceSalon?.name,
+                        url: serviceSalon?.id
+                            ? getSalonUrl({ id: serviceSalon.id, slug: serviceSalon.slug })
+                            : '/services',
+                    };
+                }),
             ];
 
             setResults(searchResults);
@@ -158,6 +184,8 @@ export function CommandSearch() {
                                     key={`${result.type}-${result.id}`}
                                     value={result.title}
                                     onSelect={() => handleSelect(result.url)}
+                                    data-testid={`command-result-${result.type}-${result.id}`}
+                                    data-url={result.url}
                                 >
                                     {getTypeIcon(result.type)}
                                     <div className="flex flex-col">

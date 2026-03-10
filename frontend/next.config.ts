@@ -9,10 +9,10 @@ const nextConfig: NextConfig = {
     IS_BUILD_PHASE: process.env.npm_lifecycle_event === 'build' ? 'true' : 'false',
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: process.env.ALLOW_BUILD_WITH_ERRORS === 'true',
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: process.env.ALLOW_BUILD_WITH_ERRORS === 'true',
   },
   staticPageGenerationTimeout: 120,
   experimental: {

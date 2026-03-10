@@ -119,7 +119,7 @@ export default function ProductFormModal({ onClose, onProductAdded, initialData,
         ...(salonId ? { salonId } : {}),
       });
 
-      const savedProduct = await apiJson(apiEndpoint, { method, headers: { 'Content-Type': 'application/json' }, body });
+      const savedProduct = await apiJson<Product>(apiEndpoint, { method, headers: { 'Content-Type': 'application/json' }, body });
 
       // Enhanced toast notification with clear messaging
       if (isEditMode) {

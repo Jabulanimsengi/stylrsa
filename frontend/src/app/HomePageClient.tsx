@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import styles from './HomePage.module.css';
@@ -12,20 +11,44 @@ import FeaturedSalons from '@/components/FeaturedSalons';
 import ServiceCategoryCircles from '@/components/ServiceCategoryCircles/ServiceCategoryCircles';
 import SalonCarouselSection from '@/components/SalonCarouselSection';
 import dynamic from 'next/dynamic';
+import { getSalonUrl } from '@/utils/salonUrl';
+import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
+import { usePagePerformance } from '@/hooks/usePagePerformance';
+import type { Salon } from '@/types';
 
+type SearchCategorySuggestion = { id: string; title: string; slug: string };
+type SearchVenueSuggestion = { id: string; title: string; slug?: string | null; city: string | null };
+type SearchServiceSuggestion = { id: string; title: string; salon?: { id?: string; name?: string } };
 // Disable SSR for TypingAnimation to prevent hydration mismatches and ghost double-rendering
 const TypingAnimation = dynamic(() => import('@/components/TypingAnimation/TypingAnimation'), {
   ssr: false,
   // Add an empty placeholder of similar size back so layout doesn't jump
   loading: () => <span style={{ display: 'inline-block', minWidth: '9em' }}></span>
 });
-
+const SEARCHABLE_CATEGORIES = [
+  { name: 'Hair', slug: 'haircuts-styling' },
+  { name: 'Braids', slug: 'braiding-weaving' },
+  { name: 'Nails', slug: 'nail-care' },
+  { name: 'Spa', slug: 'massage-body-treatments' },
+  { name: 'Makeup', slug: 'makeup-beauty' },
+  { name: 'Facials', slug: 'skin-care-facials' },
+  { name: 'Barber', slug: 'mens-grooming' },
+  { name: 'Waxing', slug: 'waxing-hair-removal' },
+  { name: 'Bridal', slug: 'bridal-services' },
+  { name: 'Wigs', slug: 'wig-installations' },
+  { name: 'Natural Hair', slug: 'natural-hair-specialists' },
+  { name: 'Lashes', slug: 'lashes-brows' },
+  { name: 'Aesthetics', slug: 'aesthetics-advanced-skin' },
+  { name: 'Tattoos', slug: 'tattoos-piercings' },
+  { name: 'Wellness', slug: 'wellness-holistic-spa' },
+  { name: 'Color', slug: 'hair-color-treatments' },
+] as const;
 
 interface HomePageClientProps {
-  initialFeaturedSalons: any[];
-  initialAllSalons: any[];
-  initialAvailableNowSalons: any[];
-  initialMobileSalons: any[];
+  initialFeaturedSalons: Salon[];
+  initialAllSalons: Salon[];
+  initialAvailableNowSalons: Salon[];
+  initialMobileSalons: Salon[];
 }
 
 export default function HomePageClient({
@@ -35,14 +58,15 @@ export default function HomePageClient({
   initialMobileSalons,
 }: HomePageClientProps) {
   const router = useRouter();
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  useMediaQuery('(max-width: 768px)');
+  usePagePerformance('home');
 
   // Hero search autocomplete state
   const [heroSearchQuery, setHeroSearchQuery] = useState('');
   const [heroSuggestions, setHeroSuggestions] = useState<{
-    categories: { id: string; title: string; slug: string }[];
-    venues: { id: string; title: string; slug: string; city: string | null }[];
-    services: { id: string; title: string; salon?: any }[];
+    categories: SearchCategorySuggestion[];
+    venues: SearchVenueSuggestion[];
+    services: SearchServiceSuggestion[];
   }>({ categories: [], venues: [], services: [] });
   const [showHeroSuggestions, setShowHeroSuggestions] = useState(false);
   const [isHeroSearching, setIsHeroSearching] = useState(false);
@@ -50,31 +74,11 @@ export default function HomePageClient({
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 
-  // Categories for search autocomplete
-  const SEARCHABLE_CATEGORIES = [
-    { name: 'Hair', slug: 'haircuts-styling' },
-    { name: 'Braids', slug: 'braiding-weaving' },
-    { name: 'Nails', slug: 'nail-care' },
-    { name: 'Spa', slug: 'massage-body-treatments' },
-    { name: 'Makeup', slug: 'makeup-beauty' },
-    { name: 'Facials', slug: 'skin-care-facials' },
-    { name: 'Barber', slug: 'mens-grooming' },
-    { name: 'Waxing', slug: 'waxing-hair-removal' },
-    { name: 'Bridal', slug: 'bridal-services' },
-    { name: 'Wigs', slug: 'wig-installations' },
-    { name: 'Natural Hair', slug: 'natural-hair-specialists' },
-    { name: 'Lashes', slug: 'lashes-brows' },
-    { name: 'Aesthetics', slug: 'aesthetics-advanced-skin' },
-    { name: 'Tattoos', slug: 'tattoos-piercings' },
-    { name: 'Wellness', slug: 'wellness-holistic-spa' },
-    { name: 'Color', slug: 'hair-color-treatments' },
-  ];
-
   // Hero search autocomplete effect
   useEffect(() => {
     const query = heroSearchQuery.trim().toLowerCase();
     if (query.length < 2) {
-      setHeroSuggestions([]);
+      setHeroSuggestions({ categories: [], venues: [], services: [] });
       setShowHeroSuggestions(false);
       return;
     }
@@ -98,24 +102,24 @@ export default function HomePageClient({
           signal: controller.signal
         });
 
-        let venueSuggestions: typeof heroSuggestions.venues = [];
-        let serviceSuggestions: typeof heroSuggestions.services = [];
+        let venueSuggestions: SearchVenueSuggestion[] = [];
+        let serviceSuggestions: SearchServiceSuggestion[] = [];
         if (res.ok) {
           const data = await res.json();
           // Map backend venues to UI venues
-          venueSuggestions = (data.venues || []).map((v: any) => ({
+          venueSuggestions = (data.venues || []).map((v: Partial<Salon>) => ({
             id: v.id,
-            title: v.name,
+            title: v.name || '',
             slug: v.slug,
-            city: v.city,
+            city: v.city || null,
           }));
 
           // Map backend services to UI services
-          serviceSuggestions = (data.services || []).map((item: any) => ({
+          serviceSuggestions = (data.services || []).map((item: { id?: string; title?: string; salon?: { id?: string; name?: string } }) => ({
             id: item.id || `suggestion-${Math.random()}`,
             title: item.title || '',
             salon: item.salon || undefined,
-          })).filter((s: any) => s.title);
+          })).filter((s: SearchServiceSuggestion) => Boolean(s.title));
         }
 
         // Combine into the state
@@ -183,15 +187,13 @@ export default function HomePageClient({
         {/* Background Image */}
         <div className={styles.heroImageWrapper}>
           <div className={styles.heroImageContainer}>
-            <Image
+            <OptimizedImage
               src="/art_one.webp"
               alt="Hero background art"
               fill
-              priority
+              eager
               className={styles.heroBackgroundImage}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
-              placeholder="blur"
-              blurDataURL="data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA="
             />
           </div>
           <div className={styles.heroOverlay} />
@@ -223,7 +225,11 @@ export default function HomePageClient({
                 value={heroSearchQuery}
                 onChange={(e) => setHeroSearchQuery(e.target.value)}
                 onFocus={() => {
-                  if (heroSuggestions.length > 0) setShowHeroSuggestions(true);
+                  const hasSuggestions =
+                    heroSuggestions.categories.length > 0 ||
+                    heroSuggestions.venues.length > 0 ||
+                    heroSuggestions.services.length > 0;
+                  if (hasSuggestions) setShowHeroSuggestions(true);
                 }}
                 onBlur={() => {
                   setTimeout(() => setShowHeroSuggestions(false), 150);
@@ -266,10 +272,12 @@ export default function HomePageClient({
                           <li
                             key={venue.id}
                             className={styles.heroSuggestionItem}
+                            data-testid={`hero-venue-${venue.id}`}
+                            data-url={getSalonUrl(venue)}
                             onMouseDown={(e) => {
                               e.preventDefault();
                               setShowHeroSuggestions(false);
-                              router.push(`/salons/${venue.slug}`);
+                              router.push(getSalonUrl(venue));
                             }}
                           >
                             <span className={styles.suggestionIcon}>🏠</span>

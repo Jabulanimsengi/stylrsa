@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { FaCheckCircle, FaStar, FaFire } from 'react-icons/fa';
 import styles from './TrustBadges.module.css';
 import { Salon } from '@/types';
@@ -12,7 +12,7 @@ interface TrustBadgesProps {
 
 export default function TrustBadges({ salon, showAll = false }: TrustBadgesProps) {
   const badges = useMemo(() => {
-    const badgesList: Array<{ type: string; label: string; icon: JSX.Element }> = [];
+    const badgesList: Array<{ type: string; label: string; icon: ReactNode }> = [];
 
     // Verified Salon - Check if salon has been verified (you can add a verified field to Salon type)
     // For now, we'll use a combination of factors: has reviews, has services, approved status

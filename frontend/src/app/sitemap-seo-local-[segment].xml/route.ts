@@ -10,11 +10,12 @@ import {
  * Pattern: /sitemap-seo-local-0.xml, /sitemap-seo-local-1.xml, etc.
  */
 export async function GET(
-    request: Request,
-    { params }: { params: Promise<{ segment: string }> }
+    request: Request
 ) {
     try {
-        const { segment } = await params;
+        const { pathname } = new URL(request.url);
+        const segmentMatch = pathname.match(/sitemap-seo-local-(\d+)\.xml$/);
+        const segment = segmentMatch?.[1] ?? '';
         const segmentNum = parseInt(segment, 10);
 
         if (isNaN(segmentNum) || segmentNum < 0) {

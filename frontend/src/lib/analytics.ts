@@ -71,6 +71,7 @@ export const event = ({
  * Predefined event types for common actions
  */
 export const analytics = {
+  event,
   // User Authentication
   login: (method: string) => {
     event({

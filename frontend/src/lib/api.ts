@@ -1,7 +1,13 @@
 /**
- * API utility for handling requests to the backend
- * Works with both Vercel (rewrites) and Cloudflare Pages (direct URLs)
+ * API utility for handling requests to the backend.
+ * Browser requests use same-origin Next.js routes; server requests use env-configured backend URLs.
  */
+
+export interface RetryOptions {
+  retries?: number;
+  retryDelay?: number;
+  shouldRetry?: (error: unknown, attempt: number) => boolean;
+}
 
 // Get the API base URL
 export function getApiUrl(): string {
@@ -22,7 +28,7 @@ export function getApiUrl(): string {
  */
 export function apiUrl(path: string): string {
   const base = getApiUrl();
-  // If base is empty, return path as-is (for Vercel rewrites)
+  // If base is empty, return the relative path as-is for same-origin routing
   if (!base) {
     return path;
   }
@@ -57,7 +63,7 @@ export async function apiFetch(path: string, options?: RequestInit, timeout: num
 }
 
 /**
- * Check if we're running on Cloudflare Pages
+ * Legacy hosting flag kept only for backward compatibility.
  */
 export function isCloudflare(): boolean {
   if (typeof window !== 'undefined') {
@@ -74,25 +80,48 @@ export function isCloudflare(): boolean {
  * @param timeout - Timeout in milliseconds (default: 30000)
  * @returns Parsed JSON response
  */
-export async function apiJson<T = unknown>(path: string, options?: RequestInit, timeout: number = 30000): Promise<T> {
-  try {
-    const response = await apiFetch(path, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    }, timeout);
-    
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+export async function apiJson<T = unknown>(
+  path: string,
+  options?: RequestInit,
+  timeoutOrRetryOptions: number | RetryOptions = 30000
+): Promise<T> {
+  const retryOptions = typeof timeoutOrRetryOptions === 'number' ? undefined : timeoutOrRetryOptions;
+  const timeout = typeof timeoutOrRetryOptions === 'number' ? timeoutOrRetryOptions : 30000;
+  const retries = retryOptions?.retries ?? 0;
+  const retryDelay = retryOptions?.retryDelay ?? 500;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const response = await apiFetch(path, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+      }, timeout);
+
+      if (!response.ok) {
+        const error = new Error(`API error: ${response.status} ${response.statusText}`) as Error & { statusCode?: number };
+        error.statusCode = response.status;
+        throw error;
+      }
+
+      return await response.json();
+    } catch (error: unknown) {
+      const isAbortError = error instanceof Error && error.name === 'AbortError';
+      const normalizedError = isAbortError
+        ? new Error('Request timed out. Please check your connection and try again.')
+        : error;
+      const shouldRetry = attempt < retries && (retryOptions?.shouldRetry?.(normalizedError, attempt) ?? false);
+
+      if (shouldRetry) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        continue;
+      }
+
+      throw normalizedError;
     }
-    
-    return response.json();
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
-      throw new Error('Request timed out. Please check your connection and try again.');
-    }
-    throw error;
   }
+
+  throw new Error('Unexpected API retry state');
 }

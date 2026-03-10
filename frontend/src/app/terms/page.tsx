@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import styles from '../info-page.module.css';
 import PageNav from '@/components/PageNav';
 
@@ -214,7 +215,7 @@ export default function TermsPage() {
 
         <h2 className={styles.sectionTitle}>13. Privacy</h2>
         <p className={styles.paragraph}>
-          Your use of the Platform is also governed by our Privacy Policy, which describes how we collect, use, and protect your personal information. Please review our Privacy Policy at <a href="/privacy">/privacy</a>.
+          Your use of the Platform is also governed by our Privacy Policy, which describes how we collect, use, and protect your personal information. Please review our Privacy Policy at <Link href="/privacy">/privacy</Link>.
         </p>
 
         <h2 className={styles.sectionTitle}>14. Changes to Terms</h2>
@@ -238,7 +239,7 @@ export default function TermsPage() {
         </p>
         <ul className={styles.list}>
           <li><strong>Email:</strong> legal@stylrsa.co.za</li>
-          <li><strong>Website:</strong> <a href="/contact">Contact Page</a></li>
+          <li><strong>Website:</strong> <Link href="/contact">Contact Page</Link></li>
           <li><strong>Address:</strong> Stylr SA, South Africa</li>
         </ul>
 

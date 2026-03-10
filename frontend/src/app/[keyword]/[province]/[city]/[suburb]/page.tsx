@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
   getSeoPageByUrl,
@@ -118,32 +119,26 @@ export default async function KeywordProvinceCitySuburbPage({
         <nav className="mb-6 text-sm text-gray-600">
           <ol className="flex items-center space-x-2">
             <li>
-              <a href="/" className="hover:text-primary">
-                Home
-              </a>
+              <Link href="/" className="hover:text-primary">Home</Link>
             </li>
             <li>/</li>
             <li>
-              <a href={`/${keyword}`} className="hover:text-primary">
-                {cachedPage.keyword?.keyword || keyword}
-              </a>
+              <Link href={`/${keyword}`} className="hover:text-primary">{cachedPage.keyword?.keyword || keyword}</Link>
             </li>
             <li>/</li>
             <li>
-              <a href={`/${keyword}/${province}`} className="hover:text-primary">
-                {cachedPage.location?.province || province}
-              </a>
+              <Link href={`/${keyword}/${province}`} className="hover:text-primary">{cachedPage.location?.province || province}</Link>
             </li>
             <li>/</li>
             {parentCity && (
               <>
                 <li>
-                  <a
+                  <Link
                     href={`/${keyword}/${province}/${city}`}
                     className="hover:text-primary"
                   >
                     {parentCity.name}
-                  </a>
+                  </Link>
                 </li>
                 <li>/</li>
               </>
@@ -209,13 +204,13 @@ export default async function KeywordProvinceCitySuburbPage({
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {cachedPage.relatedServices.map((service: any, index: number) => (
-                <a
+                <Link
                   key={index}
                   href={service.url}
                   className="p-4 border rounded-lg hover:border-primary hover:shadow-md transition-all"
                 >
                   <span className="text-sm font-medium">{service.label}</span>
-                </a>
+                </Link>
               ))}
             </div>
           </section>
@@ -229,13 +224,13 @@ export default async function KeywordProvinceCitySuburbPage({
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {cachedPage.nearbyLocations.map((location: any, index: number) => (
-                <a
+                <Link
                   key={index}
                   href={location.url}
                   className="p-4 border rounded-lg hover:border-primary hover:shadow-md transition-all"
                 >
                   <span className="text-sm font-medium">{location.label}</span>
-                </a>
+                </Link>
               ))}
             </div>
           </section>
@@ -252,12 +247,12 @@ export default async function KeywordProvinceCitySuburbPage({
               ? `Browse ${cachedPage.serviceCount} verified services and book your appointment online today.`
               : 'Be the first to list your services in this area!'}
           </p>
-          <a
+          <Link
             href="/services"
             className="inline-block px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           >
             Browse All Services
-          </a>
+          </Link>
         </section>
       </div>
     );

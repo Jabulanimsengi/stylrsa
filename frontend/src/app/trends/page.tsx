@@ -139,7 +139,7 @@ function TrendsPageContent() {
 
       {isLoading ? (
         <div className={styles.loadingState}>
-          <LoadingSpinner size="medium" color="primary" />
+          <LoadingSpinner size="md" color="primary" />
         </div>
       ) : filteredTrends.length === 0 ? (
         <div className={styles.emptyState}>
@@ -159,9 +159,8 @@ function TrendsPageContent() {
 
 export default function TrendsPage() {
   return (
-    <Suspense fallback={<LoadingSpinner size="medium" color="primary" />}>
+    <Suspense fallback={<LoadingSpinner size="md" color="primary" />}>
       <TrendsPageContent />
     </Suspense>
   );
 }
-

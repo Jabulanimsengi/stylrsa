@@ -37,11 +37,34 @@ export async function DELETE(request: NextRequest) {
 }
 
 async function proxyToBackend(request: NextRequest) {
-  const apiOrigin = process.env.NEXT_PUBLIC_API_ORIGIN || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+  // Use a dedicated backend origin for server-to-server proxying.
+  // In our Hetzner Docker setup, this must be http://backend:3001 to avoid hairpin NAT issues with public IPs.
+  const isDockerProd = process.env.NODE_ENV === 'production' && !process.env.VERCEL;
+  let apiOrigin = process.env.INTERNAL_BACKEND_URL ||
+    process.env.NEXT_PUBLIC_API_ORIGIN;
+
+  // If NEXT_PUBLIC_API_ORIGIN is undefined or points to the public URL, force the internal Docker name.
+  if (!apiOrigin || apiOrigin.includes('stylrsa.co.za') || apiOrigin.includes('127.0.0.1')) {
+    apiOrigin = isDockerProd ? 'http://backend:3001' : 'http://127.0.0.1:5000';
+  }
 
   // Get the full path including query params
   const url = new URL(request.url);
-  const backendUrl = `${apiOrigin}${url.pathname}${url.search}`;
+
+  // The route path is /api/[something]. The backend might already be mounted on /api or /, depending on setup.
+  // In the existing code: const backendUrl = `${apiOrigin}${url.pathname}${url.search}`;
+  // Let's preserve that logic unless url.pathname already starts with /api/api (which indicates a bug from earlier fallback).
+  let pathname = url.pathname;
+  if (pathname.startsWith('/api/api/')) {
+    pathname = pathname.replace('/api/api/', '/api/');
+  }
+
+  const backendUrl = `${apiOrigin}${pathname}${url.search}`;
+
+  console.log('[PROXY DEBUG] original URL:', request.url);
+  console.log('[PROXY DEBUG] NEXT_PUBLIC_API_ORIGIN:', process.env.NEXT_PUBLIC_API_ORIGIN);
+  console.log('[PROXY DEBUG] apiOrigin selected:', apiOrigin);
+  console.log('[PROXY DEBUG] Proxying to backendUrl:', backendUrl);
 
   try {
     // Get the content type to determine how to handle the body

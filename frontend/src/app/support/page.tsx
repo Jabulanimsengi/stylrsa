@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import styles from '../info-page.module.css';
 import PageNav from '@/components/PageNav';
 
@@ -31,10 +32,10 @@ export default function SupportPage() {
         <h2 className={styles.sectionTitle}>Quick Links</h2>
         <div className={styles.infoBlock}>
           <ul className={styles.list}>
-            <li><a href="/faq"><strong>📚 FAQs</strong> - Frequently Asked Questions</a></li>
-            <li><a href="/how-it-works"><strong>🔍 How It Works</strong> - Learn how to use Stylr SA</a></li>
-            <li><a href="/contact"><strong>💬 Contact Us</strong> - Get in touch with our team</a></li>
-            <li><a href="/safety-security"><strong>🔒 Safety & Security</strong> - Platform safety information</a></li>
+            <li><Link href="/faq"><strong>📚 FAQs</strong> - Frequently Asked Questions</Link></li>
+            <li><Link href="/how-it-works"><strong>🔍 How It Works</strong> - Learn how to use Stylr SA</Link></li>
+            <li><Link href="/contact"><strong>💬 Contact Us</strong> - Get in touch with our team</Link></li>
+            <li><Link href="/safety-security"><strong>🔒 Safety & Security</strong> - Platform safety information</Link></li>
           </ul>
         </div>
 
@@ -76,10 +77,10 @@ export default function SupportPage() {
         
         <h3 className={styles.blockTitle}>Getting Started</h3>
         <ul className={styles.list}>
-          <li><strong>Register as a partner:</strong> Visit <a href="/create-salon">Create Salon</a> page</li>
+          <li><strong>Register as a partner:</strong> Visit <Link href="/create-salon">Create Salon</Link> page</li>
           <li><strong>Profile setup:</strong> Complete all sections for better visibility</li>
           <li><strong>Verification:</strong> Upload required documents for account verification</li>
-          <li><strong>Partner guidelines:</strong> Read our <a href="/partner-guidelines">Partner Guidelines</a></li>
+          <li><strong>Partner guidelines:</strong> Read our <Link href="/partner-guidelines">Partner Guidelines</Link></li>
         </ul>
 
         <h3 className={styles.blockTitle}>Managing Bookings</h3>
@@ -142,7 +143,7 @@ export default function SupportPage() {
             <strong>Response Time:</strong> We typically respond within 24 hours on business days.
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
-            <a href="/contact"><strong>→ Contact Form</strong></a>
+            <Link href="/contact"><strong>→ Contact Form</strong></Link>
           </p>
         </div>
 

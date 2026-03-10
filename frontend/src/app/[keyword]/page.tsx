@@ -1,11 +1,10 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
   getFirstPageForKeyword,
-  getKeywordBySlug,
 } from '@/lib/seo-api';
 import { generateNationalSeoPageContent, isValidKeyword } from '@/lib/seo-generation';
-import { PROVINCES } from '@/lib/locationData';
 
 interface PageProps {
   params: Promise<{
@@ -13,9 +12,10 @@ interface PageProps {
   }>;
 }
 
-// ISR - pages cached for 24 hours, regenerated in background
-export const dynamicParams = true; // Allow any params (ISR)
-export const revalidate = 86400; // Cache for 24 hours
+// Force dynamic rendering so the page always fetches fresh SEO data
+// Without this, Next.js pre-renders the page at build time when the backend
+// is unreachable (in Docker build), resulting in 'Not Found' being cached
+export const dynamic = 'force-dynamic';
 
 // Top priority keywords to pre-build
 const PRIORITY_KEYWORDS = ['hair-salon', 'nail-salon', 'braiding', 'barbershop', 'spa', 'makeup', 'waxing', 'massage'];
@@ -78,7 +78,7 @@ export async function generateMetadata({
         },
       };
     }
-  } catch (error) {
+  } catch {
     // Fall through to local generation
   }
 
@@ -140,7 +140,7 @@ export default async function KeywordPage({ params }: PageProps) {
   // Try API first
   try {
     pageData = await getFirstPageForKeyword(keyword);
-  } catch (error) {
+  } catch {
     // API unavailable, will use local fallback
   }
 
@@ -171,9 +171,7 @@ export default async function KeywordPage({ params }: PageProps) {
       <nav className="mb-6 text-sm text-gray-600">
         <ol className="flex items-center space-x-2">
           <li>
-            <a href="/" className="hover:text-primary">
-              Home
-            </a>
+            <Link href="/" className="hover:text-primary">Home</Link>
           </li>
           <li>/</li>
           <li className="text-gray-900 font-medium">
@@ -212,13 +210,13 @@ export default async function KeywordPage({ params }: PageProps) {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {pageData.relatedServices.map((service: any, index: number) => (
-              <a
+              <Link
                 key={index}
                 href={service.url}
                 className="p-4 border rounded-lg hover:border-primary hover:shadow-md transition-all"
               >
                 <span className="text-sm font-medium">{service.label}</span>
-              </a>
+              </Link>
             ))}
           </div>
         </section>
@@ -232,13 +230,13 @@ export default async function KeywordPage({ params }: PageProps) {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {pageData.nearbyLocations.map((location: any, index: number) => (
-              <a
+              <Link
                 key={index}
                 href={location.url}
                 className="p-4 border rounded-lg hover:border-primary hover:shadow-md transition-all"
               >
                 <span className="text-sm font-medium">{location.label}</span>
-              </a>
+              </Link>
             ))}
           </div>
         </section>
@@ -253,12 +251,12 @@ export default async function KeywordPage({ params }: PageProps) {
           Browse our verified professionals and book your appointment online
           today.
         </p>
-        <a
+        <Link
           href="/services"
           className="inline-block px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
         >
           Browse All Services
-        </a>
+        </Link>
       </section>
     </div>
   );
