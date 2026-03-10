@@ -2,6 +2,7 @@
 
 import React from 'react';
 import styles from './AdminSidebar.module.css';
+import type { AdminView } from '../../admin-config';
 import {
     FaHome,
     FaStore,
@@ -22,26 +23,6 @@ import {
     FaChevronRight,
     FaTimes
 } from 'react-icons/fa';
-
-export type AdminView =
-    | 'dashboard'
-    | 'salons'
-    | 'services'
-    | 'reviews'
-    | 'products'
-    | 'promotions'
-    | 'all-salons'
-    | 'all-sellers'
-    | 'featured-salons'
-    | 'pending-payments'
-    | 'media'
-    | 'trends'
-    | 'salon-trendz'
-    | 'blogs'
-    | 'top10-requests'
-    | 'deleted-salons'
-    | 'deleted-sellers'
-    | 'audit';
 
 interface NavItem {
     id: AdminView;

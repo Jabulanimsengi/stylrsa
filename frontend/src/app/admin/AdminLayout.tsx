@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import styles from './AdminLayout.module.css';
-import AdminSidebar, { AdminView } from './components/AdminSidebar/AdminSidebar';
+import AdminSidebar from './components/AdminSidebar/AdminSidebar';
+import type { AdminView } from './admin-config';
 import { FaBars } from 'react-icons/fa';
 
 interface AdminLayoutProps {

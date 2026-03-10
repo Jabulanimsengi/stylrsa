@@ -11,7 +11,7 @@ import {
     FaCheckCircle,
     FaExclamationCircle
 } from 'react-icons/fa';
-import type { AdminView } from '../AdminSidebar/AdminSidebar';
+import type { AdminView } from '../../admin-config';
 
 interface DashboardMetrics {
     totalSalons: number;
