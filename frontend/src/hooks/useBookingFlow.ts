@@ -112,7 +112,6 @@ export interface UseBookingFlowReturn {
 // Constants
 // ============================================================================
 
-const STEPS: BookingStep[] = ['service', 'professional', 'details', 'date', 'time', 'confirm'];
 const VISIBLE_STEPS: BookingStep[] = ['details', 'date', 'time', 'confirm'];
 const STEP_LABELS: Record<BookingStep, string> = {
     service: 'Service',
@@ -132,7 +131,7 @@ const SLOT_REFRESH_INTERVAL = 30000; // 30 seconds
 
 export function useBookingFlow({
     salon,
-    services,
+    services: _services,
     initialService,
     onBookingSuccess,
     onClose,
@@ -299,7 +298,9 @@ export function useBookingFlow({
 
             const data = await response.json();
             // Transform to DayAvailability format
-            const availability: DayAvailability[] = Object.entries(data).map(([date, slots]: [string, any]) => {
+            const availability: DayAvailability[] = Object.entries(
+                data as Record<string, Array<{ isAvailable: boolean }> | undefined>
+            ).map(([date, slots]) => {
                 const availableCount = Array.isArray(slots)
                     ? slots.filter((s: { isAvailable: boolean }) => s.isAvailable).length
                     : 0;
@@ -320,6 +321,16 @@ export function useBookingFlow({
             setLoadingMonthAvailability(false);
         }
     }, [salon.id, state.selectedService]);
+
+    useEffect(() => {
+        if (!state.selectedService) {
+            setMonthAvailability([]);
+            return;
+        }
+
+        const referenceDate = state.selectedDate ?? new Date();
+        void fetchMonthAvailability(referenceDate.getFullYear(), referenceDate.getMonth() + 1);
+    }, [fetchMonthAvailability, state.selectedDate, state.selectedService]);
 
     // ---------------------------------------------------------------------------
     // Navigation
@@ -474,11 +485,11 @@ export function useBookingFlow({
             } catch { /* Ignore ICS generation errors */ }
 
             onBookingSuccess(newBooking);
-        } catch (error: any) {
+        } catch (error: unknown) {
             let errorMessage = 'Could not send booking request. Please try again.';
 
             // Handle specific error types
-            if (error?.message) {
+            if (error instanceof Error && error.message) {
                 if (error.message.includes('time slot is not available')) {
                     errorMessage = 'This time slot is no longer available. Please select another time.';
                 } else if (error.message.includes('Phone number')) {

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, FormEvent, useEffect, useRef, useCallback, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, type FormEvent, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './CreateSalon.module.css';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
 import PageNav from '@/components/PageNav';
-import { APP_PLANS, PLAN_BY_CODE, PlanCode } from '@/constants/plans';
+import { type PlanCode } from '@/constants/plans';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import MapboxMap from '@/components/MapboxMap';
@@ -37,6 +37,34 @@ interface SalonDraft {
   savedAt: string;
 }
 
+type BookingType = SalonDraft['bookingType'];
+
+type CreateSalonPayload = {
+  name: string;
+  address: string;
+  city: string;
+  town: string;
+  province: string;
+  phone: string;
+  email: string;
+  description: string;
+  offersMobile: boolean;
+  latitude: number;
+  longitude: number;
+  planCode: PlanCode;
+  hasSentProof: boolean;
+  website?: string;
+  whatsapp?: string;
+  mobileFee?: number;
+  operatingHours: Array<{ day: string; open: string; close: string }>;
+  operatingDays: string[];
+};
+
+type CreateSalonError = Error & {
+  statusCode?: number;
+  userMessage?: string;
+};
+
 function CreateSalonPageContent() {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -54,7 +82,7 @@ function CreateSalonPageContent() {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [addrQuery, setAddrQuery] = useState('');
-  const [addrSuggestions, setAddrSuggestions] = useState<any[]>([]);
+  const [addrSuggestions, setAddrSuggestions] = useState<GeocodingResult[]>([]);
   const [showAddrSuggestions, setShowAddrSuggestions] = useState(false);
   const [fieldsLocked, setFieldsLocked] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
@@ -66,11 +94,10 @@ function CreateSalonPageContent() {
     Object.fromEntries(days.map(d => [d, { open: '09:00', close: '17:00', isOpen: true }])) as Record<string, { open: string, close: string, isOpen: boolean }>
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<PlanCode>('PREMIUM');
+  const selectedPlan: PlanCode = 'PREMIUM';
   const [hasConfirmedPayment, setHasConfirmedPayment] = useState(false);
   const { authStatus, user } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   // Save draft to localStorage
   const saveDraft = useCallback(() => {
@@ -107,7 +134,7 @@ function CreateSalonPageContent() {
     } finally {
       setIsSaving(false);
     }
-  }, [name, address, city, province, town, postalCode, phone, email, website, description, bookingType, mobileFee, latitude, longitude, addrQuery, fieldsLocked, hours]);
+  }, [name, address, city, province, town, postalCode, phone, email, website, whatsapp, description, bookingType, mobileFee, latitude, longitude, addrQuery, fieldsLocked, hours]);
 
   // Load draft from localStorage
   const loadDraft = useCallback((draft: SalonDraft) => {
@@ -212,7 +239,7 @@ function CreateSalonPageContent() {
               router.push('/dashboard');
             }
           }
-        } catch (error) {
+        } catch {
           // Ignore errors - user might not have a salon yet
           logger.debug('No existing salon found, allowing creation');
         }
@@ -256,7 +283,7 @@ function CreateSalonPageContent() {
         return;
       }
 
-      const payload: any = {
+      const payload: CreateSalonPayload = {
         name,
         address,
         city,
@@ -270,6 +297,8 @@ function CreateSalonPageContent() {
         longitude,
         planCode: selectedPlan,
         hasSentProof: true, // User confirmed payment proof sent
+        operatingHours: [],
+        operatingDays: [],
       };
       if (website && website.trim().length > 0 && isValidUrl(website.trim())) {
         payload.website = website.trim();
@@ -307,7 +336,7 @@ function CreateSalonPageContent() {
         // Try to parse the error response as JSON, but have a fallback.
         const errorData = await response.json().catch(() => ({ message: 'Failed to create salon due to a server error.' }));
         console.error('Error data:', errorData);
-        const error: any = new Error(errorData.message || 'Failed to create salon');
+        const error: CreateSalonError = new Error(errorData.message || 'Failed to create salon');
         error.statusCode = response.status;
         error.userMessage = errorData.userMessage; // Pass through user-friendly message if available
         throw error;
@@ -330,7 +359,7 @@ function CreateSalonPageContent() {
 
       console.log('Redirecting to dashboard...');
       router.push('/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create salon:', error);
       logger.error('Failed to create salon:', error);
       const friendlyMsg = toFriendlyMessage(error, 'Failed to create salon. Please try again.');
@@ -658,7 +687,12 @@ function CreateSalonPageContent() {
           </div>
           <div className={styles.inputGroup}>
             <label htmlFor="bookingType">Service Type</label>
-            <select id="bookingType" value={bookingType} onChange={(e) => setBookingType(e.target.value as any)} className={styles.input}>
+            <select
+              id="bookingType"
+              value={bookingType}
+              onChange={(e) => setBookingType(e.target.value as BookingType)}
+              className={styles.input}
+            >
               <option value="ONSITE">On site</option>
               <option value="MOBILE">Off site (mobile)</option>
               <option value="BOTH">Both on site and off site</option>
