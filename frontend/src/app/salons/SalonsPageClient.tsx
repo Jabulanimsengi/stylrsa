@@ -14,7 +14,6 @@ import { type FilterValues } from '@/components/FilterBar/FilterBar';
 import { SkeletonGroup, SkeletonCard } from '@/components/Skeleton/Skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
-import { toast } from 'react-toastify';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { getImageWithFallback } from '@/lib/placeholders';
@@ -28,6 +27,7 @@ import BookingConfirmationModal from '@/components/BookingConfirmationModal/Book
 import { getSalonUrl } from '@/utils/salonUrl';
 import { usePagePerformance } from '@/hooks/usePagePerformance';
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
+import { notify } from '@/lib/notify';
 
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
@@ -296,7 +296,7 @@ export default function SalonsPageClient() {
             setSalons(data);
         } catch (error) {
             logger.error('Failed to fetch salons:', error);
-            toast.error(toFriendlyMessage(error, 'Failed to load salons. Please try again.'));
+            notify.error(toFriendlyMessage(error, 'Failed to load salons. Please try again.'));
             setSalons([]);
         } finally {
             setIsLoading(false);
@@ -313,7 +313,7 @@ export default function SalonsPageClient() {
             const message = locationSource === 'ip'
                 ? '📍 Showing salons near your estimated location'
                 : '📍 Showing salons near your location';
-            toast.info(message, {
+            notify.info(message, {
                 autoClose: 3000,
             });
         }
@@ -324,7 +324,7 @@ export default function SalonsPageClient() {
         if (geoError) {
             logger.debug('Geolocation error:', geoError);
             if (!geoError.includes('denied')) {
-                toast.warn('Unable to get your location. Showing all salons instead.');
+                notify.warning('Unable to get your location. Showing all salons instead.');
             }
         }
     }, [geoError]);
@@ -346,7 +346,7 @@ export default function SalonsPageClient() {
         e.stopPropagation();
 
         if (authStatus !== 'authenticated') {
-            toast.info('Please log in to add salons to your favorites.');
+            notify.info('Please sign in to save salons to favorites.');
             openModal('login');
             return;
         }
@@ -371,10 +371,10 @@ export default function SalonsPageClient() {
 
             const { favorited } = await res.json();
             const message = favorited ? 'Added to favorites!' : 'Removed from favorites.';
-            toast.success(message);
+            notify.success(message);
 
         } catch {
-            toast.error('Could not update favorites. Please try again.');
+            notify.error('Could not update favorites. Please try again.');
             setSalons(originalSalons);
         }
     };
@@ -405,7 +405,7 @@ export default function SalonsPageClient() {
     const handleBookingSuccess = (_booking: Booking) => {
         setBookingModalOpen(false);
         setSelectedService(null);
-        toast.success('Booking confirmed!');
+        notify.success('Booking confirmed.');
     };
 
     // Check if filtering by specific province or category

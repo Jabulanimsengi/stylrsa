@@ -2,7 +2,6 @@
 
 import { useState, FormEvent, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { toast } from 'react-toastify';
 import styles from './CreateSalon.module.css';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,6 +11,7 @@ import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import MapboxMap from '@/components/MapboxMap';
 import { forwardGeocode, GeocodingResult } from '@/lib/mapbox';
+import { notify } from '@/lib/notify';
 
 const DRAFT_STORAGE_KEY = 'salon-draft';
 
@@ -100,9 +100,9 @@ function CreateSalonPageContent() {
       localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
       setLastSaved(new Date().toLocaleTimeString());
       setHasDraft(true);
-      toast.success('Draft saved! You can continue later.', { autoClose: 2000 });
+      notify.success('Draft saved. You can continue later.', { autoClose: 2000 });
     } catch (error) {
-      toast.error('Failed to save draft');
+      notify.error('Failed to save draft');
       logger.error('Failed to save draft:', error);
     } finally {
       setIsSaving(false);
@@ -144,7 +144,7 @@ function CreateSalonPageContent() {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
     setHasDraft(false);
     setLastSaved(null);
-    toast.info('Draft cleared');
+    notify.info('Draft cleared');
   }, []);
 
   // Check for existing draft on mount
@@ -158,7 +158,7 @@ function CreateSalonPageContent() {
         const savedDate = draft.savedAt ? new Date(draft.savedAt).toLocaleString() : 'unknown time';
         if (window.confirm(`You have a saved draft from ${savedDate}. Would you like to restore it?`)) {
           loadDraft(draft);
-          toast.success('Draft restored!');
+          notify.success('Draft restored.');
         }
       }
     } catch (error) {
@@ -208,7 +208,7 @@ function CreateSalonPageContent() {
             const salon = await res.json();
             if (salon && salon.id) {
               // User already has a salon, redirect to dashboard
-              toast.info('You already have a salon profile. Redirecting to dashboard...');
+              notify.info('You already have a salon profile. Redirecting to dashboard.');
               router.push('/dashboard');
             }
           }
@@ -246,13 +246,13 @@ function CreateSalonPageContent() {
 
       // Validate package selection
       if (!selectedPlan) {
-        toast.error('Please select a package to continue');
+        notify.error('Please select a package to continue.');
         return;
       }
 
       // Validate WhatsApp confirmation
       if (!hasConfirmedPayment) {
-        toast.error('Please confirm that you have sent proof of payment to WhatsApp');
+        notify.error('Please confirm that you have sent proof of payment to WhatsApp.');
         return;
       }
 
@@ -317,13 +317,13 @@ function CreateSalonPageContent() {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
 
       // Enhanced success message
-      toast.success('🎉 Salon profile created successfully!', {
+      notify.success('Salon profile created successfully.', {
         autoClose: 5000
       });
 
       // Show next steps
       setTimeout(() => {
-        toast.info('💡 Next: Add services and set your availability in the dashboard', {
+        notify.info('Next: add services and set your availability in the dashboard.', {
           autoClose: 7000
         });
       }, 1000);
@@ -334,7 +334,7 @@ function CreateSalonPageContent() {
       console.error('Failed to create salon:', error);
       logger.error('Failed to create salon:', error);
       const friendlyMsg = toFriendlyMessage(error, 'Failed to create salon. Please try again.');
-      toast.error(friendlyMsg);
+      notify.error(friendlyMsg);
       // Fallback alert if toast is missed
       alert(`Error: ${friendlyMsg}`);
     } finally {
@@ -507,7 +507,7 @@ function CreateSalonPageContent() {
                           setFieldsLocked(true);
                         }
 
-                        toast.success('Location set successfully! 📍 Fields auto-populated and editable.');
+                        notify.success('Location set successfully. Fields were auto-populated and remain editable.');
                       }}
                     >
                       {s.display_name}

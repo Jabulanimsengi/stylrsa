@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
 import PageNav from '@/components/PageNav';
 import PromotionCard, { Promotion, PromotionCardSkeleton } from '@/components/PromotionCard';
 import ImageLightbox from '@/components/ImageLightbox';
@@ -9,6 +8,7 @@ import BookingModal from '@/components/BookingModal';
 import { Service, Salon } from '@/types';
 import styles from './promotions.module.css';
 import EmptyState from '@/components/EmptyState/EmptyState';
+import { notify } from '@/lib/notify';
 
 type PromotionServiceSummary = NonNullable<Promotion['service']>;
 
@@ -98,7 +98,7 @@ export default function PromotionsPage() {
   };
 
   const handleBookingSuccess = () => {
-    toast.success('Booking request sent! The salon will confirm shortly.');
+    notify.success('Booking request sent. The salon will confirm shortly.');
     handleBookingClose();
   };
 

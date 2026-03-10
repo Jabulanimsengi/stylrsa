@@ -5,12 +5,11 @@ import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import styles from '../app/auth.module.css';
 import { useAuthModal } from '@/context/AuthModalContext';
-import { toast } from 'react-toastify';
 import { User } from '@/types';
-import { apiJson, apiFetch } from '@/lib/api';
+import { apiJson } from '@/lib/api';
 import { toFriendlyMessage } from '@/lib/errors';
-import { FaGoogle } from 'react-icons/fa';
 import { Alert, LoadingButton } from '@/components/ui';
+import { notify } from '@/lib/notify';
 
 // Define the props that this component will accept
 interface LoginProps {
@@ -23,7 +22,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { switchToRegister, switchToResendVerification } = useAuthModal();
+  const { switchToResendVerification } = useAuthModal();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -37,14 +36,14 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         body: JSON.stringify({ email, password }),
       });
 
-      toast.success('Login successful! Welcome back.');
+      notify.success('Login successful. Welcome back.');
       // On success, call the function passed down from the parent component
       onLoginSuccess(data.user);
 
     } catch (err: unknown) {
       const msg = toFriendlyMessage(err, 'Login failed. Please check your credentials.');
       setError(msg);
-      toast.error(msg);
+      notify.error(msg);
     } finally {
       setIsLoading(false);
     }

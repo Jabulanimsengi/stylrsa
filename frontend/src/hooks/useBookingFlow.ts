@@ -2,9 +2,9 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Service, TeamMember, Salon, Booking } from '@/types';
-import { toast } from 'react-toastify';
 import { apiJson } from '@/lib/api';
 import { toFriendlyMessage } from '@/lib/errors';
+import { notify } from '@/lib/notify';
 
 // ============================================================================
 // Types
@@ -226,7 +226,7 @@ export function useBookingFlow({
                 console.error('Failed to fetch team members:', error);
                 const errorMessage = error instanceof Error ? error.message : 'Failed to load team members';
                 setError(errorMessage);
-                toast.error(errorMessage);
+                notify.error(errorMessage);
             } finally {
                 setLoadingTeam(false);
             }
@@ -258,7 +258,7 @@ export function useBookingFlow({
         } catch (err) {
             console.error('Error fetching time slots:', err);
             setAvailableSlots([]);
-            toast.error('Could not load available time slots. Please try another date.');
+            notify.error('Could not load available time slots. Please try another date.');
         } finally {
             setLoadingSlots(false);
         }
@@ -314,7 +314,7 @@ export function useBookingFlow({
             console.error('Failed to fetch month availability:', error);
             const errorMessage = error instanceof Error ? error.message : 'Failed to load calendar availability';
             setError(errorMessage);
-            toast.error(errorMessage);
+            notify.error(errorMessage);
             setMonthAvailability([]);
         } finally {
             setLoadingMonthAvailability(false);
@@ -422,7 +422,7 @@ export function useBookingFlow({
         if (!state.selectedDate || !state.selectedSlot || !state.selectedService) {
             const errorMsg = 'Please complete all booking details.';
             setError(errorMsg);
-            toast.error(errorMsg);
+            notify.error(errorMsg);
             return;
         }
 
@@ -431,7 +431,7 @@ export function useBookingFlow({
         if (!phoneRegex.test(state.clientPhone.replace(/\s/g, ''))) {
             const errorMsg = 'Please enter a valid South African phone number (10 digits starting with 0)';
             setError(errorMsg);
-            toast.error(errorMsg);
+            notify.error(errorMsg);
             return;
         }
 
@@ -454,7 +454,7 @@ export function useBookingFlow({
                 }),
             }) as Booking;
 
-            toast.success('Booking request sent successfully!');
+            notify.success('Booking request sent successfully.');
 
             // Generate ICS file for calendar
             try {
@@ -491,7 +491,7 @@ export function useBookingFlow({
             }
 
             setError(errorMessage);
-            toast.error(errorMessage);
+            notify.error(errorMessage);
         } finally {
             setIsSubmitting(false);
         }

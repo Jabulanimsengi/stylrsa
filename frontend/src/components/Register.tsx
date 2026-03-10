@@ -3,12 +3,9 @@
 import { useState, FormEvent } from 'react';
 import { signIn } from 'next-auth/react';
 import styles from '../app/auth.module.css';
-import { useAuthModal } from '@/context/AuthModalContext';
-import { toast } from 'react-toastify';
 import { apiFetch } from '@/lib/api';
-import { toFriendlyMessage } from '@/lib/errors';
-import { FaGoogle } from 'react-icons/fa';
 import { Alert, LoadingButton, Button } from '@/components/ui';
+import { notify } from '@/lib/notify';
 
 // Define the props that this component will accept
 interface RegisterProps {
@@ -31,8 +28,6 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showGoogleConfirm, setShowGoogleConfirm] = useState(false);
-  const { switchToLogin } = useAuthModal();
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -49,9 +44,9 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
 
       // Handle successful response
       if (response.message) {
-        toast.success(response.message);
+        notify.success(response.message);
       } else {
-        toast.success('Registration successful! Check your email for the verification code.');
+        notify.success('Registration successful. Check your email for the verification code.');
       }
 
       // Call success handler to switch to email verification view
@@ -60,23 +55,23 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
         onRegisterSuccess(email);
       }, 1500);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Registration error:', err);
 
       // Extract the error message - backend sends structured error responses
       let msg = 'Registration failed. Please try again.';
 
       // Check for message in error object (from parseErrorResponse)
-      if (err?.message) {
+      if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
         msg = err.message;
-      } else if (err?.userMessage) {
+      } else if (err && typeof err === 'object' && 'userMessage' in err && typeof err.userMessage === 'string') {
         msg = err.userMessage;
       } else if (typeof err === 'string') {
         msg = err;
       }
 
       setError(msg);
-      toast.error(msg);
+      notify.error(msg);
     } finally {
       setIsLoading(false);
     }

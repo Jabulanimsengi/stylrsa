@@ -8,7 +8,6 @@ import styles from './MyFavoritesPage.module.css';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { SkeletonGroup, SkeletonCard } from '@/components/Skeleton/Skeleton';
-import { toast } from 'react-toastify';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { getImageWithFallback } from '@/lib/placeholders';
@@ -16,6 +15,7 @@ import { transformCloudinary } from '@/utils/cloudinary';
 import PageNav from '@/components/PageNav';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import { getSalonUrl } from '@/utils/salonUrl';
+import { notify } from '@/lib/notify';
 
 export default function MyFavoritesPage() {
   const [favorites, setFavorites] = useState<Salon[]>([]);
@@ -54,7 +54,7 @@ export default function MyFavoritesPage() {
           setFavorites(data.map((fav: { salon: Salon }) => fav.salon));
         } catch (error) {
           logger.error('Failed to fetch favorites:', error);
-          toast.error(toFriendlyMessage(error, 'Failed to load your favorites.'));
+          notify.error(toFriendlyMessage(error, 'Failed to load your favorites.'));
         } finally {
           setIsLoading(false);
         }

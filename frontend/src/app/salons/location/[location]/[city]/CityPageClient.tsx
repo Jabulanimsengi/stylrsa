@@ -12,7 +12,6 @@ import { type FilterValues } from '@/components/FilterBar/FilterBar';
 import { SkeletonGroup, SkeletonCard } from '@/components/Skeleton/Skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
-import { toast } from 'react-toastify';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { getImageWithFallback } from '@/lib/placeholders';
@@ -20,6 +19,7 @@ import PageNav from '@/components/PageNav';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import { getSalonUrl } from '@/utils/salonUrl';
+import { notify } from '@/lib/notify';
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
 
@@ -67,7 +67,7 @@ function SalonsCityContent({ initialSalons = [], cityInfo }: CityPageClientProps
       setSalons(await res.json());
     } catch (error) {
       logger.error('Failed to fetch salons:', error);
-      toast.error(toFriendlyMessage(error, 'Failed to load salons. Please try again.'));
+      notify.error(toFriendlyMessage(error, 'Failed to load salons. Please try again.'));
       setSalons([]);
     } finally {
       setIsLoading(false);
@@ -88,7 +88,7 @@ function SalonsCityContent({ initialSalons = [], cityInfo }: CityPageClientProps
     e.preventDefault();
     e.stopPropagation();
     if (authStatus !== 'authenticated') {
-      toast.info('Please log in to add salons to your favorites.');
+      notify.info('Please sign in to save salons to favorites.');
       openModal('login');
       return;
     }
@@ -98,9 +98,9 @@ function SalonsCityContent({ initialSalons = [], cityInfo }: CityPageClientProps
       const res = await fetch(`/api/favorites/toggle/${salonId}`, { method: 'POST', credentials: 'include' });
       if (!res.ok) throw new Error('Failed');
       const { favorited } = await res.json();
-      toast.success(favorited ? 'Added to favorites!' : 'Removed from favorites.');
+      notify.success(favorited ? 'Added to favorites.' : 'Removed from favorites.');
     } catch {
-      toast.error('Could not update favorites. Please try again.');
+      notify.error('Could not update favorites. Please try again.');
       setSalons(originalSalons);
     }
   };
