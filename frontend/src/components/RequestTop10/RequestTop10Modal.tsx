@@ -9,6 +9,7 @@ import { FaCloudUploadAlt, FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { forwardGeocode, GeocodingResult } from '@/lib/mapbox';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
+import { ModalShell } from '@/components/ui';
 
 const SERVICE_CATEGORIES = [
   { id: 'hair-salon', name: 'Hair Salon', icon: '💇' },
@@ -210,7 +211,7 @@ export default function RequestTop10Modal({ isOpen, onClose }: RequestTop10Modal
         setImages(prev => [...prev, ...uploadedUrls]);
         toast.success(`${uploadedUrls.length} image(s) uploaded`);
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to upload images');
     } finally {
       setIsUploading(false);
@@ -285,8 +286,20 @@ export default function RequestTop10Modal({ isOpen, onClose }: RequestTop10Modal
   const getCategoryName = () => SERVICE_CATEGORIES.find(c => c.id === selectedCategory)?.name || '';
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <ModalShell
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={step === 'category' ? 'Urgent Request' : `Urgent ${getCategoryName()} Request`}
+      description={
+        step === 'category'
+          ? 'Get matched with top service providers in your area.'
+          : 'Fill in your details and we will match you with top providers.'
+      }
+      size="lg"
+      className={styles.modal}
+      bodyClassName="px-0 py-0"
+    >
+      <div className={styles.modal}>
         <button className={styles.closeButton} onClick={onClose} aria-label="Close">
           ×
         </button>
@@ -605,6 +618,6 @@ export default function RequestTop10Modal({ isOpen, onClose }: RequestTop10Modal
           </>
         )}
       </div>
-    </div>
+    </ModalShell>
   );
 }

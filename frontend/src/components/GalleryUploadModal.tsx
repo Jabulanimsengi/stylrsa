@@ -11,6 +11,7 @@ import { uploadToCloudinary } from '@/utils/cloudinary';
 import { FaTimes, FaUpload } from 'react-icons/fa';
 import { apiJson } from '@/lib/api';
 import { toFriendlyMessage } from '@/lib/errors';
+import { ModalShell } from '@/components/ui';
 
 interface GalleryUploadModalProps {
   salonId: string;
@@ -57,8 +58,9 @@ export default function GalleryUploadModal({ salonId, onClose, onImageAdded }: G
       }));
       setFiles((prev) => [...prev, ...newFiles]);
       toast.success(`${fileArray.length} image(s) selected`);
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to process files';
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to process files';
       setError(errorMessage);
       toast.error(errorMessage);
       e.target.value = '';
@@ -145,7 +147,7 @@ export default function GalleryUploadModal({ salonId, onClose, onImageAdded }: G
       cleanupPreviews();
       onClose();
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg = toFriendlyMessage(err, 'One or more images failed to save.');
       setError(msg);
       toast.error(msg);
@@ -165,10 +167,17 @@ export default function GalleryUploadModal({ salonId, onClose, onImageAdded }: G
   }, []);
 
   return (
-    <div className={styles.modalOverlay}>
+    <ModalShell
+      open={true}
+      onOpenChange={(open) => !open && handleClose()}
+      title="Upload to Gallery"
+      description="Add new portfolio images to your salon gallery."
+      size="lg"
+      className={styles.modalContent}
+      bodyClassName="px-0 py-0"
+    >
       <div className={styles.modalContent}>
         <div className={styles.header}>
-            <h2 className={styles.title}>Upload to Gallery</h2>
             <button onClick={handleClose} className={styles.closeButton}><FaTimes /></button>
         </div>
         
@@ -240,6 +249,6 @@ export default function GalleryUploadModal({ salonId, onClose, onImageAdded }: G
           </div>
         </form>
       </div>
-    </div>
+    </ModalShell>
   );
 }
