@@ -126,6 +126,19 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
   const planDetails = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
   const planStatus = (salon?.planPaymentStatus as PlanPaymentStatus | null) ?? 'PENDING_SELECTION';
   const planReference = salon?.planPaymentReference ?? salon?.name ?? 'your salon name';
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const todaysBookings = bookings.filter((booking) => booking.bookingTime.slice(0, 10) === todayIso);
+  const attentionItems = [
+    pendingBookings.length > 0 ? `${pendingBookings.length} booking request${pendingBookings.length === 1 ? '' : 's'} waiting for confirmation` : null,
+    planStatus !== 'VERIFIED' ? `Payment status: ${PLAN_PAYMENT_LABELS[planStatus]}` : null,
+    services.length === 0 ? 'No services listed yet' : null,
+  ].filter(Boolean) as string[];
+  const overviewActions = [
+    { id: 'bookings' as TabId, label: 'Review bookings', helper: `${pendingBookings.length} pending` },
+    { id: 'services' as TabId, label: 'Update services', helper: `${services.length} listed` },
+    { id: 'gallery' as TabId, label: 'Refresh gallery', helper: `${galleryImages.length} images live` },
+    { id: 'package' as TabId, label: 'Check package', helper: PLAN_PAYMENT_LABELS[planStatus] },
+  ];
 
   const handlePlanProofUpdate = useCallback(async (hasProof: boolean) => {
     if (!ownerId) return;
@@ -152,7 +165,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
     if (!ownerId) return;
     setIsSubmittingPlanChange(true);
     try {
-      const body: any = {
+      const body: Record<string, unknown> = {
         planCode: newPlanCode,
         paymentReference: paymentReference || salon?.name || 'Payment reference'
       };
@@ -212,7 +225,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
 
       if (salonData.operatingHours && Array.isArray(salonData.operatingHours)) {
         const hoursObj: OperatingHours = initializeOperatingHours();
-        salonData.operatingHours.forEach((schedule: any) => {
+        salonData.operatingHours.forEach((schedule: { day?: string; open?: string; close?: string }) => {
           if (schedule.day && schedule.open && schedule.close) {
             hoursObj[schedule.day] = { open: schedule.open, close: schedule.close, isOpen: true };
           }
@@ -235,7 +248,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
       if (galleryRes.status === 'fulfilled') setGalleryImages(galleryRes.value as GalleryImage[]);
       if (productsRes.status === 'fulfilled') setProducts(productsRes.value as Product[]);
       if (promotionsRes.status === 'fulfilled') setPromotions((promotionsRes.value as { active: any[]; expired: any[] }) || { active: [], expired: [] });
-    } catch (err: any) {
+    } catch (err: unknown) {
       notify.error(toFriendlyMessage(err, 'Failed to load dashboard.'));
     } finally {
       setIsLoading(false);
@@ -283,7 +296,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
 
   useEffect(() => {
     if (!socket || !salon?.id) return;
-    const handler = (payload: any) => {
+    const handler = (payload: { entity?: string; id?: string }) => {
       if (payload?.entity === 'salon' && payload.id === salon.id) {
         fetchDashboardData();
         notify.success('Your package has been updated');
@@ -348,7 +361,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
       else if (type === 'promotion') setPromotions({ active: promotions.active.filter(p => p.id !== id), expired: promotions.expired.filter(p => p.id !== id) });
       else if (type === 'gallery') setGalleryImages(galleryImages.filter(g => g.id !== id));
       notify.success(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted.`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       notify.error(toFriendlyMessage(err, 'Deletion failed'));
     } finally {
       setItemToDelete(null);
@@ -365,7 +378,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
   const refetchSalon = async () => {
     if (!ownerId) return;
     try {
-      const salonRes = await fetch(`/api/salons/my-salon?ownerId=${ownerId}&_t=${Date.now()}`, { credentials: 'include', cache: 'no-store' as any });
+      const salonRes = await fetch(`/api/salons/my-salon?ownerId=${ownerId}&_t=${Date.now()}`, { credentials: 'include', cache: 'no-store' as RequestCache });
       if (salonRes.ok) {
         const salonData = await salonRes.json();
         if (salonData) setSalon(salonData);
@@ -380,7 +393,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
       const updated = await apiJson(`/api/salons/mine/availability?ownerId=${ownerId}`, { method: 'PATCH' }) as Salon;
       setSalon(updated);
       notify.success(updated.isAvailableNow ? 'Marked as available' : 'Marked as unavailable');
-    } catch (e: any) {
+    } catch (e: unknown) {
       notify.error(toFriendlyMessage(e, 'Could not update availability'));
     } finally {
       setIsTogglingAvailability(false);
@@ -399,7 +412,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
       setSalon(updated);
       setIsEditingMessage(false);
       notify.success('Booking message saved');
-    } catch (e: any) {
+    } catch (e: unknown) {
       notify.error(toFriendlyMessage(e, 'Failed to save'));
     } finally {
       setIsSavingMessage(false);
@@ -419,7 +432,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
       setSalon(updated);
       setIsEditingHours(false);
       notify.success('Operating hours saved');
-    } catch (e: any) {
+    } catch (e: unknown) {
       notify.error(toFriendlyMessage(e, 'Failed to save'));
     } finally {
       setIsSavingHours(false);
@@ -537,13 +550,13 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
           </div>
           <div className={styles.bookingMeta}>
             <span className={styles.bookingMetaItem}>{booking.user.firstName} {booking.user.lastName}</span>
-            <span className={styles.bookingMetaDot}>·</span>
+            <span className={styles.bookingMetaDot}>-</span>
             <span className={styles.bookingMetaItem}>{dateStr}</span>
-            <span className={styles.bookingMetaDot}>·</span>
+            <span className={styles.bookingMetaDot}>-</span>
             <span className={styles.bookingMetaItem}>{timeStr}</span>
             {booking.clientPhone && (
               <>
-                <span className={styles.bookingMetaDot}>·</span>
+                <span className={styles.bookingMetaDot}>-</span>
                 <span className={styles.bookingMetaItem}>{booking.clientPhone}</span>
               </>
             )}
@@ -595,8 +608,72 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
         <PageNav />
         <h1 className={styles.title}>{user?.role === 'ADMIN' ? `${salon.name}'s Dashboard` : 'My Dashboard'}</h1>
 
-        {/* Status Summary */}
+        <section className={styles.overviewHero}>
+          <div className={styles.overviewLead}>
+            <span className={styles.overviewEyebrow}>Salon operator overview</span>
+            <div className={styles.overviewTitleRow}>
+              <h2 className={styles.overviewTitle}>{salon.name}</h2>
+              <span className={`${styles.overviewStatus} ${salon.isAvailableNow ? styles.overviewStatusAvailable : styles.overviewStatusUnavailable}`}>
+                {salon.isAvailableNow ? 'Available for bookings' : 'Currently unavailable'}
+              </span>
+            </div>
+            <p className={styles.overviewDescription}>
+              Prioritize today&apos;s bookings, keep your services current, and resolve package blockers before they slow down conversions.
+            </p>
+            <div className={styles.overviewMetaRow}>
+              <span className={styles.overviewMetaPill}>{todaysBookings.length} booking{todaysBookings.length === 1 ? '' : 's'} today</span>
+              <span className={styles.overviewMetaPill}>{services.length} services live</span>
+              <span className={styles.overviewMetaPill}>{galleryImages.length} gallery items</span>
+              <span className={styles.overviewMetaPill}>{planDetails.name} plan</span>
+            </div>
+            <div className={styles.overviewActions}>
+              <Link href={getSalonUrl(salon)} target="_blank" className={styles.headerActionBtn}>
+                View Public Profile
+              </Link>
+              <Button
+                type="button"
+                onClick={() => setIsEditSalonModalOpen(true)}
+                className={`${styles.headerActionBtn} ${styles.headerActionBtnPrimary}`}
+              >
+                Edit Salon Profile
+              </Button>
+            </div>
+          </div>
+          <div className={styles.overviewBoard}>
+            <div className={styles.overviewPanel}>
+              <span className={styles.statusLabel}>Needs attention</span>
+              {attentionItems.length > 0 ? (
+                <ul className={styles.attentionList}>
+                  {attentionItems.map((item) => (
+                    <li key={item} className={styles.attentionItem}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className={styles.attentionEmpty}>No urgent blockers right now.</p>
+              )}
+            </div>
+            <div className={styles.quickActionGrid}>
+              {overviewActions.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  className={styles.quickActionButton}
+                  onClick={() => navigateToTab(action.id)}
+                >
+                  <span className={styles.quickActionLabel}>{action.label}</span>
+                  <span className={styles.quickActionHelper}>{action.helper}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <div className={styles.statusSummary}>
+          <div className={styles.statusCard} onClick={() => navigateToTab('bookings')} style={{ cursor: 'pointer' }}>
+            <span className={styles.statusLabel}>Bookings</span>
+            <span className={styles.statusValue}>{pendingBookings.length}</span>
+            <span className={styles.statusSubtext}>pending requests</span>
+          </div>
           <div className={styles.statusCard} onClick={() => navigateToTab('package')} style={{ cursor: 'pointer' }}>
             <span className={styles.statusLabel}>Package</span>
             <span className={styles.statusValue}>{planDetails.name}</span>
@@ -605,11 +682,6 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
           <div className={styles.statusCard}>
             <span className={styles.statusLabel}>Payment</span>
             <span className={`${styles.statusValue} ${styles[`planStatus_${planStatus.toLowerCase()}`]}`}>{PLAN_PAYMENT_LABELS[planStatus]}</span>
-          </div>
-          <div className={styles.statusCard} onClick={() => navigateToTab('bookings')} style={{ cursor: 'pointer' }}>
-            <span className={styles.statusLabel}>Bookings</span>
-            <span className={styles.statusValue}>{pendingBookings.length}</span>
-            <span className={styles.statusSubtext}>pending requests</span>
           </div>
           <div className={styles.statusCard}>
             <span className={styles.statusLabel}>Availability</span>
@@ -634,20 +706,6 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
               <span className={styles.availabilitySwitchOnLabel}>ON</span>
             </div>
           </div>
-        </div>
-
-        {/* Header Actions */}
-        <div className={styles.headerActions}>
-          <Link href={getSalonUrl(salon)} target="_blank" className={styles.headerActionBtn}>
-            View Public Profile
-          </Link>
-          <Button
-            type="button"
-            onClick={() => setIsEditSalonModalOpen(true)}
-            className={`${styles.headerActionBtn} ${styles.headerActionBtnPrimary}`}
-          >
-            Edit Salon Profile
-          </Button>
         </div>
 
 
@@ -818,3 +876,4 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
 }
 
 export default DashboardPageClient;
+

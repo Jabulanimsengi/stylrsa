@@ -9,7 +9,11 @@ import {
     FaCreditCard,
     FaArrowRight,
     FaCheckCircle,
-    FaExclamationCircle
+    FaExclamationCircle,
+    FaChartLine,
+    FaShieldAlt,
+    FaBullhorn,
+    FaBoxes
 } from 'react-icons/fa';
 import type { AdminView } from '../../admin-config';
 
@@ -33,41 +37,91 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ metrics, onNavigate }: AdminDashboardProps) {
-    const quickActions = [
+    const queueCards = [
         {
-            label: 'Review Pending Salons',
+            label: 'Salon approvals',
+            helper: 'New salons waiting for moderation',
             view: 'salons' as AdminView,
             count: metrics.pendingApprovals,
             urgent: metrics.pendingApprovals > 5
         },
         {
-            label: 'Verify Payments',
+            label: 'Payment proofs',
+            helper: 'Manual verifications requiring attention',
             view: 'pending-payments' as AdminView,
             count: metrics.pendingPayments,
             urgent: metrics.pendingPayments > 0
         },
         {
-            label: 'Manage Featured',
+            label: 'Featured placements',
+            helper: 'Manage promoted visibility slots',
             view: 'featured-salons' as AdminView,
             count: 0,
             urgent: false
         },
         {
-            label: 'Review Media',
+            label: 'Media review',
+            helper: 'Moderate uploads and visual content',
             view: 'media' as AdminView,
             count: 0,
             urgent: false
         },
     ];
 
+    const quickActions = [
+        { label: 'Products', view: 'products' as AdminView, icon: <FaBoxes /> },
+        { label: 'Promotions', view: 'promotions' as AdminView, icon: <FaBullhorn /> },
+        { label: 'Audit log', view: 'audit' as AdminView, icon: <FaShieldAlt /> },
+        { label: 'All salons', view: 'all-salons' as AdminView, icon: <FaChartLine /> },
+    ];
+
     return (
         <div className={styles.dashboard}>
-            <div className={styles.header}>
-                <h1 className={styles.title}>Dashboard</h1>
-                <p className={styles.subtitle}>Welcome back! Here's what's happening today.</p>
+            <div className={styles.hero}>
+                <div className={styles.heroCopy}>
+                    <span className={styles.kicker}>Admin Control Room</span>
+                    <h1 className={styles.title}>Review what needs action first.</h1>
+                    <p className={styles.subtitle}>
+                        Prioritize approvals, payment proofs, and visibility changes before moving into full platform management.
+                    </p>
+                </div>
+                <div className={styles.heroSnapshot}>
+                    <div className={styles.snapshotCard}>
+                        <span className={styles.snapshotLabel}>Needs attention</span>
+                        <span className={styles.snapshotValue}>{metrics.pendingApprovals + metrics.pendingPayments}</span>
+                        <span className={styles.snapshotHint}>moderation and payment items</span>
+                    </div>
+                    <div className={styles.snapshotCard}>
+                        <span className={styles.snapshotLabel}>Approved today</span>
+                        <span className={styles.snapshotValue}>{metrics.approvedToday || 0}</span>
+                        <span className={styles.snapshotHint}>items processed successfully</span>
+                    </div>
+                </div>
             </div>
 
-            {/* Metrics Grid */}
+            <div className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>Attention Queue</h2>
+                    <p className={styles.sectionHint}>Start here when you log in.</p>
+                </div>
+                <div className={styles.queueGrid}>
+                    {queueCards.map((action) => (
+                        <button
+                            key={action.label}
+                            className={`${styles.queueCard} ${action.urgent ? styles.queueCardUrgent : ''}`}
+                            onClick={() => onNavigate(action.view)}
+                        >
+                            <div className={styles.queueTop}>
+                                <span className={styles.queueLabel}>{action.label}</span>
+                                <FaArrowRight className={styles.queueArrow} />
+                            </div>
+                            <span className={styles.queueCount}>{action.count}</span>
+                            <span className={styles.queueHelper}>{action.helper}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             <div className={styles.metricsGrid}>
                 <div className={styles.metricCard}>
                     <div className={styles.metricIcon}>
@@ -110,21 +164,21 @@ export default function AdminDashboard({ metrics, onNavigate }: AdminDashboardPr
                 </div>
             </div>
 
-            {/* Quick Actions */}
             <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>Quick Actions</h2>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>Operational Shortcuts</h2>
+                    <p className={styles.sectionHint}>Jump into the core admin workflows.</p>
+                </div>
                 <div className={styles.actionsGrid}>
-                    {quickActions.map((action, index) => (
+                    {quickActions.map((action) => (
                         <button
-                            key={index}
-                            className={`${styles.actionCard} ${action.urgent ? styles.actionUrgent : ''}`}
+                            key={action.label}
+                            className={styles.actionCard}
                             onClick={() => onNavigate(action.view)}
                         >
                             <div className={styles.actionContent}>
+                                <span className={styles.actionIcon}>{action.icon}</span>
                                 <span className={styles.actionLabel}>{action.label}</span>
-                                {action.count > 0 && (
-                                    <span className={styles.actionBadge}>{action.count}</span>
-                                )}
                             </div>
                             <FaArrowRight className={styles.actionArrow} />
                         </button>
@@ -132,10 +186,12 @@ export default function AdminDashboard({ metrics, onNavigate }: AdminDashboardPr
                 </div>
             </div>
 
-            {/* Recent Activity */}
             {metrics.recentActivity && metrics.recentActivity.length > 0 && (
                 <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Recent Activity</h2>
+                    <div className={styles.sectionHeader}>
+                        <h2 className={styles.sectionTitle}>Recent Activity</h2>
+                        <p className={styles.sectionHint}>Latest changes across moderation and verification flows.</p>
+                    </div>
                     <div className={styles.activityList}>
                         {metrics.recentActivity.map((activity, index) => (
                             <div key={index} className={styles.activityItem}>
@@ -158,15 +214,29 @@ export default function AdminDashboard({ metrics, onNavigate }: AdminDashboardPr
                 </div>
             )}
 
-            {/* Stats Summary */}
             <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>Platform Overview</h2>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>Platform Overview</h2>
+                    <p className={styles.sectionHint}>Core marketplace footprint at a glance.</p>
+                </div>
                 <div className={styles.statsGrid}>
                     <div className={styles.statCard}>
                         <div className={styles.statHeader}>
                             <span className={styles.statLabel}>Approved Today</span>
                         </div>
                         <span className={styles.statValue}>{metrics.approvedToday || 0}</span>
+                    </div>
+                    <div className={styles.statCard}>
+                        <div className={styles.statHeader}>
+                            <span className={styles.statLabel}>Total salons</span>
+                        </div>
+                        <span className={styles.statValue}>{metrics.totalSalons}</span>
+                    </div>
+                    <div className={styles.statCard}>
+                        <div className={styles.statHeader}>
+                            <span className={styles.statLabel}>Total sellers</span>
+                        </div>
+                        <span className={styles.statValue}>{metrics.totalSellers}</span>
                     </div>
                 </div>
             </div>

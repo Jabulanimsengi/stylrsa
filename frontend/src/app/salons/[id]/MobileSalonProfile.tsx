@@ -36,9 +36,9 @@ import { SERVICE_CATEGORIES } from '@/constants/categories';
 import MapboxMap from '@/components/MapboxMap';
 import styles from './MobileSalonProfile.module.css';
 import MaterialsShowcase from '@/components/MaterialsShowcase/MaterialsShowcase';
-import { toast } from 'react-toastify';
 import SimilarSalons from '@/components/SimilarSalons/SimilarSalons';
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
+import { notify } from '@/lib/notify';
 
 type TabType = 'photos' | 'services' | 'details' | 'reviews';
 
@@ -138,7 +138,7 @@ function getOpenStatus(hoursRecord: Record<string, string> | null, todayLabel: s
         } else if (currentTime < openMinutes) {
             return { isOpen: false, statusText: `Opens at ${openTime}` };
         } else {
-            return { isOpen: false, statusText: `Closed · Opens tomorrow` };
+            return { isOpen: false, statusText: `Closed - Opens tomorrow` };
         }
     }
 
@@ -341,6 +341,10 @@ export default function MobileSalonProfile({
     };
 
     const addressText = salon.address || [salon.town, salon.city, salon.province].filter(Boolean).join(', ');
+    const primaryPhoneHref = salon.phoneNumber ? `tel:${salon.phoneNumber.replace(/[^0-9+]/g, '')}` : null;
+    const primaryWhatsappHref = salon.whatsapp
+        ? `https://wa.me/${salon.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi! I found your salon on Stylr SA and I'd like to make a booking.`)}`
+        : null;
 
     return (
         <>
@@ -476,7 +480,7 @@ export default function MobileSalonProfile({
                         <FaRegClock />
                         <span className={styles.statusDot} />
                         <span className={styles.statusText}>
-                            {isOpen ? 'Open' : 'Closed'} · {statusText}
+                            {isOpen ? 'Open' : 'Closed'} - {statusText}
                         </span>
                     </div>
 
@@ -491,6 +495,30 @@ export default function MobileSalonProfile({
                         <span className={styles.featureBadge}>
                             <FaCheckCircle /> Instant confirmation
                         </span>
+                    </div>
+
+                    <div className={styles.quickActionRow}>
+                        <button className={styles.primaryBookAction} onClick={onBookNow}>
+                            <FaBolt /> Book now
+                        </button>
+                        <a href={mapsHref} target="_blank" rel="noopener noreferrer" className={styles.secondaryAction}>
+                            <FaDirections /> Directions
+                        </a>
+                        {primaryPhoneHref ? (
+                            <a href={primaryPhoneHref} className={styles.secondaryAction}>
+                                <FaPhone /> Call
+                            </a>
+                        ) : primaryWhatsappHref ? (
+                            <a href={primaryWhatsappHref} target="_blank" rel="noopener noreferrer" className={styles.secondaryAction}>
+                                <FaWhatsapp /> WhatsApp
+                            </a>
+                        ) : null}
+                    </div>
+
+                    <div className={styles.quickFactsRow}>
+                        <span className={styles.quickFactPill}>{services.length} services</span>
+                        <span className={styles.quickFactPill}>{allImages.length} photos</span>
+                        <span className={styles.quickFactPill}>{reviews.length} reviews</span>
                     </div>
                 </div>
 
@@ -650,7 +678,7 @@ export default function MobileSalonProfile({
                             <MaterialsShowcase
                                 salonId={salon.id}
                                 onMaterialClick={(material) => {
-                                    toast.info(`${material.name} - ${material.isSold ? `R${material.price?.toFixed(2)}` : 'Used by this salon'}`);
+                                    notify.info(`${material.name} - ${material.isSold ? `R${material.price?.toFixed(2)}` : 'Used by this salon'}`);
                                 }}
                             />
                         </div>
@@ -860,9 +888,9 @@ export default function MobileSalonProfile({
                         <button className={styles.mobileBookBtn} onClick={onBookNow}>
                             <FaBolt /> Book now
                         </button>
-                        {salon.whatsapp && (
+                        {primaryWhatsappHref && (
                             <a
-                                href={`https://wa.me/${salon.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi! I found your salon on Stylr SA and I'd like to make a booking.`)}`}
+                                href={primaryWhatsappHref}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={styles.mobileWhatsappBtn}
@@ -1026,3 +1054,4 @@ function MobileReviewsContent({
         </div>
     );
 }
+

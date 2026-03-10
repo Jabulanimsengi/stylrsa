@@ -326,6 +326,59 @@
     font-size: 0.75rem;
 }
 
+.quickActionRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.primaryBookAction,
+.secondaryAction {
+    min-height: 48px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.primaryBookAction {
+    border: none;
+    background: linear-gradient(135deg, var(--color-primary) 0%, #111827 100%);
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(17, 24, 39, 0.14);
+}
+
+.secondaryAction {
+    border: 1px solid var(--color-border, #eee);
+    background: var(--color-surface-elevated, #f8f8fa);
+    color: var(--color-text-strong, #1a1a1a);
+}
+
+.quickFactsRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.quickFactPill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    background: var(--color-surface-elevated, #f5f5f5);
+    border: 1px solid var(--color-border, #eee);
+    color: var(--color-text-secondary, #666);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
 /* Tab Navigation */
 .tabNav {
     display: flex;
@@ -1205,6 +1258,16 @@
 
 .mobileWhatsappBtn:active {
     transform: scale(0.95);
+}
+
+@media (max-width: 520px) {
+    .quickActionRow {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .primaryBookAction {
+        grid-column: 1 / -1;
+    }
 }
 
 /* Desktop Profile Hidden on Mobile */

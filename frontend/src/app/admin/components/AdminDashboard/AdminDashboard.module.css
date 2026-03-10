@@ -2,8 +2,40 @@
     padding: 0;
 }
 
-.header {
+.hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+    gap: 1.25rem;
     margin-bottom: 2rem;
+}
+
+.heroCopy,
+.heroSnapshot {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 24px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.heroSnapshot {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.kicker {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(245, 25, 87, 0.08);
+    color: var(--color-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 0.9rem;
 }
 
 .title {
@@ -17,6 +49,36 @@
     font-size: 1rem;
     color: var(--color-text-muted);
     margin: 0;
+}
+
+.snapshotCard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1rem;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(245, 25, 87, 0.04), rgba(15, 23, 42, 0.02));
+    border: 1px solid rgba(245, 25, 87, 0.08);
+}
+
+.snapshotLabel {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.snapshotValue {
+    font-size: 2rem;
+    line-height: 1;
+    font-weight: 700;
+    color: var(--color-text-strong);
+}
+
+.snapshotHint {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
 }
 
 /* Metrics Grid */
@@ -99,11 +161,86 @@
     margin-bottom: 2rem;
 }
 
+.sectionHeader {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
 .sectionTitle {
     font-size: 1.125rem;
     font-weight: 600;
     color: var(--color-text-strong);
-    margin: 0 0 1rem 0;
+    margin: 0;
+}
+
+.sectionHint {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.queueGrid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.queueCard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    background: var(--color-surface-elevated);
+    cursor: pointer;
+    text-align: left;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.queueCard:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(245, 25, 87, 0.18);
+}
+
+.queueCardUrgent {
+    background: linear-gradient(180deg, rgba(239, 68, 68, 0.06), rgba(255, 255, 255, 0.96));
+    border-color: rgba(239, 68, 68, 0.22);
+}
+
+.queueTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.queueLabel {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-strong);
+}
+
+.queueArrow {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+
+.queueCount {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-text-strong);
+}
+
+.queueHelper {
+    font-size: 0.84rem;
+    color: var(--color-text-muted);
 }
 
 /* Actions Grid */
@@ -156,6 +293,18 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
+}
+
+.actionIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: var(--color-surface-subtle);
+    color: var(--color-primary);
+    font-size: 0.95rem;
 }
 
 .actionLabel {
@@ -275,4 +424,26 @@
     font-size: 2rem;
     font-weight: 700;
     color: var(--color-text-strong);
+}
+
+@media (max-width: 1080px) {
+    .hero {
+        grid-template-columns: 1fr;
+    }
+
+    .queueGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .heroSnapshot,
+    .queueGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .sectionHeader {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
