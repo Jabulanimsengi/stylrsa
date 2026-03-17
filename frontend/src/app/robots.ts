@@ -16,7 +16,6 @@ export default function robots(): MetadataRoute.Robots {
           '/my-profile',
           '/my-bookings',
           '/my-favorites',
-          '/my-orders',
           '/my-trends',
           '/create-salon',
           '/login',
@@ -41,7 +40,6 @@ export default function robots(): MetadataRoute.Robots {
           '/my-profile',
           '/my-bookings',
           '/my-favorites',
-          '/my-orders',
           '/my-trends',
           '/create-salon',
           '/login',
@@ -52,10 +50,7 @@ export default function robots(): MetadataRoute.Robots {
         crawlDelay: 0,
       },
     ],
-    sitemap: [
-      `${siteUrl}/sitemap.xml`,
-      `${siteUrl}/sitemap-index.xml`,
-    ],
+    sitemap: `${siteUrl}/sitemap.xml`,
     host: siteUrl,
   };
 }

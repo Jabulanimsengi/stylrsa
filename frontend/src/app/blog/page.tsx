@@ -5,7 +5,7 @@ import styles from './blog.module.css';
 export const metadata: Metadata = {
   title: 'Stylr SA Blog - Beauty & Wellness Tips for South Africans',
   description: 'Expert guides on protective hairstyles, nail trends, men\'s grooming, skincare, massage benefits, and wedding makeup. Discover local beauty tips tailored for South African climate and lifestyle.',
-  keywords: 'protective hairstyles, knotless braids, box braids, Cape Town nail trends, men\'s grooming Johannesburg, highveld skincare, wedding makeup Gauteng, massage benefits, local beauty products, matric dance prep, Stylr SA blog',
+  keywords: 'protective hairstyles, knotless braids, box braids, Cape Town nail trends, men\'s grooming Johannesburg, highveld skincare, wedding makeup Gauteng, massage benefits, matric dance prep, Stylr SA blog',
   openGraph: {
     title: 'Stylr SA Blog - Beauty & Wellness Tips for South Africans',
     description: 'Expert guides on protective hairstyles, nail trends, men\'s grooming, skincare, massage benefits, and wedding makeup. Discover local beauty tips.',
@@ -94,14 +94,6 @@ const blogPosts = [
     description: 'Understand the importance of verified reviews and how they protect you from fake feedback. Learn to read reviews like a pro.',
     category: 'Platform Feature Guide',
     readTime: '7 min read',
-    featured: false,
-  },
-  {
-    id: 'local-beauty-products',
-    title: 'Support Local: 5 Must-Have South African Beauty Products You Can Buy Online',
-    description: 'Discover amazing locally-made beauty products from Marula oil to artisanal soaps. Support South African entrepreneurs through our marketplace.',
-    category: 'E-commerce / Products',
-    readTime: '6 min read',
     featured: false,
   },
   {
@@ -197,4 +189,3 @@ export default function BlogPage() {
     </div>
   );
 }
-

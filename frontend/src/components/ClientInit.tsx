@@ -16,6 +16,9 @@ export default function ClientInit() {
       // Clean up old zoom settings that were causing CLS issues
       // This removes any stored zoom preferences from previous versions
       cleanupZoomSettings();
+
+      // Dev localhost should never be controlled by a stale production service worker.
+      void cleanupServiceWorkersForDev();
     } catch (error) {
       // Silently fail if initialization fails (e.g., chunk loading error)
       console.warn('ClientInit failed to initialize:', error);
@@ -49,7 +52,36 @@ function cleanupZoomSettings() {
     if (html.style.zoom) {
       html.style.zoom = '';
     }
-  } catch (e) {
+  } catch {
     // Silently fail if cleanup fails
+  }
+}
+
+async function cleanupServiceWorkersForDev() {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('caches' in window)) {
+    return;
+  }
+
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+  if (!isDevelopment && !isLocalHost) {
+    return;
+  }
+
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    if (registrations.length > 0) {
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+
+    const cacheNames = await caches.keys();
+    const nextOrWorkboxCaches = cacheNames.filter(
+      (cacheName) => cacheName.includes('workbox') || cacheName.includes('_next') || cacheName.includes('precache')
+    );
+
+    await Promise.all(nextOrWorkboxCaches.map((cacheName) => caches.delete(cacheName)));
+  } catch (error) {
+    console.warn('Service worker cleanup skipped:', error);
   }
 }

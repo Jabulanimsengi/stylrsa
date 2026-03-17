@@ -73,8 +73,13 @@ export default function TypingAnimation({
 
     if (!words || words.length === 0) return null;
 
+    const longestWordLength = words.reduce((max, word) => Math.max(max, word.length), 0);
+
     return (
-        <span className={styles.wrapper}>
+        <span
+            className={styles.wrapper}
+            style={{ width: `${Math.max(longestWordLength + 1, 9)}ch` }}
+        >
             <span className={styles.text}>{currentText}</span>
             <span className={styles.cursor} />
         </span>

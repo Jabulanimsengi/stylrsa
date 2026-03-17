@@ -20,13 +20,19 @@ interface AddressBookProps {
     selectable?: boolean;
 }
 
+interface GeocodeFeature {
+    id: string;
+    place_name: string;
+    center: [number, number];
+}
+
 const LABEL_ICONS: Record<string, React.ReactNode> = {
     HOME: <FaHome />,
     WORK: <FaBriefcase />,
     OTHER: <FaEllipsisH />,
 };
 
-export default function AddressBook({ userId, onAddressSelect, selectable = false }: AddressBookProps) {
+export default function AddressBook({ userId: _userId, onAddressSelect, selectable = false }: AddressBookProps) {
     const [addresses, setAddresses] = useState<UserAddress[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
@@ -37,7 +43,7 @@ export default function AddressBook({ userId, onAddressSelect, selectable = fals
         latitude: undefined as number | undefined,
         longitude: undefined as number | undefined,
     });
-    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchResults, setSearchResults] = useState<GeocodeFeature[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
 
     // Fetch addresses
@@ -94,7 +100,7 @@ export default function AddressBook({ userId, onAddressSelect, selectable = fals
         return () => clearTimeout(timer);
     }, [formData.address, formData.latitude]);
 
-    const selectSearchResult = (result: any) => {
+    const selectSearchResult = (result: GeocodeFeature) => {
         setFormData({
             ...formData,
             address: result.place_name,
@@ -133,7 +139,7 @@ export default function AddressBook({ userId, onAddressSelect, selectable = fals
             } else {
                 throw new Error('Failed to save address');
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to save address');
         }
     };
@@ -164,7 +170,7 @@ export default function AddressBook({ userId, onAddressSelect, selectable = fals
             } else {
                 throw new Error('Failed to delete');
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete address');
         }
     };
@@ -180,7 +186,7 @@ export default function AddressBook({ userId, onAddressSelect, selectable = fals
                 toast.success('Default address updated');
                 fetchAddresses();
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to set default');
         }
     };

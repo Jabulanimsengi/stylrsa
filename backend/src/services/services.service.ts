@@ -44,7 +44,7 @@ export class ServicesService {
     const maxListings = salon.maxListings ?? 2;
     if (currentCount >= maxListings) {
       throw new ForbiddenException(
-        `Listing limit reached for your plan (max ${maxListings} services). Upgrade your plan to add more.`,
+        `Listing limit reached for your current package (max ${maxListings} services). Please contact support if you need help increasing this limit.`,
       );
     }
 
@@ -241,25 +241,15 @@ export class ServicesService {
             province: true,
             ownerId: true,
             visibilityWeight: true,
-            featuredUntil: true,
             createdAt: true,
           },
         },
       },
       take: 20,
     });
-    const now = Date.now();
-    const score = (s: any) => {
-      const w = s.salon?.visibilityWeight ?? 1;
-      const fu = s.salon?.featuredUntil
-        ? new Date(s.salon.featuredUntil).getTime()
-        : 0;
-      const boost = fu > now ? 10 : 0;
-      return w + boost;
-    };
     return items
       .sort((a: any, b: any) => {
-        const sv = score(b) - score(a);
+        const sv = (b.salon?.visibilityWeight ?? 1) - (a.salon?.visibilityWeight ?? 1);
         if (sv !== 0) return sv;
         return (
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -286,7 +276,6 @@ export class ServicesService {
             province: true,
             ownerId: true,
             visibilityWeight: true,
-            featuredUntil: true,
           },
         },
         category: {
@@ -297,16 +286,6 @@ export class ServicesService {
         },
       },
     });
-
-    const now = Date.now();
-    const score = (s: any) => {
-      const w = s.salon?.visibilityWeight ?? 1;
-      const fu = s.salon?.featuredUntil
-        ? new Date(s.salon.featuredUntil).getTime()
-        : 0;
-      const boost = fu > now ? 10 : 0;
-      return w + boost;
-    };
 
     // Attach isLikedByCurrentUser if user present
     const userId: string | null = user?.id ?? null;
@@ -322,7 +301,7 @@ export class ServicesService {
     }
 
     const ordered = withLikeFlag.sort((a: any, b: any) => {
-      const sv = score(b) - score(a);
+      const sv = (b.salon?.visibilityWeight ?? 1) - (a.salon?.visibilityWeight ?? 1);
       if (sv !== 0) return sv;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
@@ -412,7 +391,6 @@ export class ServicesService {
             province: true,
             ownerId: true,
             visibilityWeight: true,
-            featuredUntil: true,
           },
         },
         category: { select: { id: true, name: true } },
@@ -446,17 +424,8 @@ export class ServicesService {
     if (orderBy) {
       return withLikeFlag;
     }
-    const now = Date.now();
-    const score = (s: any) => {
-      const w = s.salon?.visibilityWeight ?? 1;
-      const fu = s.salon?.featuredUntil
-        ? new Date(s.salon.featuredUntil).getTime()
-        : 0;
-      const boost = fu > now ? 10 : 0;
-      return w + boost;
-    };
     return withLikeFlag.sort((a: any, b: any) => {
-      const sv = score(b) - score(a);
+      const sv = (b.salon?.visibilityWeight ?? 1) - (a.salon?.visibilityWeight ?? 1);
       if (sv !== 0) return sv;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });

@@ -6,13 +6,16 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { CreateBookingWhatsAppIntentDto } from './dto/create-booking-whatsapp-intent.dto';
 import { EventsGateway } from '../events/events.gateway';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { MailService } from 'src/mail/mail.service';
-import { CashbackService, COMMISSION_RATES, DEPOSIT_RATE } from 'src/cashback/cashback.service';
 
 type ServiceWithSalon = any;
 type BookingWithServiceAndSalon = any;
+
+const DEPOSIT_RATE = 0.6;
+const BOOKING_COMMISSION_RATE = 0.32;
 
 export interface TimeSlot {
   time: string;
@@ -25,6 +28,12 @@ export interface DayAvailability {
   slots: TimeSlot[];
 }
 
+export interface BookingWhatsAppIntentResult {
+  id: string;
+  referenceCode: string;
+  sequenceNumber: number;
+}
+
 @Injectable()
 export class BookingsService {
   constructor(
@@ -32,8 +41,73 @@ export class BookingsService {
     private eventsGateway: EventsGateway,
     private notificationsService: NotificationsService,
     private mailService: MailService,
-    private cashbackService: CashbackService,
   ) { }
+
+  private buildReferenceBase(firstName: string, lastName: string): string {
+    const normalized = `${firstName}${lastName}`
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase()
+      .slice(0, 18);
+
+    return normalized || 'STYLRSA';
+  }
+
+  async createWhatsAppIntent(
+    dto: CreateBookingWhatsAppIntentDto,
+  ): Promise<BookingWhatsAppIntentResult> {
+    const service = await this.prisma.service.findUnique({
+      where: { id: dto.serviceId },
+      include: { salon: true },
+    });
+
+    if (!service) {
+      throw new NotFoundException('Service not found');
+    }
+
+    if (service.salonId !== dto.salonId) {
+      throw new BadRequestException('Service does not belong to this salon');
+    }
+
+    const salon = service.salon;
+    if (!salon?.whatsapp && !salon?.phoneNumber) {
+      throw new BadRequestException('This salon does not have a WhatsApp booking number configured yet');
+    }
+
+    const sequenceNumber = (await this.prisma.bookingWhatsAppIntent.count({
+      where: { salonId: dto.salonId },
+    })) + 1;
+
+    const referenceCode = `${this.buildReferenceBase(dto.clientFirstName, dto.clientLastName)}-${String(sequenceNumber).padStart(4, '0')}`;
+
+    const intent = await this.prisma.bookingWhatsAppIntent.create({
+      data: {
+        salonId: dto.salonId,
+        serviceId: dto.serviceId,
+        teamMemberId: dto.teamMemberId || null,
+        bookingTime: new Date(dto.bookingTime),
+        isMobile: dto.isMobile ?? false,
+        clientFirstName: dto.clientFirstName.trim(),
+        clientLastName: dto.clientLastName.trim(),
+        clientPhone: dto.clientPhone.replace(/\s/g, ''),
+        clientNotes: dto.clientNotes?.trim() || null,
+        colorSelection: dto.colorSelection?.trim() || null,
+        materialSelection: dto.materialSelection || null,
+        totalCost: dto.totalCost,
+        depositAmount: dto.depositAmount,
+        referenceCode,
+        sequenceNumber,
+        whatsappClicks: 1,
+        source: 'STYLRSA',
+      },
+      select: {
+        id: true,
+        referenceCode: true,
+        sequenceNumber: true,
+      },
+    });
+
+    return intent;
+  }
 
   /**
    * Get available time slots for a service on a specific date
@@ -215,19 +289,8 @@ export class BookingsService {
     // Calculate financial breakdown
     const totalCost = service.price;
     const depositAmount = totalCost * DEPOSIT_RATE;
-    const commissionAmount = totalCost * COMMISSION_RATES.TOTAL;
+    const commissionAmount = totalCost * BOOKING_COMMISSION_RATE;
     const salonPayout = totalCost - commissionAmount;
-
-    // Handle cashback if requested
-    let cashbackUsed = 0;
-    if (dto.useCashback && dto.cashbackUsed && dto.cashbackUsed > 0) {
-      // Verify user has sufficient cashback balance
-      const { balance } = await this.cashbackService.getBalance(user.id);
-      if (balance < dto.cashbackUsed) {
-        throw new BadRequestException('Insufficient cashback balance');
-      }
-      cashbackUsed = dto.cashbackUsed;
-    }
 
     const booking = await this.prisma.booking.create({
       data: {
@@ -246,9 +309,6 @@ export class BookingsService {
         depositPaid: dto.depositPaid ?? false,
         commissionAmount,
         salonPayout,
-        // Cashback fields
-        useCashback: dto.useCashback ?? false,
-        cashbackUsed,
         // Customization fields
         colorSelection: dto.colorSelection || null,
         materialSelection: dto.materialSelection || null,
@@ -259,16 +319,6 @@ export class BookingsService {
         teamMember: true,
       },
     });
-
-    // Deduct cashback if used
-    if (cashbackUsed > 0) {
-      await this.cashbackService.spendCashback(
-        user.id,
-        cashbackUsed,
-        booking.id,
-        `Used on booking at ${service.salon.name}`,
-      );
-    }
 
     // Notify salon owner
     const notification = await this.notificationsService.create(
@@ -485,16 +535,6 @@ export class BookingsService {
         booking.service.salon.name,
         booking.service.title,
       );
-    } else if (status === 'COMPLETED') {
-      // Award cashback for completed bookings over R100
-      if (booking.totalCost >= 100) {
-        await this.cashbackService.awardCashback(
-          booking.userId,
-          booking.totalCost,
-          booking.id,
-          `Cashback from ${booking.service.salon.name}`,
-        );
-      }
     }
 
     return updatedBooking;

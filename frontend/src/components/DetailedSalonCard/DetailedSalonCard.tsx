@@ -68,10 +68,6 @@ export default function DetailedSalonCard({ salon, onToggleFavorite, onBook }: D
     }
   };
 
-  const mapsHref = salon.latitude && salon.longitude
-    ? `https://www.google.com/maps/dir/?api=1&destination=${salon.latitude},${salon.longitude}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${salon.name} ${salon.city} ${salon.province}`)}`;
-
   return (
     <div className={styles.detailedCard}>
       {/* Salon Image */}

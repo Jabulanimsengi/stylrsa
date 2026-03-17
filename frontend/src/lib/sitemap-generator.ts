@@ -7,7 +7,7 @@
  */
 
 import { PROVINCES } from './locationData';
-import { SEO_KEYWORDS, JOB_ROLES, ORIGINAL_CATEGORIES } from './seo-generation';
+import { SEO_KEYWORDS, ORIGINAL_CATEGORIES } from './seo-generation';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 const URLS_PER_SITEMAP = 45000; // Stay under Google's 50,000 limit
@@ -62,40 +62,6 @@ export function generateSeoKeywordUrls(): SitemapUrl[] {
 }
 
 /**
- * Generate all job page URLs
- * Pattern: /jobs/[role]/[province] and /jobs/[role]/[city]
- */
-export function generateJobUrls(): SitemapUrl[] {
-    const urls: SitemapUrl[] = [];
-    const today = new Date().toISOString().split('T')[0];
-
-    for (const role of JOB_ROLES) {
-        // Role + Province: /jobs/hairdresser/gauteng
-        for (const provinceSlug of Object.keys(PROVINCES)) {
-            urls.push({
-                loc: `${SITE_URL}/jobs/${role}/${provinceSlug}`,
-                lastmod: today,
-                changefreq: 'daily',
-                priority: 0.7,
-            });
-
-            // Role + City: /jobs/hairdresser/johannesburg
-            const province = PROVINCES[provinceSlug];
-            for (const city of province.cities) {
-                urls.push({
-                    loc: `${SITE_URL}/jobs/${role}/${city.slug}`,
-                    lastmod: today,
-                    changefreq: 'daily',
-                    priority: 0.6,
-                });
-            }
-        }
-    }
-
-    return urls;
-}
-
-/**
  * Generate all service category page URLs
  * Pattern: /services/[category]/near-you/[province]/[city]
  */
@@ -139,43 +105,6 @@ export function generateServiceUrls(): SitemapUrl[] {
                     priority: 0.5,
                 });
             }
-        }
-    }
-
-    return urls;
-}
-
-/**
- * Generate candidate location URLs
- * Pattern: /candidates/[province] and /candidates/[province]/[city]
- */
-export function generateCandidateUrls(): SitemapUrl[] {
-    const urls: SitemapUrl[] = [];
-    const today = new Date().toISOString().split('T')[0];
-
-    urls.push({
-        loc: `${SITE_URL}/candidates`,
-        lastmod: today,
-        changefreq: 'daily',
-        priority: 0.8,
-    });
-
-    for (const provinceSlug of Object.keys(PROVINCES)) {
-        urls.push({
-            loc: `${SITE_URL}/candidates/${provinceSlug}`,
-            lastmod: today,
-            changefreq: 'daily',
-            priority: 0.7,
-        });
-
-        const province = PROVINCES[provinceSlug];
-        for (const city of province.cities) {
-            urls.push({
-                loc: `${SITE_URL}/candidates/${provinceSlug}/${city.slug}`,
-                lastmod: today,
-                changefreq: 'daily',
-                priority: 0.6,
-            });
         }
     }
 
@@ -260,18 +189,14 @@ export function splitIntoSitemaps(urls: SitemapUrl[]): SitemapUrl[][] {
  */
 export function getSitemapStats() {
     const seoUrls = generateSeoKeywordUrls();
-    const jobUrls = generateJobUrls();
     const serviceUrls = generateServiceUrls();
-    const candidateUrls = generateCandidateUrls();
     const salonUrls = generateSalonUrls();
 
     return {
         seoPages: seoUrls.length,
-        jobPages: jobUrls.length,
         servicePages: serviceUrls.length,
-        candidatePages: candidateUrls.length,
         salonPages: salonUrls.length,
-        totalPages: seoUrls.length + jobUrls.length + serviceUrls.length + candidateUrls.length + salonUrls.length,
+        totalPages: seoUrls.length + serviceUrls.length + salonUrls.length,
         sitemapsNeeded: Math.ceil(seoUrls.length / URLS_PER_SITEMAP),
     };
 }

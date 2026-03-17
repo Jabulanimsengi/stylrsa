@@ -86,6 +86,26 @@ export class UpdateSalonDto {
   whatsapp?: string;
 
   @IsString()
+  @MaxLength(120)
+  @IsOptional()
+  bankName?: string;
+
+  @IsString()
+  @MaxLength(120)
+  @IsOptional()
+  accountHolder?: string;
+
+  @IsString()
+  @MaxLength(40)
+  @IsOptional()
+  accountNumber?: string;
+
+  @IsString()
+  @MaxLength(20)
+  @IsOptional()
+  branchCode?: string;
+
+  @IsString()
   @MaxLength(500)
   @IsOptional()
   description?: string;

@@ -39,6 +39,19 @@ export const metadata: Metadata = {
   },
 };
 
+function normalizeSalonList(data: unknown): any[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (data && typeof data === 'object' && 'salons' in data) {
+    const salons = (data as { salons?: unknown }).salons;
+    return Array.isArray(salons) ? salons : [];
+  }
+
+  return [];
+}
+
 // Fetch initial data server-side
 async function getInitialData() {
   const apiUrl = getInternalBackendOrigin();
@@ -48,32 +61,23 @@ async function getInitialData() {
   if (isBuildPhase && (apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1'))) {
     return {
       featuredSalons: [] as any[],
-      allSalons: [] as any[],
       availableNowSalons: [] as any[],
-      mobileSalons: [] as any[],
     };
   }
 
   console.log('Fetching initial data from:', apiUrl);
   try {
     // Fetch salon data in parallel for faster loading
-    const [featuredSalonsRes, allSalonsRes, availableNowRes, mobileSalonsRes] = await Promise.all([
-      // Fetch featured/recommended salons - 5 minute revalidation (admin changes)
+    const [featuredSalonsRes, availableNowRes] = await Promise.all([
+      // Fetch featured salons - admin-weighted ordering, includes closed salons too
       fetch(`${apiUrl}/api/salons/featured`, {
         next: { revalidate: 300 },
-      }),
-      // Fetch all salons for Featured Salons section - 30 minute revalidation
-      fetch(`${apiUrl}/api/salons/approved?limit=12`, {
-        next: { revalidate: 1800 },
       }),
       // Fetch available now salons - 5 minute revalidation (highly dynamic)
       fetch(`${apiUrl}/api/salons/approved?openNow=true&limit=12`, {
         next: { revalidate: 300 },
       }),
       // Fetch mobile salons - 1 hour revalidation
-      fetch(`${apiUrl}/api/salons/approved?offersMobile=true&limit=12`, {
-        next: { revalidate: 3600 },
-      }),
     ]);
 
     const featuredSalonsData = featuredSalonsRes.ok
@@ -81,40 +85,28 @@ async function getInitialData() {
       : [];
 
     if (!featuredSalonsRes.ok) console.error('Featured salons fetch failed:', featuredSalonsRes.status);
-    if (!allSalonsRes.ok) console.error('All salons fetch failed:', allSalonsRes.status);
-
-    const allSalonsData = allSalonsRes.ok
-      ? await allSalonsRes.json()
-      : { salons: [] };
 
     const availableNowData = availableNowRes.ok
       ? await availableNowRes.json()
       : { salons: [] };
 
-    const mobileSalonsData = mobileSalonsRes.ok
-      ? await mobileSalonsRes.json()
-      : { salons: [] };
+    const featuredSalons = normalizeSalonList(featuredSalonsData);
+    const availableNowSalons = normalizeSalonList(availableNowData);
 
     console.log('Fetched salons counts:', {
-      featured: Array.isArray(featuredSalonsData) ? featuredSalonsData.length : 0,
-      all: (allSalonsData.salons || allSalonsData || []).length,
-      available: (availableNowData.salons || availableNowData || []).length,
-      mobile: (mobileSalonsData.salons || mobileSalonsData || []).length
+      featured: featuredSalons.length,
+      available: availableNowSalons.length,
     });
 
     return {
-      featuredSalons: Array.isArray(featuredSalonsData) ? featuredSalonsData : [],
-      allSalons: allSalonsData.salons || allSalonsData || [],
-      availableNowSalons: availableNowData.salons || availableNowData || [],
-      mobileSalons: mobileSalonsData.salons || mobileSalonsData || [],
+      featuredSalons,
+      availableNowSalons,
     };
   } catch (error) {
     console.error('Failed to fetch initial data:', error);
     return {
       featuredSalons: [] as any[],
-      allSalons: [] as any[],
       availableNowSalons: [] as any[],
-      mobileSalons: [] as any[],
     };
   }
 }
@@ -229,9 +221,7 @@ export default async function HomePage() {
       {/* Client Component with server-rendered initial data */}
       <HomePageClient
         initialFeaturedSalons={initialData.featuredSalons}
-        initialAllSalons={initialData.allSalons}
         initialAvailableNowSalons={initialData.availableNowSalons}
-        initialMobileSalons={initialData.mobileSalons}
       />
     </>
   );

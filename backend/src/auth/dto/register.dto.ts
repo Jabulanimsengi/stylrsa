@@ -4,6 +4,7 @@ import {
   MinLength,
   IsNotEmpty,
   IsOptional,
+  IsIn,
 } from 'class-validator';
 
 export class RegisterDto {
@@ -26,5 +27,8 @@ export class RegisterDto {
 
   @IsString()
   @IsOptional()
+  @IsIn(['CLIENT', 'SALON_OWNER'], {
+    message: 'Role must be CLIENT or SALON_OWNER',
+  })
   role?: string;
 }

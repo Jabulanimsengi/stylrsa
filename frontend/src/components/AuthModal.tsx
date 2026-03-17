@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Login from './Login';
 import Register from './Register';
 import ResendVerification from './ResendVerification';
 import VerifyEmailCode from './VerifyEmailCode';
+import styles from '../app/auth.module.css';
 import { useAuthModal } from '@/context/AuthModalContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigationLoading } from '@/context/NavigationLoadingContext';
 import { User } from '@/types';
 import {
   Dialog,
@@ -29,27 +31,34 @@ interface AuthModalProps {
 
 export default function AuthModal({ view: initialView, onClose }: AuthModalProps) {
   const { login } = useAuth();
-  const { switchToLogin, switchToRegister, switchToResendVerification, switchToVerifyEmail, pendingVerificationEmail } = useAuthModal();
+  const { switchToLogin, switchToRegister, switchToVerifyEmail, pendingVerificationEmail } = useAuthModal();
   const [view, setView] = useState(initialView);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { showPageLoader } = useNavigationLoading();
 
   useEffect(() => {
     setView(initialView);
   }, [initialView]);
 
   const handleLoginSuccess = (user: User) => {
+    const redirectTarget = searchParams.get('redirect');
+    const isSafeRedirect = redirectTarget?.startsWith('/') && !redirectTarget.startsWith('//');
+
     login(user);
     onClose();
+    showPageLoader();
 
-    // Intelligent redirection logic
-    if (user.role === 'SALON_OWNER' && !user.salonId) {
+    if (isSafeRedirect && redirectTarget) {
+      router.push(redirectTarget);
+    } else if (user.role === 'SALON_OWNER' && !user.salonId) {
       router.push('/create-salon');
     } else if (user.role === 'SALON_OWNER') {
       router.push('/dashboard');
-    } else if (user.role === 'PRODUCT_SELLER') {
-      router.push('/product-dashboard');
     } else if (user.role === 'ADMIN') {
       router.push('/admin');
+    } else {
+      router.push('/salons');
     }
   };
 
@@ -74,10 +83,10 @@ export default function AuthModal({ view: initialView, onClose }: AuthModalProps
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[440px] p-0 border-0">
+      <DialogContent className={`sm:max-w-[560px] p-0 border-0 max-h-[90vh] overflow-y-auto [&>button]:right-4 [&>button]:top-4 ${styles.authDialog}`}>
         {/* Verification flows */}
         {isVerificationView && (
-          <div className="p-6">
+          <div className={styles.authModalPane}>
             <DialogHeader className="mb-4">
               <DialogTitle>
                 {view === 'verify-email' ? 'Verify Your Email' : 'Resend Verification'}
@@ -102,19 +111,30 @@ export default function AuthModal({ view: initialView, onClose }: AuthModalProps
         {/* Login/Register tabs */}
         {isAuthTab && (
           <Tabs value={view} onValueChange={handleTabChange} className="w-full">
-            <div className="px-6 pt-6 pb-2">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
+            <div className={styles.authModalIntro}>
+              <span className={styles.authModalEyebrow}>Account access</span>
+              <h2 className={styles.authModalTitle}>
+                {view === 'login' ? 'Welcome back' : 'Create your account'}
+              </h2>
+              <p className={styles.authModalDescription}>
+                {view === 'login'
+                  ? 'Sign in to manage bookings, favorites, or your business workspace.'
+                  : 'Start with your role and email, then finish your profile in one calmer flow.'}
+              </p>
+            </div>
+            <div className={styles.authTabsWrap}>
+              <TabsList className={styles.authTabsList}>
+                <TabsTrigger value="login" className={styles.authTabsTrigger}>Login</TabsTrigger>
+                <TabsTrigger value="register" className={styles.authTabsTrigger}>Register</TabsTrigger>
               </TabsList>
             </div>
 
-            <div className="px-6 pb-6">
-              <TabsContent value="login" className="mt-0">
+            <div className={styles.authModalBody}>
+              <TabsContent value="login" className={styles.authTabsContent}>
                 <Login onLoginSuccess={handleLoginSuccess} />
               </TabsContent>
 
-              <TabsContent value="register" className="mt-0">
+              <TabsContent value="register" className={styles.authTabsContent}>
                 <Register onRegisterSuccess={handleRegisterSuccess} />
               </TabsContent>
             </div>

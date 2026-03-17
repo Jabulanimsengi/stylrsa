@@ -31,6 +31,16 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    if (authStatus !== 'authenticated' || !userId) {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+      setSocket(null);
+      setStatus({ isConnected: false, isRegistered: false });
+      return;
+    }
+
     // Dynamically import socket.io-client to reduce initial bundle size
     const connectionDelay = setTimeout(async () => {
       const { io } = await import('socket.io-client');
@@ -79,13 +89,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.on('newBooking', (data) => {
         try {
           toast.info(`New Booking: ${data?.service?.title || 'Service'} from ${data?.client?.firstName || 'Client'}`);
-        } catch (e) { /* ignore */ }
+        } catch { /* ignore */ }
       });
 
       newSocket.on('bookingUpdate', (data) => {
         try {
           toast.success(`Booking ${data?.status?.toLowerCase() || 'updated'}!`);
-        } catch (e) { /* ignore */ }
+        } catch { /* ignore */ }
       });
 
       newSocket.on('error', () => { /* silently ignore */ });
@@ -99,6 +109,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         socketRef.current.disconnect();
         socketRef.current = null;
       }
+      setSocket(null);
       setStatus({ isConnected: false, isRegistered: false });
     };
   }, [authStatus, userId]);

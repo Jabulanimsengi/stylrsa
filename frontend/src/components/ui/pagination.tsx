@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { Button } from './button';
@@ -62,7 +61,7 @@ function Pagination({
     totalPages,
     onPageChange,
     siblingCount = 1,
-    showFirstLast = true,
+    showFirstLast: _showFirstLast = true,
     className,
 }: PaginationProps) {
     if (totalPages <= 1) return null;

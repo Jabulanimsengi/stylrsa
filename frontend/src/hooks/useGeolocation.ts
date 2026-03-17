@@ -64,7 +64,7 @@ export function useGeolocation(autoRequest: boolean = false) {
             timestamp: Date.now(),
           };
           localStorage.setItem(STORAGE_KEY, JSON.stringify(storedData));
-        } catch (e) {
+        } catch {
           // localStorage not available
         }
 
@@ -143,7 +143,7 @@ export function useGeolocation(autoRequest: boolean = false) {
             timestamp: Date.now(),
           };
           localStorage.setItem(STORAGE_KEY, JSON.stringify(storedData));
-        } catch (e) {
+        } catch {
           // localStorage not available, continue without caching
         }
 
@@ -203,7 +203,7 @@ export function useGeolocation(autoRequest: boolean = false) {
           return;
         }
       }
-    } catch (e) {
+    } catch {
       // Invalid stored data, continue to request
     }
 
@@ -217,7 +217,7 @@ export function useGeolocation(autoRequest: boolean = false) {
     if (typeof window !== 'undefined') {
       try {
         localStorage.removeItem(STORAGE_KEY);
-      } catch (e) {
+      } catch {
         // localStorage not available
       }
     }

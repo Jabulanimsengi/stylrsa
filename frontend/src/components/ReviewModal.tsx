@@ -122,8 +122,8 @@ export default function ReviewModal({ bookingId, onClose, onReviewAdded, existin
           setUploadProgress(((i + 1) / selectedImages.length) * 100);
           setUploadMessage(`Uploading image ${i + 1} of ${selectedImages.length}`);
           try {
-            const url = await uploadToCloudinary(selectedImages[i].file);
-            uploadedUrls.push(url);
+            const uploaded = await uploadToCloudinary(selectedImages[i].file);
+            uploadedUrls.push(uploaded.secure_url);
           } catch (uploadError) {
             console.error('Failed to upload image:', uploadError);
             toast.warning(`Failed to upload image ${i + 1}`);
@@ -158,7 +158,7 @@ export default function ReviewModal({ bookingId, onClose, onReviewAdded, existin
 
       onReviewAdded(newReview);
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg = toFriendlyMessage(err, 'Failed to submit review.');
       setError(msg);
       toast.error(msg);

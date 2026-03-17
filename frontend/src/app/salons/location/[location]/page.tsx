@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
 import LocationPageClient from './LocationPageClient';
 import { getProvinceInfo, findCityBySlug } from '@/lib/locationData';
+import { buildSalonLocationMetadata } from '@/lib/seoMetadataHelpers';
 
 interface PageProps {
     params: Promise<{
@@ -65,20 +66,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         };
     }
 
-    const title = provinceInfo.metaTitle || `Best Hair Salons & Spas in ${provinceInfo.name} | Stylr SA`;
-    const description = provinceInfo.description;
+    const metadataFields = buildSalonLocationMetadata({ province: location });
     const canonicalUrl = `https://www.stylrsa.co.za/salons/location/${location}`;
 
     return {
-        title,
-        description,
+        title: metadataFields.title,
+        description: metadataFields.description,
         keywords: provinceInfo.keywords.join(', '),
         alternates: {
             canonical: canonicalUrl,
         },
         openGraph: {
-            title,
-            description,
+            title: metadataFields.title,
+            description: metadataFields.description,
             url: canonicalUrl,
             siteName: 'Stylr SA',
             locale: 'en_ZA',
@@ -86,8 +86,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         },
         twitter: {
             card: 'summary_large_image',
-            title,
-            description,
+            title: metadataFields.title,
+            description: metadataFields.description,
         },
     };
 }

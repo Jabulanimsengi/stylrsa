@@ -17,7 +17,7 @@ import { EventsGateway } from '../events/events.gateway';
 import { generateSalonSlug, isUUID } from '../common/slug.util';
 import { MailService } from '../mail/mail.service';
 
-type PlanCode = 'FREE' | 'STARTER' | 'ESSENTIAL' | 'GROWTH' | 'PRO' | 'ELITE' | 'PREMIUM';
+type PlanCode = 'PREMIUM';
 type PlanPaymentStatus =
   | 'PENDING_SELECTION'
   | 'AWAITING_PROOF'
@@ -28,12 +28,6 @@ const PLAN_FALLBACKS: Record<
   PlanCode,
   { visibilityWeight: number; maxListings: number; priceCents: number }
 > = {
-  FREE: { visibilityWeight: 1, maxListings: 9999, priceCents: 0 },
-  STARTER: { visibilityWeight: 2, maxListings: 10, priceCents: 9900 }, // Legacy
-  ESSENTIAL: { visibilityWeight: 3, maxListings: 9999, priceCents: 9900 },
-  GROWTH: { visibilityWeight: 5, maxListings: 9999, priceCents: 19900 },
-  PRO: { visibilityWeight: 7, maxListings: 9999, priceCents: 29900 },
-  ELITE: { visibilityWeight: 10, maxListings: 9999, priceCents: 49900 },
   PREMIUM: { visibilityWeight: 5, maxListings: 9999, priceCents: 39900 },
 };
 
@@ -138,14 +132,16 @@ export class SalonsService {
     if (!user) {
       throw new ForbiddenException('User not found');
     }
-    if (user.role !== 'SALON_OWNER') {
+    const isAdmin = user.role === 'ADMIN';
+    const canCreateSalon = user.role === 'SALON_OWNER' || isAdmin;
+    if (!canCreateSalon) {
       throw new ForbiddenException(
         `You are not authorized to create a salon. Your account role is '${user.role}'. Please contact support if you believe this is an error.`
       );
     }
 
     const requestedPlan = (dto as any).planCode as PlanCode | undefined;
-    if (!requestedPlan || !PLAN_FALLBACKS[requestedPlan]) {
+    if (requestedPlan !== 'PREMIUM') {
       throw new ForbiddenException('Please select a valid package.');
     }
 
@@ -157,11 +153,12 @@ export class SalonsService {
         paymentReferenceRaw.trim().length > 0
         ? paymentReferenceRaw.trim()
         : dto.name.trim();
-    const planPaymentStatus: PlanPaymentStatus = requestedPlan === 'FREE'
+    const planPaymentStatus: PlanPaymentStatus = isAdmin
       ? 'VERIFIED'
       : hasSentProof
         ? 'PROOF_SUBMITTED'
         : 'AWAITING_PROOF';
+    const adminConfirmEmailVerified = Boolean((dto as any).adminConfirmEmailVerified);
 
     const normalizedOperatingHours = normalizeOperatingHours(
       (dto as any).operatingHours,
@@ -201,11 +198,13 @@ export class SalonsService {
       visibilityWeight: planMeta.visibilityWeight,
       maxListings: planMeta.maxListings,
       planPriceCents: planMeta.priceCents,
-      commissionRate: requestedPlan === 'FREE' ? 0.32 : 0.0, // FREE: 32% commission, Paid: 0%
+      commissionRate: 0.0,
+      approvalStatus: isAdmin ? 'APPROVED' : 'PENDING',
+      isVerified: isAdmin,
       planPaymentStatus,
       planPaymentReference: paymentReference,
-      planProofSubmittedAt: requestedPlan === 'FREE' ? null : hasSentProof ? new Date() : null,
-      planVerifiedAt: requestedPlan === 'FREE' ? new Date() : null,
+      planProofSubmittedAt: isAdmin ? null : hasSentProof ? new Date() : null,
+      planVerifiedAt: isAdmin ? new Date() : null,
     };
 
     console.log('SalonsService.create called for user:', userId);
@@ -215,6 +214,12 @@ export class SalonsService {
     try {
       console.log('Attempting to create salon in DB...');
       salon = await this.prisma.salon.create({ data });
+      if (isAdmin && adminConfirmEmailVerified && !user.emailVerified) {
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { emailVerified: true },
+        });
+      }
       console.log('Salon created successfully:', salon.id);
     } catch (err: any) {
       console.error(
@@ -234,7 +239,9 @@ export class SalonsService {
       for (const admin of admins) {
         const notification = await this.notificationsService.create(
           admin.id,
-          `New salon "${salon.name}" created by ${user.firstName || 'a user'} is pending approval.`,
+          isAdmin
+            ? `Admin-created salon "${salon.name}" is now live.`
+            : `New salon "${salon.name}" created by ${user.firstName || 'a user'} is pending approval.`,
           { link: '/admin?tab=salons' },
         );
         this.eventsGateway.sendNotificationToUser(
@@ -307,8 +314,7 @@ export class SalonsService {
       data.visibilityWeight = planMeta.visibilityWeight;
       data.maxListings = planMeta.maxListings;
       data.planPriceCents = planMeta.priceCents;
-      // Set commission rate: FREE has 32% commission, paid plans have 0%
-      data.commissionRate = normalizedPlan === 'FREE' ? 0.32 : 0.0;
+      data.commissionRate = 0.0;
     }
 
     const planChanged =
@@ -318,7 +324,7 @@ export class SalonsService {
     let nextStatus: PlanPaymentStatus | undefined;
 
     if (planChanged) {
-      nextStatus = normalizedPlan === 'FREE' ? 'VERIFIED' : dto.hasSentProof ? 'PROOF_SUBMITTED' : 'AWAITING_PROOF';
+      nextStatus = dto.hasSentProof ? 'PROOF_SUBMITTED' : 'AWAITING_PROOF';
     }
     if (typeof dto.hasSentProof === 'boolean') {
       if (dto.hasSentProof) {
@@ -334,11 +340,7 @@ export class SalonsService {
       nextStatus = 'VERIFIED';
     }
 
-    if (normalizedPlan === 'FREE') {
-      data.planPaymentStatus = 'VERIFIED';
-      data.planProofSubmittedAt = null;
-      data.planVerifiedAt = salon.planVerifiedAt ?? new Date();
-    } else if (nextStatus) {
+    if (nextStatus) {
       data.planPaymentStatus = nextStatus;
       if (nextStatus === 'PROOF_SUBMITTED') {
         data.planProofSubmittedAt = salon.planProofSubmittedAt ?? new Date();
@@ -559,6 +561,10 @@ export class SalonsService {
         'phoneNumber',
         'whatsapp',
         'website',
+        'bankName',
+        'accountHolder',
+        'accountNumber',
+        'branchCode',
         'bookingType',
         'offersMobile',
         'mobileFee',
@@ -783,7 +789,6 @@ export class SalonsService {
           avgRating: true,        // Pre-computed - no need to calculate!
           viewCount: true,
           visibilityWeight: true,
-          featuredUntil: true,
           createdAt: true,
           _count: {
             select: {
@@ -840,12 +845,10 @@ export class SalonsService {
           compareByVisibilityThenRecency(
             {
               visibilityWeight: a.visibilityWeight,
-              featuredUntil: a.featuredUntil,
               createdAt: a.createdAt,
             },
             {
               visibilityWeight: b.visibilityWeight,
-              featuredUntil: b.featuredUntil,
               createdAt: b.createdAt,
             },
           ),
@@ -967,21 +970,10 @@ export class SalonsService {
 
   async findFeatured(user?: any) {
     try {
-      const now = new Date();
-      const where: any = {
-        approvalStatus: 'APPROVED',
-        featuredUntil: {
-          gte: now,
-        },
-      };
-
       let salons = await this.prisma.salon.findMany({
-        where,
-        orderBy: [
-          { visibilityWeight: 'desc' },
-          { createdAt: 'desc' },
-        ],
-        take: 12, // Limit to 12 featured salons
+        where: {
+          approvalStatus: 'APPROVED',
+        },
         include: {
           reviews: {
             where: { approvalStatus: 'APPROVED' },
@@ -990,7 +982,6 @@ export class SalonsService {
         }
       });
 
-      // Calculate average rating and review count for each salon
       salons = salons.map((s: any) => {
         const approvedReviews = s.reviews || [];
         const reviewCount = approvedReviews.length;
@@ -1006,6 +997,20 @@ export class SalonsService {
           reviewCount,
           viewCount: salon.viewCount || 0
         };
+      });
+
+      salons.sort((a: any, b: any) => {
+        const weightDiff = (b.visibilityWeight || 0) - (a.visibilityWeight || 0);
+        if (weightDiff !== 0) {
+          return weightDiff;
+        }
+
+        const verifiedDiff = Number(Boolean(b.isVerified)) - Number(Boolean(a.isVerified));
+        if (verifiedDiff !== 0) {
+          return verifiedDiff;
+        }
+
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
 
       // Attach favorite flag if logged-in

@@ -157,7 +157,7 @@ export default function SalonCityNearYouClient({ provinceSlug, citySlug }: Props
       const message = favorited ? 'Added to favorites!' : 'Removed from favorites.';
       toast.success(message);
 
-    } catch (error) {
+    } catch {
       toast.error('Could not update favorites. Please try again.');
       setSalons(originalSalons);
     }

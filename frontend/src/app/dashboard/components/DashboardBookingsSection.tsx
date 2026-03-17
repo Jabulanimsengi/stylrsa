@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react';
 import BookingCalendar from '@/components/BookingCalendar/BookingCalendar';
 import styles from '../Dashboard.module.css';
 import type { DashboardBooking } from '../types';
+import DashboardBookingCard from './DashboardBookingCard';
 
 interface DashboardBookingsSectionProps {
   bookings: DashboardBooking[];
@@ -10,7 +10,9 @@ interface DashboardBookingsSectionProps {
   pastBookings: DashboardBooking[];
   activeBookingTab: 'pending' | 'confirmed' | 'past';
   onBookingTabChange: (tab: 'pending' | 'confirmed' | 'past') => void;
-  renderBookingCard: (booking: DashboardBooking) => ReactNode;
+  onConfirmBooking: (bookingId: string) => void;
+  onDeclineBooking: (bookingId: string) => void;
+  onCompleteBooking: (bookingId: string) => void;
 }
 
 export default function DashboardBookingsSection({
@@ -20,7 +22,9 @@ export default function DashboardBookingsSection({
   pastBookings,
   activeBookingTab,
   onBookingTabChange,
-  renderBookingCard,
+  onConfirmBooking,
+  onDeclineBooking,
+  onCompleteBooking,
 }: DashboardBookingsSectionProps) {
   return (
     <div className={styles.contentCard}>
@@ -56,7 +60,15 @@ export default function DashboardBookingsSection({
             </div>
             <div className={styles.list}>
               {activeBookingTab === 'pending' && (
-                pendingBookings.length > 0 ? pendingBookings.map(renderBookingCard) : (
+                pendingBookings.length > 0 ? pendingBookings.map((booking) => (
+                  <DashboardBookingCard
+                    key={booking.id}
+                    booking={booking}
+                    onConfirmBooking={onConfirmBooking}
+                    onDeclineBooking={onDeclineBooking}
+                    onCompleteBooking={onCompleteBooking}
+                  />
+                )) : (
                   <div className={styles.emptyState}>
                     <h3 className={styles.emptyStateTitle}>No Pending Bookings</h3>
                     <p className={styles.emptyStateMessage}>
@@ -66,7 +78,15 @@ export default function DashboardBookingsSection({
                 )
               )}
               {activeBookingTab === 'confirmed' && (
-                confirmedBookings.length > 0 ? confirmedBookings.map(renderBookingCard) : (
+                confirmedBookings.length > 0 ? confirmedBookings.map((booking) => (
+                  <DashboardBookingCard
+                    key={booking.id}
+                    booking={booking}
+                    onConfirmBooking={onConfirmBooking}
+                    onDeclineBooking={onDeclineBooking}
+                    onCompleteBooking={onCompleteBooking}
+                  />
+                )) : (
                   <div className={styles.emptyState}>
                     <h3 className={styles.emptyStateTitle}>No Confirmed Bookings</h3>
                     <p className={styles.emptyStateMessage}>
@@ -76,7 +96,15 @@ export default function DashboardBookingsSection({
                 )
               )}
               {activeBookingTab === 'past' && (
-                pastBookings.length > 0 ? pastBookings.map(renderBookingCard) : (
+                pastBookings.length > 0 ? pastBookings.map((booking) => (
+                  <DashboardBookingCard
+                    key={booking.id}
+                    booking={booking}
+                    onConfirmBooking={onConfirmBooking}
+                    onDeclineBooking={onDeclineBooking}
+                    onCompleteBooking={onCompleteBooking}
+                  />
+                )) : (
                   <div className={styles.emptyState}>
                     <h3 className={styles.emptyStateTitle}>No Past Bookings</h3>
                     <p className={styles.emptyStateMessage}>

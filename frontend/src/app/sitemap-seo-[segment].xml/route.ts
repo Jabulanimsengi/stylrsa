@@ -4,6 +4,7 @@ import { generateSeoKeywordUrls, generateSitemapXml, splitIntoSitemaps } from '@
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN ||
   process.env.BACKEND_URL ||
   'http://localhost:5000';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 
 // Cache for local fallback sitemaps
 let localSitemapsCache: { sitemaps: string[]; timestamp: number } | null = null;
@@ -23,6 +24,26 @@ function getLocalSitemaps(): string[] {
   return sitemaps;
 }
 
+function isValidSitemapXml(xml: string): boolean {
+  return xml.includes('<?xml') &&
+    xml.includes('<urlset') &&
+    /<url(\s|>)/.test(xml) &&
+    xml.includes('<loc>');
+}
+
+function buildMinimalSitemapXml(): string {
+  const now = new Date().toISOString();
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${SITE_URL}/</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`;
+}
+
 /**
  * Dynamic SEO sitemap route - paginated keyword×location combinations
  * Supports: /sitemap-seo-0.xml, /sitemap-seo-1.xml, /sitemap-seo-2.xml, etc.
@@ -38,10 +59,7 @@ export async function GET(
 
   // Validate segment is a number
   if (!segment || !/^\d+$/.test(segment) || isNaN(segmentNum) || segmentNum < 0) {
-    const emptyXml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-</urlset>`;
-    return new NextResponse(emptyXml, {
+    return new NextResponse(buildMinimalSitemapXml(), {
       status: 200,
       headers: { 'Content-Type': 'application/xml; charset=utf-8' },
     });
@@ -65,14 +83,13 @@ export async function GET(
       const xml = await response.text();
 
       // Validate it's actually XML and doesn't contain JS code
-      const isValidXml = xml.includes('<?xml') && xml.includes('<urlset');
       const hasJsPattern = xml.includes(';// ') ||
         xml.includes('function(') ||
         xml.includes('<!DOCTYPE html') ||
         xml.includes('<script') ||
         xml.includes('webpack');
 
-      if (isValidXml && !hasJsPattern) {
+      if (isValidSitemapXml(xml) && !hasJsPattern) {
         return new NextResponse(xml, {
           status: 200,
           headers: {
@@ -110,16 +127,12 @@ export async function GET(
     console.error('Local sitemap generation failed:', error);
   }
 
-  // Last resort: return empty but valid XML
-  const emptyXml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-</urlset>`;
-
-  return new NextResponse(emptyXml, {
+  return new NextResponse(buildMinimalSitemapXml(), {
     status: 200,
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'X-Source': 'empty-fallback',
+      'Cache-Control': 'public, max-age=300, s-maxage=300',
+      'X-Source': 'minimal-fallback',
     },
   });
 }

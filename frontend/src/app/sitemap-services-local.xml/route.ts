@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateServiceUrls, generateSitemapXml } from '@/lib/sitemap-generator';
+import { buildMinimalUrlsetXml } from '@/lib/sitemap-response';
 
 /**
  * Local Services Sitemap - All service category × location combinations
@@ -19,14 +20,13 @@ export async function GET() {
         });
     } catch (error) {
         console.error('Error generating local services sitemap:', error);
-
-        const emptyXml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-</urlset>`;
-
-        return new NextResponse(emptyXml, {
+        return new NextResponse(buildMinimalUrlsetXml(), {
             status: 200,
-            headers: { 'Content-Type': 'application/xml; charset=utf-8' },
+            headers: {
+                'Content-Type': 'application/xml; charset=utf-8',
+                'Cache-Control': 'public, max-age=300, s-maxage=300',
+                'X-Source': 'minimal-fallback',
+            },
         });
     }
 }

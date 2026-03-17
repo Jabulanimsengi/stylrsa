@@ -1,6 +1,6 @@
 // Reverse Geolocation Hook - Get city/address from coordinates using Mapbox
 import { useState, useCallback } from 'react';
-import { reverseGeocode as mapboxReverseGeocode, ReverseGeocodingResult } from '@/lib/mapbox';
+import { reverseGeocode as mapboxReverseGeocode } from '@/lib/mapbox';
 
 export interface ReverseGeolocationResult {
   city?: string;

@@ -13,11 +13,12 @@ interface OperatingHoursInputProps {
   hours: OperatingHours;
   onChange: (hours: OperatingHours) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-export default function OperatingHoursInput({ hours, onChange, className }: OperatingHoursInputProps) {
+export default function OperatingHoursInput({ hours, onChange, className, disabled = false }: OperatingHoursInputProps) {
   const handleApplyToAll = (field: 'open' | 'close', value: string) => {
     const updated = { ...hours };
     DAYS.forEach(day => {
@@ -62,6 +63,7 @@ export default function OperatingHoursInput({ hours, onChange, className }: Oper
             value={hours['Monday']?.open || '09:00'}
             onChange={(e) => handleApplyToAll('open', e.target.value)}
             className={styles.timeInput}
+            disabled={disabled}
           />
           <span className={styles.separator}>to</span>
           <input
@@ -69,13 +71,14 @@ export default function OperatingHoursInput({ hours, onChange, className }: Oper
             value={hours['Monday']?.close || '17:00'}
             onChange={(e) => handleApplyToAll('close', e.target.value)}
             className={styles.timeInput}
+            disabled={disabled}
           />
         </div>
         <div className={styles.bulkActions}>
-          <button type="button" onClick={applyAllOpen} className={styles.bulkButton}>
+          <button type="button" onClick={applyAllOpen} className={styles.bulkButton} disabled={disabled}>
             Mark all as open
           </button>
-          <button type="button" onClick={applyAllClosed} className={styles.bulkButton}>
+          <button type="button" onClick={applyAllClosed} className={styles.bulkButton} disabled={disabled}>
             Mark all as closed
           </button>
         </div>
@@ -94,6 +97,7 @@ export default function OperatingHoursInput({ hours, onChange, className }: Oper
                   type="checkbox"
                   checked={dayData.isOpen}
                   onChange={(e) => handleDayChange(day, 'isOpen', e.target.checked)}
+                  disabled={disabled}
                 />
                 <span className={styles.dayName}>{day}</span>
               </label>
@@ -105,6 +109,7 @@ export default function OperatingHoursInput({ hours, onChange, className }: Oper
                     value={dayData.open}
                     onChange={(e) => handleDayChange(day, 'open', e.target.value)}
                     className={styles.timeInput}
+                    disabled={disabled}
                   />
                   <span className={styles.separator}>to</span>
                   <input
@@ -112,6 +117,7 @@ export default function OperatingHoursInput({ hours, onChange, className }: Oper
                     value={dayData.close}
                     onChange={(e) => handleDayChange(day, 'close', e.target.value)}
                     className={styles.timeInput}
+                    disabled={disabled}
                   />
                 </div>
               ) : (

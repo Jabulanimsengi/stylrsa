@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import Image from 'next/image';
 import styles from './ImageLightbox.module.css';
 import { FaTimes, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner/LoadingSpinner';
@@ -109,15 +110,14 @@ export default function ImageLightbox({ images, initialImageIndex = 0, onClose }
               Failed to load image
             </div>
           )}
-          <img
+          <Image
             src={images[currentIndex]}
             alt={`Image ${currentIndex + 1} of ${images.length}`}
+            fill
+            unoptimized
             className={styles.image}
             style={{ 
-              maxWidth: '100%', 
-              maxHeight: '100%', 
-              width: 'auto', 
-              height: 'auto',
+              objectFit: 'contain',
               display: isLoading ? 'none' : 'block'
             }}
             onLoad={handleImageLoad}

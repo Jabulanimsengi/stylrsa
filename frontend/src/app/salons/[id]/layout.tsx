@@ -1,5 +1,3 @@
-import type { Metadata } from 'next';
-
 type Sanitizable = string | null | undefined;
 
 const normalizeText = (value: Sanitizable) => {
@@ -46,61 +44,6 @@ async function fetchSalon(id: string) {
     clearTimeout(timeoutId);
     return null;
   }
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const salon = await fetchSalon(id);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
-  // Use slug for canonical URL if available for better SEO
-  const canonicalUrl = `${siteUrl}/salons/${salon?.slug || id}`;
-
-  if (!salon) {
-    return {
-      title: 'Salon Not Found | Stylr SA',
-      description: 'The salon you are looking for could not be found.',
-    };
-  }
-
-  const title = `${salon.name} - ${salon.city}, ${salon.province} | Stylr SA`;
-  const description = salon.description
-    ? `${salon.description.substring(0, 155)}...`
-    : `Book appointments at ${salon.name} in ${salon.city}, ${salon.province}. Find professional beauty services including hair styling, nails, and more.`;
-
-  const images = salon.heroImages && salon.heroImages.length > 0
-    ? salon.heroImages.slice(0, 3)
-    : salon.backgroundImage
-      ? [salon.backgroundImage]
-      : [`${siteUrl}/logo-transparent.png`];
-
-  return {
-    title,
-    description,
-    keywords: `${salon.name}, salon, beauty, ${salon.city}, ${salon.province}, South Africa, hair salon, nail salon, spa`,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    openGraph: {
-      title,
-      description,
-      url: canonicalUrl,
-      siteName: 'Stylr SA',
-      type: 'website',
-      images: images.map((img: string) => ({
-        url: img,
-        width: 1200,
-        height: 630,
-        alt: `${salon.name} - Beauty Salon`,
-      })),
-      locale: 'en_ZA',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images,
-    },
-  };
 }
 
 export default async function SalonLayout({ children, params }: Props) {

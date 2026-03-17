@@ -1,4 +1,9 @@
 import { NextResponse } from 'next/server';
+import {
+  buildMinimalUrlsetXml,
+  hasUnsafeXmlPayload,
+  isValidUrlsetXml,
+} from '@/lib/sitemap-response';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN || process.env.BACKEND_URL || 'http://localhost:5000';
 
@@ -13,16 +18,26 @@ export async function GET() {
     }
 
     const xml = await response.text();
+    if (!isValidUrlsetXml(xml) || hasUnsafeXmlPayload(xml)) {
+      throw new Error('Backend returned invalid salons sitemap XML');
+    }
 
     return new NextResponse(xml, {
       status: 200,
       headers: {
-        'Content-Type': 'application/xml',
+        'Content-Type': 'application/xml; charset=utf-8',
         'Cache-Control': 'public, max-age=3600, s-maxage=3600',
       },
     });
   } catch (error) {
     console.error('Error generating salons sitemap:', error);
-    return new NextResponse('Error generating sitemap', { status: 500 });
+    return new NextResponse(buildMinimalUrlsetXml(), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, s-maxage=300',
+        'X-Source': 'minimal-fallback',
+      },
+    });
   }
 }

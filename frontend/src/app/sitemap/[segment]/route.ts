@@ -3,6 +3,27 @@ import { NextResponse } from 'next/server';
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN ||
     process.env.BACKEND_URL ||
     'http://localhost:5000';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
+
+function buildMinimalSitemapXml(): string {
+    const now = new Date().toISOString();
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${SITE_URL}/</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`;
+}
+
+function isValidSitemapXml(xml: string): boolean {
+    return xml.includes('<?xml') &&
+        xml.includes('<urlset') &&
+        /<url(\s|>)/.test(xml) &&
+        xml.includes('<loc>');
+}
 
 /**
  * Generic Sitemap Route Handler
@@ -18,10 +39,7 @@ export async function GET(
 
         // Validate segment is a number
         if (!segment || !/^\d+$/.test(segment)) {
-            const emptyXml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-</urlset>`;
-            return new NextResponse(emptyXml, {
+            return new NextResponse(buildMinimalSitemapXml(), {
                 status: 200,
                 headers: { 'Content-Type': 'application/xml; charset=utf-8' },
             });
@@ -36,11 +54,7 @@ export async function GET(
         );
 
         if (!response.ok) {
-            const emptyXml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-</urlset>`;
-
-            return new NextResponse(emptyXml, {
+            return new NextResponse(buildMinimalSitemapXml(), {
                 status: 200,
                 headers: {
                     'Content-Type': 'application/xml; charset=utf-8',
@@ -51,12 +65,8 @@ export async function GET(
 
         const xml = await response.text();
 
-        if (!xml.includes('<?xml') || !xml.includes('<urlset')) {
-            const emptyXml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-</urlset>`;
-
-            return new NextResponse(emptyXml, {
+        if (!isValidSitemapXml(xml)) {
+            return new NextResponse(buildMinimalSitemapXml(), {
                 status: 200,
                 headers: { 'Content-Type': 'application/xml; charset=utf-8' },
             });
@@ -72,11 +82,7 @@ export async function GET(
     } catch (error) {
         console.error(`Sitemap error:`, error);
 
-        const emptyXml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-</urlset>`;
-
-        return new NextResponse(emptyXml, {
+        return new NextResponse(buildMinimalSitemapXml(), {
             status: 200,
             headers: {
                 'Content-Type': 'application/xml; charset=utf-8',

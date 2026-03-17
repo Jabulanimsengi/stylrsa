@@ -22,14 +22,6 @@ export class GalleryService {
         'You are not authorized to add images to this gallery.',
       );
     }
-    // Enforce gallery cap for FREE plan
-    if ((salon as any).planCode === 'FREE') {
-      const count = await this.prisma.galleryImage.count({ where: { salonId } });
-      if (count >= 5) {
-        throw new ForbiddenException('Free package allows up to 5 gallery images.');
-      }
-    }
-
     return this.prisma.galleryImage.create({
       data: {
         salonId,

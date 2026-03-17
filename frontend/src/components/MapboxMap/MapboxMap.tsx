@@ -1,12 +1,13 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './MapboxMap.module.css';
 
 // Set the Mapbox access token
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
+mapboxgl.accessToken = MAPBOX_TOKEN;
 
 interface MapboxMapProps {
     latitude: number;
@@ -45,13 +46,17 @@ export default function MapboxMap({
     const mapContainer = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const markerRef = useRef<mapboxgl.Marker | null>(null);
-    const [isLoaded, setIsLoaded] = useState(false);
+    const hasToken = Boolean(MAPBOX_TOKEN);
 
     useEffect(() => {
         if (!mapContainer.current || mapRef.current) return;
 
         // Validate coordinates
         if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
+            return;
+        }
+
+        if (!hasToken) {
             return;
         }
 
@@ -102,10 +107,6 @@ export default function MapboxMap({
         mapRef.current = map;
         markerRef.current = marker;
 
-        map.on('load', () => {
-            setIsLoaded(true);
-        });
-
         // Cleanup
         return () => {
             marker.remove();
@@ -113,7 +114,7 @@ export default function MapboxMap({
             mapRef.current = null;
             markerRef.current = null;
         };
-    }, [latitude, longitude, zoom, markerColor, interactive, showPopup, popupContent, style]);
+    }, [latitude, longitude, zoom, markerColor, interactive, showPopup, popupContent, style, hasToken]);
 
     // Update marker position when coordinates change
     useEffect(() => {
@@ -126,6 +127,21 @@ export default function MapboxMap({
     }, [latitude, longitude, zoom]);
 
     const containerHeight = typeof height === 'number' ? `${height}px` : height;
+
+    if (!hasToken) {
+        return (
+            <div
+                className={`${styles.mapContainer} ${styles.mapFallback} ${className}`}
+                style={{ height: containerHeight }}
+                aria-label="Map unavailable"
+            >
+                <div className={styles.mapFallbackContent}>
+                    <strong>Map unavailable</strong>
+                    <span>Add `NEXT_PUBLIC_MAPBOX_TOKEN` to enable interactive maps locally.</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div

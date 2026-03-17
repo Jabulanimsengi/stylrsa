@@ -5,15 +5,15 @@
     position: relative;
     z-index: 20;
     white-space: nowrap;
-    /* Prevent horizontal text shifting (dancing) when typing inside a centered container */
-    min-width: 9em;
+    min-height: 1.1em;
     text-align: left;
     justify-content: flex-start;
+    flex-shrink: 0;
 }
 
 .text {
     font-weight: 800;
-    color: #1D1D1F;
+    color: currentColor;
     display: inline-block;
 }
 
@@ -24,8 +24,7 @@
     /* Block width */
     height: 1.1em;
     /* Matches text height closely */
-    background-color: #1D1D1F;
-    /* Solid black */
+    background-color: currentColor;
     border-radius: 2px;
     margin-left: 2px;
     animation: blink 1s step-end infinite;

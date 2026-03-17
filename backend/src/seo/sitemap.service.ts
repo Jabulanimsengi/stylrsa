@@ -1,11 +1,25 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { slugify } from '../common/slug.util';
 
 interface SitemapUrl {
   loc: string;
   lastmod: string;
   changefreq: 'daily' | 'weekly' | 'monthly';
   priority: string;
+}
+
+interface SitemapLocation {
+  slug: string;
+  provinceSlug: string;
+  type: string;
+  population: number | null;
+  salonCount: number;
+  serviceCount: number;
+  parentLocationId: string | null;
+  parentLocation?: {
+    slug: string;
+  } | null;
 }
 
 @Injectable()
@@ -16,7 +30,7 @@ export class SitemapService {
     process.env.FRONTEND_URL || 'https://www.stylrsa.co.za';
 
   // Cache for locations to avoid DB hits on every request
-  private locationsCache: any[] | null = null;
+  private locationsCache: SitemapLocation[] | null = null;
   private lastLocationsFetch = 0;
   private readonly LOCATIONS_CACHE_TTL = 1000 * 60 * 60; // 1 hour
 
@@ -35,7 +49,8 @@ export class SitemapService {
 
     // Calculate total possible URLs from keywords × locations
     const keywordCount = await this.prisma.seoKeyword.count();
-    const locationCount = await this.prisma.seoLocation.count();
+    const locations = this.getIndexableLocations(await this.getLocations());
+    const locationCount = locations.length;
     const totalUrls = keywordCount * locationCount;
     const totalSitemaps = Math.ceil(totalUrls / this.URLS_PER_SITEMAP);
 
@@ -69,12 +84,6 @@ export class SitemapService {
     // Add trends sitemap
     xml += '  <sitemap>\n';
     xml += `    <loc>${this.BASE_URL}/sitemap-trends.xml</loc>\n`;
-    xml += `    <lastmod>${new Date().toISOString()}</lastmod>\n`;
-    xml += '  </sitemap>\n';
-
-    // Add jobs sitemap
-    xml += '  <sitemap>\n';
-    xml += `    <loc>${this.BASE_URL}/sitemap-jobs.xml</loc>\n`;
     xml += `    <lastmod>${new Date().toISOString()}</lastmod>\n`;
     xml += '  </sitemap>\n';
 
@@ -132,12 +141,7 @@ export class SitemapService {
       { loc: '/salons', lastmod: now, changefreq: 'daily', priority: '0.9' },
       { loc: '/services', lastmod: now, changefreq: 'daily', priority: '0.9' },
       { loc: '/trends', lastmod: now, changefreq: 'daily', priority: '0.8' },
-      { loc: '/products', lastmod: now, changefreq: 'daily', priority: '0.8' },
       { loc: '/blog', lastmod: now, changefreq: 'weekly', priority: '0.7' },
-      { loc: '/jobs', lastmod: now, changefreq: 'daily', priority: '0.8' },
-      { loc: '/candidates', lastmod: now, changefreq: 'daily', priority: '0.8' },
-      { loc: '/employers', lastmod: now, changefreq: 'weekly', priority: '0.7' },
-      { loc: '/careers', lastmod: now, changefreq: 'weekly', priority: '0.7' },
       { loc: '/privacy', lastmod: now, changefreq: 'monthly', priority: '0.5' },
       { loc: '/terms', lastmod: now, changefreq: 'monthly', priority: '0.5' },
     ];
@@ -189,6 +193,7 @@ export class SitemapService {
       },
       select: {
         id: true,
+        title: true,
         updatedAt: true,
         salonId: true,
         salon: {
@@ -202,7 +207,7 @@ export class SitemapService {
     });
 
     const urls: SitemapUrl[] = services.map((service) => ({
-      loc: `/salons/${service.salon?.slug || service.salonId}?service=${service.id}`,
+      loc: `/salons/${service.salon?.slug || service.salonId}/services/${slugify(service.title || 'beauty-service') || 'beauty-service'}-${service.id}`,
       lastmod: service.updatedAt.toISOString(),
       changefreq: 'weekly',
       priority: '0.6',
@@ -291,7 +296,7 @@ export class SitemapService {
   /**
    * Get cached locations
    */
-  private async getLocations(): Promise<any[]> {
+  private async getLocations(): Promise<SitemapLocation[]> {
     if (
       this.locationsCache &&
       Date.now() - this.lastLocationsFetch < this.LOCATIONS_CACHE_TTL
@@ -301,12 +306,27 @@ export class SitemapService {
 
     this.logger.log('Fetching locations from DB for sitemap generation');
     this.locationsCache = await this.prisma.seoLocation.findMany({
+      where: {
+        OR: [
+          { type: 'PROVINCE' },
+          { salonCount: { gt: 0 } },
+          { serviceCount: { gt: 0 } },
+        ],
+      },
       orderBy: [{ population: 'desc' }, { name: 'asc' }],
       select: {
         slug: true,
         provinceSlug: true,
         type: true,
         population: true,
+        salonCount: true,
+        serviceCount: true,
+        parentLocationId: true,
+        parentLocation: {
+          select: {
+            slug: true,
+          },
+        },
       },
     });
     this.lastLocationsFetch = Date.now();
@@ -320,7 +340,7 @@ export class SitemapService {
   async getAllSEOUrls(skip: number, limit: number): Promise<SitemapUrl[]> {
     // 1. Fetch all locations to calculate pagination
     // Use cached locations to improve performance
-    const locations = await this.getLocations();
+    const locations = this.getIndexableLocations(await this.getLocations());
 
     const locationCount = locations.length;
     if (locationCount === 0) return [];
@@ -358,12 +378,10 @@ export class SitemapService {
 
         const location = locations[i];
 
-        // Build URL based on location type
-        let url: string;
-        if (location.type === 'PROVINCE') {
-          url = `/${keyword.slug}/${location.provinceSlug}`;
-        } else {
-          url = `/${keyword.slug}/${location.provinceSlug}/${location.slug}`;
+        const url = this.buildSeoLocationUrl(keyword.slug, location);
+
+        if (!url) {
+          continue;
         }
 
         urls.push({
@@ -404,8 +422,9 @@ export class SitemapService {
       priority += 0.1; // Province pages are important
     } else if (location.type === 'CITY' || location.type === 'TOWN') {
       priority += 0.05; // City pages are moderately important
+    } else if (location.type === 'SUBURB' || location.type === 'TOWNSHIP') {
+      priority += 0.02; // Deep local pages matter when they have real inventory
     }
-    // Suburbs get no bonus
 
     // Population bonus (if available)
     if (location.population) {
@@ -454,10 +473,12 @@ export class SitemapService {
     totalUrls: number;
     totalSitemaps: number;
     cachedUrls: number;
+    eligibleLocations: number;
     lastGenerated: Date | null;
   }> {
     const keywordCount = await this.prisma.seoKeyword.count();
-    const locationCount = await this.prisma.seoLocation.count();
+    const locations = this.getIndexableLocations(await this.getLocations());
+    const locationCount = locations.length;
     const totalUrls = keywordCount * locationCount;
     const totalSitemaps = Math.ceil(totalUrls / this.URLS_PER_SITEMAP);
     const cachedUrls = await this.prisma.seoPageCache.count();
@@ -472,7 +493,52 @@ export class SitemapService {
       totalUrls,
       totalSitemaps,
       cachedUrls,
+      eligibleLocations: locationCount,
       lastGenerated: latestPage?.lastGenerated || null,
     };
+  }
+
+  private buildSeoLocationUrl(
+    keywordSlug: string,
+    location: SitemapLocation,
+  ): string | null {
+    if (location.type === 'PROVINCE') {
+      return `/${keywordSlug}/${location.provinceSlug}`;
+    }
+
+    if (
+      (location.type === 'SUBURB' || location.type === 'TOWNSHIP') &&
+      location.parentLocation?.slug
+    ) {
+      return `/${keywordSlug}/${location.provinceSlug}/${location.parentLocation.slug}/${location.slug}`;
+    }
+
+    if (location.type === 'SUBURB' || location.type === 'TOWNSHIP') {
+      return null;
+    }
+
+    return `/${keywordSlug}/${location.provinceSlug}/${location.slug}`;
+  }
+
+  private getIndexableLocations(
+    locations: SitemapLocation[],
+  ): SitemapLocation[] {
+    return locations.filter((location) => this.isIndexableLocation(location));
+  }
+
+  private isIndexableLocation(location: SitemapLocation): boolean {
+    if (location.type === 'PROVINCE') {
+      return true;
+    }
+
+    if (location.type === 'CITY' || location.type === 'TOWN') {
+      return true;
+    }
+
+    if (location.type === 'SUBURB' || location.type === 'TOWNSHIP') {
+      return Boolean(location.parentLocation?.slug);
+    }
+
+    return false;
   }
 }

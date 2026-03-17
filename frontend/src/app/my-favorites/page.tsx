@@ -16,6 +16,7 @@ import PageNav from '@/components/PageNav';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import { getSalonUrl } from '@/utils/salonUrl';
 import { notify } from '@/lib/notify';
+import { getGuestFavoriteSalons } from '@/lib/guestFavorites';
 
 export default function MyFavoritesPage() {
   const [favorites, setFavorites] = useState<Salon[]>([]);
@@ -24,14 +25,13 @@ export default function MyFavoritesPage() {
   const { authStatus } = useAuth();
 
   useEffect(() => {
-    // Don't redirect if still loading auth status
     if (authStatus === 'loading') {
       return;
     }
 
     if (authStatus === 'unauthenticated') {
-      // Redirect to home with auth modal instead of /login page
-      router.push('/?auth=login&redirect=/my-favorites');
+      setFavorites(getGuestFavoriteSalons());
+      setIsLoading(false);
       return;
     }
 
@@ -78,36 +78,6 @@ export default function MyFavoritesPage() {
     );
   }
 
-  // Show message for unauthenticated users (while redirect is happening)
-  if (authStatus === 'unauthenticated') {
-    return (
-      <div className={styles.container}>
-        <PageNav />
-        <h1 className={styles.title}>My Favorite Salons</h1>
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '3rem 1rem',
-          maxWidth: '500px',
-          margin: '0 auto'
-        }}>
-          <p style={{ 
-            fontSize: '1.1rem', 
-            marginBottom: '1rem',
-            color: 'var(--color-text-secondary)'
-          }}>
-            🔒 Please sign in to view your favorite salons
-          </p>
-          <p style={{ 
-            fontSize: '0.9rem',
-            color: 'var(--color-text-muted)'
-          }}>
-            Redirecting to login...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   // Show loading for auth status check
   if (authStatus === 'loading') {
     return (
@@ -125,14 +95,14 @@ export default function MyFavoritesPage() {
       <h1 className={styles.title}>My Favorite Salons</h1>
 
       {favorites.length === 0 ? (
-        <p>You haven't favorited any salons yet.</p>
+        <p>{authStatus === 'authenticated' ? "You haven't favorited any salons yet." : "You haven't saved any salons on this device yet."}</p>
       ) : (
         <div className={styles.salonGrid}>
           {favorites.map((salon) => (
             <Link href={getSalonUrl(salon)} key={salon.id} className={styles.salonCard}>
               <div className={styles.imageWrapper}>
                 <ReviewBadge 
-                  reviewCount={salon.reviews?.length || 0}
+                  reviewCount={salon.reviewCount || salon.reviews?.length || 0}
                   avgRating={salon.avgRating || 0}
                 />
                 <Image

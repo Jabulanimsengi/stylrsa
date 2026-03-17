@@ -5,7 +5,7 @@ import PageNav from '@/components/PageNav';
 
 export const metadata: Metadata = {
   title: 'Terms of Service - Stylr SA',
-  description: 'Read Stylr SA\'s Terms of Service. Understand your rights and responsibilities when using our beauty and wellness marketplace platform.',
+  description: 'Read Stylr SA\'s Terms of Service. Understand your rights and responsibilities when using our beauty and wellness booking and discovery platform.',
   keywords: 'terms of service, user agreement, Stylr SA legal, terms and conditions',
   openGraph: {
     title: 'Terms of Service - Stylr SA',
@@ -31,17 +31,16 @@ export default function TermsPage() {
           Welcome to Stylr SA. By accessing or using our platform at stylrsa.co.za ("Platform"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, please do not use our Platform.
         </p>
         <p className={styles.paragraph}>
-          These Terms apply to all users of the Platform, including customers, salon owners, service providers, product sellers, and visitors.
+          These Terms apply to all users of the Platform, including customers, salon owners, service providers, and visitors.
         </p>
 
         <h2 className={styles.sectionTitle}>2. Description of Service</h2>
         <p className={styles.paragraph}>
-          Stylr SA is an online marketplace that connects beauty and wellness service providers with customers in South Africa. Our Platform allows:
+          Stylr SA is an online platform that connects beauty and wellness service providers with customers in South Africa. Our Platform allows:
         </p>
         <ul className={styles.list}>
           <li>Customers to discover, review, and book services with salons and independent professionals</li>
           <li>Service providers to create profiles, showcase their work, manage bookings, and promote their services</li>
-          <li>Product sellers to list and sell beauty and wellness products</li>
           <li>Users to interact through reviews, ratings, and messaging</li>
         </ul>
 
@@ -61,9 +60,8 @@ export default function TermsPage() {
 
         <h3 className={styles.blockTitle}>3.2 Account Types</h3>
         <ul className={styles.list}>
-          <li><strong>Customer Accounts:</strong> For booking services and purchasing products</li>
+          <li><strong>Customer Accounts:</strong> For booking services and managing your activity on the Platform</li>
           <li><strong>Service Provider Accounts:</strong> For salons, spas, and independent professionals</li>
-          <li><strong>Seller Accounts:</strong> For product vendors</li>
         </ul>
 
         <h3 className={styles.blockTitle}>3.3 Account Termination</h3>
@@ -83,7 +81,7 @@ export default function TermsPage() {
           <li>Upload viruses, malware, or any harmful code</li>
           <li>Attempt to gain unauthorized access to our systems</li>
           <li>Scrape, data mine, or extract data from the Platform without permission</li>
-          <li>Use the Platform for any commercial purpose outside the intended marketplace functions</li>
+          <li>Use the Platform for any commercial purpose outside the intended booking, discovery, and career-networking functions</li>
           <li>Post spam, advertisements, or unsolicited messages</li>
         </ul>
 
@@ -100,20 +98,9 @@ export default function TermsPage() {
           <li>You must honor your booking commitments</li>
         </ul>
 
-        <h3 className={styles.blockTitle}>5.2 Product Purchases</h3>
+        <h3 className={styles.blockTitle}>5.2 Payments and Fees</h3>
         <p className={styles.paragraph}>
-          When you purchase products through our marketplace:
-        </p>
-        <ul className={styles.list}>
-          <li>You are purchasing directly from the seller</li>
-          <li>Product descriptions, pricing, and availability are provided by sellers</li>
-          <li>Shipping, returns, and refunds are handled according to seller policies</li>
-          <li>We facilitate the transaction but are not the seller of record</li>
-        </ul>
-
-        <h3 className={styles.blockTitle}>5.3 Payments and Fees</h3>
-        <p className={styles.paragraph}>
-          All payments are processed securely through our payment partners. We may charge platform fees or commission on transactions. These fees will be clearly disclosed before you complete a transaction.
+          Service-provider listings are offered on a flat R399/month subscription for salons and independent professionals listing services on Stylr SA. Any applicable fees will be clearly disclosed before completion.
         </p>
 
         <h2 className={styles.sectionTitle}>6. Service Provider Obligations</h2>
@@ -130,17 +117,16 @@ export default function TermsPage() {
           <li>Maintain accurate calendars and availability</li>
         </ul>
 
-        <h2 className={styles.sectionTitle}>7. Seller Obligations</h2>
+        <h2 className={styles.sectionTitle}>7. Profile Accuracy and Professional Conduct</h2>
         <p className={styles.paragraph}>
-          If you sell products on our Platform, you agree to:
+          If you create or manage a profile on our Platform, you agree to:
         </p>
         <ul className={styles.list}>
-          <li>Provide accurate product descriptions, images, and pricing</li>
-          <li>Ensure products comply with South African consumer protection laws</li>
-          <li>Fulfill orders promptly and as described</li>
-          <li>Handle customer service, returns, and refunds according to applicable laws</li>
-          <li>Pay applicable platform fees and commissions</li>
-          <li>Not sell counterfeit, illegal, or prohibited items</li>
+          <li>Provide accurate information about your business, services, qualifications, and availability</li>
+          <li>Only upload portfolio content that you own or have permission to use</li>
+          <li>Represent your certifications, experience, and service scope honestly</li>
+          <li>Comply with all applicable employment, licensing, and professional standards</li>
+          <li>Communicate professionally with customers, partners, and other users</li>
         </ul>
 
         <h2 className={styles.sectionTitle}>8. Content and Intellectual Property</h2>
@@ -180,12 +166,12 @@ export default function TermsPage() {
 
         <h3 className={styles.blockTitle}>10.2 Third-Party Services</h3>
         <p className={styles.paragraph}>
-          Stylr SA is a marketplace connecting users with service providers and sellers. We are not responsible for:
+          Stylr SA is a platform connecting users with service providers and beauty businesses. We are not responsible for:
         </p>
         <ul className={styles.list}>
-          <li>The quality, safety, or legality of services or products offered</li>
+          <li>The quality, safety, or legality of services offered</li>
           <li>The accuracy of listings, profiles, or user content</li>
-          <li>The conduct or performance of service providers or sellers</li>
+          <li>The conduct or performance of service providers or other users</li>
           <li>Disputes between users</li>
         </ul>
 

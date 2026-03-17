@@ -32,7 +32,7 @@
 }
 
 .breadcrumbLink:hover {
-  color: var(--primary, #e91e63);
+  color: var(--color-text-strong, #111827);
 }
 
 .breadcrumbSeparator {
@@ -78,7 +78,7 @@
 .statValue {
   font-size: 1.875rem;
   font-weight: 700;
-  color: var(--primary, #e91e63);
+  color: var(--color-text-strong, #111827);
   line-height: 1;
 }
 
@@ -154,7 +154,7 @@
 }
 
 .linkCard:hover {
-  border-color: var(--primary, #e91e63);
+  border-color: var(--color-text-strong, #111827);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transform: translateY(-2px);
@@ -168,7 +168,7 @@
 
 .linkArrow {
   font-size: 1.25rem;
-  color: var(--primary, #e91e63);
+  color: var(--color-text-strong, #111827);
   margin-left: 0.5rem;
   transition: transform 0.2s;
 }
@@ -181,9 +181,11 @@
 .ctaSection {
   margin-top: 4rem;
   padding: 3rem 2rem;
-  background: linear-gradient(135deg,
-      rgba(233, 30, 99, 0.1) 0%,
-      rgba(233, 30, 99, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(17, 24, 39, 0.06) 0%,
+    rgba(17, 24, 39, 0.02) 100%
+  );
   border-radius: 1rem;
   text-align: center;
 }
@@ -272,13 +274,13 @@
 .viewAllLink {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--primary, #e91e63);
+  color: var(--color-text-strong, #111827);
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .viewAllLink:hover {
-  color: var(--primary-dark, #c2185b);
+  color: #333333;
 }
 
 /* Services and Salons Grids */
@@ -301,20 +303,20 @@
   display: inline-block;
   padding: 0.75rem 2rem;
   background-color: transparent;
-  color: var(--primary, #e91e63);
+  color: var(--color-text-strong, #111827);
   font-size: 1rem;
   font-weight: 600;
   text-decoration: none;
-  border: 2px solid var(--primary, #e91e63);
+  border: 2px solid var(--color-text-strong, #111827);
   border-radius: 0.5rem;
   transition: all 0.2s;
 }
 
 .viewMoreButton:hover {
-  background-color: var(--primary, #e91e63);
+  background-color: var(--color-text-strong, #111827);
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(233, 30, 99, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(17, 24, 39, 0.24);
 }
 
 /* FAQ Section */

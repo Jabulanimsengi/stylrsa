@@ -5,10 +5,8 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsNumber,
   IsEnum,
   Matches,
-  Min,
 } from 'class-validator';
 
 export enum MaterialSelection {
@@ -55,14 +53,5 @@ export class CreateBookingDto {
   // Payment-related fields
   @IsBoolean()
   @IsOptional()
-  depositPaid?: boolean; // Whether 60% deposit is paid
-
-  @IsBoolean()
-  @IsOptional()
-  useCashback?: boolean; // Whether to use cashback balance
-
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  cashbackUsed?: number; // Amount of cashback to apply
+  depositPaid?: boolean; // Whether the 50% deposit is paid
 }

@@ -9,8 +9,8 @@ import {
 export class UpdateSalonPlanDto {
   @IsOptional()
   @IsString()
-  @IsIn(['FREE', 'STARTER', 'ESSENTIAL', 'GROWTH', 'PRO', 'ELITE'])
-  planCode?: 'FREE' | 'STARTER' | 'ESSENTIAL' | 'GROWTH' | 'PRO' | 'ELITE';
+  @IsIn(['PREMIUM'])
+  planCode?: 'PREMIUM';
 
   @IsOptional()
   @IsBoolean()

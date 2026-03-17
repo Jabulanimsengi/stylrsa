@@ -18,8 +18,6 @@ import { UpdatePlanDto } from './dto/update-plan.dto';
 import { UpdatePlanPaymentStatusDto } from './dto/update-plan-payment-status.dto';
 import { DeleteEntityDto } from './dto/delete-entity.dto';
 import { Request } from 'express';
-import { BeforeAfterService } from '../before-after/before-after.service';
-import { VideosService } from '../videos/videos.service';
 
 @Controller('api/admin')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -27,8 +25,6 @@ import { VideosService } from '../videos/videos.service';
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
-    private readonly beforeAfterService: BeforeAfterService,
-    private readonly videosService: VideosService,
   ) { }
 
   @Get('salons/all')
@@ -134,13 +130,9 @@ export class AdminController {
     @Param('salonId') salonId: string,
     @Body() dto: UpdatePlanDto,
   ) {
-    const featuredUntil = dto.featuredUntil
-      ? new Date(dto.featuredUntil)
-      : undefined;
     return this.adminService.setSalonPlan(salonId, dto.planCode ?? '', {
       visibilityWeight: dto.visibilityWeight,
       maxListings: dto.maxListings,
-      featuredUntil,
     });
   }
 
@@ -149,13 +141,9 @@ export class AdminController {
     @Param('sellerId') sellerId: string,
     @Body() dto: UpdatePlanDto,
   ) {
-    const featuredUntil = dto.featuredUntil
-      ? new Date(dto.featuredUntil)
-      : undefined;
     return this.adminService.setSellerPlan(sellerId, dto.planCode ?? '', {
       visibilityWeight: dto.visibilityWeight,
       maxListings: dto.maxListings,
-      featuredUntil,
     });
   }
 
@@ -271,71 +259,4 @@ export class AdminController {
     return this.adminService.diagnosticDeletedSellersTable();
   }
 
-  @Get('salons/featured/manage')
-  getManageFeaturedSalons() {
-    return this.adminService.getManageFeaturedSalons();
-  }
-
-  @Post('salons/:salonId/feature')
-  featureSalon(
-    @Param('salonId') salonId: string,
-    @Body() body: { durationDays: number },
-    @Req() req: Request,
-  ) {
-    const adminId = (req as any)?.user?.id as string | undefined;
-    return this.adminService.featureSalon(salonId, body.durationDays, adminId);
-  }
-
-  @Delete('salons/:salonId/unfeature')
-  unfeatureSalon(
-    @Param('salonId') salonId: string,
-    @Req() req: Request,
-  ) {
-    const adminId = (req as any)?.user?.id as string | undefined;
-    return this.adminService.unfeatureSalon(salonId, adminId);
-  }
-
-  // Before/After Photos Management
-  @Get('before-after/pending')
-  getPendingBeforeAfter() {
-    return this.beforeAfterService.getPendingBeforeAfter();
-  }
-
-  @Patch('before-after/:id/approve')
-  approveBeforeAfter(@Param('id') id: string, @Req() req: Request) {
-    const adminId = (req as any)?.user?.id as string | undefined;
-    return this.beforeAfterService.approveBeforeAfter(id, adminId ?? 'unknown');
-  }
-
-  @Patch('before-after/:id/reject')
-  rejectBeforeAfter(
-    @Param('id') id: string,
-    @Body('reason') reason: string | undefined,
-    @Req() req: Request,
-  ) {
-    const adminId = (req as any)?.user?.id as string | undefined;
-    return this.beforeAfterService.rejectBeforeAfter(id, adminId ?? 'unknown', reason);
-  }
-
-  // Videos Management
-  @Get('videos/pending')
-  getPendingVideos() {
-    return this.videosService.getPendingVideos();
-  }
-
-  @Patch('videos/:id/approve')
-  approveVideo(@Param('id') id: string, @Req() req: Request) {
-    const adminId = (req as any)?.user?.id as string | undefined;
-    return this.videosService.approveVideo(id, adminId ?? 'unknown');
-  }
-
-  @Patch('videos/:id/reject')
-  rejectVideo(
-    @Param('id') id: string,
-    @Body('reason') reason: string | undefined,
-    @Req() req: Request,
-  ) {
-    const adminId = (req as any)?.user?.id as string | undefined;
-    return this.videosService.rejectVideo(id, adminId ?? 'unknown', reason);
-  }
 }

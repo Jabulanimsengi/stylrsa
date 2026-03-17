@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import styles from '../info-page.module.css';
+import { buildAuthRoute } from '@/constants/routes';
 import PageNav from '@/components/PageNav';
 
 export const metadata: Metadata = {
@@ -16,6 +17,8 @@ export const metadata: Metadata = {
 };
 
 export default function TestimonialsPage() {
+  const providerSignupHref = buildAuthRoute.providerRegister('/create-salon');
+
   return (
     <div className={styles.container}>
       <PageNav />
@@ -115,7 +118,7 @@ export default function TestimonialsPage() {
             <strong>For Clients:</strong> <Link href="/register">Sign up</Link> and discover amazing local talent
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
-            <strong>For Professionals:</strong> <Link href="/create-salon">Join as a Partner</Link> and grow your business
+            <strong>For Professionals:</strong> <Link href={providerSignupHref}>Join as a Partner</Link> and grow your business
           </p>
         </div>
 

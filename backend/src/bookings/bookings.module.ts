@@ -4,10 +4,9 @@ import { BookingsService } from './bookings.service';
 import { EventsModule } from 'src/events/events.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { MailModule } from 'src/mail/mail.module';
-import { CashbackModule } from 'src/cashback/cashback.module';
 
 @Module({
-  imports: [EventsModule, NotificationsModule, MailModule, CashbackModule],
+  imports: [EventsModule, NotificationsModule, MailModule],
   controllers: [BookingsController],
   providers: [BookingsService],
 })

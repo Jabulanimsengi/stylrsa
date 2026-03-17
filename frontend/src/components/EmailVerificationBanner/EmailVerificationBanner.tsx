@@ -43,7 +43,7 @@ export default function EmailVerificationBanner({ email, onDismiss }: EmailVerif
                 // No email in props, just navigate to verify page
                 router.push('/verify-email');
             }
-        } catch (error) {
+        } catch {
             setMessage('Failed to send code. Please try again.');
         } finally {
             setIsLoading(false);

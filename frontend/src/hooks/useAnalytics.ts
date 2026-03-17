@@ -103,7 +103,7 @@ export function useSearchTracking() {
  */
 export function useClickTracking() {
   return useCallback(
-    (elementName: string, category: string = 'click', additionalData?: Record<string, any>) => {
+    (elementName: string, category: string = 'click', additionalData?: Record<string, unknown>) => {
       analytics.event({
         action: 'click',
         category,
@@ -251,7 +251,7 @@ export function useDownloadTracking() {
  * Track share actions
  */
 export function useShareTracking() {
-  return useCallback((contentType: string, method: string, contentId?: string) => {
+  return useCallback((contentType: string, method: string, _contentId?: string) => {
     analytics.event({
       action: 'share',
       category: 'engagement',
@@ -264,7 +264,7 @@ export function useShareTracking() {
  * Track errors
  */
 export function useErrorTracking() {
-  return useCallback((errorMessage: string, errorType: string, context?: Record<string, any>) => {
+  return useCallback((errorMessage: string, errorType: string, context?: Record<string, unknown>) => {
     analytics.error(errorMessage, errorType);
 
     if (context && process.env.NODE_ENV === 'development') {

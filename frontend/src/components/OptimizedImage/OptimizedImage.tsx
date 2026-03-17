@@ -28,6 +28,8 @@ export default function OptimizedImage({
   fallbackSrc = '/placeholder-image.jpg',
   eager = false,
   seoContext,
+  priority,
+  loading,
   ...props
 }: OptimizedImageProps) {
   const [imgSrc, setImgSrc] = useState(props.src);
@@ -57,13 +59,16 @@ export default function OptimizedImage({
   };
 
   const optimizedAlt = generateAltText();
+  const shouldPrioritize = Boolean(priority || eager);
+  const imageLoading = shouldPrioritize ? undefined : (loading ?? 'lazy');
 
   return (
     <Image
       {...props}
       src={imgSrc}
       alt={optimizedAlt}
-      loading={eager ? 'eager' : 'lazy'}
+      priority={shouldPrioritize}
+      loading={imageLoading}
       onError={handleError}
       quality={85}
       placeholder="blur"

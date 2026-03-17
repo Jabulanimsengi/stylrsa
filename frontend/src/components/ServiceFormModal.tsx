@@ -46,8 +46,18 @@ interface Category {
   name: string;
 }
 
+interface ServicePayload {
+  title: string;
+  description: string;
+  price: number;
+  duration: number;
+  images: string[];
+  salonId: string;
+  categoryId?: string;
+}
+
 const ServiceFormModal: React.FC<ServiceFormModalProps> = ({
-  isOpen,
+  isOpen: _isOpen,
   onClose,
   salonId,
   onServiceAddedOrUpdated,
@@ -121,11 +131,11 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({
   useEffect(() => {
     if (initialService) {
       reset({
-        name: (initialService as any).name ?? (initialService as any).title ?? '',
+        name: initialService.name ?? initialService.title ?? '',
         description: initialService.description,
         price: initialService.price,
         duration: initialService.duration,
-        categoryId: (initialService as any).categoryId ?? '',
+        categoryId: initialService.categoryId ?? '',
         images: initialService.images || [],
       });
       setImagePreviews(initialService.images || []);
@@ -174,7 +184,7 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({
     setIsUploading(true);
     setErrorMessage(null);
     try {
-      let uploadedImageUrls = [...(data.images || [])];
+      const uploadedImageUrls = [...(data.images || [])];
 
       if (imageFiles.length > 0) {
         const uploadPromises = imageFiles.map(file => uploadToCloudinary(file));
@@ -183,7 +193,7 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({
         uploadedImageUrls.push(...newUrls);
       }
 
-      const serviceData: any = {
+      const serviceData: ServicePayload = {
         // Backend expects 'title'
         title: data.name,
         description: data.description,
@@ -221,10 +231,10 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({
 
       // Fire any provided callback name for backwards compatibility
       onServiceAddedOrUpdated?.(savedService);
-      (typeof (onServiceSaved) === 'function') && onServiceSaved(savedService);
-      (typeof (onServiceAdded) === 'function') && onServiceAdded(savedService);
+      onServiceSaved?.(savedService);
+      onServiceAdded?.(savedService);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const msg = toFriendlyMessage(error, 'Failed to save service.');
       setErrorMessage(msg);
       toast.error(msg);

@@ -471,19 +471,12 @@ export class AdminService {
     overrides?: {
       visibilityWeight?: number;
       maxListings?: number;
-      featuredUntil?: Date | null;
     },
   ) {
     const FALLBACKS: Record<
       string,
       { visibilityWeight: number; maxListings: number; priceCents: number }
     > = {
-      FREE: { visibilityWeight: 0, maxListings: 1, priceCents: 0 },
-      STARTER: { visibilityWeight: 1, maxListings: 3, priceCents: 4900 },
-      ESSENTIAL: { visibilityWeight: 2, maxListings: 7, priceCents: 9900 },
-      GROWTH: { visibilityWeight: 3, maxListings: 15, priceCents: 19900 },
-      PRO: { visibilityWeight: 4, maxListings: 27, priceCents: 29900 },
-      ELITE: { visibilityWeight: 5, maxListings: 9999, priceCents: 49900 },
       PREMIUM: { visibilityWeight: 5, maxListings: 9999, priceCents: 39900 },
     };
     type PlanPartial = {
@@ -492,15 +485,8 @@ export class AdminService {
       priceCents?: number | null;
     };
     // Normalize and validate incoming plan code (handle 'undefined'/'null' strings)
-    const normalizedPlan =
-      !planCode || planCode === 'undefined' || planCode === 'null'
-        ? undefined
-        : planCode;
-    const isValidPlan =
-      !!normalizedPlan &&
-      ['FREE', 'STARTER', 'ESSENTIAL', 'GROWTH', 'PRO', 'ELITE', 'PREMIUM'].includes(
-        normalizedPlan,
-      );
+    const normalizedPlan = 'PREMIUM';
+    const isValidPlan = true;
     let plan: PlanPartial | null = null;
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
@@ -516,12 +502,12 @@ export class AdminService {
       overrides?.visibilityWeight ??
       plan?.visibilityWeight ??
       (isValidPlan ? FALLBACKS[normalizedPlan] : undefined)?.visibilityWeight ??
-      1;
+      5;
     const maxListings =
       overrides?.maxListings ??
       plan?.maxListings ??
       (isValidPlan ? FALLBACKS[normalizedPlan] : undefined)?.maxListings ??
-      2;
+      9999;
     const planPriceCents =
       plan?.priceCents ??
       (isValidPlan ? FALLBACKS[normalizedPlan]?.priceCents : undefined);
@@ -529,19 +515,8 @@ export class AdminService {
       visibilityWeight,
       maxListings,
     };
-    if (isValidPlan) data.planCode = normalizedPlan as PlanCode;
-    if (normalizedPlan === 'FREE') {
-      data.planPaymentStatus = 'VERIFIED';
-      data.planProofSubmittedAt = null;
-      data.planVerifiedAt = new Date();
-    }
+    if (isValidPlan) data.planCode = normalizedPlan as any;
     if (planPriceCents !== undefined) data.planPriceCents = planPriceCents;
-    if (
-      overrides &&
-      Object.prototype.hasOwnProperty.call(overrides, 'featuredUntil')
-    ) {
-      data.featuredUntil = overrides.featuredUntil ?? null;
-    }
     const updated = await this.prisma.salon.update({
       where: { id: salonId },
       data,
@@ -563,7 +538,6 @@ export class AdminService {
     overrides?: {
       visibilityWeight?: number;
       maxListings?: number;
-      featuredUntil?: Date | null;
     },
   ) {
     const FALLBACKS: Record<
@@ -623,12 +597,6 @@ export class AdminService {
     if (isValidPlan) data.sellerPlanCode = normalizedPlan as PlanCode;
     if (sellerPlanPriceCents !== undefined)
       data.sellerPlanPriceCents = sellerPlanPriceCents;
-    if (
-      overrides &&
-      Object.prototype.hasOwnProperty.call(overrides, 'featuredUntil')
-    ) {
-      data.sellerFeaturedUntil = overrides.featuredUntil ?? null;
-    }
     const updated = await this.prisma.user.update({
       where: { id: sellerId },
       data,
@@ -671,8 +639,7 @@ export class AdminService {
     const now = new Date();
     if (status === 'VERIFIED') {
       data.planVerifiedAt = now;
-      // Set commission rate: FREE has 32% commission, paid plans have 0%
-      data.commissionRate = existing.planCode === 'FREE' ? 0.32 : 0.0;
+      data.commissionRate = 0.0;
     } else {
       data.planVerifiedAt = null;
     }
@@ -1037,7 +1004,7 @@ export class AdminService {
         approvalStatus: salonData.approvalStatus ?? 'PENDING',
         avgRating:
           typeof salonData.avgRating === 'number' ? salonData.avgRating : 0,
-        planCode: salonData.planCode ?? 'STARTER',
+        planCode: salonData.planCode ?? 'PREMIUM',
         visibilityWeight:
           typeof salonData.visibilityWeight === 'number'
             ? salonData.visibilityWeight
@@ -1701,155 +1668,4 @@ export class AdminService {
     return result;
   }
 
-  async getManageFeaturedSalons() {
-    const now = new Date();
-
-    // Get currently featured salons
-    const featured = await this.prisma.salon.findMany({
-      where: {
-        approvalStatus: 'APPROVED',
-        featuredUntil: { gte: now },
-      },
-      orderBy: [
-        { visibilityWeight: 'desc' },
-        { featuredUntil: 'desc' },
-      ],
-      select: {
-        id: true,
-        name: true,
-        city: true,
-        province: true,
-        backgroundImage: true,
-        featuredUntil: true,
-        visibilityWeight: true,
-        planCode: true,
-        owner: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-    });
-
-    // Get available (non-featured) approved salons
-    const available = await this.prisma.salon.findMany({
-      where: {
-        approvalStatus: 'APPROVED',
-        OR: [
-          { featuredUntil: null },
-          { featuredUntil: { lt: now } },
-        ],
-      },
-      orderBy: { name: 'asc' },
-      select: {
-        id: true,
-        name: true,
-        city: true,
-        province: true,
-        backgroundImage: true,
-        planCode: true,
-        owner: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-    });
-
-    return { featured, available };
-  }
-
-  async featureSalon(
-    salonId: string,
-    durationDays: number,
-    adminId?: string,
-  ) {
-    const salon = await this.prisma.salon.findUnique({
-      where: { id: salonId },
-      select: { approvalStatus: true, name: true, ownerId: true },
-    });
-
-    if (!salon) {
-      throw new NotFoundException('Salon not found');
-    }
-
-    if (salon.approvalStatus !== 'APPROVED') {
-      throw new ForbiddenException(
-        'Only approved salons can be featured',
-      );
-    }
-
-    const now = new Date();
-    const featuredUntil = new Date(now);
-    featuredUntil.setDate(featuredUntil.getDate() + durationDays);
-
-    const updated = await this.prisma.salon.update({
-      where: { id: salonId },
-      data: { featuredUntil },
-    });
-
-    // Log admin action
-    if (adminId) {
-      void this.logAction({
-        adminId,
-        action: 'SALON_FEATURED',
-        targetType: 'SALON',
-        targetId: salonId,
-        metadata: { durationDays, featuredUntil: featuredUntil.toISOString() },
-      });
-    }
-
-    // Notify salon owner
-    try {
-      const message = `Your salon "${salon.name}" has been featured on the homepage for ${durationDays} days!`;
-      const notification = await this.notificationsService.create(
-        salon.ownerId,
-        message,
-        { link: '/dashboard' },
-      );
-      this.eventsGateway.sendNotificationToUser(
-        salon.ownerId,
-        'newNotification',
-        notification,
-      );
-    } catch {
-      // Notification is best-effort
-    }
-
-    return updated;
-  }
-
-  async unfeatureSalon(salonId: string, adminId?: string) {
-    const salon = await this.prisma.salon.findUnique({
-      where: { id: salonId },
-      select: { name: true, ownerId: true },
-    });
-
-    if (!salon) {
-      throw new NotFoundException('Salon not found');
-    }
-
-    const updated = await this.prisma.salon.update({
-      where: { id: salonId },
-      data: { featuredUntil: null },
-    });
-
-    // Log admin action
-    if (adminId) {
-      void this.logAction({
-        adminId,
-        action: 'SALON_UNFEATURED',
-        targetType: 'SALON',
-        targetId: salonId,
-      });
-    }
-
-    return updated;
-  }
 }

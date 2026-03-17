@@ -11,6 +11,22 @@ type TransformOpts = {
   sharpen?: boolean;
 };
 
+export interface CloudinaryUploadResponse {
+  public_id?: string;
+  secure_url: string;
+  [key: string]: unknown;
+}
+
+function parseCloudinaryUploadResponse(payload: string): CloudinaryUploadResponse {
+  const parsed = JSON.parse(payload) as Partial<CloudinaryUploadResponse>;
+
+  if (!parsed.secure_url || typeof parsed.secure_url !== 'string') {
+    throw new Error('Cloudinary upload response did not include a secure URL.');
+  }
+
+  return parsed as CloudinaryUploadResponse;
+}
+
 /**
  * Transform Cloudinary image URLs with optimizations
  * @param url - Original Cloudinary URL
@@ -121,9 +137,9 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 1
     });
     clearTimeout(timeout);
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(timeout);
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new Error('Upload timed out. Please check your connection and try again with a smaller file.');
     }
     throw error;
@@ -137,7 +153,7 @@ export async function uploadToCloudinary(
     publicId?: string;
     onProgress?: (progress: number) => void;
   }
-): Promise<any> {
+): Promise<CloudinaryUploadResponse> {
   // Validate file before upload (security check)
   if (file instanceof File) {
     const { validateImageFile, isValidImageByContent } = await import('@/lib/file-validation');
@@ -210,14 +226,14 @@ export async function uploadToCloudinary(
       xhr.addEventListener('load', () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
-            resolve(JSON.parse(xhr.responseText));
-          } catch (err) {
+            resolve(parseCloudinaryUploadResponse(xhr.responseText));
+          } catch {
             reject(new Error('Failed to parse upload response'));
           }
         } else {
           try {
-            const error = JSON.parse(xhr.responseText);
-            reject(error);
+            const errorResponse = JSON.parse(xhr.responseText) as CloudinaryUploadResponse;
+            reject(errorResponse);
           } catch {
             reject(new Error('Upload failed'));
           }
@@ -247,10 +263,12 @@ export async function uploadToCloudinary(
       120000 // 2 minute timeout for large files
     );
     if (!uploadRes.ok) {
-      let err: any = null;
-      try { err = await uploadRes.json(); } catch {}
-      throw err || new Error('Upload failed.');
+      let errorResponse: unknown = null;
+      try {
+        errorResponse = await uploadRes.json();
+      } catch {}
+      throw errorResponse || new Error('Upload failed.');
     }
-    return uploadRes.json();
+    return parseCloudinaryUploadResponse(await uploadRes.text());
   }
 }

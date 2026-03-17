@@ -2,13 +2,20 @@
 
 .container {
     width: 100%;
-    margin-top: 1rem;
+    margin-top: 0;
+}
+
+.emptyStateShell {
+    border: 1px solid var(--color-border);
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 244, 238, 0.94));
+    box-shadow: 0 20px 44px rgba(17, 24, 39, 0.06);
 }
 
 /* Main Layout */
 .mainLayout {
     display: flex;
-    gap: 2rem;
+    gap: 1.5rem;
     align-items: flex-start;
     /* Enable sticky positioning for children */
 }
@@ -38,7 +45,7 @@
 
 /* Category Sections */
 .categorySection {
-    margin-bottom: 2rem;
+    margin-bottom: 1.35rem;
 }
 
 .categoryTitle {
@@ -46,22 +53,25 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 1.25rem;
-    font-weight: 700;
-    padding: 1rem;
+    font-size: 1.08rem;
+    font-weight: 800;
+    padding: 1rem 1.1rem;
     margin-bottom: 0.5rem;
-    color: var(--color-text, #1a1a1a);
-    background: var(--color-surface-subtle, #f9f9f9);
-    border: 1px solid var(--color-border, #eee);
-    border-radius: 12px;
+    color: #1f2430;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(17, 24, 39, 0.05);
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: left;
+    letter-spacing: -0.02em;
 }
 
 .categoryTitle:hover {
-    background: var(--color-border, #eee);
-    border-color: var(--color-border-strong, #ddd);
+    background: #ffffff;
+    border-color: rgba(17, 24, 39, 0.14);
+    box-shadow: 0 16px 34px rgba(17, 24, 39, 0.08);
 }
 
 .categoryServices {
@@ -74,22 +84,24 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    padding: 1rem;
-    border: 1px solid var(--color-border, #eee);
-    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
     margin-bottom: 0.75rem;
     transition: all 0.2s ease;
-    background: var(--color-background, #fff);
+    background: rgba(255, 255, 255, 0.96);
     cursor: pointer;
+    box-shadow: 0 12px 28px rgba(17, 24, 39, 0.04);
 }
 
 .serviceItem:hover {
-    border-color: var(--color-border-hover, #ccc);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border-color: rgba(17, 24, 39, 0.14);
+    box-shadow: 0 18px 36px rgba(17, 24, 39, 0.08);
+    transform: translateY(-1px);
 }
 
 .serviceItem.selected {
-    border-color: var(--color-primary, var(--color-primary));
+    border-color: rgba(17, 24, 39, 0.18);
     background: var(--color-surface-subtle);
 }
 
@@ -100,9 +112,26 @@
 
 .serviceName {
     font-size: 1rem;
-    font-weight: 600;
-    color: var(--color-text, #1a1a1a);
+    font-weight: 700;
+    color: #1f2430;
     margin: 0;
+}
+
+.serviceDetailLink {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 0.375rem;
+    color: var(--color-text-strong);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.serviceDetailLink:hover {
+    color: #000000;
+    border-color: rgba(17, 24, 39, 0.4);
 }
 
 .serviceNameRow {
@@ -146,24 +175,24 @@
 }
 
 .selected .serviceName {
-    color: var(--color-primary, var(--color-primary));
+    color: var(--color-text-strong);
 }
 
 .serviceDuration {
     font-size: 0.875rem;
-    color: var(--color-text-secondary, #666);
+    color: #667085;
     margin: 0 0 0.5rem 0;
 }
 
 .servicePrice {
-    font-size: 0.9375rem;
-    font-weight: 500;
-    color: var(--color-text, #1a1a1a);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2430;
 }
 
 .servicePriceFrom {
     font-size: 0.8125rem;
-    color: var(--color-text-secondary, #666);
+    color: #667085;
     margin-right: 0.25rem;
 }
 
@@ -178,11 +207,11 @@
 .viewImagesButton {
     padding: 0.5rem 0.875rem;
     font-size: 0.8125rem;
-    font-weight: 500;
-    border: 1px solid var(--color-border, #ddd);
-    border-radius: 8px;
-    background: var(--color-background, #fff);
-    color: var(--color-text, #333);
+    font-weight: 700;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: #ffffff;
+    color: #475467;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
@@ -191,17 +220,17 @@
 }
 
 .viewImagesButton:hover {
-    background: var(--color-background-alt, #f5f5f5);
-    border-color: var(--color-border-hover, #ccc);
+    background: var(--color-surface-subtle);
+    border-color: rgba(17, 24, 39, 0.14);
 }
 
 .addButton {
     width: 40px;
     height: 40px;
-    border-radius: 8px;
-    border: 1px solid var(--color-border, #ddd);
-    background: var(--color-background, #fff);
-    color: var(--color-text, #333);
+    border-radius: 14px;
+    border: 1px solid var(--color-border);
+    background: #ffffff;
+    color: #1f2430;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
@@ -211,12 +240,12 @@
 }
 
 .addButton:hover {
-    background: var(--color-background-alt, #f5f5f5);
+    background: var(--color-surface-subtle);
 }
 
 .addButton.added {
-    background: var(--color-primary, var(--color-primary));
-    border-color: var(--color-primary, var(--color-primary));
+    background: #1f2430;
+    border-color: #1f2430;
     color: #fff;
 }
 
@@ -226,19 +255,19 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: var(--color-primary-soft);
-    border: 1px solid var(--color-primary, var(--color-primary));
+    background: var(--color-surface-subtle);
+    border: 1px solid rgba(17, 24, 39, 0.14);
     border-radius: 9999px;
     font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--color-primary, var(--color-primary));
+    font-weight: 700;
+    color: var(--color-text-strong);
     margin-bottom: 1rem;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .selectedIndicator:hover {
-    background: var(--color-border);
+    background: #ffffff;
 }
 
 .selectedIndicator svg {
@@ -248,11 +277,11 @@
 
 /* Cart Sidebar */
 .cartSidebar {
-    background: var(--color-background, #fff);
-    border: 1px solid var(--color-border, #eee);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid var(--color-border);
+    border-radius: 24px;
     padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 20px 48px rgba(17, 24, 39, 0.08);
 }
 
 .cartHeader {
@@ -275,8 +304,8 @@
 
 .cartSalonName {
     font-size: 1rem;
-    font-weight: 600;
-    color: var(--color-text, #1a1a1a);
+    font-weight: 700;
+    color: #1f2430;
     margin: 0;
 }
 
@@ -294,7 +323,7 @@
 
 .cartSalonLocation {
     font-size: 0.8125rem;
-    color: var(--color-text-secondary, #666);
+    color: #667085;
     margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -386,27 +415,35 @@
 
 .continueButton {
     width: 100%;
-    padding: 1rem;
+    min-height: var(--button-height-md, 3rem);
+    padding: var(--button-padding-md, 0 1.25rem);
     margin-top: 1rem;
-    background: var(--color-text, #1a1a1a);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 1rem;
-    font-weight: 600;
+    background: var(--btn-primary-bg, #111318);
+    color: var(--btn-primary-text, #fff);
+    border: 1px solid var(--btn-primary-bg, #111318);
+    border-radius: var(--radius-full, 999px);
+    font-size: var(--button-font-size-lg, 1rem);
+    font-weight: var(--button-font-weight, 700);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+    box-shadow: var(--button-shadow, 0 10px 22px rgba(17, 19, 24, 0.08));
 }
 
 .continueButton:hover {
-    background: var(--color-text-hover, #333);
+    background: var(--btn-primary-hover, #667085);
+    color: var(--btn-primary-text, #fff);
+    border-color: var(--btn-primary-hover, #667085);
+    box-shadow: var(--button-shadow-hover, 0 14px 28px rgba(17, 19, 24, 0.12));
     transform: translateY(-1px);
 }
 
 .continueButton:disabled {
-    background: var(--color-border, #ccc);
+    background: var(--btn-primary-disabled-bg, var(--color-border, #ccc));
+    color: var(--btn-primary-disabled-text, var(--color-text-muted));
+    border-color: var(--btn-primary-disabled-bg, var(--color-border, #ccc));
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
 }
 
 /* Empty Cart */
@@ -434,11 +471,12 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--color-background, #fff);
-    border-top: 1px solid var(--color-border, #eee);
+    background: rgba(255, 255, 255, 0.96);
+    border-top: 1px solid var(--color-border);
     padding: 1rem;
     z-index: 100;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -18px 40px rgba(17, 24, 39, 0.12);
+    backdrop-filter: blur(14px);
 }
 
 .mobileCartContent {
@@ -467,12 +505,12 @@
 
 .mobileCartButton {
     padding: 0.875rem 1.5rem;
-    background: var(--color-text, #1a1a1a);
+    background: #111318;
     color: #fff;
     border: none;
-    border-radius: 10px;
+    border-radius: 14px;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
 }
 
@@ -524,4 +562,26 @@
     .categoryTitle {
         font-size: 1.25rem;
     }
+}
+
+[data-theme='dark'] .categoryTitle,
+[data-theme='dark'] .serviceItem,
+[data-theme='dark'] .cartSidebar,
+[data-theme='dark'] .mobileCartFooter {
+    background: rgba(44, 44, 46, 0.94);
+    border-color: var(--color-border);
+}
+
+[data-theme='dark'] .serviceItem.selected,
+[data-theme='dark'] .selectedIndicator,
+[data-theme='dark'] .viewImagesButton:hover,
+[data-theme='dark'] .addButton:hover {
+    background: rgba(58, 58, 61, 0.92);
+}
+
+[data-theme='dark'] .viewImagesButton,
+[data-theme='dark'] .addButton {
+    background: rgba(28, 28, 30, 0.9);
+    border-color: var(--color-border);
+    color: var(--color-text-strong);
 }

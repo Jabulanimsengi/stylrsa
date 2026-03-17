@@ -1,8 +1,6 @@
 import { Suspense } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import SalonCityNearYouClient from './SalonCityNearYouClient';
-import { getAllProvinceSlugs } from '@/lib/nearYouContent';
-import { getCitiesByProvince } from '@/lib/locationData';
 import styles from '@/app/salons/SalonsPage.module.css';
 
 // ISR - pages cached for 24 hours

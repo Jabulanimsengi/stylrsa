@@ -6,31 +6,181 @@
   padding-bottom: 2rem;
 }
 
+.discoveryIntro {
+  margin-bottom: 1.75rem;
+}
+
+.discoveryShell {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.4rem;
+  border-radius: 32px;
+  border: 1px solid rgba(20, 32, 51, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(17, 19, 24, 0.06), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 243, 237, 0.96) 100%);
+  box-shadow: 0 24px 56px rgba(17, 24, 39, 0.08);
+}
+
+.discoveryHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.95fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.discoveryCopyBlock {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.discoveryEyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #111318;
+}
+
 .title {
-  font-size: 1.75rem;
+  font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 800;
   color: var(--color-text-strong);
-  margin: 0 0 0.5rem 0;
-  text-align: center;
+  margin: 0;
+  text-align: left;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.discoveryLead {
+  max-width: 720px;
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--color-text-muted);
+}
+
+.discoverySignalGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.discoverySignalCard {
+  min-height: 164px;
+  padding: 1rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(20, 32, 51, 0.08);
+  box-shadow: 0 14px 30px rgba(17, 24, 39, 0.04);
+}
+
+.discoverySignalLabel {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #667085;
+}
+
+.discoverySignalValue {
+  display: block;
+  margin-bottom: 0.65rem;
+  color: #111318;
+  font-size: 1.02rem;
+  line-height: 1.25;
   letter-spacing: -0.02em;
 }
 
-.subtitle {
-  font-size: 0.95rem;
+.discoverySignalDetail {
+  margin: 0;
   color: var(--color-text-muted);
-  margin: 0 0 1.25rem 0;
-  text-align: center;
+  font-size: 0.9rem;
+  line-height: 1.55;
 }
 
-.subtitle a {
+.resultsHeader {
+  display: grid;
+  gap: 1rem;
+  margin: 1.5rem 0 1.25rem;
+}
+
+.resultsHeaderTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.resultsEyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease;
 }
 
-.subtitle a:hover {
-  text-decoration: underline;
+.resultsSummary {
+  margin: 0;
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  line-height: 1.15;
+  color: var(--color-text-strong);
+}
+
+.resultsCopy {
+  margin: 0.45rem 0 0;
+  max-width: 720px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(17, 19, 24, 0.06);
+  color: #28303c;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.clearFiltersButton {
+  border: 1px solid rgba(20, 32, 51, 0.12);
+  background: #fff;
+  color: var(--color-text-strong);
+  border-radius: 999px;
+  min-height: 42px;
+  padding: 0.65rem 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.clearFiltersButton:hover {
+  border-color: #111318;
+  color: #111318;
+  transform: translateY(-1px);
+}
+
+.secondaryBrowse {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(20, 32, 51, 0.08);
+}
+
+.secondaryBrowseHeader {
+  margin-bottom: 1rem;
 }
 
 /* Province Groups Container */
@@ -330,6 +480,25 @@
   margin-top: 0.35rem;
 }
 
+.cardMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.cardMetaPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(20, 32, 51, 0.06);
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
 .salonLink {
   text-decoration: none;
   color: inherit;
@@ -395,19 +564,34 @@
 /* Mobile Styles */
 @media (max-width: 768px) {
   .container {
-    --page-inline-padding: 0;
+    --page-inline-padding: 0.75rem;
     padding-top: 0.5rem;
   }
 
-  .title {
-    font-size: 1.25rem;
-    padding: 0 0.75rem;
+  .discoveryShell {
+    border-radius: 24px;
+    padding: 1rem;
   }
 
-  .subtitle {
-    font-size: 0.85rem;
-    margin-bottom: 0.75rem;
-    padding: 0 0.75rem;
+  .discoveryHero {
+    grid-template-columns: 1fr;
+  }
+
+  .discoverySignalGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .discoverySignalCard {
+    min-height: auto;
+  }
+
+  .title {
+    font-size: 1.7rem;
+    padding: 0;
+  }
+
+  .discoveryLead {
+    font-size: 0.95rem;
   }
 
   .provinceGroupsContainer {
@@ -494,6 +678,15 @@
   .gridCard .cardLocation {
     font-size: 0.7rem;
   }
+
+  .resultsHeaderTop {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .clearFiltersButton {
+    width: 100%;
+  }
 }
 
 @media (max-width: 540px) {
@@ -524,7 +717,12 @@
 
 @media (max-width: 400px) {
   .container {
-    --page-inline-padding: 0.5rem;
+    --page-inline-padding: 0.75rem;
+  }
+
+  .discoveryShell {
+    padding: 0.85rem;
+    border-radius: 20px;
   }
 
   .title {

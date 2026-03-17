@@ -1,71 +1,45 @@
-/* Service Category Circles - Fresha-style Clean Design */
-
-/* Section styling */
 .section {
-    padding: 0 0 1.25rem;
-    background: var(--color-surface);
-    position: relative;
+    background: transparent;
 }
 
-.header {
-    display: none;
-}
-
-.sectionTitle {
-    display: none;
-}
-
-/* Scroll wrapper with arrows */
 .scrollWrapper {
     position: relative;
+    width: min(1200px, calc(100% - 3rem));
+    margin: 0 auto;
     display: flex;
     align-items: center;
 }
 
-/* Navigation arrows - Fresha-style */
 .scrollArrow {
-    display: none;
     position: absolute;
-    z-index: 10;
-    width: 44px;
-    height: 44px;
+    z-index: 4;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    background: white;
-    border: none;
-    box-shadow: var(--fresha-card-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(232, 225, 216, 0.96);
+    box-shadow: 0 16px 30px rgba(17, 24, 39, 0.08);
     cursor: pointer;
+    display: none;
     align-items: center;
     justify-content: center;
-    transition: all 0.25s ease;
-    color: var(--fresha-dark, #1a1a1a);
+    color: #1f2430;
     top: 50%;
     transform: translateY(-50%);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
 }
 
 .scrollArrow:hover {
-    background: var(--color-text-strong, #1a1a1a);
-    color: white;
-    border-color: var(--color-text-strong, #1a1a1a);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    transform: translateY(-50%) scale(1.05);
-}
-
-.scrollArrow:active {
-    transform: translateY(-50%) scale(0.95);
+    transform: translateY(-50%) scale(1.03);
+    box-shadow: 0 20px 36px rgba(17, 24, 39, 0.12);
 }
 
 .scrollArrowLeft {
-    left: 8px;
+    left: -0.25rem;
 }
 
 .scrollArrowRight {
-    right: 8px;
-}
-
-.scrollArrow svg {
-    pointer-events: none;
-    width: 20px;
-    height: 20px;
+    right: -0.25rem;
 }
 
 .scrollArrow.hidden {
@@ -74,9 +48,7 @@
     pointer-events: none;
 }
 
-/* Categories container - horizontal scroll */
 .categoriesContainer {
-    padding: 0 1rem;
     flex: 1;
     overflow-x: auto;
     overflow-y: hidden;
@@ -91,149 +63,78 @@
 
 .categoriesRow {
     display: inline-flex;
-    gap: 1.25rem;
-    padding: 0.5rem 0;
+    gap: 0.8rem;
     min-width: max-content;
+    padding: 0.25rem 0;
 }
 
-/* Individual category item - Ultra-clean text-only */
 .categoryItem {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    padding: 0.5rem 0;
-    cursor: pointer;
+    min-height: 48px;
+    padding: 0 1rem;
+    border-radius: 999px;
     text-decoration: none;
-    transition: all 0.2s ease;
-    color: var(--color-text-strong, #4a4a4a);
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(232, 225, 216, 0.96);
+    color: #4e5665;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
 .categoryItem:hover {
-    color: var(--color-primary);
+    transform: translateY(-1px);
+    color: #1f2430;
+    border-color: rgba(17, 19, 24, 0.14);
+    box-shadow: 0 14px 28px rgba(17, 24, 39, 0.08);
 }
 
-/* Category icon - Hidden */
-.categoryIcon {
-    display: none;
-}
-
-/* Category name - Clean text only */
 .categoryName {
-    font-size: 0.875rem;
-    font-weight: 400;
-    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
     white-space: nowrap;
-    transition: color 0.2s ease;
 }
 
-/* Desktop: Text-only categories */
 @media (min-width: 769px) {
-    .section {
-        padding: 0 0 1.25rem;
-    }
-
-    .scrollWrapper {
-        padding: 0 3.5rem;
-        position: relative;
-    }
-
     .scrollArrow {
         display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .scrollArrowLeft {
-        left: 4px;
-    }
-
-    .scrollArrowRight {
-        right: 4px;
-    }
-
-    .categoriesContainer {
-        padding: 0 1rem;
-        max-width: 100%;
-        margin: 0 auto;
-        overflow-x: auto;
-        overflow-y: hidden;
-    }
-
-    .categoriesRow {
-        gap: 2rem;
-        display: inline-flex;
-        min-width: max-content;
-        padding: 0.5rem 0;
-    }
-
-    .categoryItem {
-        padding: 0.625rem 0;
-    }
-
-    .categoryName {
-        font-size: 0.9375rem;
-        font-weight: 400;
     }
 }
 
-/* Large Desktop */
-@media (min-width: 1200px) {
-    .categoriesRow {
-        gap: 2.5rem;
-    }
-
-    .categoryName {
-        font-size: 1rem;
-        font-weight: 400;
-    }
-}
-
-/* Mobile Responsive */
 @media (max-width: 768px) {
-    .section {
-        padding: 0 0 1rem;
-    }
-
-    .categoriesContainer {
-        padding: 0 0.75rem;
+    .scrollWrapper {
+        width: calc(100% - 2rem);
     }
 
     .categoriesRow {
-        gap: 1.25rem;
-        padding: 0.35rem 0;
+        gap: 0.65rem;
     }
 
     .categoryItem {
-        padding: 0.4rem 0;
+        min-height: 44px;
+        padding: 0 0.9rem;
     }
 
     .categoryName {
-        font-size: 0.8125rem;
-        font-weight: 400;
+        font-size: 0.84rem;
     }
 }
 
-/* Small Mobile */
 @media (max-width: 480px) {
-    .section {
-        padding: 0 0 0.875rem;
-    }
-
-    .categoriesContainer {
-        padding: 0 0.5rem;
+    .scrollWrapper {
+        width: calc(100% - 1.5rem);
     }
 
     .categoriesRow {
-        gap: 1rem;
-        padding: 0.25rem 0;
+        gap: 0.55rem;
     }
 
     .categoryItem {
-        padding: 0.35rem 0;
+        min-height: 40px;
+        padding: 0 0.8rem;
     }
 
     .categoryName {
-        font-size: 0.75rem;
-        font-weight: 400;
+        font-size: 0.78rem;
     }
 }

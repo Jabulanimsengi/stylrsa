@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FiCalendar, FiStar, FiCheckCircle, FiAlertCircle, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { FiAlertCircle, FiCalendar, FiCheckCircle, FiStar } from 'react-icons/fi';
 import styles from '../../app/dashboard/Dashboard.module.css';
 
 interface KPIData {
@@ -11,26 +11,12 @@ interface KPIData {
     avgRating: number | null;
     reviewCount: number;
     servicesCount: number;
-    profileComplete: number; // 0-100
+    profileComplete: number;
 }
 
 interface DashboardKPIRowProps {
     data: KPIData;
     onCardClick?: (tab: string) => void;
-}
-
-/** Tiny trend arrow chip */
-function Trend({ value, label }: { value: number; label: string }) {
-    const up = value >= 0;
-    return (
-        <span
-            className={up ? styles.kpiTrendUp : styles.kpiTrendDown}
-            aria-label={`${up ? 'Up' : 'Down'} ${Math.abs(value)} ${label}`}
-        >
-            {up ? <FiArrowUp size={10} /> : <FiArrowDown size={10} />}
-            {Math.abs(value)}
-        </span>
-    );
 }
 
 export default function DashboardKPIRow({ data, onCardClick }: DashboardKPIRowProps) {
@@ -39,7 +25,7 @@ export default function DashboardKPIRow({ data, onCardClick }: DashboardKPIRowPr
             label: 'Total Bookings',
             value: data.totalBookings,
             sub: data.pendingBookings > 0
-                ? <span className={styles.kpiSubAlert}>{data.pendingBookings} need action →</span>
+                ? <span className={styles.kpiSubAlert}>{data.pendingBookings} need action</span>
                 : 'No pending',
             icon: FiCalendar,
             iconBg: '#EEF2FF',
@@ -50,7 +36,7 @@ export default function DashboardKPIRow({ data, onCardClick }: DashboardKPIRowPr
         {
             label: 'Completed',
             value: data.completedBookings,
-            sub: 'services done',
+            sub: 'Services done',
             icon: FiCheckCircle,
             iconBg: '#ECFDF5',
             iconColor: '#059669',
@@ -59,7 +45,7 @@ export default function DashboardKPIRow({ data, onCardClick }: DashboardKPIRowPr
         },
         {
             label: 'Avg Rating',
-            value: data.avgRating !== null ? data.avgRating.toFixed(1) : '—',
+            value: data.avgRating !== null ? data.avgRating.toFixed(1) : '--',
             sub: `${data.reviewCount} review${data.reviewCount !== 1 ? 's' : ''}`,
             icon: FiStar,
             iconBg: '#FFFBEB',
@@ -70,7 +56,7 @@ export default function DashboardKPIRow({ data, onCardClick }: DashboardKPIRowPr
         {
             label: 'Profile',
             value: `${data.profileComplete}%`,
-            sub: data.profileComplete === 100 ? 'Complete ✓' : 'Fill in more details',
+            sub: data.profileComplete === 100 ? 'Complete' : 'Fill in more details',
             icon: FiAlertCircle,
             iconBg: data.profileComplete === 100 ? '#ECFDF5' : '#FEF3C7',
             iconColor: data.profileComplete === 100 ? '#059669' : '#D97706',
@@ -89,7 +75,11 @@ export default function DashboardKPIRow({ data, onCardClick }: DashboardKPIRowPr
                     style={{ cursor: card.tab ? 'pointer' : 'default' }}
                     role={card.tab ? 'button' : undefined}
                     tabIndex={card.tab ? 0 : undefined}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && card.tab) onCardClick?.(card.tab); }}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && card.tab) {
+                            onCardClick?.(card.tab);
+                        }
+                    }}
                     aria-label={card.tab ? `Go to ${card.label}` : card.label}
                 >
                     <div
@@ -101,9 +91,8 @@ export default function DashboardKPIRow({ data, onCardClick }: DashboardKPIRowPr
                     <div className={styles.kpiValue}>{card.value}</div>
                     <div className={styles.kpiLabel}>{card.label}</div>
                     {card.sub && <div className={styles.kpiSub}>{card.sub}</div>}
-                    {/* Clickable hint arrow for actionable cards */}
                     {card.tab && (
-                        <span className={styles.kpiArrow} aria-hidden>›</span>
+                        <span className={styles.kpiArrow} aria-hidden>{'>'}</span>
                     )}
                 </div>
             ))}

@@ -41,7 +41,7 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
   const locationInfo = provinceInfo || PROVINCES[locationSlug] || {
     slug: 'south-africa',
     name: 'South Africa',
-    description: 'Find the best salons and beauty professionals in South Africa',
+    description: 'Browse salons and beauty professionals across South Africa.',
     metaTitle: 'Salons in South Africa',
     metaDescription: 'Find salons in South Africa',
     keywords: ['South Africa salons'],

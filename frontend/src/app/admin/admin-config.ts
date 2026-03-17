@@ -3,19 +3,9 @@ export type AdminView =
   | 'salons'
   | 'services'
   | 'reviews'
-  | 'products'
-  | 'promotions'
   | 'all-salons'
-  | 'all-sellers'
-  | 'featured-salons'
   | 'pending-payments'
-  | 'media'
-  | 'trends'
-  | 'salon-trendz'
-  | 'blogs'
-  | 'top10-requests'
   | 'deleted-salons'
-  | 'deleted-sellers'
   | 'audit';
 
 export const DEFAULT_ADMIN_VIEW: AdminView = 'dashboard';
@@ -25,19 +15,9 @@ const ADMIN_VIEW_SET = new Set<AdminView>([
   'salons',
   'services',
   'reviews',
-  'products',
-  'promotions',
   'all-salons',
-  'all-sellers',
-  'featured-salons',
   'pending-payments',
-  'media',
-  'trends',
-  'salon-trendz',
-  'blogs',
-  'top10-requests',
   'deleted-salons',
-  'deleted-sellers',
   'audit',
 ]);
 

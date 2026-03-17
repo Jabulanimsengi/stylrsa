@@ -1,10 +1,5 @@
-import { Suspense } from 'react';
-import ProductDashboardClient from './ProductDashboardClient';
+import { permanentRedirect } from 'next/navigation';
 
 export default function ProductDashboardPage() {
-  return (
-    <Suspense fallback={<div />}>
-      <ProductDashboardClient />
-    </Suspense>
-  );
+  permanentRedirect('/dashboard');
 }

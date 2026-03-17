@@ -1,73 +1,103 @@
 'use client';
 
-import { useState, FormEvent, useTransition } from 'react';
-import Image from 'next/image';
-import { Salon, Service, Booking, TeamMember } from '@/types';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { Salon, Service } from '@/types';
 import styles from './BookingModal.module.css';
 import {
+  FaBox,
+  FaCheck,
   FaChevronLeft,
   FaChevronRight,
-  FaCheck,
   FaClock,
-  FaCalendarAlt,
-  FaUser,
-  FaMobile,
-  FaMapMarkerAlt,
-  FaUsers,
   FaExclamationTriangle,
-  FaPalette,
-  FaBox,
-  FaShoppingCart,
   FaInfoCircle,
+  FaMapMarkerAlt,
+  FaMobile,
+  FaPalette,
   FaTimes,
+  FaUser,
   FaWhatsapp,
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
-import { useAuthModal } from '@/context/AuthModalContext';
-import { useSocket } from '@/context/SocketContext';
-import { useBookingFlow, STEP_LABELS, BookingStep, BookingPreferences } from '@/hooks/useBookingFlow';
-import DateTimePicker from './DateTimePicker';
-import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
+import useBookingFlow, {
+  STEP_LABELS,
+  type BookingPreferences,
+  type BookingStep,
+  type BookingTimePeriod,
+} from '@/hooks/useBookingFlow';
+import { apiJson } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
   DialogTitle,
-  Progress,
 } from '@/components/ui';
-
-// ============================================================================
-// Types
-// ============================================================================
 
 interface BookingModalProps {
   salon: Salon;
   service?: Service;
   services: Service[];
   onClose: () => void;
-  onBookingSuccess: (booking: Booking) => void;
+  onBookingSuccess: () => void;
 }
 
-// ============================================================================
-// Helper functions
-// ============================================================================
+interface BookingWhatsAppIntentResponse {
+  id: string;
+  referenceCode: string;
+  sequenceNumber: number;
+}
 
-// Check if service requires color selection
+type StoredBookingContact = {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+};
+
+const BOOKING_CONTACT_STORAGE_KEY = 'stylrsa-booking-contact';
+
+const TIME_PERIOD_LABELS: Record<BookingTimePeriod, string> = {
+  morning: 'Morning',
+  afternoon: 'Afternoon',
+  late_afternoon: 'Late afternoon',
+};
+
+const TIME_PERIOD_HOURS: Record<BookingTimePeriod, number> = {
+  morning: 9,
+  afternoon: 13,
+  late_afternoon: 16,
+};
+
 const requiresColorSelection = (category?: string, name?: string): boolean => {
   const colorKeywords = ['nail', 'manicure', 'pedicure', 'polish', 'gel'];
   const searchText = `${category || ''} ${name || ''}`.toLowerCase();
-  return colorKeywords.some(keyword => searchText.includes(keyword));
+  return colorKeywords.some((keyword) => searchText.includes(keyword));
 };
 
-// Check if service requires material selection
 const requiresMaterialSelection = (category?: string, name?: string): boolean => {
   const materialKeywords = ['braid', 'weave', 'wig', 'extension', 'hairpiece', 'locs', 'twist'];
   const searchText = `${category || ''} ${name || ''}`.toLowerCase();
-  return materialKeywords.some(keyword => searchText.includes(keyword));
+  return materialKeywords.some((keyword) => searchText.includes(keyword));
 };
 
-// ============================================================================
-// Component
-// ============================================================================
+const resolveServiceCategoryName = (service: Service | null): string => {
+  if (!service?.category) {
+    return '';
+  }
+
+  if (typeof service.category === 'string') {
+    return service.category;
+  }
+
+  const categoryRecord = service.category as Record<string, unknown>;
+  return typeof categoryRecord.name === 'string' ? categoryRecord.name : '';
+};
+
+const getTodayDateValue = () => new Date().toISOString().split('T')[0];
+
+const buildBookingDateTime = (selectedDate: Date, period: BookingTimePeriod) => {
+  const bookingDateTime = new Date(selectedDate);
+  bookingDateTime.setHours(TIME_PERIOD_HOURS[period], 0, 0, 0);
+  return bookingDateTime;
+};
 
 export default function BookingModal({
   salon,
@@ -77,80 +107,174 @@ export default function BookingModal({
   onBookingSuccess,
 }: BookingModalProps) {
   const { authStatus, user } = useAuth();
-  const { openModal } = useAuthModal();
-  const socket = useSocket();
-  const [isPending, startTransition] = useTransition();
+  const [isCreatingIntent, setIsCreatingIntent] = useState(false);
+  const [colorSelection, setColorSelection] = useState('');
+  const [materialSelection, setMaterialSelection] = useState<BookingPreferences['materialSelection']>(null);
+  const hasPrefilledContact = useRef(false);
 
-  // Use the booking flow hook
   const booking = useBookingFlow({
     salon,
     services,
     initialService,
-    onBookingSuccess: (newBooking) => {
-      // Send socket notification
-      if (socket && booking.state.selectedService) {
-        socket.emit('newBooking', {
-          bookingId: newBooking.id,
-          salonOwnerId: salon.ownerId,
-          message: `New booking for ${booking.state.selectedService.title} from ${user?.firstName}.`,
-        });
-      }
-      startTransition(() => {
-        onBookingSuccess(newBooking);
-      });
-    },
+    onBookingSuccess: () => undefined,
     onClose,
   });
+  const {
+    setClientFirstName,
+    setClientLastName,
+    setClientPhone,
+    setPreferences,
+  } = booking;
 
-  // Local state for preferences (since we combined steps)
-  const [colorSelection, setColorSelection] = useState('');
-  const [materialSelection, setMaterialSelection] = useState<BookingPreferences['materialSelection']>(null);
-
-  // Computed values for preferences step integration
-  const showColorInput = booking.state.selectedService && requiresColorSelection(
-    (booking.state.selectedService as any).category?.name,
-    booking.state.selectedService.title || booking.state.selectedService.name
-  );
-  const showMaterialOptions = booking.state.selectedService && requiresMaterialSelection(
-    (booking.state.selectedService as any).category?.name,
-    booking.state.selectedService.title || booking.state.selectedService.name
+  const clientFullName = useMemo(
+    () => [booking.state.clientFirstName.trim(), booking.state.clientLastName.trim()].filter(Boolean).join(' '),
+    [booking.state.clientFirstName, booking.state.clientLastName],
   );
 
-  // ---------------------------------------------------------------------------
-  // Handlers
-  // ---------------------------------------------------------------------------
+  const referenceCodePreview = useMemo(
+    () => `${clientFullName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || 'STYLRSA'}-PENDING`,
+    [clientFullName],
+  );
 
-  const handleSubmit = () => {
-    // Generate WhatsApp message with booking details
+  const selectedService = booking.state.selectedService;
+  const showColorInput = selectedService && requiresColorSelection(
+    resolveServiceCategoryName(selectedService),
+    selectedService.title || selectedService.name,
+  );
+  const showMaterialOptions = selectedService && requiresMaterialSelection(
+    resolveServiceCategoryName(selectedService),
+    selectedService.title || selectedService.name,
+  );
+
+  useEffect(() => {
+    if (authStatus === 'loading' || hasPrefilledContact.current) {
+      return;
+    }
+
+    let storedContact: StoredBookingContact | null = null;
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = window.localStorage.getItem(BOOKING_CONTACT_STORAGE_KEY);
+        storedContact = raw ? JSON.parse(raw) as StoredBookingContact : null;
+      } catch {
+        storedContact = null;
+      }
+    }
+
+    setClientFirstName(user?.firstName || storedContact?.firstName || '');
+    setClientLastName(user?.lastName || storedContact?.lastName || '');
+    setClientPhone(storedContact?.phone || '');
+    hasPrefilledContact.current = true;
+  }, [authStatus, setClientFirstName, setClientLastName, setClientPhone, user?.firstName, user?.lastName]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const contact: StoredBookingContact = {
+      firstName: booking.state.clientFirstName.trim(),
+      lastName: booking.state.clientLastName.trim(),
+      phone: booking.state.clientPhone.trim(),
+    };
+
+    if (!contact.firstName && !contact.lastName && !contact.phone) {
+      return;
+    }
+
+    window.localStorage.setItem(BOOKING_CONTACT_STORAGE_KEY, JSON.stringify(contact));
+  }, [
+    booking.state.clientFirstName,
+    booking.state.clientLastName,
+    booking.state.clientPhone,
+  ]);
+
+  useEffect(() => {
+    setPreferences({
+      colorSelection: colorSelection.trim() || undefined,
+      materialSelection,
+    });
+  }, [colorSelection, materialSelection, setPreferences]);
+
+  const handleDateChange = (value: string) => {
+    if (!value) {
+      return;
+    }
+
+    const nextDate = new Date(`${value}T00:00:00`);
+    booking.selectDate(nextDate);
+  };
+
+  const handleSubmit = async () => {
+    if (isCreatingIntent) {
+      return;
+    }
+
     const service = booking.state.selectedService;
-    if (!service || !booking.state.selectedDate || !booking.state.selectedSlot) return;
+    const selectedDate = booking.state.selectedDate;
+    const selectedTimePeriod = booking.state.selectedTimePeriod;
 
-    const depositAmount = booking.depositAmount;
-    const bookingDate = booking.state.selectedDate.toLocaleDateString('en-ZA', {
+    if (!service || !selectedDate || !selectedTimePeriod) {
+      return;
+    }
+
+    const bookingDateTime = buildBookingDateTime(selectedDate, selectedTimePeriod);
+    const bookingDate = selectedDate.toLocaleDateString('en-ZA', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     });
-    const bookingTime = booking.formatTime(booking.state.selectedSlot);
+    const preferredTimeLabel = TIME_PERIOD_LABELS[selectedTimePeriod];
+    const fallbackReference = `${clientFullName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || 'STYLRSA'}-${Date.now().toString().slice(-6)}`;
+    let referenceCode = fallbackReference;
 
-    // Build WhatsApp message
-    let message = `*New Booking Request via StylrSA*\n`;
-    message += `📍 *Booked from:* www.stylrsa.co.za\n\n`;
+    setIsCreatingIntent(true);
+    try {
+      const intent = await apiJson<BookingWhatsAppIntentResponse>('/api/bookings/whatsapp-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          salonId: salon.id,
+          serviceId: service.id,
+          bookingTime: bookingDateTime.toISOString(),
+          isMobile: booking.state.isMobile,
+          clientFirstName: booking.state.clientFirstName.trim(),
+          clientLastName: booking.state.clientLastName.trim(),
+          clientPhone: booking.state.clientPhone.replace(/\s/g, ''),
+          clientNotes: booking.state.clientNotes.trim() || null,
+          colorSelection: colorSelection.trim() || null,
+          materialSelection: materialSelection || null,
+          totalCost: booking.totalCost,
+          depositAmount: booking.depositAmount,
+        }),
+      });
+
+      if (intent.referenceCode) {
+        referenceCode = intent.referenceCode;
+      }
+    } catch (error) {
+      console.error('Failed to record WhatsApp booking intent:', error);
+    } finally {
+      setIsCreatingIntent(false);
+    }
+
+    let message = `*New Booking Request via Stylr SA*\n`;
+    message += `*Source:* Stylr SA platform\n\n`;
     message += `*Service:* ${service.title || service.name}\n`;
-    message += `*Client Name:* ${booking.state.clientName}\n`;
+    message += `*Client Name:* ${clientFullName}\n`;
     message += `*Phone:* ${booking.state.clientPhone}\n`;
-    message += `*Date:* ${bookingDate}\n`;
-    message += `*Time:* ${bookingTime}\n`;
+    message += `*Preferred Date:* ${bookingDate}\n`;
+    message += `*Preferred Time:* ${preferredTimeLabel}\n`;
     message += `*Total Cost:* R${booking.totalCost.toFixed(2)}\n`;
-    message += `*Deposit Required:* R${depositAmount.toFixed(2)} (50%)\n\n`;
+    message += `*Deposit Required:* R${booking.depositAmount.toFixed(2)} (50%)\n\n`;
 
     if (booking.state.isMobile) {
       message += `*Service Type:* Mobile Service\n`;
     }
 
     if (booking.state.clientNotes) {
-      message += `*Notes:* ${booking.state.clientNotes}\n`;
+      message += `*Client Notes:* ${booking.state.clientNotes}\n`;
     }
 
     if (colorSelection) {
@@ -158,12 +282,10 @@ export default function BookingModal({
     }
 
     if (materialSelection) {
-      const materialText = materialSelection === 'HAVE_OWN' ? 'Bringing own' :
-        materialSelection === 'BUY_SALON' ? 'From salon' : 'Shop on platform';
-      message += `*Material:* ${materialText}\n`;
+      message += `*Material:* ${materialSelection === 'HAVE_OWN' ? 'Client has own material' : 'Use salon material'}\n`;
     }
 
-    message += `\n*Reference Number:* ${booking.state.clientName}\n\n`;
+    message += `\n*Reference Number:* ${referenceCode}\n\n`;
 
     if (salon.bankName && salon.accountNumber) {
       message += `*Banking Details for Deposit:*\n`;
@@ -173,44 +295,37 @@ export default function BookingModal({
       if (salon.branchCode) {
         message += `Branch Code: ${salon.branchCode}\n`;
       }
-      message += `Reference: ${booking.state.clientName}\n\n`;
+      message += `Reference: ${referenceCode}\n\n`;
     }
 
     if (salon.bookingMessage) {
-      message += `\n${salon.bookingMessage}`;
+      message += `*Salon Note:*\n${salon.bookingMessage}\n\n`;
     }
 
-    // Encode message for WhatsApp URL
+    message += `*Important:* Refunds follow the salon's own policy, not Stylr SA.\n`;
+    message += `A 20% booking cancellation fee applies.\n`;
+
     const encodedMessage = encodeURIComponent(message);
     const whatsappNumber = salon.whatsapp || salon.phoneNumber || '';
     const cleanNumber = whatsappNumber.replace(/[^0-9]/g, '');
-
-    // Open WhatsApp
     const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
 
-    // Close modal after sending
-    setTimeout(() => {
-      onClose();
-    }, 500);
+    onBookingSuccess();
   };
 
-  // ---------------------------------------------------------------------------
-  // Render helpers
-  // ---------------------------------------------------------------------------
-
   const getStepIcon = (step: BookingStep, isCompleted: boolean) => {
-    if (isCompleted) return <FaCheck />;
+    if (isCompleted) {
+      return <FaCheck />;
+    }
 
     switch (step) {
+      case 'service':
+        return <FaCheck />;
       case 'details':
         return <FaUser />;
-      case 'date':
-        return <FaCalendarAlt />;
-      case 'time':
-        return <FaClock />;
       case 'confirm':
-        return <FaCheck />;
+        return <FaWhatsapp />;
       default:
         return <FaCheck />;
     }
@@ -221,6 +336,7 @@ export default function BookingModal({
       {booking.visibleSteps.map((step, index) => {
         const isCompleted = index < booking.currentStepIndex;
         const isActive = index === booking.currentStepIndex;
+
         return (
           <div
             key={step}
@@ -237,14 +353,11 @@ export default function BookingModal({
 
   const renderStepContent = () => {
     switch (booking.state.step) {
-      // -----------------------------------------------------------------------
-      // Step 1: Service Selection
-      // -----------------------------------------------------------------------
       case 'service':
         return (
           <div className={styles.stepContent}>
             <h3 className={styles.stepTitle}>Select a Service</h3>
-            <p className={styles.stepSubtitle}>Choose the service you'd like to book</p>
+            <p className={styles.stepSubtitle}>Choose the service you want to book through WhatsApp.</p>
             <div className={styles.serviceList}>
               {services.map((svc) => (
                 <button
@@ -269,215 +382,117 @@ export default function BookingModal({
             </div>
           </div>
         );
-
-      // -----------------------------------------------------------------------
-      // Step 2: Professional Selection
-      // -----------------------------------------------------------------------
-      case 'professional':
-        return (
-          <div className={styles.stepContent}>
-            <h3 className={styles.stepTitle}>
-              <FaUsers /> Choose a Professional
-              <span className={styles.optionalBadge}>Optional</span>
-            </h3>
-
-            <div className={styles.professionalList}>
-              {/* "Any Professional" option */}
-              <button
-                className={`${styles.anyProfessionalCard} ${booking.state.useAnyProfessional ? styles.selected : ''}`}
-                onClick={() => booking.setUseAnyProfessional(true)}
-              >
-                <div className={styles.anyProfessionalIcon}>
-                  <FaUsers />
-                </div>
-                <div className={styles.anyProfessionalInfo}>
-                  <h4>Any Professional</h4>
-                  <p>We'll assign the best available stylist</p>
-                </div>
-                {booking.state.useAnyProfessional && (
-                  <span className={styles.checkmark}>
-                    <FaCheck />
-                  </span>
-                )}
-              </button>
-
-              {/* Team Members */}
-              {booking.loadingTeam ? (
-                <div className={styles.loadingSlots}>
-                  <LoadingSpinner size="md" inline text="Loading team..." />
-                </div>
-              ) : (
-                booking.teamMembers.map((member) => (
-                  <button
-                    key={member.id}
-                    className={`${styles.professionalCard} ${!booking.state.useAnyProfessional && booking.state.selectedProfessional?.id === member.id ? styles.selected : ''}`}
-                    onClick={() => booking.selectProfessional(member)}
-                  >
-                    <div className={styles.professionalAvatar}>
-                      {member.image ? (
-                        <Image
-                          src={member.image}
-                          alt={member.name}
-                          fill
-                          style={{ objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <FaUser />
-                      )}
-                    </div>
-                    <div className={styles.professionalInfo}>
-                      <h4 className={styles.professionalName}>{member.name}</h4>
-                      <p className={styles.professionalRole}>{member.role}</p>
-                      {member.specialties && member.specialties.length > 0 && (
-                        <div className={styles.professionalSpecialties}>
-                          {member.specialties.slice(0, 3).map((s, i) => (
-                            <span key={i} className={styles.specialtyTag}>{s}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    {!booking.state.useAnyProfessional && booking.state.selectedProfessional?.id === member.id && (
-                      <span className={styles.checkmark}>
-                        <FaCheck />
-                      </span>
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        );
-
-      // -----------------------------------------------------------------------
-      // Step 2: Date Selection
-      // -----------------------------------------------------------------------
-      case 'date':
-        return (
-          <div className={styles.stepContent}>
-            <h3 className={styles.stepTitle}>
-              <FaCalendarAlt /> Select a Date
-            </h3>
-            <p className={styles.stepSubtitle}>Choose your preferred appointment date</p>
-
-            <DateTimePicker
-              selectedDate={booking.state.selectedDate}
-              selectedSlot={booking.state.selectedSlot}
-              onDateChange={booking.selectDate}
-              onSlotChange={booking.selectSlot}
-              availableSlots={booking.availableSlots}
-              loadingSlots={booking.loadingSlots}
-              monthAvailability={booking.monthAvailability}
-              loadingMonthAvailability={booking.loadingMonthAvailability}
-              onRefresh={booking.refreshSlots}
-              formatTime={booking.formatTime}
-              mode="date"
-            />
-          </div>
-        );
-
-      // -----------------------------------------------------------------------
-      // Step 3: Time Selection
-      // -----------------------------------------------------------------------
-      case 'time':
-        return (
-          <div className={styles.stepContent}>
-            <h3 className={styles.stepTitle}>
-              <FaClock /> Select a Time
-            </h3>
-            <p className={styles.stepSubtitle}>
-              {booking.state.selectedDate?.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-            </p>
-
-            <DateTimePicker
-              selectedDate={booking.state.selectedDate}
-              selectedSlot={booking.state.selectedSlot}
-              onDateChange={booking.selectDate}
-              onSlotChange={booking.selectSlot}
-              availableSlots={booking.availableSlots}
-              loadingSlots={booking.loadingSlots}
-              monthAvailability={booking.monthAvailability}
-              loadingMonthAvailability={booking.loadingMonthAvailability}
-              onRefresh={booking.refreshSlots}
-              formatTime={booking.formatTime}
-              mode="time"
-              selectedTimePeriod={booking.state.selectedTimePeriod}
-              onTimePeriodChange={booking.selectTimePeriod}
-            />
-          </div>
-        );
-
-      // -----------------------------------------------------------------------
-      // Step 4: Details & Preferences (COMBINED STEP)
-      // -----------------------------------------------------------------------
       case 'details':
         return (
           <div className={styles.stepContent}>
             <h3 className={styles.stepTitle}>
               <FaUser /> Your Details
             </h3>
-            <p className={styles.stepSubtitle}>We'll use this to confirm your appointment</p>
+            <p className={styles.stepSubtitle}>
+              Share your details and preferred appointment window. Final confirmation happens directly with the salon on WhatsApp.
+            </p>
 
-            {/* Full Name */}
-            <div className={styles.formGroup}>
-              <label htmlFor="name">Full Name *</label>
-              <input
-                type="text"
-                id="name"
-                value={booking.state.clientName}
-                onChange={(e) => booking.setClientName(e.target.value)}
-                placeholder="Enter your full name"
-                className={styles.input}
-                required
-              />
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label htmlFor="firstName">First Name *</label>
+                <input
+                  id="firstName"
+                  type="text"
+                  value={booking.state.clientFirstName}
+                  onChange={(event) => booking.setClientFirstName(event.target.value)}
+                  placeholder="Enter your first name"
+                  className={styles.input}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="lastName">Surname *</label>
+                <input
+                  id="lastName"
+                  type="text"
+                  value={booking.state.clientLastName}
+                  onChange={(event) => booking.setClientLastName(event.target.value)}
+                  placeholder="Enter your surname"
+                  className={styles.input}
+                  required
+                />
+              </div>
             </div>
 
-            {/* Contact Details */}
             <div className={styles.formGroup}>
               <label htmlFor="phone">Phone Number *</label>
               <input
-                type="tel"
                 id="phone"
+                type="tel"
                 value={booking.state.clientPhone}
-                onChange={(e) => booking.setClientPhone(e.target.value)}
-                placeholder="e.g., 082 123 4567"
+                onChange={(event) => booking.setClientPhone(event.target.value)}
+                placeholder="e.g. 082 123 4567"
                 className={styles.input}
                 required
               />
-              <span className={styles.hint}>We'll send booking confirmation to this number</span>
+              <span className={styles.hint}>This is the number the salon will use to confirm your booking.</span>
+            </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label htmlFor="preferredDate">Preferred Date *</label>
+                <input
+                  id="preferredDate"
+                  type="date"
+                  min={getTodayDateValue()}
+                  value={booking.state.selectedDate ? booking.state.selectedDate.toISOString().split('T')[0] : ''}
+                  onChange={(event) => handleDateChange(event.target.value)}
+                  className={styles.input}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="preferredTime">Preferred Time *</label>
+                <select
+                  id="preferredTime"
+                  value={booking.state.selectedTimePeriod ?? ''}
+                  onChange={(event) => booking.selectTimePeriod(event.target.value as BookingTimePeriod)}
+                  className={styles.input}
+                  required
+                >
+                  <option value="">Choose a time window</option>
+                  <option value="morning">Morning</option>
+                  <option value="afternoon">Afternoon</option>
+                  <option value="late_afternoon">Late afternoon</option>
+                </select>
+              </div>
             </div>
 
             <div className={styles.formGroup}>
-              <label htmlFor="notes">Notes for your appointment (optional)</label>
+              <label htmlFor="notes">Notes for the salon (optional)</label>
               <textarea
                 id="notes"
                 value={booking.state.clientNotes}
-                onChange={(e) => booking.setClientNotes(e.target.value)}
-                placeholder="Any specific requests or preferences..."
+                onChange={(event) => booking.setClientNotes(event.target.value)}
+                placeholder="Any prep notes, style ideas, or timing preferences..."
                 className={styles.textarea}
                 rows={3}
               />
             </div>
 
-            {/* Mobile Service Option */}
             {salon.bookingType !== 'ONSITE' && (
               <div className={styles.mobileOption}>
                 <label className={styles.checkboxLabel}>
                   <input
                     type="checkbox"
                     checked={booking.state.isMobile}
-                    onChange={(e) => booking.setIsMobile(e.target.checked)}
+                    onChange={(event) => booking.setIsMobile(event.target.checked)}
                     disabled={salon.bookingType === 'MOBILE'}
                   />
                   <FaMobile />
                   <span>Request mobile service</span>
-                  {salon.mobileFee && (
+                  {salon.mobileFee ? (
                     <span className={styles.mobileFee}>+R{salon.mobileFee.toFixed(2)}</span>
-                  )}
+                  ) : null}
                 </label>
               </div>
             )}
 
-            {/* Color Selection (for nail services) */}
             {showColorInput && (
               <div className={styles.preferencesSection}>
                 <div className={styles.sectionHeader}>
@@ -488,24 +503,20 @@ export default function BookingModal({
                 <input
                   type="text"
                   value={colorSelection}
-                  onChange={(e) => setColorSelection(e.target.value)}
-                  placeholder="e.g., French tip, Red #42, Nude pink..."
+                  onChange={(event) => setColorSelection(event.target.value)}
+                  placeholder="e.g. French tip, nude pink, cherry red..."
                   className={styles.input}
                 />
               </div>
             )}
 
-            {/* Material Selection (for braiding/weaving services) */}
             {showMaterialOptions && (
               <div className={styles.preferencesSection}>
                 <div className={styles.sectionHeader}>
                   <FaBox className={styles.sectionIcon} />
-                  <span>Hair/Material</span>
+                  <span>Hair / Material</span>
                 </div>
-                <p className={styles.sectionDesc}>
-                  Do you have your own hair/material for this service?
-                </p>
-
+                <p className={styles.sectionDesc}>Let the salon know whether you are bringing your own material.</p>
                 <div className={styles.materialOptions}>
                   <button
                     type="button"
@@ -515,42 +526,19 @@ export default function BookingModal({
                     <FaCheck className={styles.optionIcon} />
                     <span>I have my own</span>
                   </button>
-
                   <button
                     type="button"
                     className={`${styles.materialOption} ${materialSelection === 'BUY_SALON' ? styles.selected : ''}`}
                     onClick={() => setMaterialSelection('BUY_SALON')}
                   >
                     <FaBox className={styles.optionIcon} />
-                    <span>Use salon's</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`${styles.materialOption} ${materialSelection === 'BUY_PLATFORM' ? styles.selected : ''}`}
-                    onClick={() => setMaterialSelection('BUY_PLATFORM')}
-                  >
-                    <FaShoppingCart className={styles.optionIcon} />
-                    <span>Shop on platform</span>
+                    <span>Use salon material</span>
                   </button>
                 </div>
-
-                {materialSelection === 'BUY_PLATFORM' && (
-                  <div className={styles.platformNote}>
-                    <FaInfoCircle />
-                    <span>
-                      After booking, we'll suggest products from our marketplace that match your service.
-                    </span>
-                  </div>
-                )}
               </div>
             )}
           </div>
         );
-
-      // -----------------------------------------------------------------------
-      // Step 5: Confirm & Pay (COMBINED STEP)
-      // -----------------------------------------------------------------------
       case 'confirm':
         return (
           <div className={styles.stepContent}>
@@ -559,103 +547,62 @@ export default function BookingModal({
             </h3>
 
             <div className={styles.summary}>
-              {/* Service */}
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>Service</span>
-                <span className={styles.summaryValue}>
-                  {booking.state.selectedService?.title || booking.state.selectedService?.name}
-                </span>
+                <span className={styles.summaryValue}>{selectedService?.title || selectedService?.name}</span>
               </div>
-
-              {/* Professional */}
               <div className={styles.summaryItem}>
-                <span className={styles.summaryLabel}>Professional</span>
+                <span className={styles.summaryLabel}>Preferred Appointment</span>
                 <span className={styles.summaryValue}>
-                  {booking.state.useAnyProfessional ? 'Any available' : booking.state.selectedProfessional?.name}
-                </span>
-              </div>
-
-              {/* Date & Time */}
-              <div className={styles.summaryItem}>
-                <span className={styles.summaryLabel}>Date & Time</span>
-                <span className={styles.summaryValue}>
-                  {booking.state.selectedDate?.toLocaleDateString('en-US', {
+                  {booking.state.selectedDate?.toLocaleDateString('en-ZA', {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',
                   })}{' '}
-                  at {booking.state.selectedSlot && booking.formatTime(booking.state.selectedSlot)}
+                  in the {booking.state.selectedTimePeriod ? TIME_PERIOD_LABELS[booking.state.selectedTimePeriod].toLowerCase() : ''}
                 </span>
               </div>
-
-              {/* Duration */}
-              <div className={styles.summaryItem}>
-                <span className={styles.summaryLabel}>Duration</span>
-                <span className={styles.summaryValue}>
-                  {booking.state.selectedService && booking.formatDuration(
-                    booking.state.selectedService.duration,
-                    booking.state.selectedService.durationMin,
-                    booking.state.selectedService.durationMax
-                  )}
-                </span>
-              </div>
-
-              {/* Location */}
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>Location</span>
                 <span className={styles.summaryValue}>
-                  <FaMapMarkerAlt />{' '}
-                  {booking.state.isMobile ? 'Mobile visit' : salon.address || `${salon.city}, ${salon.province}`}
+                  <FaMapMarkerAlt /> {booking.state.isMobile ? 'Mobile visit' : salon.address || `${salon.city}, ${salon.province}`}
                 </span>
               </div>
-
-              {/* Client Name */}
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>Client Name</span>
-                <span className={styles.summaryValue}>{booking.state.clientName}</span>
+                <span className={styles.summaryValue}>{clientFullName}</span>
               </div>
-
-              {/* Contact */}
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>Phone Number</span>
                 <span className={styles.summaryValue}>{booking.state.clientPhone}</span>
               </div>
-
-              {/* Notes */}
               {booking.state.clientNotes && (
                 <div className={styles.summaryItem}>
                   <span className={styles.summaryLabel}>Notes</span>
                   <span className={styles.summaryValue}>{booking.state.clientNotes}</span>
                 </div>
               )}
-
-              {/* Color Selection */}
               {colorSelection && (
                 <div className={styles.summaryItem}>
                   <span className={styles.summaryLabel}>Color Choice</span>
                   <span className={styles.summaryValue}>{colorSelection}</span>
                 </div>
               )}
-
-              {/* Material Selection */}
               {materialSelection && (
                 <div className={styles.summaryItem}>
                   <span className={styles.summaryLabel}>Material</span>
                   <span className={styles.summaryValue}>
-                    {materialSelection === 'HAVE_OWN' ? 'Bringing own' :
-                      materialSelection === 'BUY_SALON' ? 'From salon' : 'Shop on platform'}
+                    {materialSelection === 'HAVE_OWN' ? 'Client has own material' : 'Use salon material'}
                   </span>
                 </div>
               )}
 
               <div className={styles.summaryDivider} />
 
-              {/* Payment Summary */}
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>Service Price</span>
                 <span className={styles.summaryValue}>R{booking.totalCost.toFixed(2)}</span>
               </div>
-
               <div className={`${styles.summaryItem} ${styles.highlight}`}>
                 <span className={styles.summaryLabel}>Deposit Required (50%)</span>
                 <span className={styles.summaryValue}>R{booking.depositAmount.toFixed(2)}</span>
@@ -671,14 +618,13 @@ export default function BookingModal({
               <div className={styles.depositNote}>
                 <FaInfoCircle />
                 <span>
-                  A 50% deposit (R{booking.depositAmount.toFixed(2)}) is required to confirm your booking.
-                  The remaining R{(booking.totalCost - booking.depositAmount).toFixed(2)} is due at the appointment.
+                  A 50% deposit (R{booking.depositAmount.toFixed(2)}) is required to secure this booking. The remaining
+                  R{(booking.totalCost - booking.depositAmount).toFixed(2)} is due directly to the salon.
                 </span>
               </div>
             </div>
 
-            {/* Banking Details */}
-            {(salon.bankName && salon.accountNumber) && (
+            {salon.bankName && salon.accountNumber && (
               <div className={styles.bankingDetails}>
                 <h4 className={styles.bankingDetailsTitle}>Banking Details for Deposit</h4>
                 <div className={styles.bankingInfo}>
@@ -702,53 +648,47 @@ export default function BookingModal({
                   )}
                   <div className={`${styles.bankingItem} ${styles.reference}`}>
                     <span className={styles.bankingLabel}>Reference:</span>
-                    <span className={styles.bankingValue}><strong>{booking.state.clientName}</strong></span>
+                    <span className={styles.bankingValue}><strong>{referenceCodePreview}</strong></span>
                   </div>
                 </div>
                 <div className={styles.bankingNote}>
                   <FaInfoCircle />
-                  <span>Use your name as reference when making the deposit</span>
+                  <span>Use this booking reference when making the deposit.</span>
                 </div>
               </div>
             )}
 
-            {/* Custom Booking Message */}
             {salon.bookingMessage && (
               <div className={styles.bookingMessage}>
                 <p>{salon.bookingMessage}</p>
               </div>
             )}
 
-            {/* Cancellation Policy */}
             {salon.cancellationPolicy && (
               <div className={styles.cancellationPolicy}>
                 <div className={styles.cancellationPolicyHeader}>
                   <FaExclamationTriangle /> Cancellation Policy
                 </div>
-                <p className={styles.cancellationPolicyText}>
-                  {salon.cancellationPolicy}
-                </p>
+                <p className={styles.cancellationPolicyText}>{salon.cancellationPolicy}</p>
               </div>
             )}
+
+            <div className={styles.platformPolicyNote}>
+              <FaInfoCircle />
+              <p>Refunds are guided by the salon&apos;s own policy, not Stylr SA. A 20% booking cancellation fee applies.</p>
+            </div>
           </div>
         );
-
       default:
         return null;
     }
   };
 
-  // ---------------------------------------------------------------------------
-  // Main render
-  // ---------------------------------------------------------------------------
-
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[500px] md:max-w-[600px] h-[90vh] overflow-hidden p-0 gap-0 flex flex-col">
-        {/* Visually hidden title for accessibility */}
         <DialogTitle className="sr-only">Book Appointment at {salon.name}</DialogTitle>
 
-        {/* Header */}
         <div className={styles.header}>
           <button className={styles.backButton} onClick={booking.goBack} aria-label="Go back">
             <FaChevronLeft />
@@ -759,8 +699,7 @@ export default function BookingModal({
           </div>
         </div>
 
-        {/* Booking Summary */}
-        {booking.state.selectedService && (
+        {selectedService && (
           <div className={styles.bookingSummary}>
             <div className={styles.summaryItem}>
               <span className={styles.summaryLabel}>Treatments:</span>
@@ -773,12 +712,8 @@ export default function BookingModal({
           </div>
         )}
 
-        {/* Breadcrumbs */}
         {renderBreadcrumbs()}
 
-        {/* Breadcrumbs already provide step indication */}
-
-        {/* Error Display */}
         {booking.error && (
           <div className={styles.errorBanner}>
             <FaExclamationTriangle className={styles.errorIcon} />
@@ -793,15 +728,12 @@ export default function BookingModal({
           </div>
         )}
 
-        {/* Content */}
         <div className={styles.content} key={booking.state.step}>
           {renderStepContent()}
         </div>
 
-        {/* Footer */}
         <div className={styles.footer}>
-          {/* Back button - show when not on first step */}
-          {booking.state.step !== 'details' && (
+          {booking.currentStepIndex > 0 && (
             <button
               className={styles.secondaryButton}
               onClick={booking.goBack}
@@ -810,13 +742,13 @@ export default function BookingModal({
             </button>
           )}
 
-          {/* Continue or WhatsApp button */}
           {booking.state.step === 'confirm' ? (
             <button
               className={`${styles.primaryButton} ${styles.whatsappButton}`}
               onClick={handleSubmit}
+              disabled={isCreatingIntent}
             >
-              <FaWhatsapp /> Send Booking via WhatsApp
+              <FaWhatsapp /> {isCreatingIntent ? 'Preparing WhatsApp...' : 'Send Booking via WhatsApp'}
             </button>
           ) : (
             <button

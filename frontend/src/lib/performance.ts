@@ -13,30 +13,9 @@ export interface PerformanceMetric {
   id: string;
 }
 
-/**
- * Web Vitals thresholds (in milliseconds)
- * Based on Google's recommendations
- */
-const THRESHOLDS = {
-  FCP: { good: 1800, poor: 3000 },    // First Contentful Paint
-  LCP: { good: 2500, poor: 4000 },    // Largest Contentful Paint
-  FID: { good: 100, poor: 300 },      // First Input Delay
-  CLS: { good: 0.1, poor: 0.25 },     // Cumulative Layout Shift
-  TTFB: { good: 800, poor: 1800 },    // Time to First Byte
-  INP: { good: 200, poor: 500 },      // Interaction to Next Paint
-};
-
-/**
- * Get performance rating
- */
-function getRating(
-  name: keyof typeof THRESHOLDS,
-  value: number
-): 'good' | 'needs-improvement' | 'poor' {
-  const threshold = THRESHOLDS[name];
-  if (value <= threshold.good) return 'good';
-  if (value <= threshold.poor) return 'needs-improvement';
-  return 'poor';
+interface BrowserMemoryInfo {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
 }
 
 /**
@@ -203,7 +182,7 @@ export function trackRender(componentName: string, renderTime: number): void {
 export function trackMemoryUsage(): void {
   if (typeof window === 'undefined') return;
 
-  const memory = (performance as any).memory;
+  const memory = (performance as Performance & { memory?: BrowserMemoryInfo }).memory;
   if (!memory) return;
 
   const usedMemory = Math.round(memory.usedJSHeapSize / 1048576); // Convert to MB
@@ -235,7 +214,7 @@ export function trackLongTasks(): void {
     });
 
     observer.observe({ entryTypes: ['longtask'] });
-  } catch (e) {
+  } catch {
     // PerformanceObserver not supported
   }
 }

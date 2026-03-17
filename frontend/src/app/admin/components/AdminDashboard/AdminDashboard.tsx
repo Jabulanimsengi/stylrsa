@@ -4,7 +4,6 @@ import React from 'react';
 import styles from './AdminDashboard.module.css';
 import {
     FaStore,
-    FaUserTie,
     FaClock,
     FaCreditCard,
     FaArrowRight,
@@ -12,19 +11,16 @@ import {
     FaExclamationCircle,
     FaChartLine,
     FaShieldAlt,
-    FaBullhorn,
-    FaBoxes
 } from 'react-icons/fa';
 import type { AdminView } from '../../admin-config';
 
 interface DashboardMetrics {
     totalSalons: number;
-    totalSellers: number;
     pendingApprovals: number;
     pendingPayments: number;
     approvedToday?: number;
     recentActivity?: Array<{
-        type: 'salon' | 'service' | 'review' | 'product' | 'payment';
+        type: 'salon' | 'service' | 'review' | 'payment';
         action: 'approved' | 'rejected' | 'created' | 'verified';
         name: string;
         timestamp: string;
@@ -52,27 +48,12 @@ export default function AdminDashboard({ metrics, onNavigate }: AdminDashboardPr
             count: metrics.pendingPayments,
             urgent: metrics.pendingPayments > 0
         },
-        {
-            label: 'Featured placements',
-            helper: 'Manage promoted visibility slots',
-            view: 'featured-salons' as AdminView,
-            count: 0,
-            urgent: false
-        },
-        {
-            label: 'Media review',
-            helper: 'Moderate uploads and visual content',
-            view: 'media' as AdminView,
-            count: 0,
-            urgent: false
-        },
     ];
 
     const quickActions = [
-        { label: 'Products', view: 'products' as AdminView, icon: <FaBoxes /> },
-        { label: 'Promotions', view: 'promotions' as AdminView, icon: <FaBullhorn /> },
         { label: 'Audit log', view: 'audit' as AdminView, icon: <FaShieldAlt /> },
         { label: 'All salons', view: 'all-salons' as AdminView, icon: <FaChartLine /> },
+        { label: 'Service approvals', view: 'services' as AdminView, icon: <FaClock /> },
     ];
 
     return (
@@ -82,7 +63,7 @@ export default function AdminDashboard({ metrics, onNavigate }: AdminDashboardPr
                     <span className={styles.kicker}>Admin Control Room</span>
                     <h1 className={styles.title}>Review what needs action first.</h1>
                     <p className={styles.subtitle}>
-                        Prioritize approvals, payment proofs, and visibility changes before moving into full platform management.
+                        Prioritize salon approvals, service approvals, and payment proofs before moving into deeper moderation work.
                     </p>
                 </div>
                 <div className={styles.heroSnapshot}>
@@ -130,16 +111,6 @@ export default function AdminDashboard({ metrics, onNavigate }: AdminDashboardPr
                     <div className={styles.metricContent}>
                         <span className={styles.metricValue}>{metrics.totalSalons}</span>
                         <span className={styles.metricLabel}>Total Salons</span>
-                    </div>
-                </div>
-
-                <div className={styles.metricCard}>
-                    <div className={styles.metricIcon}>
-                        <FaUserTie />
-                    </div>
-                    <div className={styles.metricContent}>
-                        <span className={styles.metricValue}>{metrics.totalSellers}</span>
-                        <span className={styles.metricLabel}>Total Sellers</span>
                     </div>
                 </div>
 
@@ -231,12 +202,6 @@ export default function AdminDashboard({ metrics, onNavigate }: AdminDashboardPr
                             <span className={styles.statLabel}>Total salons</span>
                         </div>
                         <span className={styles.statValue}>{metrics.totalSalons}</span>
-                    </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statHeader}>
-                            <span className={styles.statLabel}>Total sellers</span>
-                        </div>
-                        <span className={styles.statValue}>{metrics.totalSellers}</span>
                     </div>
                 </div>
             </div>

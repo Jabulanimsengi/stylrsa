@@ -1,4 +1,4 @@
-const INVALID_PREFIXES = ['_vercel', '_next', 'api', 'static', 'favicon'];
+const INVALID_PREFIXES = ['_next', 'api', 'static', 'favicon'];
 const INVALID_EXTENSIONS = [
   '.js',
   '.css',

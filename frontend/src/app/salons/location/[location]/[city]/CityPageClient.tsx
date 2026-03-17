@@ -109,9 +109,9 @@ function SalonsCityContent({ initialSalons = [], cityInfo }: CityPageClientProps
     <div className={styles.container}>
       <PageNav />
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
-        <h1 className={styles.title}>Salons Near Me in {cityName}</h1>
+        <h1 className={styles.title}>Salons in {cityName}</h1>
         <p style={{ fontSize: '1.1rem', marginBottom: '2rem', color: '#666', lineHeight: '1.6' }}>
-          {cityInfo?.description || `Find the best hair salons, nail salons, spas, and beauty services near you in ${cityName}.`}
+          {cityInfo?.description || `Browse hair salons, nail salons, spas, and beauty services in ${cityName}.`}
         </p>
       </div>
 

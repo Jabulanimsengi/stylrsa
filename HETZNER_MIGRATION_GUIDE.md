@@ -5,7 +5,7 @@ This guide will help you migrate your full-stack application and data to your ne
 ## Prerequisites
 - access to the Hetzner Cloud Console
 - SSH access to your new server (`ssh root@<YOUR_SERVER_IP>`)
-- Your current database connection string (from Supabase/Render/Local)
+- Your current database connection string (from Supabase, another hosted Postgres provider, or local development)
 
 ## Phase 1: Server Setup (One-Time)
 

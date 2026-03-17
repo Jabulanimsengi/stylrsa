@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Trend, TrendCategory, AgeGroup } from '@/types';
 import TrendCard from '@/components/TrendCard/TrendCard';
@@ -48,11 +48,7 @@ function TrendsPageContent() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    fetchTrends();
-  }, [selectedCategory]);
-
-  const fetchTrends = async () => {
+  const fetchTrends = useCallback(async () => {
     setIsLoading(true);
     try {
       const url = selectedCategory === 'ALL'
@@ -78,15 +74,19 @@ function TrendsPageContent() {
       } else {
         toast.error('Failed to load trends');
       }
-    } catch (error) {
+    } catch {
       toast.error('Error loading trends');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedCategory]);
 
-  const filteredTrends = React.useMemo(() => {
-    let filtered = selectedAgeGroup === 'ALL'
+  useEffect(() => {
+    fetchTrends();
+  }, [fetchTrends]);
+
+  const filteredTrends = useMemo(() => {
+    const filtered = selectedAgeGroup === 'ALL'
       ? trends
       : trends.filter((trend) => trend.ageGroups.includes(selectedAgeGroup as AgeGroup));
     

@@ -1,6 +1,12 @@
-import { Skeleton, SkeletonGroup, SkeletonCard } from './Skeleton';
+import {
+    CarouselRowSkeleton,
+    DiscoverySectionSkeleton,
+    FilterBarSkeleton,
+    Skeleton,
+    SkeletonGroup,
+    SkeletonCard,
+} from './Skeleton';
 import styles from './Skeleton.module.css';
-import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 
 interface ServicesPageSkeletonProps {
     message?: string;
@@ -12,40 +18,33 @@ export default function ServicesPageSkeleton({
     cardCount = 6
 }: ServicesPageSkeletonProps) {
     return (
-        <div aria-hidden>
-            {/* Loading indicator */}
+        <div className={styles.pageSkeletonContainer} aria-hidden>
             <div className={styles.loadingIndicator}>
-                <LoadingSpinner size="md" inline />
                 <span>{message}</span>
             </div>
 
-            {/* Content skeleton */}
-            <div style={{ maxWidth: '1200px', margin: '1.5rem auto', padding: '0 1rem' }}>
-                {/* Title skeleton */}
-                <Skeleton
-                    variant="text"
-                    style={{ width: '40%', height: 32, marginBottom: '1.5rem' }}
-                />
-
-                {/* Filter bar skeleton */}
-                <div style={{
-                    display: 'flex',
-                    gap: '0.75rem',
-                    marginBottom: '1.5rem',
-                    overflowX: 'auto',
-                    paddingBottom: '0.5rem'
-                }}>
-                    <Skeleton variant="button" style={{ width: 100, height: 40, flexShrink: 0 }} />
-                    <Skeleton variant="button" style={{ width: 100, height: 40, flexShrink: 0 }} />
-                    <Skeleton variant="button" style={{ width: 100, height: 40, flexShrink: 0 }} />
-                    <Skeleton variant="button" style={{ width: 100, height: 40, flexShrink: 0 }} />
-                </div>
-
-                {/* Cards grid */}
-                <SkeletonGroup count={cardCount} className={styles.skeletonGrid}>
-                    {(index) => <SkeletonCard key={index} hasImage lines={2} />}
-                </SkeletonGroup>
+            <div className={styles.headerSkeleton}>
+                <Skeleton variant="text" width="9rem" height={12} />
+                <Skeleton variant="text" width="34%" height={36} />
+                <Skeleton variant="text" width="62%" height={18} />
             </div>
+
+            <div className={styles.filterSkeleton}>
+                <FilterBarSkeleton compact />
+            </div>
+
+            <div className={styles.headerSkeleton} style={{ marginBottom: '1rem' }}>
+                <Skeleton variant="text" width="18%" height={12} />
+                <Skeleton variant="text" width="28%" height={28} />
+            </div>
+
+            <CarouselRowSkeleton count={4} />
+
+            <div style={{ height: '1.75rem' }} />
+
+            <SkeletonGroup count={cardCount} className={styles.gridSkeleton}>
+                {(index) => <SkeletonCard key={index} hasImage lines={2} />}
+            </SkeletonGroup>
         </div>
     );
 }
@@ -61,26 +60,11 @@ export function SalonsPageSkeleton({
     cardCount = 8
 }: SalonsPageSkeletonProps) {
     return (
-        <div aria-hidden>
-            {/* Loading indicator */}
+        <div className={styles.pageSkeletonContainer} aria-hidden>
             <div className={styles.loadingIndicator}>
-                <LoadingSpinner size="md" inline />
                 <span>{message}</span>
             </div>
-
-            {/* Content skeleton */}
-            <div style={{ maxWidth: '1200px', margin: '1.5rem auto', padding: '0 1rem' }}>
-                {/* Title skeleton */}
-                <Skeleton
-                    variant="text"
-                    style={{ width: '35%', height: 32, marginBottom: '1.5rem' }}
-                />
-
-                {/* Cards grid */}
-                <SkeletonGroup count={cardCount} className={styles.skeletonGrid}>
-                    {(index) => <SkeletonCard key={index} hasImage lines={3} />}
-                </SkeletonGroup>
-            </div>
+            <DiscoverySectionSkeleton cardCount={cardCount} />
         </div>
     );
 }

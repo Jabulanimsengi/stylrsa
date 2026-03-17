@@ -15,7 +15,7 @@ type PromotionServiceSummary = NonNullable<Promotion['service']>;
 export default function PromotionsPage() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'services' | 'products'>('all');
+  const [filter, setFilter] = useState<'all' | 'services'>('all');
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -104,7 +104,6 @@ export default function PromotionsPage() {
 
   const filteredPromotions = promotions.filter((promo) => {
     if (filter === 'services') return Boolean(promo.service);
-    if (filter === 'products') return Boolean(promo.product);
     return true;
   });
 
@@ -115,7 +114,7 @@ export default function PromotionsPage() {
       <div className={styles.header}>
         <h1 className={styles.title}>Special Promotions</h1>
         <p className={styles.subtitle}>
-          Discover amazing deals on services and products
+          Discover amazing deals on services
         </p>
       </div>
 
@@ -132,12 +131,6 @@ export default function PromotionsPage() {
             onClick={() => setFilter('services')}
           >
             Services
-          </button>
-          <button
-            className={`${styles.filterButton} ${filter === 'products' ? styles.active : ''}`}
-            onClick={() => setFilter('products')}
-          >
-            Products
           </button>
         </div>
         <button

@@ -8,15 +8,7 @@ import {
     FaStore,
     FaConciergeBell,
     FaStar,
-    FaBox,
-    FaGift,
-    FaUsers,
-    FaUserTie,
-    FaCrown,
     FaCreditCard,
-    FaImage,
-    FaChartLine,
-    FaNewspaper,
     FaTrash,
     FaHistory,
     FaChevronDown,
@@ -44,7 +36,6 @@ interface AdminSidebarProps {
         salons: number;
         services: number;
         reviews: number;
-        products: number;
         promotions: number;
         payments: number;
     };
@@ -78,9 +69,7 @@ export default function AdminSidebar({
     const totalPending =
         pendingCounts.salons +
         pendingCounts.services +
-        pendingCounts.reviews +
-        pendingCounts.products +
-        pendingCounts.promotions;
+        pendingCounts.reviews;
 
     const sections: NavSection[] = [
         {
@@ -97,8 +86,6 @@ export default function AdminSidebar({
                 { id: 'salons', label: 'Salons', icon: <FaStore />, badge: pendingCounts.salons },
                 { id: 'services', label: 'Services', icon: <FaConciergeBell />, badge: pendingCounts.services },
                 { id: 'reviews', label: 'Reviews', icon: <FaStar />, badge: pendingCounts.reviews },
-                { id: 'products', label: 'Products', icon: <FaBox />, badge: pendingCounts.products },
-                { id: 'promotions', label: 'Promotions', icon: <FaGift />, badge: pendingCounts.promotions },
             ],
         },
         {
@@ -106,26 +93,13 @@ export default function AdminSidebar({
             defaultExpanded: true,
             items: [
                 { id: 'all-salons', label: 'All Salons', icon: <FaStore /> },
-                { id: 'all-sellers', label: 'All Sellers', icon: <FaUserTie /> },
-                { id: 'featured-salons', label: 'Featured Salons', icon: <FaCrown /> },
                 { id: 'pending-payments', label: 'Pending Payments', icon: <FaCreditCard />, badge: pendingCounts.payments },
-            ],
-        },
-        {
-            title: 'Content',
-            items: [
-                { id: 'media', label: 'Media Review', icon: <FaImage /> },
-                { id: 'trends', label: 'Trends', icon: <FaChartLine /> },
-                { id: 'salon-trendz', label: 'Salon Trendz', icon: <FaChartLine /> },
-                { id: 'blogs', label: 'Blogs', icon: <FaNewspaper /> },
-                { id: 'top10-requests', label: 'Top 10 Requests', icon: <FaUsers /> },
             ],
         },
         {
             title: 'Archive',
             items: [
                 { id: 'deleted-salons', label: 'Deleted Salons', icon: <FaTrash /> },
-                { id: 'deleted-sellers', label: 'Deleted Sellers', icon: <FaTrash /> },
                 { id: 'audit', label: 'Audit Logs', icon: <FaHistory /> },
             ],
         },

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import styles from './ReviewsTab.module.css';
 import { Review } from '@/types';
-import { Button, EmptyState, StarRating, Alert, Spinner } from '@/components/ui';
+import { Button, EmptyState, StarRating, Alert } from '@/components/ui';
 import StatusBadge from '@/components/StatusBadge';
+import { ReviewsPanelSkeleton } from '@/components/Skeleton/Skeleton';
 
 interface ReviewsData {
   pending: Review[];
@@ -21,7 +22,7 @@ export default function ReviewsTab() {
   const [responseText, setResponseText] = useState('');
   const [view, setView] = useState<'needsResponse' | 'approved' | 'pending'>('needsResponse');
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -53,11 +54,11 @@ export default function ReviewsTab() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchReviews();
-  }, []);
+  }, [fetchReviews]);
 
   const handleRespond = async (reviewId: string) => {
     if (!responseText.trim()) {
@@ -79,7 +80,7 @@ export default function ReviewsTab() {
       setRespondingTo(null);
       setResponseText('');
       fetchReviews();
-    } catch (error) {
+    } catch {
       toast.error('Failed to submit response');
     }
   };
@@ -87,10 +88,7 @@ export default function ReviewsTab() {
   if (isLoading) {
     return (
       <div className={styles.container}>
-        <div className={styles.loading}>
-          <Spinner size="lg" />
-          <p>Loading reviews...</p>
-        </div>
+        <ReviewsPanelSkeleton />
       </div>
     );
   }
@@ -121,6 +119,20 @@ export default function ReviewsTab() {
   }
 
   const currentReviews = reviews[view];
+  const emptyMessages = {
+    needsResponse: {
+      title: 'All caught up on replies',
+      description: 'New customer feedback that needs a response will appear here.',
+    },
+    approved: {
+      title: 'No approved reviews yet',
+      description: 'Once approved reviews are published, you will be able to read and manage them here.',
+    },
+    pending: {
+      title: 'Nothing waiting for approval',
+      description: 'Reviews that still need moderation approval will appear in this tab.',
+    },
+  } satisfies Record<typeof view, { title: string; description: string }>;
 
   return (
     <div className={styles.container}>
@@ -162,10 +174,12 @@ export default function ReviewsTab() {
 
       <div className={styles.reviewsList}>
         {currentReviews.length === 0 ? (
-          <div className={styles.empty}>
-            {view === 'needsResponse' && 'All reviews have been responded to!'}
-            {view === 'pending' && 'No reviews pending approval.'}
-            {view === 'approved' && 'No approved reviews yet.'}
+          <div className={styles.emptyPanel}>
+            <EmptyState
+              icon="inbox"
+              title={emptyMessages[view].title}
+              description={emptyMessages[view].description}
+            />
           </div>
         ) : (
           currentReviews.map((review) => (

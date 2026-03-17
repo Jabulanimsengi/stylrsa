@@ -1,21 +1,26 @@
 'use client';
 
-import { useState, useEffect, useCallback, useDeferredValue, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { FaMapMarkerAlt, FaExclamationTriangle, FaBolt, FaStar, FaSlidersH, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { useState, useEffect, useCallback, useDeferredValue, useRef, useId } from 'react';
+import {
+  FaMapMarkerAlt,
+  FaExclamationTriangle,
+  FaBolt,
+  FaStar,
+  FaSlidersH,
+  FaChevronDown,
+  FaChevronUp,
+} from 'react-icons/fa';
 import styles from './FilterBar.module.css';
 import { toFriendlyMessage } from '@/lib/errors';
 import { getCategoriesCached, getLocationsCached } from '@/lib/resourceCache';
 import { apiJson } from '@/lib/api';
 import { useGeolocation } from '@/hooks/useGeolocation';
-import RadiusSelector from '@/components/RadiusSelector';
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectItem,
   SelectValue,
-  Checkbox,
 } from '@/components/ui';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 
@@ -68,14 +73,27 @@ export default function FilterBar({
   isSearching = false,
   orientation = 'horizontal',
 }: FilterBarProps) {
+  const serviceInputId = useId();
+  const suggestionsId = useId();
+  const categoryLabelId = useId();
+  const categoryTriggerId = useId();
+  const provinceLabelId = useId();
+  const provinceTriggerId = useId();
+  const cityLabelId = useId();
+  const cityTriggerId = useId();
+  const advancedFiltersId = useId();
+  const sortLabelId = useId();
+  const sortTriggerId = useId();
+  const radiusLabelId = useId();
+  const radiusTriggerId = useId();
+  const priceMinId = useId();
+  const priceMaxId = useId();
   const [locations, setLocations] = useState<LocationsByProvince>({});
   const [province, setProvince] = useState(initialFilters.province || '');
   const [city, setCity] = useState(initialFilters.city || '');
   const [serviceSearch, setServiceSearch] = useState(initialFilters.service || '');
   const [category, setCategory] = useState(initialFilters.category || '');
-  const [offersMobile, setOffersMobile] = useState(
-    initialFilters.offersMobile ?? false
-  );
+  const [offersMobile, setOffersMobile] = useState(initialFilters.offersMobile ?? false);
   const [sortBy, setSortBy] = useState(initialFilters.sortBy || '');
   const [openNow, setOpenNow] = useState(initialFilters.openNow ?? false);
   const [priceMin, setPriceMin] = useState(initialFilters.priceMin || '');
@@ -86,12 +104,22 @@ export default function FilterBar({
   const [isServiceLoading, setIsServiceLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const deferredServiceSearch = useDeferredValue(serviceSearch);
-  const router = useRouter();
-  const enableAutoSearch = autoSearch ?? !isHomePage;
-  const lastEmittedFiltersRef = useRef<string>('');
 
-  const { coordinates, locationName, isLoading: isGeoLoading, isReverseGeocoding, error: geoError, requestLocation, source: locationSource } = useGeolocation();
+  const deferredServiceSearch = useDeferredValue(serviceSearch);
+  const enableAutoSearch = autoSearch ?? !isHomePage;
+  const lastEmittedFiltersRef = useRef('');
+  const fetchedStaticDataRef = useRef(false);
+  const coordinatesProcessedRef = useRef<string | null>(null);
+
+  const {
+    coordinates,
+    locationName,
+    isLoading: isGeoLoading,
+    isReverseGeocoding,
+    error: geoError,
+    requestLocation,
+    source: locationSource,
+  } = useGeolocation();
 
   const initialProvince = initialFilters.province ?? '';
   const initialCity = initialFilters.city ?? '';
@@ -102,8 +130,7 @@ export default function FilterBar({
   const initialOpenNow = initialFilters.openNow ?? false;
   const initialPriceMin = initialFilters.priceMin ?? '';
   const initialPriceMax = initialFilters.priceMax ?? '';
-
-  const fetchedStaticDataRef = useRef(false);
+  const initialRadius = initialFilters.radius ?? null;
 
   useEffect(() => {
     if (fetchedStaticDataRef.current) {
@@ -124,7 +151,6 @@ export default function FilterBar({
       }
 
       if (locationsResult.status === 'fulfilled' && locationsResult.value && typeof locationsResult.value === 'object') {
-        console.log('FETCHED locations:', locationsResult.value);
         setLocations(locationsResult.value);
       } else if (locationsResult.status === 'rejected') {
         console.debug('Locations load failed:', toFriendlyMessage(locationsResult.reason));
@@ -149,43 +175,49 @@ export default function FilterBar({
     };
   }, []);
 
-  const buildFilters = useCallback((): FilterValues => ({
-    province,
-    city,
-    service: serviceSearch,
-    category,
-    offersMobile,
-    sortBy,
-    openNow,
-    priceMin,
-    priceMax,
-    lat: coordinates?.latitude ?? null,
-    lon: coordinates?.longitude ?? null,
-    radius,
-  }), [province, city, serviceSearch, category, offersMobile, sortBy, openNow, priceMin, priceMax, coordinates, radius]);
+  const buildFilters = useCallback(
+    (): FilterValues => ({
+      province,
+      city,
+      service: serviceSearch,
+      category,
+      offersMobile,
+      sortBy,
+      openNow,
+      priceMin,
+      priceMax,
+      lat: coordinates?.latitude ?? null,
+      lon: coordinates?.longitude ?? null,
+      radius,
+    }),
+    [province, city, serviceSearch, category, offersMobile, sortBy, openNow, priceMin, priceMax, coordinates, radius],
+  );
 
-  const triggerSearch = useCallback((filters: FilterValues, force = false) => {
-    const serialized = JSON.stringify(filters);
-    if (!force && serialized === lastEmittedFiltersRef.current) {
-      return;
-    }
-    lastEmittedFiltersRef.current = serialized;
-    setShowSuggestions(false);
-    onSearch(filters);
-  }, [onSearch]);
+  const triggerSearch = useCallback(
+    (filters: FilterValues, force = false) => {
+      const serialized = JSON.stringify(filters);
+      if (!force && serialized === lastEmittedFiltersRef.current) {
+        return;
+      }
 
-  const coordinatesProcessedRef = useRef<string | null>(null);
+      lastEmittedFiltersRef.current = serialized;
+      setShowSuggestions(false);
+      onSearch(filters);
+    },
+    [onSearch],
+  );
 
   useEffect(() => {
     if (!enableAutoSearch) {
       return;
     }
+
     const handler = setTimeout(() => {
-      const nextFilters = buildFilters();
-      triggerSearch(nextFilters);
+      triggerSearch(buildFilters());
     }, 300);
+
     return () => clearTimeout(handler);
-  }, [province, city, serviceSearch, category, offersMobile, sortBy, openNow, priceMin, priceMax, radius, enableAutoSearch]);
+  }, [buildFilters, enableAutoSearch, triggerSearch]);
 
   useEffect(() => {
     if (!coordinates || !enableAutoSearch) {
@@ -206,11 +238,10 @@ export default function FilterBar({
     }
 
     triggerSearch(filters, true);
-  }, [coordinates, enableAutoSearch]);
+  }, [coordinates, enableAutoSearch, buildFilters, triggerSearch]);
 
   const handleSearchClick = () => {
-    const filters = buildFilters();
-    triggerSearch(filters, true);
+    triggerSearch(buildFilters(), true);
   };
 
   const handleFindNearby = () => {
@@ -219,11 +250,11 @@ export default function FilterBar({
       return;
     }
 
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'geolocation_requested', {
+    if (typeof window !== 'undefined' && (window as Window & { gtag?: (...args: unknown[]) => void }).gtag) {
+      window.gtag?.('event', 'geolocation_requested', {
         event_category: 'user_interaction',
         event_label: 'filter_bar_near_me',
-        page_location: window.location.pathname
+        page_location: window.location.pathname,
       });
     }
 
@@ -249,14 +280,19 @@ export default function FilterBar({
         if (cancelled || !Array.isArray(data)) {
           return;
         }
+
         const suggestions = data.reduce<ServiceSuggestion[]>((acc, item, index) => {
           const title = (item?.title ?? '').trim();
-          if (!title) return acc;
+          if (!title) {
+            return acc;
+          }
+
           const id = item?.id ?? `suggestion-${index}`;
           const salonName = item?.salon?.name ?? item?.salonName ?? undefined;
           acc.push({ id, title, salon: salonName ?? undefined });
           return acc;
         }, []);
+
         setServiceSuggestions(suggestions);
         setShowSuggestions(suggestions.length > 0);
       })
@@ -288,6 +324,7 @@ export default function FilterBar({
     setOpenNow((prev) => (prev === initialOpenNow ? prev : initialOpenNow));
     setPriceMin((prev) => (prev === initialPriceMin ? prev : initialPriceMin));
     setPriceMax((prev) => (prev === initialPriceMax ? prev : initialPriceMax));
+    setRadius((prev) => (prev === initialRadius ? prev : initialRadius));
   }, [
     initialProvince,
     initialCity,
@@ -298,6 +335,7 @@ export default function FilterBar({
     initialOpenNow,
     initialPriceMin,
     initialPriceMax,
+    initialRadius,
   ]);
 
   useEffect(() => {
@@ -306,7 +344,7 @@ export default function FilterBar({
     }
   }, [isSearching]);
 
-  const handleQuickFilter = (filterType: 'openNow' | 'nearMe' | 'topRated' | 'mobile' | 'nightShift') => {
+  const handleQuickFilter = (filterType: 'openNow' | 'nearMe' | 'topRated' | 'mobile') => {
     const filters = buildFilters();
 
     switch (filterType) {
@@ -325,17 +363,17 @@ export default function FilterBar({
         filters.offersMobile = !offersMobile;
         setOffersMobile(!offersMobile);
         break;
-      case 'nightShift':
-        // Night shift filter - salons open after 6pm
-        filters.sortBy = sortBy === 'night_shift' ? '' : 'night_shift';
-        setSortBy(sortBy === 'night_shift' ? '' : 'night_shift');
-        break;
     }
 
     triggerSearch(filters, true);
   };
 
-  console.log('RENDER - locations state:', locations, 'keys:', Object.keys(locations));
+  const locationStatusTone = isGeoLoading
+    ? styles.locationStatusLoading
+    : coordinates
+      ? styles.locationStatusSuccess
+      : styles.locationStatusWarning;
+  const showLocationStatus = isGeoLoading || coordinates || geoError;
 
   return (
     <>
@@ -344,185 +382,189 @@ export default function FilterBar({
           type="button"
           onClick={() => handleQuickFilter('openNow')}
           className={`${styles.quickFilterBtn} ${openNow ? styles.active : ''}`}
+          aria-pressed={openNow}
         >
-          <FaBolt /> Open Now
+          <FaBolt aria-hidden="true" /> Open Now
         </button>
         <button
           type="button"
           onClick={() => handleQuickFilter('nearMe')}
           className={styles.quickFilterBtn}
         >
-          <FaMapMarkerAlt /> Near Me
-        </button>
-        <button
-          type="button"
-          onClick={() => handleQuickFilter('topRated')}
-          className={`${styles.quickFilterBtn} ${sortBy === 'top_rated' ? styles.active : ''}`}
-        >
-          <FaStar /> Top Rated
+          <FaMapMarkerAlt aria-hidden="true" /> Use My Location
         </button>
         <button
           type="button"
           onClick={() => handleQuickFilter('mobile')}
           className={`${styles.quickFilterBtn} ${offersMobile ? styles.active : ''}`}
+          aria-pressed={offersMobile}
         >
-          <FaBolt /> Mobile Services
+          <FaBolt aria-hidden="true" /> Mobile
         </button>
         <button
           type="button"
-          onClick={() => handleQuickFilter('nightShift')}
-          className={`${styles.quickFilterBtn} ${sortBy === 'night_shift' ? styles.active : ''}`}
+          onClick={() => handleQuickFilter('topRated')}
+          className={`${styles.quickFilterBtn} ${sortBy === 'top_rated' ? styles.active : ''}`}
+          aria-pressed={sortBy === 'top_rated'}
         >
-          🌙 Night Shift
+          <FaStar aria-hidden="true" /> Top Rated
         </button>
       </div>
 
       <div
-        className={`${styles.filterBar} ${isHomePage ? styles.homeFilterBar : ''
-          } ${orientation === 'vertical' ? styles.vertical : ''}`}
+        className={`${styles.filterBar} ${isHomePage ? styles.homeFilterBar : ''} ${
+          orientation === 'vertical' ? styles.vertical : ''
+        }`}
       >
-        {/* Advanced Filters - Collapsible */}
-        {showAdvancedFilters && (
-          <>
-            <div className={styles.filterGroup}>
-              <label>Province</label>
-              <Select
-                value={province}
-                onValueChange={(value) => {
-                  setProvince(value === '__all__' ? '' : value);
-                  setCity('');
-                }}
-              >
-                <SelectTrigger className={styles.filterSelect}>
-                  <SelectValue placeholder="All Provinces" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All Provinces</SelectItem>
-                  {Object.keys(locations).map((prov) => (
-                    <SelectItem key={prov} value={prov}>
-                      {prov}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className={styles.filterGroup}>
-              <label>Town/City</label>
-              <Select
-                value={city}
-                onValueChange={(value) => setCity(value === '__all__' ? '' : value)}
-                disabled={!province}
-              >
-                <SelectTrigger className={styles.filterSelect}>
-                  <SelectValue placeholder="All Cities" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All Cities</SelectItem>
-                  {province &&
-                    locations[province]?.map((c: string, index: number) => (
-                      <SelectItem key={`${c}-${index}`} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        )}
-        <div className={styles.filterGroup}>
-          <label htmlFor="service">Service</label>
-          <input
-            id="service"
-            type="text"
-            placeholder="e.g., Braids, Nails"
-            value={serviceSearch}
-            onChange={(e) => {
-              const val = e.target.value;
-              setServiceSearch(val);
-              if (val.trim().length <= 1) {
-                setServiceSuggestions([]);
-                setShowSuggestions(false);
-              }
-            }}
-            className={styles.filterInput}
-            onFocus={() => {
-              if (serviceSuggestions.length > 0) setShowSuggestions(true);
-            }}
-            onBlur={() => {
-              setTimeout(() => setShowSuggestions(false), 120);
-            }}
-          />
-          {showSuggestions && (
-            <ul className={styles.suggestionsList}>
-              <li className={styles.suggestionsHeader}>
-                <button type="button" className={styles.dismissButton} onClick={() => setShowSuggestions(false)}>×</button>
-              </li>
-              {isServiceLoading && (
-                <li className={`${styles.suggestionItem} ${styles.suggestionLoading}`}>Searching…</li>
-              )}
-              {!isServiceLoading && serviceSuggestions.length === 0 && (
-                <li className={`${styles.suggestionItem} ${styles.suggestionEmpty}`}>No matches found</li>
-              )}
-              {!isServiceLoading &&
-                serviceSuggestions.map((s) => (
-                  <li
-                    key={s.id}
-                    className={styles.suggestionItem}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      const base = buildFilters();
-                      const next = { ...base, service: s.title };
-                      setServiceSearch(s.title);
-                      setShowSuggestions(false);
-                      triggerSearch(next, true);
-                    }}
+        <div className={styles.filterFields}>
+          <div className={styles.filterGroup}>
+            <label htmlFor={serviceInputId}>Service</label>
+            <input
+              id={serviceInputId}
+              type="text"
+              placeholder="Braids, nails, locs..."
+              value={serviceSearch}
+              onChange={(event) => {
+                const value = event.target.value;
+                setServiceSearch(value);
+                if (value.trim().length <= 1) {
+                  setServiceSuggestions([]);
+                  setShowSuggestions(false);
+                }
+              }}
+              className={styles.filterInput}
+              onFocus={() => {
+                if (serviceSuggestions.length > 0) {
+                  setShowSuggestions(true);
+                }
+              }}
+              onBlur={() => {
+                setTimeout(() => setShowSuggestions(false), 120);
+              }}
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={showSuggestions}
+              aria-controls={showSuggestions ? suggestionsId : undefined}
+              aria-describedby={showLocationStatus ? undefined : undefined}
+            />
+            {showSuggestions && (
+              <ul id={suggestionsId} className={styles.suggestionsList} role="listbox" aria-label="Service suggestions">
+                <li className={styles.suggestionsHeader}>
+                  <button
+                    type="button"
+                    className={styles.dismissButton}
+                    onClick={() => setShowSuggestions(false)}
+                    aria-label="Dismiss suggestions"
                   >
-                    <span className={styles.suggestionTitle}>{s.title}</span>
-                    {s.salon && <span className={styles.suggestionMeta}>{s.salon}</span>}
-                  </li>
+                    x
+                  </button>
+                </li>
+                {isServiceLoading && (
+                  <li className={`${styles.suggestionItem} ${styles.suggestionLoading}`} role="status" aria-live="polite">Searching...</li>
+                )}
+                {!isServiceLoading && serviceSuggestions.length === 0 && (
+                  <li className={`${styles.suggestionItem} ${styles.suggestionEmpty}`} role="status">No matches found</li>
+                )}
+                {!isServiceLoading &&
+                  serviceSuggestions.map((suggestion) => (
+                    <li key={suggestion.id} role="presentation">
+                      <button
+                        type="button"
+                        role="option"
+                        className={styles.suggestionItem}
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          const next = { ...buildFilters(), service: suggestion.title };
+                          setServiceSearch(suggestion.title);
+                          setShowSuggestions(false);
+                          triggerSearch(next, true);
+                        }}
+                        aria-selected={serviceSearch === suggestion.title}
+                        aria-label={suggestion.salon ? `${suggestion.title}, ${suggestion.salon}` : suggestion.title}
+                      >
+                        <span className={styles.suggestionTitle}>{suggestion.title}</span>
+                        {suggestion.salon && <span className={styles.suggestionMeta}>{suggestion.salon}</span>}
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
+
+          <div className={styles.filterGroup}>
+            <label id={categoryLabelId}>Category</label>
+            <Select
+              value={category}
+              onValueChange={(value) => setCategory(value === '__all__' ? '' : value)}
+            >
+              <SelectTrigger id={categoryTriggerId} aria-labelledby={categoryLabelId} className={styles.filterSelect}>
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All Categories</SelectItem>
+                {categories.map((item) => (
+                  <SelectItem key={item.id} value={item.name}>
+                    {item.name}
+                  </SelectItem>
                 ))}
-            </ul>
-          )}
-        </div>
-        <div className={styles.filterGroup}>
-          <label>Category</label>
-          <Select
-            value={category}
-            onValueChange={(value) => setCategory(value === '__all__' ? '' : value)}
-          >
-            <SelectTrigger className={styles.filterSelect}>
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">All Categories</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className={styles.filterGroup}>
+            <label id={provinceLabelId}>Province</label>
+            <Select
+              value={province}
+              onValueChange={(value) => {
+                setProvince(value === '__all__' ? '' : value);
+                setCity('');
+              }}
+            >
+              <SelectTrigger id={provinceTriggerId} aria-labelledby={provinceLabelId} className={styles.filterSelect}>
+                <SelectValue placeholder="All Provinces" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All Provinces</SelectItem>
+                {Object.keys(locations).map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className={styles.filterGroup}>
+            <label id={cityLabelId}>Town or City</label>
+            <Select
+              value={city}
+              onValueChange={(value) => setCity(value === '__all__' ? '' : value)}
+              disabled={!province}
+            >
+              <SelectTrigger id={cityTriggerId} aria-labelledby={cityLabelId} className={styles.filterSelect}>
+                <SelectValue placeholder={province ? 'All Cities' : 'Select a province first'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All Cities</SelectItem>
+                {locations[province]?.map((item, index) => (
+                  <SelectItem key={`${item}-${index}`} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* More Filters Toggle */}
-        <button
-          type="button"
-          className={styles.moreFiltersToggle}
-          onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-        >
-          <FaSlidersH />
-          {showAdvancedFilters ? 'Less' : 'More'}
-          {showAdvancedFilters ? <FaChevronUp /> : <FaChevronDown />}
-        </button>
-
-        {/* Remaining Advanced Filters */}
         {showAdvancedFilters && (
-          <>
+          <div className={styles.advancedFilters} id={advancedFiltersId}>
             <div className={styles.filterGroup}>
-              <label>Sort By</label>
+              <label id={sortLabelId}>Sort By</label>
               <Select
                 value={sortBy || '__default__'}
                 onValueChange={(value) => setSortBy(value === '__default__' ? '' : value)}
               >
-                <SelectTrigger className={styles.filterSelect}>
+                <SelectTrigger id={sortTriggerId} aria-labelledby={sortLabelId} className={styles.filterSelect}>
                   <SelectValue placeholder="Default" />
                 </SelectTrigger>
                 <SelectContent>
@@ -533,14 +575,15 @@ export default function FilterBar({
                 </SelectContent>
               </Select>
             </div>
+
             {coordinates && (
               <div className={styles.filterGroup}>
-                <label>Within</label>
+                <label id={radiusLabelId}>Within</label>
                 <Select
                   value={radius?.toString() || '__any__'}
                   onValueChange={(value) => setRadius(value === '__any__' ? null : Number(value))}
                 >
-                  <SelectTrigger className={styles.filterSelect}>
+                  <SelectTrigger id={radiusTriggerId} aria-labelledby={radiusLabelId} className={styles.filterSelect}>
                     <SelectValue placeholder="Any distance" />
                   </SelectTrigger>
                   <SelectContent>
@@ -554,89 +597,91 @@ export default function FilterBar({
                 </Select>
               </div>
             )}
-            <div className={styles.checkboxGroup}>
-              <Checkbox
-                id="openNow"
-                checked={openNow}
-                onCheckedChange={(checked) => setOpenNow(checked === true)}
-                label="Open now"
-              />
-            </div>
-            <div className={styles.checkboxGroup}>
-              <Checkbox
-                id="offersMobile"
-                checked={offersMobile}
-                onCheckedChange={(checked) => setOffersMobile(checked === true)}
-                label="Offers Mobile Services"
-              />
-            </div>
+
             <div className={styles.filterGroup}>
-              <label>Price Range (R)</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <label htmlFor={priceMinId}>Price Range (R)</label>
+              <div className={styles.priceRange}>
                 <input
+                  id={priceMinId}
                   type="number"
                   placeholder="Min"
                   value={priceMin}
-                  onChange={(e) => setPriceMin(e.target.value)}
+                  onChange={(event) => setPriceMin(event.target.value)}
                   className={styles.filterInput}
                   min={0}
                 />
                 <input
+                  id={priceMaxId}
                   type="number"
                   placeholder="Max"
                   value={priceMax}
-                  onChange={(e) => setPriceMax(e.target.value)}
+                  onChange={(event) => setPriceMax(event.target.value)}
                   className={styles.filterInput}
                   min={0}
                 />
               </div>
             </div>
-          </>
-        )}
-        <button
-          onClick={handleFindNearby}
-          disabled={isGeoLoading}
-          className={styles.geoButton}
-        >
-          {isGeoLoading ? 'Finding...' : '📍 Near Me'}
-        </button>
-
-        {(isGeoLoading || coordinates || geoError) && (
-          <div className={styles.locationStatus}>
-            {isGeoLoading && !coordinates && (
-              <>
-                <LoadingSpinner size="sm" inline />
-                <span style={{ marginLeft: '8px' }}>Detecting location...</span>
-              </>
-            )}
-            {coordinates && !isGeoLoading && (
-              <>
-                <FaMapMarkerAlt className={styles.iconSuccess} />
-                <span>
-                  {isReverseGeocoding ? (
-                    'Getting location name...'
-                  ) : locationName?.city ? (
-                    `${locationSource === 'ip' ? '~' : ''}Near ${locationName.city}${locationName.province ? `, ${locationName.province}` : ''}${locationSource === 'ip' ? ' (estimated)' : ''}`
-                  ) : (
-                    'Showing nearby results'
-                  )}
-                </span>
-              </>
-            )}
-            {geoError && !coordinates && (
-              <>
-                <FaExclamationTriangle className={styles.iconWarning} />
-                <span>Using default location</span>
-              </>
-            )}
           </div>
         )}
 
-        {showSearchButton && (
-          <button onClick={handleSearchClick} className={styles.searchButton} disabled={isSearching}>
-            {isSearching ? 'Searching…' : 'Search'}
-          </button>
-        )}
+        <div className={styles.utilityRow}>
+          {showLocationStatus ? (
+            <div className={`${styles.locationStatus} ${locationStatusTone}`} role="status" aria-live="polite">
+              {isGeoLoading && !coordinates && (
+                <>
+                  <LoadingSpinner size="sm" inline />
+                  <span className={styles.locationStatusText}>Detecting location...</span>
+                </>
+              )}
+              {coordinates && !isGeoLoading && (
+                <>
+                  <FaMapMarkerAlt className={styles.iconSuccess} aria-hidden="true" />
+                  <span className={styles.locationStatusText}>
+                    {isReverseGeocoding
+                      ? 'Getting location name...'
+                      : locationName?.city
+                        ? `${locationSource === 'ip' ? '~' : ''}Near ${locationName.city}${
+                            locationName.province ? `, ${locationName.province}` : ''
+                          }${locationSource === 'ip' ? ' (estimated)' : ''}`
+                        : 'Showing nearby results'}
+                  </span>
+                </>
+              )}
+              {geoError && !coordinates && (
+                <>
+                  <FaExclamationTriangle className={styles.iconWarning} aria-hidden="true" />
+                  <span className={styles.locationStatusText}>Using a broader default location</span>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className={styles.utilitySpacer} />
+          )}
+
+          <div className={styles.filterActions}>
+            <button
+              type="button"
+              className={styles.moreFiltersToggle}
+              onClick={() => setShowAdvancedFilters((prev) => !prev)}
+              aria-expanded={showAdvancedFilters}
+              aria-controls={advancedFiltersId}
+            >
+              <FaSlidersH aria-hidden="true" />
+              {showAdvancedFilters ? 'Fewer Filters' : 'All Filters'}
+              {showAdvancedFilters ? <FaChevronUp aria-hidden="true" /> : <FaChevronDown aria-hidden="true" />}
+            </button>
+
+            <button type="button" onClick={handleFindNearby} disabled={isGeoLoading} className={styles.geoButton}>
+              {isGeoLoading ? 'Locating...' : 'Use My Location'}
+            </button>
+
+            {showSearchButton && (
+              <button type="button" onClick={handleSearchClick} className={styles.searchButton} disabled={isSearching}>
+                {isSearching ? 'Searching...' : 'Search'}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { Suspense, createContext, useContext, useState, ReactNode } from 'react';
 import AuthModal from '@/components/AuthModal';
 
 type AuthModalView = 'login' | 'register' | 'resend-verification' | 'verify-email';
@@ -55,7 +55,11 @@ export const AuthModalProvider = ({ children }: { children: ReactNode }) => {
       pendingVerificationEmail
     }}>
       {children}
-      {isOpen && <AuthModal view={view} onClose={closeModal} />}
+      {isOpen && (
+        <Suspense fallback={null}>
+          <AuthModal view={view} onClose={closeModal} />
+        </Suspense>
+      )}
     </AuthModalContext.Provider>
   );
 };

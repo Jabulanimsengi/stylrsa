@@ -20,7 +20,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'USER' | 'SALON_OWNER' | 'PRODUCT_SELLER' | 'ADMIN';
+  role: 'CLIENT' | 'SALON_OWNER' | 'ADMIN';
   createdAt: string;
   updatedAt: string;
   profileImage?: string;

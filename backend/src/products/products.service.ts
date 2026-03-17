@@ -174,13 +174,11 @@ export class ProductsService {
     const score = (p: {
       seller?: {
         sellerVisibilityWeight?: number | null;
-        sellerFeaturedUntil?: Date | string | null;
       } | null;
       createdAt: Date | string;
     }) =>
       calculateVisibilityScore({
         visibilityWeight: p.seller?.sellerVisibilityWeight ?? 1,
-        featuredUntil: p.seller?.sellerFeaturedUntil ?? null,
         createdAt: p.createdAt,
       });
 

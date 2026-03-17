@@ -1,11 +1,14 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
   getFirstPageForKeyword,
+  type SeoPageCache,
 } from '@/lib/seo-api';
 import { generateNationalSeoPageContent, isValidKeyword } from '@/lib/seo-generation';
+import { buildSeoLandingRobots } from '@/lib/seoIndexability';
+import { buildKeywordLandingMetadata } from '@/lib/seoMetadataHelpers';
 import { isBlockedSeoSegment } from '@/lib/seoRouteGuard';
+import CachedSeoLandingPage from '@/components/SEOLandingPage/CachedSeoLandingPage';
 
 interface PageProps {
   params: Promise<{
@@ -13,21 +16,8 @@ interface PageProps {
   }>;
 }
 
-// Force dynamic rendering so the page always fetches fresh SEO data
-// Without this, Next.js pre-renders the page at build time when the backend
-// is unreachable (in Docker build), resulting in 'Not Found' being cached
-export const dynamic = 'force-dynamic';
-
-// Top priority keywords to pre-build
-const PRIORITY_KEYWORDS = ['hair-salon', 'nail-salon', 'braiding', 'barbershop', 'spa', 'makeup', 'waxing', 'massage'];
-
-/**
- * Generate static params for crucial keyword pages only (~8 pages)
- * Other pages will be generated on-demand via ISR
- */
-export async function generateStaticParams() {
-  return PRIORITY_KEYWORDS.map(keyword => ({ keyword }));
-}
+export const dynamicParams = true;
+export const revalidate = 86400;
 
 /**
  * Generate metadata from cached SEO data or local fallback
@@ -46,20 +36,22 @@ export async function generateMetadata({
   }
 
   const canonicalUrl = `https://www.stylrsa.co.za/${keyword}`;
+  const metadataFields = buildKeywordLandingMetadata({ keyword });
 
   // Try API first
   try {
     const cachedPage = await getFirstPageForKeyword(keyword);
     if (cachedPage) {
       return {
-        title: cachedPage.metaTitle,
-        description: cachedPage.metaDescription,
+        title: metadataFields.title,
+        description: metadataFields.description,
+        robots: buildSeoLandingRobots(cachedPage, 'national'),
         alternates: {
           canonical: canonicalUrl,
         },
         openGraph: {
-          title: cachedPage.metaTitle,
-          description: cachedPage.metaDescription,
+          title: metadataFields.title,
+          description: metadataFields.description,
           type: 'website',
           url: canonicalUrl,
           siteName: 'Stylr SA',
@@ -67,8 +59,8 @@ export async function generateMetadata({
         },
         twitter: {
           card: 'summary_large_image',
-          title: cachedPage.metaTitle,
-          description: cachedPage.metaDescription,
+          title: metadataFields.title,
+          description: metadataFields.description,
           site: '@stylrsa',
         },
       };
@@ -83,14 +75,15 @@ export async function generateMetadata({
     const localPage = generateNationalSeoPageContent(keyword);
     if (localPage) {
       return {
-        title: localPage.metaTitle,
-        description: localPage.metaDescription,
+        title: metadataFields.title,
+        description: metadataFields.description,
+        robots: buildSeoLandingRobots(localPage, 'national'),
         alternates: {
           canonical: canonicalUrl,
         },
         openGraph: {
-          title: localPage.metaTitle,
-          description: localPage.metaDescription,
+          title: metadataFields.title,
+          description: metadataFields.description,
           type: 'website',
           url: canonicalUrl,
           siteName: 'Stylr SA',
@@ -98,8 +91,8 @@ export async function generateMetadata({
         },
         twitter: {
           card: 'summary_large_image',
-          title: localPage.metaTitle,
-          description: localPage.metaDescription,
+          title: metadataFields.title,
+          description: metadataFields.description,
           site: '@stylrsa',
         },
       };
@@ -109,6 +102,7 @@ export async function generateMetadata({
   return {
     title: 'Service | Stylr SA',
     description: 'Browse services and book your appointment online.',
+    robots: { index: false, follow: true },
   };
 }
 
@@ -119,12 +113,12 @@ export async function generateMetadata({
 export default async function KeywordPage({ params }: PageProps) {
   const { keyword } = await params;
 
-  // Filter out invalid paths (Vercel scripts, static files, etc.)
+  // Filter out invalid paths (framework assets, static files, etc.)
   if (isBlockedSeoSegment(keyword)) {
     notFound();
   }
 
-  let pageData: any = null;
+  let pageData: SeoPageCache | ReturnType<typeof generateNationalSeoPageContent> | null = null;
 
   // Try API first
   try {
@@ -143,110 +137,15 @@ export default async function KeywordPage({ params }: PageProps) {
     notFound();
   }
 
-  // Parse schema markup
-  const schemaMarkup = pageData.schemaMarkup;
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Schema.org JSON-LD */}
-      {schemaMarkup && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaMarkup) }}
-        />
-      )}
-
-      {/* Breadcrumbs */}
-      <nav className="mb-6 text-sm text-gray-600">
-        <ol className="flex items-center space-x-2">
-          <li>
-            <Link href="/" className="hover:text-primary">Home</Link>
-          </li>
-          <li>/</li>
-          <li className="text-gray-900 font-medium">
-            {pageData.keyword?.keyword || keyword}
-          </li>
-        </ol>
-      </nav>
-
-      {/* H1 Heading */}
-      <h1 className="text-4xl font-bold mb-6">{pageData.h1}</h1>
-
-      {/* Intro Text */}
-      <div className="prose max-w-none mb-8">
-        {pageData.introText.split('\n\n').map((paragraph: string, index: number) => (
-          <p key={index} className="mb-4 text-gray-700 leading-relaxed">
-            {paragraph}
-          </p>
-        ))}
-      </div>
-
-      {/* H2 Sections */}
-      {pageData.h2Headings.map((heading: string, index: number) => (
-        <section key={index} className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">{heading}</h2>
-          <div className="text-gray-700">
-            <p>Content for {heading}</p>
-          </div>
-        </section>
-      ))}
-
-      {/* Related Services */}
-      {pageData.relatedServices && pageData.relatedServices.length > 0 && pageData.location && (
-        <section className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">
-            Related Services in {pageData.location.name}
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {pageData.relatedServices.map((service: any, index: number) => (
-              <Link
-                key={index}
-                href={service.url}
-                className="p-4 border rounded-lg hover:border-primary hover:shadow-md transition-all"
-              >
-                <span className="text-sm font-medium">{service.label}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Nearby Locations */}
-      {pageData.nearbyLocations && pageData.nearbyLocations.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">
-            {pageData.keyword?.keyword || keyword} in Nearby Locations
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {pageData.nearbyLocations.map((location: any, index: number) => (
-              <Link
-                key={index}
-                href={location.url}
-                className="p-4 border rounded-lg hover:border-primary hover:shadow-md transition-all"
-              >
-                <span className="text-sm font-medium">{location.label}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* CTA Section */}
-      <section className="mt-12 p-8 bg-primary/10 rounded-lg text-center">
-        <h2 className="text-2xl font-bold mb-4">
-          Ready to Book {pageData.keyword?.keyword || keyword}?
-        </h2>
-        <p className="text-gray-700 mb-6">
-          Browse our verified professionals and book your appointment online
-          today.
-        </p>
-        <Link
-          href="/services"
-          className="inline-block px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          Browse All Services
-        </Link>
-      </section>
-    </div>
+    <CachedSeoLandingPage
+      pageData={pageData}
+      keywordFallback={keyword}
+      locationFallback="South Africa"
+      breadcrumbs={[
+        { label: 'Home', url: '/' },
+        { label: pageData.keyword?.keyword || keyword, url: `/${keyword}` },
+      ]}
+    />
   );
 }

@@ -1,9 +1,11 @@
 .skeleton {
-  --pulse-color-start: rgba(148, 163, 184, 0.2);
-  --pulse-color-end: rgba(148, 163, 184, 0.35);
+  --skeleton-base: #eceff3;
+  --skeleton-highlight: rgba(255, 255, 255, 0.88);
   position: relative;
+  display: block;
   overflow: hidden;
-  background-color: var(--pulse-color-start);
+  background: linear-gradient(180deg, #f1f3f6, #e9edf2);
+  border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .skeleton::after {
@@ -11,17 +13,17 @@
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background-image: linear-gradient(
+  background: linear-gradient(
     90deg,
-    transparent,
-    var(--pulse-color-end),
-    transparent
+    transparent 0%,
+    var(--skeleton-highlight) 45%,
+    transparent 100%
   );
-  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  animation: skeleton-shimmer 1.45s ease-in-out infinite;
 }
 
 .skeletonRounded {
-  border-radius: 0.75rem;
+  border-radius: 1rem;
 }
 
 .skeletonCircle {
@@ -30,248 +32,164 @@
 
 .skeletonText {
   height: 1em;
-  border-radius: 0.5rem;
+  border-radius: 999px;
 }
 
 .skeletonButton {
-  height: 2.5rem;
-  border-radius: 0.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
 }
 
-.skeletonCard {
-  border-radius: var(--radius-sm, 0.5rem);
-  padding: 0;
+.skeletonCard,
+.serviceCardSkeleton,
+.carouselSkeletonCard {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  background-color: var(--color-surface-elevated, #fffaf5);
-  border: 1px solid var(--color-border, #e0e0e0);
+  min-height: 280px;
+  border-radius: 1.5rem;
   overflow: hidden;
-  height: 240px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 244, 238, 0.96) 100%);
+  border: 1px solid rgba(20, 32, 51, 0.08);
+  box-shadow: 0 18px 40px rgba(17, 24, 39, 0.06);
 }
 
-.skeletonCard::after {
-  display: none;
+.skeletonCardMedia {
+  padding: 0.8rem 0.8rem 0;
 }
 
-/* Skeleton card image placeholder */
 .skeletonCardImage {
-  height: 160px;
-  background: linear-gradient(
-    90deg,
-    rgba(200, 200, 200, 0.3) 0%,
-    rgba(180, 180, 180, 0.5) 50%,
-    rgba(200, 200, 200, 0.3) 100%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  width: 100%;
+  height: 176px;
+  border-radius: 1.1rem;
 }
 
-/* Skeleton card content placeholder */
-.skeletonCardContent {
-  flex: 1;
-  padding: 0.5rem 0.625rem;
+.skeletonCardBody {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.9rem;
+  padding: 1rem 1rem 1.15rem;
 }
 
-@keyframes skeleton-shimmer {
-  100% {
-    transform: translateX(100%);
-  }
+.skeletonLineCluster {
+  display: grid;
+  gap: 0.55rem;
 }
 
-/* Horizontal scroll skeleton row - matches FeaturedServicesCategoryRow */
+.skeletonCardLine {
+  height: 0.9rem;
+}
+
+.skeletonMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.skeletonPill,
+.skeletonPillShort {
+  min-height: 1.95rem;
+  border-radius: 999px;
+}
+
+.skeletonPill {
+  width: 42%;
+}
+
+.skeletonPillShort {
+  width: 28%;
+}
+
+.skeletonCardButton {
+  margin-top: auto;
+  width: 44%;
+}
+
+.serviceCardSkeleton {
+  width: 100%;
+  min-width: 240px;
+  max-width: 280px;
+  height: 264px;
+  flex: 0 0 auto;
+}
+
+.carouselSkeletonCard {
+  width: min(100%, 280px);
+  min-width: 240px;
+}
+
 .skeletonRow {
   display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  gap: 1rem;
+  overflow: hidden;
   padding: 0.25rem 0;
 }
 
-.skeletonRow::-webkit-scrollbar {
-  display: none;
-}
-
-/* Service card skeleton - matches FeaturedServiceCard dimensions */
-.serviceCardSkeleton {
-  flex: 0 0 auto;
-  width: 220px;
-  height: 240px;
-  border-radius: var(--radius-sm, 0.5rem);
-  background-color: var(--color-surface-elevated, #fffaf5);
-  border: 1px solid var(--color-border, #e0e0e0);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.serviceCardSkeleton::before {
-  content: '';
-  height: 160px;
-  background: linear-gradient(
-    90deg,
-    rgba(200, 200, 200, 0.3) 0%,
-    rgba(180, 180, 180, 0.5) 50%,
-    rgba(200, 200, 200, 0.3) 100%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.4s ease-in-out infinite;
-}
-
-.serviceCardSkeleton::after {
-  content: '';
-  flex: 1;
-  margin: 0.5rem 0.625rem;
-  background: linear-gradient(
-    90deg,
-    rgba(200, 200, 200, 0.2) 0%,
-    rgba(180, 180, 180, 0.35) 50%,
-    rgba(200, 200, 200, 0.2) 100%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.4s ease-in-out infinite;
-  border-radius: 4px;
-}
-
-/* Mobile responsive skeleton grids */
-.skeletonGrid {
+.skeletonGrid,
+.gridSkeleton,
+.discoveryCards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.875rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
 }
 
-@media (max-width: 768px) {
-  .skeletonGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-  }
-  
-  .skeletonCard {
-    height: 200px;
-  }
-  
-  .skeletonCardImage {
-    height: 130px;
-  }
-
-  .skeletonRow {
-    gap: 12px;
-  }
-
-  .serviceCardSkeleton {
-    width: calc(100% / 1.15 - 12px);
-    min-width: 280px;
-    height: 200px;
-  }
-
-  .serviceCardSkeleton::before {
-    height: 130px;
-  }
-}
-
-@media (max-width: 540px) {
-  .skeletonGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.4rem;
-  }
-  
-  .skeletonCard {
-    height: 180px;
-  }
-  
-  .skeletonCardImage {
-    height: 115px;
-  }
-
-  .serviceCardSkeleton {
-    min-width: 260px;
-    height: 180px;
-  }
-
-  .serviceCardSkeleton::before {
-    height: 115px;
-  }
-}
-
-@media (max-width: 400px) {
-  .skeletonGrid {
-    gap: 0.35rem;
-  }
-  
-  .skeletonCard {
-    height: 165px;
-  }
-  
-  .skeletonCardImage {
-    height: 105px;
-  }
-
-  .serviceCardSkeleton {
-    min-width: 240px;
-    height: 165px;
-  }
-
-  .serviceCardSkeleton::before {
-    height: 105px;
-  }
-}
-
-/* Additional skeleton layouts */
-.pageSkeletonContainer {
-  padding: 2rem 1rem;
-  max-width: 1400px;
+.pageSkeletonContainer,
+.listSkeletonContainer,
+.discoveryShell {
+  width: min(1400px, 100%);
   margin: 0 auto;
 }
 
+.pageSkeletonContainer {
+  padding: 2rem 1rem;
+}
+
 .headerSkeleton {
-  margin-bottom: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: grid;
+  gap: 0.7rem;
+  margin-bottom: 1.5rem;
 }
 
 .filterSkeleton {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
-.gridSkeleton {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
+.productCardSkeleton,
+.listItemSkeleton,
+.chatSkeletonContainer {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 244, 238, 0.96));
+  border: 1px solid rgba(20, 32, 51, 0.08);
+  border-radius: 1.25rem;
+  box-shadow: 0 16px 36px rgba(17, 24, 39, 0.06);
 }
 
 .productCardSkeleton {
-  border: 1px solid var(--color-border, #ddd);
-  border-radius: 0.75rem;
   overflow: hidden;
-  background: var(--color-surface, #fff);
 }
 
 .cardContent {
-  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  padding: 1rem;
 }
 
 .chatSkeletonContainer {
   display: flex;
   flex-direction: column;
-  height: 600px;
-  border: 1px solid var(--color-border, #ddd);
-  border-radius: 0.75rem;
+  min-height: 600px;
   overflow: hidden;
 }
 
-.chatHeader {
+.chatHeader,
+.chatInputSkeleton {
   padding: 1rem;
-  border-bottom: 1px solid var(--color-border, #ddd);
-  display: flex;
-  align-items: center;
+  border-bottom: 1px solid rgba(20, 32, 51, 0.08);
+}
+
+.chatInputSkeleton {
+  border-bottom: none;
+  border-top: 1px solid rgba(20, 32, 51, 0.08);
 }
 
 .messagesContainer {
@@ -280,23 +198,12 @@
   overflow-y: auto;
 }
 
-.chatInputSkeleton {
-  padding: 1rem;
-  border-top: 1px solid var(--color-border, #ddd);
-}
-
-.listSkeletonContainer {
-  padding: 2rem 1rem;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
 .tabsSkeleton {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid var(--color-border, #ddd);
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
   padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(20, 32, 51, 0.08);
 }
 
 .listItems {
@@ -308,46 +215,615 @@
 .listItemSkeleton {
   display: flex;
   align-items: center;
+  gap: 1rem;
   padding: 1rem;
-  border: 1px solid var(--color-border, #ddd);
-  border-radius: 0.75rem;
-  background: var(--color-surface, #fff);
 }
 
-@media (max-width: 768px) {
-  .pageSkeletonContainer {
-    padding: 1rem 0.5rem;
-  }
-
-  .gridSkeleton {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
-  }
-
-  .tabsSkeleton {
-    overflow-x: auto;
-  }
-
-  .listItemSkeleton {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.reviewsSkeletonShell,
+.timeSlotSkeletonShell {
+  display: grid;
+  gap: 1.25rem;
 }
 
+.reviewsStats,
+.timeSlotLegendSkeleton {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
 
-/* Loading indicator with spinner */
+.reviewsStat {
+  width: 10rem;
+  max-width: 100%;
+}
+
+.reviewCardSkeleton {
+  display: grid;
+  gap: 1rem;
+  padding: 1.15rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 244, 238, 0.96));
+  border: 1px solid rgba(20, 32, 51, 0.08);
+  box-shadow: 0 16px 36px rgba(17, 24, 39, 0.05);
+}
+
+.reviewHeaderRow,
+.reviewMetaFooter,
+.reviewActionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.reviewActionRow {
+  justify-content: flex-start;
+}
+
+.timeSlotLegendItem {
+  width: 8rem;
+}
+
+.timeSlotGridSkeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 244, 238, 0.96));
+  border: 1px solid rgba(20, 32, 51, 0.08);
+  box-shadow: 0 16px 36px rgba(17, 24, 39, 0.05);
+}
+
+.timeSlotItemSkeleton {
+  min-height: 92px;
+  border-radius: 1rem;
+}
+
 .loadingIndicator {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  padding: 1.5rem;
-  background: var(--color-surface, #fff);
-  border-bottom: 1px solid var(--color-border, #e5e5e5);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(20, 32, 51, 0.08);
 }
 
 .loadingIndicator span {
+  color: #667085;
   font-size: 0.95rem;
-  color: var(--text-muted, #666);
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.discoveryShell {
+  padding: 0.25rem 0 0;
+}
+
+.discoveryHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.9fr);
+  gap: 1.25rem;
+  align-items: stretch;
+  margin-bottom: 1.35rem;
+}
+
+.discoveryHeaderCopy,
+.discoveryMetrics,
+.discoveryFilterShell {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(249, 245, 239, 0.98) 100%);
+  border: 1px solid rgba(20, 32, 51, 0.08);
+  border-radius: 1.75rem;
+  box-shadow: 0 18px 44px rgba(17, 24, 39, 0.06);
+}
+
+.discoveryHeaderCopy {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.5rem;
+}
+
+.discoveryEyebrow {
+  width: 9rem;
+  height: 0.8rem;
+}
+
+.discoveryTitle {
+  width: min(26rem, 80%);
+  height: 3rem;
+}
+
+.discoveryLead {
+  width: 92%;
+  height: 1rem;
+}
+
+.discoveryLeadShort {
+  width: 68%;
+  height: 1rem;
+}
+
+.discoveryMetrics {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.25rem;
+}
+
+.discoveryMetric {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1.2rem;
+  background: rgba(20, 32, 51, 0.03);
+}
+
+.discoveryMetricLabel {
+  width: 38%;
+  height: 0.72rem;
+}
+
+.discoveryMetricValue {
+  width: 78%;
+  height: 1rem;
+}
+
+.discoveryFilterShell {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.discoveryQuickFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.discoveryQuickFilter,
+.discoveryQuickFilterShort {
+  min-height: 2.75rem;
+}
+
+.discoveryQuickFilter {
+  width: 9rem;
+}
+
+.discoveryQuickFilterShort {
+  width: 7rem;
+}
+
+.discoveryFilterGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.discoveryField {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.discoveryLabel {
+  width: 4.75rem;
+  height: 0.72rem;
+}
+
+.discoveryInput {
+  min-height: 3.4rem;
+  border-radius: 1.05rem;
+}
+
+.discoveryUtilityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+
+.discoveryStatus {
+  flex: 1 1 auto;
+  min-height: 3.4rem;
+  border-radius: 1.1rem;
+}
+
+.discoveryActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.discoveryPrimaryButton,
+.discoverySecondaryButton {
+  min-height: 2.95rem;
+}
+
+.discoveryPrimaryButton {
+  width: 8rem;
+}
+
+.discoverySecondaryButton {
+  width: 7rem;
+}
+
+.discoveryResultsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.discoveryResultsEyebrow {
+  width: 5rem;
+  height: 0.74rem;
+  margin-bottom: 0.45rem;
+}
+
+.discoveryResultsTitle {
+  width: min(20rem, 90%);
+  height: 1.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.discoveryResultsCopy {
+  width: min(34rem, 100%);
+  height: 0.95rem;
+}
+
+.dashboardSkeletonShell {
+  display: grid;
+  gap: 1.5rem;
+  padding: 0.25rem 0 0;
+}
+
+.dashboardHeroSkeleton,
+.dashboardSidebarSkeleton,
+.dashboardPanelSkeleton {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(249, 245, 239, 0.98) 100%);
+  border: 1px solid rgba(20, 32, 51, 0.08);
+  box-shadow: 0 18px 44px rgba(17, 24, 39, 0.06);
+}
+
+.dashboardHeroSkeleton {
+  border-radius: 1.8rem;
+  padding: 1.5rem;
+}
+
+.dashboardHeroCopy {
+  display: grid;
+  gap: 0.95rem;
+}
+
+.dashboardHeroEyebrow {
+  width: 9rem;
+  height: 0.8rem;
+}
+
+.dashboardHeroTitle {
+  width: min(28rem, 84%);
+  height: 3rem;
+}
+
+.dashboardHeroLead {
+  width: min(44rem, 96%);
+  height: 1rem;
+}
+
+.dashboardHeroLeadShort {
+  width: min(26rem, 68%);
+  height: 1rem;
+}
+
+.dashboardHeroMeta,
+.dashboardHeroActions,
+.dashboardTopTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.dashboardHeroPill,
+.dashboardHeroPillShort,
+.dashboardHeroSecondaryAction,
+.dashboardHeroPrimaryAction,
+.dashboardSidebarItem,
+.dashboardSidebarItemShort,
+.dashboardTopTab,
+.dashboardTopTabShort {
+  height: 2.8rem;
+  border-radius: 999px;
+}
+
+.dashboardHeroPill {
+  width: 10rem;
+}
+
+.dashboardHeroPillShort {
+  width: 7rem;
+}
+
+.dashboardHeroSecondaryAction {
+  width: 9.5rem;
+}
+
+.dashboardHeroPrimaryAction {
+  width: 11.5rem;
+}
+
+.dashboardContentSkeleton {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+.dashboardSidebarSkeleton {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  border-radius: 1.5rem;
+  padding: 1.2rem;
+}
+
+.dashboardSidebarHeading {
+  width: 6rem;
+  height: 0.75rem;
+}
+
+.dashboardSidebarGroup,
+.dashboardMainSkeleton,
+.dashboardPanelGrid,
+.dashboardMetricRow,
+.dashboardListSkeleton,
+.dashboardBookingSkeleton {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.dashboardSidebarItem,
+.dashboardTopTab {
+  width: 100%;
+}
+
+.dashboardSidebarItemShort {
+  width: 72%;
+}
+
+.dashboardMainSkeleton {
+  gap: 1rem;
+}
+
+.dashboardTopTabs {
+  padding: 0 0 0.25rem;
+}
+
+.dashboardTopTab {
+  width: 8rem;
+}
+
+.dashboardTopTabShort {
+  width: 5.25rem;
+}
+
+.dashboardPanelGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.dashboardPanelSkeleton {
+  display: grid;
+  gap: 1rem;
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+}
+
+.dashboardPanelWide {
+  grid-column: 1 / -1;
+}
+
+.dashboardPanelTitle {
+  width: 10rem;
+  height: 1rem;
+}
+
+.dashboardPanelLine {
+  width: 92%;
+  height: 0.95rem;
+}
+
+.dashboardPanelLineShort {
+  width: 64%;
+  height: 0.95rem;
+}
+
+.dashboardMetricRow {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboardMetricCard {
+  min-height: 5.75rem;
+  border-radius: 1.25rem;
+}
+
+.dashboardListItem,
+.dashboardBookingRow {
+  min-height: 4.25rem;
+  border-radius: 1.15rem;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (max-width: 1024px) {
+  .discoveryHeader {
+    grid-template-columns: 1fr;
+  }
+
+  .discoveryFilterGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .discoveryUtilityRow,
+  .discoveryResultsHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .discoveryActions {
+    width: 100%;
+  }
+
+  .discoveryPrimaryButton,
+  .discoverySecondaryButton {
+    flex: 1 1 0;
+    width: auto;
+  }
+
+  .dashboardContentSkeleton {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardSidebarSkeleton {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .skeletonGrid,
+  .gridSkeleton,
+  .discoveryCards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  .skeletonCard {
+    min-height: 228px;
+    border-radius: 1.2rem;
+  }
+
+  .skeletonCardMedia {
+    padding: 0.65rem 0.65rem 0;
+  }
+
+  .skeletonCardImage {
+    height: 128px;
+    border-radius: 0.95rem;
+  }
+
+  .skeletonCardBody {
+    gap: 0.75rem;
+    padding: 0.85rem;
+  }
+
+  .skeletonCardButton {
+    width: 56%;
+  }
+
+  .serviceCardSkeleton,
+  .carouselSkeletonCard {
+    min-width: 220px;
+    max-width: 240px;
+  }
+
+  .pageSkeletonContainer,
+  .listSkeletonContainer {
+    padding: 1rem 0.75rem;
+  }
+
+  .reviewHeaderRow,
+  .reviewMetaFooter {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .discoveryHeaderCopy,
+  .discoveryMetrics,
+  .discoveryFilterShell {
+    border-radius: 1.4rem;
+  }
+
+  .discoveryHeaderCopy,
+  .discoveryMetrics,
+  .discoveryFilterShell {
+    padding: 1rem;
+  }
+
+  .discoveryTitle {
+    width: 90%;
+    height: 2.4rem;
+  }
+
+  .discoveryFilterGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .discoveryQuickFilters {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .discoveryQuickFilter,
+  .discoveryQuickFilterShort {
+    flex: 0 0 8.5rem;
+  }
+
+  .dashboardHeroSkeleton {
+    padding: 1.2rem;
+    border-radius: 1.55rem;
+  }
+
+  .dashboardPanelGrid,
+  .dashboardMetricRow {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardPanelSkeleton,
+  .dashboardSidebarSkeleton {
+    border-radius: 1.3rem;
+  }
+}
+
+@media (max-width: 540px) {
+  .skeletonCard {
+    min-height: 208px;
+  }
+
+  .skeletonCardImage {
+    height: 116px;
+  }
+
+  .skeletonCardLine {
+    height: 0.82rem;
+  }
+
+  .discoveryCards,
+  .skeletonGrid,
+  .gridSkeleton {
+    gap: 0.7rem;
+  }
+
+  .timeSlotGridSkeleton {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboardSidebarSkeleton {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .dashboardHeroSecondaryAction,
+  .dashboardHeroPrimaryAction,
+  .dashboardTopTab,
+  .dashboardTopTabShort {
+    width: 100%;
+  }
+
+  .dashboardPanelSkeleton {
+    padding: 1rem;
+  }
 }

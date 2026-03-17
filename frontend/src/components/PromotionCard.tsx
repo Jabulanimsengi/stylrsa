@@ -47,7 +47,6 @@ export interface Promotion {
 }
 
 type PromotionService = NonNullable<Promotion['service']>;
-type PromotionProduct = NonNullable<Promotion['product']>;
 interface PromotionCardProps {
   promotion: Promotion;
   onImageClick?: (images: string[], startIndex: number) => void;

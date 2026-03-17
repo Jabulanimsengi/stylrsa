@@ -73,7 +73,7 @@ async function getSalon(id: string): Promise<Salon | null> {
   const url = buildApiUrl(baseUrl, `/api/salons/${id}`);
 
   try {
-    // Increased timeout for sleeping backends (Render free tier can take 30-60s to wake)
+    // Allow extra time for slower production API responses before treating the request as failed.
     const salon = await fetchSalonWithTimeout(url, 15000);
 
     if (!salon) {
@@ -106,14 +106,28 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 
   // Build dynamic title and description
-  const title = `${salon.name} - ${salon.city || 'South Africa'} | Stylr SA`;
+  const locationLabel = [salon.town && salon.town !== salon.city ? salon.town : null, salon.city, salon.province]
+    .filter(Boolean)
+    .join(', ');
+  const serviceNames = salon.services?.map((service) => service.name || service.title).filter(Boolean).slice(0, 6) || [];
+  const serviceSummary = serviceNames.join(', ');
+  const title = `${salon.name} | ${locationLabel || 'South Africa'} Salon | Stylr SA`;
   const description = salon.description
-    ? `${salon.description.substring(0, 155)}...`
-    : `Book appointments at ${salon.name} in ${salon.city || 'South Africa'}. Professional salon services with easy online booking.`;
+    ? `${salon.description.substring(0, 150)}. Book ${serviceSummary || 'beauty services'} at ${salon.name}.`
+    : `Book ${serviceSummary || 'hair, nail, beauty, and wellness services'} at ${salon.name} in ${locationLabel || 'South Africa'}. View prices, reviews, and direct booking options on Stylr SA.`;
 
   // Build keywords from services
-  const serviceKeywords = salon.services?.map(s => s.name || s.title).filter(Boolean).join(', ') || '';
-  const keywords = `${salon.name}, salon ${salon.city || 'South Africa'}, ${serviceKeywords}, hair salon, beauty salon, book appointment`;
+  const serviceKeywords = serviceNames.join(', ');
+  const keywords = Array.from(new Set([
+    salon.name,
+    salon.city,
+    salon.town,
+    salon.province,
+    serviceKeywords,
+    `salon ${salon.city || 'South Africa'}`,
+    `beauty salon ${salon.city || salon.province || 'South Africa'}`,
+    `book ${salon.name}`,
+  ].filter(Boolean))).join(', ');
 
   // Use slug for canonical URL if available, fallback to ID
   const salonIdentifier = salon.slug || salon.id;

@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getSitemapStats } from '@/lib/sitemap-generator';
+import {
+  buildMinimalSitemapIndexXml,
+  hasUnsafeXmlPayload,
+  isValidSitemapIndexXml,
+} from '@/lib/sitemap-response';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN || process.env.BACKEND_URL || 'http://localhost:5000';
@@ -23,15 +28,7 @@ export async function GET() {
     if (response.ok) {
       const xml = await response.text();
 
-      // Validate it's actually XML and doesn't contain JS code
-      const isValidXml = xml.includes('<?xml') && xml.includes('<sitemapindex');
-      const hasJsPattern = xml.includes(';// ') ||
-        xml.includes('function(') ||
-        xml.includes('<!DOCTYPE html') ||
-        xml.includes('<script') ||
-        xml.includes('webpack');
-
-      if (isValidXml && !hasJsPattern) {
+      if (isValidSitemapIndexXml(xml) && !hasUnsafeXmlPayload(xml)) {
         return new NextResponse(xml, {
           status: 200,
           headers: {
@@ -71,13 +68,6 @@ export async function GET() {
     </sitemap>`);
     }
 
-    // Jobs
-    sitemaps.push(`
-    <sitemap>
-      <loc>${SITE_URL}/sitemap-jobs-local.xml</loc>
-      <lastmod>${today}</lastmod>
-    </sitemap>`);
-
     // Services
     sitemaps.push(`
     <sitemap>
@@ -89,13 +79,6 @@ export async function GET() {
     sitemaps.push(`
     <sitemap>
       <loc>${SITE_URL}/sitemap-salons.xml</loc>
-      <lastmod>${today}</lastmod>
-    </sitemap>`);
-
-    // Candidates
-    sitemaps.push(`
-    <sitemap>
-      <loc>${SITE_URL}/sitemap-candidates-local.xml</loc>
       <lastmod>${today}</lastmod>
     </sitemap>`);
 
@@ -121,6 +104,13 @@ ${sitemaps.join('')}
     });
   } catch (error) {
     console.error('Error generating sitemap index:', error);
-    return new NextResponse('Error generating sitemap', { status: 500 });
+    return new NextResponse(buildMinimalSitemapIndexXml(), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, s-maxage=300',
+        'X-Source': 'error-fallback',
+      },
+    });
   }
 }

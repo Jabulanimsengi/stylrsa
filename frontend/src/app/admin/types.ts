@@ -4,10 +4,8 @@ import type {
     Salon,
     Service,
     Review,
-    Product,
     PlanCode,
     PlanPaymentStatus,
-    SellerSummary,
     ApprovalStatus,
 } from '@/types';
 
@@ -29,29 +27,6 @@ export type PendingService = Service & { salon: { name: string } };
 export type PendingReview = Review & {
     author: { firstName: string };
     salon: { name: string }
-};
-
-export type PendingProduct = Product & {
-    seller: {
-        id: string;
-        firstName: string;
-        lastName: string;
-        sellerPlanCode?: PlanCode | null;
-        sellerPlanPriceCents?: number | null;
-        sellerPlanPaymentStatus?: PlanPaymentStatus | null;
-        sellerPlanPaymentReference?: string | null;
-        sellerPlanProofSubmittedAt?: string | null;
-        sellerPlanVerifiedAt?: string | null;
-    };
-};
-
-export type SellerRow = SellerSummary & {
-    sellerPlanPaymentStatus?: PlanPaymentStatus | null;
-};
-
-export type SellerDeletionTarget = {
-    sellerId: string;
-    name: string;
 };
 
 export type Top10RequestStatus =
@@ -100,23 +75,6 @@ export type PendingPromotionRow = {
         salon?: {
             name?: string | null;
         } | null;
-    } | null;
-    product?: {
-        name?: string | null;
-        seller?: {
-            firstName?: string | null;
-            lastName?: string | null;
-        } | null;
-    } | null;
-};
-
-export type DeletedSellerArchiveRow = {
-    id: string;
-    deletedAt?: string | null;
-    reason?: string | null;
-    seller?: {
-        firstName?: string | null;
-        lastName?: string | null;
     } | null;
 };
 

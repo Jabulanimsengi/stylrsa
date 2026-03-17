@@ -1,4 +1,4 @@
--- Restore schema parity with original Render database
+-- Restore schema parity with the original hosted database
 -- Generated via `prisma migrate diff`
 
 -- DropForeignKey

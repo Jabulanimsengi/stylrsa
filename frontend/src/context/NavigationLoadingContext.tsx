@@ -2,9 +2,11 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
 
 interface NavigationLoadingContextType {
+  isPageLoading: boolean;
+  showPageLoader: () => void;
+  hidePageLoader: () => void;
   setIsNavigating: (value: boolean) => void;
 }
 
@@ -13,48 +15,66 @@ const NavigationLoadingContext = createContext<NavigationLoadingContextType | un
 export function NavigationLoadingProvider({ children }: { children: ReactNode }) {
   const [isNavigating, setIsNavigating] = useState(false);
   const pathname = usePathname();
+  const showPageLoader = () => setIsNavigating(true);
+  const hidePageLoader = () => setIsNavigating(false);
 
-  // Reset loading state when pathname changes (navigation complete)
+  // Reset loading state when route changes (navigation complete)
   useEffect(() => {
-    setIsNavigating(false);
+    hidePageLoader();
   }, [pathname]);
 
+  useEffect(() => {
+    const handleDocumentClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest('a[href]') as HTMLAnchorElement | null;
+
+      if (!anchor) return;
+      if (anchor.dataset.noNavSpinner === 'true') return;
+      if (anchor.target && anchor.target !== '_self') return;
+      if (anchor.hasAttribute('download')) return;
+
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) {
+        return;
+      }
+
+      const nextUrl = new URL(anchor.href, window.location.href);
+      const currentUrl = new URL(window.location.href);
+
+      if (nextUrl.origin !== currentUrl.origin) return;
+
+      const nextRoute = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
+      const currentRoute = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
+
+      if (nextRoute === currentRoute) return;
+
+      showPageLoader();
+    };
+
+    document.addEventListener('click', handleDocumentClick, true);
+    return () => document.removeEventListener('click', handleDocumentClick, true);
+  }, []);
+
   return (
-    <NavigationLoadingContext.Provider value={{ setIsNavigating }}>
+    <NavigationLoadingContext.Provider
+      value={{
+        isPageLoading: isNavigating,
+        showPageLoader,
+        hidePageLoader,
+        // Backward-compatible alias while older callers are cleaned up.
+        setIsNavigating: (value) => (value ? showPageLoader() : hidePageLoader()),
+      }}
+    >
       {children}
-      {isNavigating && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99998,
-          pointerEvents: 'auto'
-        }}>
-          <div
-            style={{
-              animation: 'navPulse 1.5s ease-in-out infinite',
-            }}
-          >
-            <Image
-              src="/logo-white.png"
-              alt="Stylr SA"
-              width={180}
-              height={60}
-              priority
-              style={{
-                objectFit: 'contain',
-              }}
-            />
-          </div>
-        </div>
-      )}
+      <div
+        className={`route-loading-shell ${isNavigating ? 'route-loading-shell-visible' : ''}`}
+        aria-hidden={!isNavigating}
+      >
+        <div className="route-loading-bar" />
+      </div>
     </NavigationLoadingContext.Provider>
   );
 }

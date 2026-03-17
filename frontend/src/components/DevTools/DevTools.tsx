@@ -55,7 +55,6 @@ export default function DevTools() {
   const [position, setPosition] = useState({ x: 20, y: 80 });
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; startPosX: number; startPosY: number } | null>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Load saved position
   useEffect(() => {
@@ -172,13 +171,15 @@ export default function DevTools() {
   }, []);
 
   useEffect(() => {
+    if (!isDevelopment) return;
+    if (!isOpen) return;
     const initialCheck = setTimeout(checkHealth, 1000);
     const interval = setInterval(checkHealth, 30000);
     return () => {
       clearTimeout(initialCheck);
       clearInterval(interval);
     };
-  }, [checkHealth]);
+  }, [checkHealth, isDevelopment, isOpen]);
 
   // Fetch SEO stats
   const fetchSeoStats = useCallback(async () => {
@@ -310,9 +311,8 @@ export default function DevTools() {
     <>
       {/* Draggable floating button */}
       <button
-        ref={buttonRef}
         onMouseDown={handleMouseDown}
-        onClick={(e) => {
+        onClick={() => {
           // Only toggle if not dragging
           if (!isDragging) setIsOpen(!isOpen);
         }}

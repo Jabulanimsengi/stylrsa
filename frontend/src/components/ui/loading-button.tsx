@@ -20,7 +20,14 @@ const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonProps>(
                 {loading && (
                     <Spinner
                         size="sm"
-                        variant={props.variant === 'outline' || props.variant === 'ghost' ? 'primary' : 'white'}
+                        variant={
+                            props.variant === 'outline' ||
+                            props.variant === 'ghost' ||
+                            props.variant === 'secondary' ||
+                            props.variant === 'link'
+                                ? 'primary'
+                                : 'white'
+                        }
                         className="mr-2"
                     />
                 )}

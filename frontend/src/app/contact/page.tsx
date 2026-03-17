@@ -40,15 +40,15 @@ export default function ContactPage() {
         </div>
 
         <div className={styles.infoBlock}>
-          <h2 className={styles.sectionTitle}>Partner (Salon & Seller) Support</h2>
+          <h2 className={styles.sectionTitle}>Partner Support</h2>
           <p className={styles.paragraph}>
-            For help with your profile, managing your services, using the booking dashboard, or listing products.
+            For help with your salon profile, managing services, or using the booking dashboard.
           </p>
           <p className={styles.paragraph}>
             <strong>Email:</strong> <a href="mailto:info@stylrsa.co.za" className={styles.link}>info@stylrsa.co.za</a>
           </p>
           <p className={styles.paragraph}>
-            <strong>Resources:</strong> Visit our <Link href="/advice" className={styles.link}>Advice Center</Link> for guides and tips.
+            <strong>Resources:</strong> Visit our <Link href="/faq" className={styles.link}>FAQ</Link> for guides and tips.
           </p>
         </div>
 

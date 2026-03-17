@@ -86,6 +86,7 @@ export const STORAGE_KEYS = {
   refreshToken: 'refreshToken',
   recentSearches: 'recentSearches',
   favoritesSynced: 'favoritesSynced',
+  guestFavorites: 'guestFavoriteSalons',
   cookieConsent: 'cookieConsent',
   notificationsCache: 'nav-notifications-cache',
 } as const;

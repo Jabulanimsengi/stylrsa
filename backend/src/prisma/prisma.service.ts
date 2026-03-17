@@ -68,7 +68,7 @@ export class PrismaService extends BasePrismaClient implements OnModuleInit {
           this.logger.error(
             'Max database connection retries reached. App will continue but DB operations will fail.',
           );
-          // Don't throw - let app start anyway so Render sees the port
+          // Don't throw - let the app start so health checks can still reach the process
           return;
         }
         

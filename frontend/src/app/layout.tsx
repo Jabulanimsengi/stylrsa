@@ -1,6 +1,6 @@
 // frontend/src/app/layout.tsx
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -21,7 +21,6 @@ import ClientInit from '@/components/ClientInit';
 import { Suspense } from 'react';
 // Analytics/runtime is handled by the self-hosted Hetzner deployment
 import SkipToContent from '@/components/SkipToContent/SkipToContent';
-import BackendStatus from '@/components/DevTools/BackendStatus';
 import EmailVerificationBannerWrapper from '@/components/EmailVerificationBannerWrapper';
 // Client-only components with ssr: false must be in a Client Component (Next.js 15 requirement)
 import ClientComponents from '@/components/ClientComponents';
@@ -31,8 +30,38 @@ const inter = Inter({
   subsets: ['latin'],
   display: 'swap', // Prevents FOUT layout shift
   preload: true,
+  variable: '--font-base',
   fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
 });
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '800'],
+  display: 'swap',
+  variable: '--font-display',
+});
+
+const DEV_SERVICE_WORKER_REDIRECT_SCRIPT = `
+(function () {
+  if (typeof window === 'undefined') return;
+  const isLocalHost =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+
+  if (!isLocalHost) return;
+  if (!('serviceWorker' in navigator)) return;
+  if (!navigator.serviceWorker.controller) return;
+  if (window.location.pathname === '/unregister-sw.html') return;
+
+  const redirectKey = 'stylrsa-dev-sw-redirected';
+  if (window.sessionStorage.getItem(redirectKey) === '1') return;
+
+  window.sessionStorage.setItem(redirectKey, '1');
+  window.location.replace(
+    '/unregister-sw.html?return=' + encodeURIComponent(window.location.href)
+  );
+})();
+`;
 
 export const viewport = {
   width: 'device-width',
@@ -121,6 +150,11 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: DEV_SERVICE_WORKER_REDIRECT_SCRIPT,
+          }}
+        />
         {/* Preload LCP hero image for faster initial paint */}
         <link
           rel="preload"
@@ -136,8 +170,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
       </head>
-      <body className={inter.className} suppressHydrationWarning>
-        <BackendStatus />
+      <body className={`${inter.className} ${inter.variable} ${playfairDisplay.variable}`} suppressHydrationWarning>
         <Suspense fallback={null}>
           <ClientInit />
         </Suspense>
@@ -147,8 +180,8 @@ export default function RootLayout({
             <ThemeProvider>
               <AuthProvider>
                 <SocketProvider>
-                  <AuthModalProvider>
-                    <NavigationLoadingProvider>
+                  <NavigationLoadingProvider>
+                    <AuthModalProvider>
                       <ScrollToTop />
                       <Suspense fallback={null}>
                         <AuthModalHandler />
@@ -164,8 +197,8 @@ export default function RootLayout({
                         </div>
                       </div>
                       <ClientComponents />
-                    </NavigationLoadingProvider>
-                  </AuthModalProvider>
+                    </AuthModalProvider>
+                  </NavigationLoadingProvider>
                 </SocketProvider>
               </AuthProvider>
             </ThemeProvider>

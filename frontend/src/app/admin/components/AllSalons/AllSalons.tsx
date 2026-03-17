@@ -23,10 +23,9 @@ export default function AllSalons({
     const [search, setSearch] = useState('');
     const [savedViews, setSavedViews] = useState<{ name: string; query: string }[]>([]);
     const [editingSalonId, setEditingSalonId] = useState<string | null>(null);
-    const [draftPlan, setDraftPlan] = useState('STARTER');
+    const [draftPlan, setDraftPlan] = useState('PREMIUM');
     const [draftWeight, setDraftWeight] = useState('');
     const [draftMax, setDraftMax] = useState('');
-    const [draftFeatured, setDraftFeatured] = useState('');
 
     const filteredSalons = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -70,10 +69,9 @@ export default function AllSalons({
 
     const startEdit = (salon: PendingSalon) => {
         setEditingSalonId(salon.id);
-        setDraftPlan((salon.planCode ?? 'STARTER').toUpperCase());
+        setDraftPlan((salon.planCode ?? 'PREMIUM').toUpperCase());
         setDraftWeight(String(salon.visibilityWeight ?? ''));
         setDraftMax(String(salon.maxListings ?? ''));
-        setDraftFeatured(salon.featuredUntil ? new Date(salon.featuredUntil).toISOString().slice(0, 16) : '');
     };
 
     const handleSave = async (salonId: string) => {
@@ -81,7 +79,6 @@ export default function AllSalons({
         const normalizedPlan = (draftPlan ?? '').toUpperCase();
         const visibilityWeight = Number(draftWeight);
         const maxListings = Number(draftMax);
-        const featuredUntil = draftFeatured;
         const body: Record<string, unknown> = {};
 
         if (allowedPlans.includes(normalizedPlan as typeof allowedPlans[number])) {
@@ -89,7 +86,6 @@ export default function AllSalons({
         }
         if (!Number.isNaN(visibilityWeight) && draftWeight !== '') body.visibilityWeight = visibilityWeight;
         if (!Number.isNaN(maxListings) && draftMax !== '') body.maxListings = maxListings;
-        body.featuredUntil = featuredUntil ? new Date(featuredUntil).toISOString() : null;
 
         const r = await fetch(`/api/admin/salons/${salonId}/plan`, {
             method: 'PATCH',
@@ -177,9 +173,8 @@ export default function AllSalons({
                             {editingSalonId !== salon.id ? (
                                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                     <span><strong>Package:</strong> {salon.planCode ?? '-'}</span>
-                                    <span><strong>Visibility:</strong> {salon.visibilityWeight ?? '-'}</span>
+                                    <span><strong>Featured order weight:</strong> {salon.visibilityWeight ?? 0}</span>
                                     <span><strong>Max listings:</strong> {salon.maxListings ?? '-'}</span>
-                                    <span><strong>Featured until:</strong> {salon.featuredUntil ? new Date(salon.featuredUntil).toLocaleString() : '-'}</span>
                                     <button className={styles.approveButton} onClick={() => startEdit(salon)}>Edit</button>
                                 </div>
                             ) : (
@@ -192,12 +187,10 @@ export default function AllSalons({
                                             </option>
                                         ))}
                                     </select>
-                                    <label>Weight</label>
-                                    <input value={draftWeight} onChange={e => setDraftWeight(e.target.value)} type="number" min={1} placeholder="visibility" style={{ width: 90, padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
+                                    <label>Featured order weight</label>
+                                    <input value={draftWeight} onChange={e => setDraftWeight(e.target.value)} type="number" min={0} placeholder="0" style={{ width: 90, padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
                                     <label>Max listings</label>
                                     <input value={draftMax} onChange={e => setDraftMax(e.target.value)} type="number" min={1} placeholder="max" style={{ width: 90, padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
-                                    <label>Featured until</label>
-                                    <input value={draftFeatured} onChange={e => setDraftFeatured(e.target.value)} type="datetime-local" style={{ padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
                                     <button className={styles.approveButton} onClick={() => handleSave(salon.id)}>Save</button>
                                     <button className={styles.rejectButton} onClick={() => setEditingSalonId(null)}>Cancel</button>
                                 </div>

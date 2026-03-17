@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import Link from 'next/link';
 import {
     FaMapMarkerAlt,
     FaStar,
@@ -14,55 +13,11 @@ import {
 } from 'react-icons/fa';
 import { Salon, GalleryImage, Review } from '@/types';
 import { transformCloudinary } from '@/utils/cloudinary';
-import { getSalonUrl } from '@/utils/salonUrl';
 import styles from './BooksyLayout.module.css';
 import VerificationBadge from '@/components/VerificationBadge/VerificationBadge';
 import MapboxMap from '@/components/MapboxMap';
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
-
-// Helper to check if salon is currently open
-function getOpenStatus(hoursRecord: Record<string, string> | null, todayLabel: string): { isOpen: boolean; statusText: string } {
-    if (!hoursRecord) return { isOpen: false, statusText: 'Hours not available' };
-
-    const todayHours = hoursRecord[todayLabel];
-    if (!todayHours || todayHours.toLowerCase() === 'closed') {
-        // Find next open day
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        const todayIndex = days.indexOf(todayLabel);
-        for (let i = 1; i <= 7; i++) {
-            const nextDay = days[(todayIndex + i) % 7];
-            const nextHours = hoursRecord[nextDay];
-            if (nextHours && nextHours.toLowerCase() !== 'closed') {
-                return { isOpen: false, statusText: `Opens ${nextDay} at ${nextHours.split('-')[0]?.trim() || '09:00'}` };
-            }
-        }
-        return { isOpen: false, statusText: 'Closed' };
-    }
-
-    // Parse hours (e.g., "09:00 - 18:00")
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTime = currentHour * 60 + currentMinute;
-
-    const [openTime, closeTime] = todayHours.split('-').map(t => t.trim());
-    if (openTime && closeTime) {
-        const [openH, openM] = openTime.split(':').map(Number);
-        const [closeH, closeM] = closeTime.split(':').map(Number);
-        const openMinutes = (openH || 0) * 60 + (openM || 0);
-        const closeMinutes = (closeH || 0) * 60 + (closeM || 0);
-
-        if (currentTime >= openMinutes && currentTime < closeMinutes) {
-            return { isOpen: true, statusText: `Open until ${closeTime}` };
-        } else if (currentTime < openMinutes) {
-            return { isOpen: false, statusText: `Opens at ${openTime}` };
-        } else {
-            return { isOpen: false, statusText: `Closed · Opens tomorrow` };
-        }
-    }
-
-    return { isOpen: false, statusText: todayHours };
-}
+import { getSalonOpenStatus } from './salonOpenStatus';
 
 // Sticky Tab Navigation Component
 export function StickyTabNavigation({
@@ -79,10 +34,10 @@ export function StickyTabNavigation({
     reviewsCount: number;
 }) {
     const tabs = [
-        { id: 'about-section', label: 'About', show: true },
-        { id: 'reviews-section', label: 'Reviews', count: reviewsCount, show: true },
         { id: 'services-section', label: 'Services', show: true },
         { id: 'photos-section', label: 'Photos', show: hasPhotos },
+        { id: 'reviews-section', label: 'Reviews', count: reviewsCount, show: true },
+        { id: 'about-section', label: 'About', show: true },
         { id: 'team-section', label: 'Team', show: hasTeam },
     ].filter(tab => tab.show);
 
@@ -104,46 +59,6 @@ export function StickyTabNavigation({
             </div>
         </nav>
     );
-}
-
-interface BooksySidebarProps {
-    salon: Salon;
-    galleryImages: GalleryImage[];
-    onShowAllPhotos: () => void;
-    onOpenLightbox: (images: string[], index: number) => void;
-    latitude?: number | null;
-    longitude?: number | null;
-    mapsHref: string;
-    hoursRecord: Record<string, string> | null;
-    todayLabel: string;
-    orderedOperatingDays: string[];
-    onBookNow: () => void;
-    isFavorited: boolean;
-    onToggleFavorite: () => void;
-    showFavoriteButton: boolean;
-}
-
-export default function BooksySidebar({
-    salon: _salon,
-    galleryImages: _galleryImages,
-    onShowAllPhotos: _onShowAllPhotos,
-    onOpenLightbox: _onOpenLightbox,
-    latitude: _latitude,
-    longitude: _longitude,
-    mapsHref: _mapsHref,
-    hoursRecord,
-    todayLabel,
-    orderedOperatingDays: _orderedOperatingDays,
-    onBookNow: _onBookNow,
-    isFavorited: _isFavorited,
-    onToggleFavorite: _onToggleFavorite,
-    showFavoriteButton: _showFavoriteButton,
-}: BooksySidebarProps) {
-    void hoursRecord;
-    void todayLabel;
-
-    // All sidebar content removed - features already displayed in main content
-    return null;
 }
 
 // Hero Gallery Component
@@ -271,7 +186,7 @@ export function SalonInfoHeader({
     hoursRecord?: Record<string, string> | null;
     todayLabel?: string;
 }) {
-    const { isOpen, statusText } = getOpenStatus(hoursRecord || null, todayLabel || '');
+    const { isOpen, statusText } = getSalonOpenStatus(hoursRecord || null, todayLabel || '');
 
     return (
         <div className={styles.salonInfoHeader}>
@@ -327,7 +242,7 @@ export function SalonInfoHeader({
                 <div className={`${styles.statusRow} ${isOpen ? styles.open : styles.closed}`}>
                     <FaRegClock />
                     <span className={styles.statusDot} />
-                    <span>{isOpen ? 'Open' : 'Closed'} · {statusText}</span>
+                    <span>{isOpen ? 'Open' : 'Closed'} - {statusText}</span>
                 </div>
             )}
 
@@ -655,52 +570,4 @@ export function BooksyReviewsSection({
     );
 }
 
-// Venues Nearby Component
-export function VenuesNearby({
-    nearbySalons,
-}: {
-    nearbySalons: Salon[];
-}) {
-    if (!nearbySalons || nearbySalons.length === 0) {
-        return null;
-    }
 
-    return (
-        <section className={styles.nearbySection}>
-            <h2 className={styles.sectionTitle}>Venues nearby</h2>
-            <div className={styles.nearbyGrid}>
-                {nearbySalons.slice(0, 4).map(salon => (
-                    <Link
-                        key={salon.id}
-                        href={getSalonUrl(salon)}
-                        className={styles.nearbyCard}
-                    >
-                        <div className={styles.nearbyImageWrapper}>
-                            <OptimizedImage
-                                src={transformCloudinary(
-                                    salon.backgroundImage || salon.logo || '/placeholder-salon.jpg',
-                                    { width: 400, quality: 'auto', format: 'auto', crop: 'fill' }
-                                )}
-                                alt={salon.name}
-                                fill
-                                sizes="(max-width: 768px) 50vw, 25vw"
-                                seoContext={{ salonName: salon.name, city: salon.city }}
-                            />
-                        </div>
-                        <div className={styles.nearbyInfo}>
-                            <h3 className={styles.nearbyName}>{salon.name}</h3>
-                            {salon.avgRating && salon.avgRating > 0 && (
-                                <div className={styles.nearbyRating}>
-                                    <FaStar /> {salon.avgRating.toFixed(1)}
-                                </div>
-                            )}
-                            <p className={styles.nearbyLocation}>
-                                {salon.town || salon.city}
-                            </p>
-                        </div>
-                    </Link>
-                ))}
-            </div>
-        </section>
-    );
-}

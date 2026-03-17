@@ -114,7 +114,7 @@ export async function addCsrfHeader(options: RequestInit = {}): Promise<RequestI
           },
         };
       }
-    } catch (error) {
+    } catch {
       // If CSRF fails, continue without it (graceful degradation)
       console.warn('CSRF token not available, continuing without CSRF protection');
     }

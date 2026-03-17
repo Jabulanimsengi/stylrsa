@@ -34,24 +34,27 @@ export function generateNearYouMetadata(
   } else if (categorySlug) {
     canonicalPath = `/services/${categorySlug}/near-you`;
   } else if (citySlug && provinceSlug) {
-    canonicalPath = `/salons/near-you/${provinceSlug}/${citySlug}`;
+    canonicalPath = `/salons/location/${provinceSlug}/${citySlug}`;
   } else if (provinceSlug) {
-    canonicalPath = `/salons/near-you/${provinceSlug}`;
+    canonicalPath = `/salons/location/${provinceSlug}`;
   } else {
     canonicalPath = '/salons/near-you';
   }
 
   const canonicalUrl = `${siteUrl}${canonicalPath}`;
+  const shouldIndex = hasResults && Boolean(categorySlug);
 
   return {
     title,
     description,
     keywords,
-    // No-index pages with no results to avoid indexing empty pages
-    robots: hasResults ? undefined : {
-      index: false,
-      follow: true,
-    },
+    // Generic "near you" salon pages overlap with stronger /salons/location pages.
+    robots: shouldIndex
+      ? undefined
+      : {
+          index: false,
+          follow: true,
+        },
     alternates: {
       canonical: canonicalUrl,
     },
@@ -192,8 +195,8 @@ export function generateLocalBusinessSchema(
       ? `${category.name} Services in ${city.name}`
       : `Salons in ${city.name}`,
     description: category
-      ? `Find the best ${category.serviceName} services near you in ${city.name}, ${province.name}`
-      : `Find the best salons and beauty services near you in ${city.name}, ${province.name}`,
+      ? `Browse ${category.serviceName} services in ${city.name}, ${province.name}`
+      : `Browse salons and beauty services in ${city.name}, ${province.name}`,
     address: {
       '@type': 'PostalAddress',
       addressLocality: city.name,

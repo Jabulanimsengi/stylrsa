@@ -30,10 +30,8 @@ model User {
   twoFactorSecret            String?
   twoFactorBackupCodes       String[]          @default([])
   profileImage               String?
-  cashbackBalance            Float             @default(0)
   stripeCustomerId           String?
   addresses                  UserAddress[]
-  cashbackHistory            CashbackTransaction[]
   // Seller plan fields
   sellerPlanCode             PlanCode?
   sellerVisibilityWeight     Int?              @default(1)
@@ -103,13 +101,17 @@ model Salon {
   offersMobile         Boolean                       @default(false)
   mobileFee            Float?
   isAvailableNow       Boolean                       @default(false)
-  commissionRate       Float                         @default(0.32)
+  commissionRate       Float                         @default(0.0)
   materials            SalonMaterial[]
   videoShorts          VideoShort[]
   operatingHours       Json?
   operatingDays        String[]
   bookingMessage       String?
   cancellationPolicy   String?                       // Salon's cancellation policy text
+  bankName             String?
+  accountHolder        String?
+  accountNumber        String?
+  branchCode           String?
   approvalStatus       ApprovalStatus                @default(PENDING)
   isVerified           Boolean                       @default(false)
   avgRating            Float                         @default(0)
@@ -117,9 +119,9 @@ model Salon {
   createdAt            DateTime                      @default(now())
   updatedAt            DateTime                      @updatedAt
   ownerId              String                        @unique
-  planCode             PlanCode?                     @default(STARTER)
-  visibilityWeight     Int                           @default(1)
-  maxListings          Int                           @default(2)
+  planCode             PlanCode?                     @default(PREMIUM)
+  visibilityWeight     Int                           @default(5)
+  maxListings          Int                           @default(9999)
   featuredUntil        DateTime?
   planPriceCents       Int?
   planPaymentStatus    PlanPaymentStatus             @default(PENDING_SELECTION)
@@ -234,7 +236,6 @@ model Booking {
   depositPaid    Boolean       @default(false)
   commissionAmount Float?
   platformFee    Float?
-  cashbackAmount Float?
   paymentFee     Float?
   materialSelection String?    // e.g., "HAVE_OWN", "BUY_SALON", "BUY_PLATFORM"
   colorSelection    String?
@@ -258,6 +259,35 @@ model Booking {
   @@index([salonId])
   @@index([serviceId])
   @@index([teamMemberId])
+}
+
+model BookingWhatsAppIntent {
+  id              String   @id @default(uuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  salonId         String
+  serviceId       String
+  userId          String?
+  teamMemberId    String?
+  bookingTime     DateTime
+  isMobile        Boolean  @default(false)
+  clientFirstName String
+  clientLastName  String
+  clientPhone     String
+  clientNotes     String?
+  colorSelection  String?
+  materialSelection String?
+  totalCost       Float
+  depositAmount   Float
+  referenceCode   String   @unique
+  sequenceNumber  Int
+  whatsappClicks  Int      @default(1)
+  source          String   @default("STYLRSA")
+
+  @@index([salonId])
+  @@index([serviceId])
+  @@index([userId])
+  @@index([bookingTime])
 }
 
 model Product {
@@ -988,22 +1018,3 @@ model VideoShort {
   @@index([createdAt])
 }
 
-model CashbackTransaction {
-  id          String       @id @default(uuid())
-  userId      String
-  amount      Float
-  type        CashbackType
-  referenceId String?      // BookingID or OrderID
-  description String?
-  createdAt   DateTime     @default(now())
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([createdAt])
-}
-
-enum CashbackType {
-  EARNED
-  SPENT
-  ADJUSTMENT
-}

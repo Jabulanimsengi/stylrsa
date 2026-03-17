@@ -1,0 +1,152 @@
+.panel {
+  width: min(380px, 92vw);
+  max-height: min(70vh, 620px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1rem;
+  background: var(--color-surface, #fff);
+  border: 1px solid rgba(20, 32, 51, 0.08);
+  border-radius: 22px;
+  box-shadow: 0 22px 44px rgba(10, 15, 30, 0.18);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-text-strong, #142033);
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.actionButton,
+.loadMoreButton {
+  border: 1px solid rgba(20, 32, 51, 0.12);
+  background: #fff;
+  color: var(--color-text-strong, #142033);
+  border-radius: 999px;
+  min-height: 34px;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.actionButton:hover,
+.loadMoreButton:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.filters {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filterButton {
+  flex: 1;
+  min-height: 38px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(20, 32, 51, 0.06);
+  color: var(--color-text-muted, #667085);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.filterButtonActive {
+  background: rgba(17, 19, 24, 0.12);
+  color: var(--color-primary);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  overflow-y: auto;
+  min-height: 120px;
+  max-height: 360px;
+  padding-right: 0.15rem;
+}
+
+.item,
+.loadingItem,
+.emptyState {
+  border-radius: 16px;
+  padding: 0.8rem 0.85rem;
+}
+
+.item {
+  border: none;
+  background: rgba(20, 32, 51, 0.03);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.item:hover {
+  background: rgba(20, 32, 51, 0.06);
+  transform: translateY(-1px);
+}
+
+.itemUnread {
+  background: rgba(17, 19, 24, 0.08);
+}
+
+.message {
+  color: var(--color-text-strong, #142033);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.meta {
+  color: var(--color-text-muted, #667085);
+  font-size: 0.75rem;
+}
+
+.loadingItem,
+.emptyState {
+  background: rgba(20, 32, 51, 0.03);
+}
+
+.loadingItem {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.emptyState {
+  color: var(--color-text-muted, #667085);
+  text-align: center;
+}
+
+.loadMoreButton {
+  align-self: stretch;
+}

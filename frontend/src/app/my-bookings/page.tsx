@@ -48,8 +48,8 @@ export default function MyBookingsPage() {
       const data: PopulatedBooking[] = await res.json();
       setBookings(data);
 
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to fetch bookings');
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +74,7 @@ export default function MyBookingsPage() {
 
   useEffect(() => {
     if (socket) {
-      const handleBookingUpdate = (updatedBooking: PopulatedBooking) => {
+      const handleBookingUpdate = () => {
         fetchBookings();
       };
       socket.on('bookingUpdate', handleBookingUpdate);
@@ -101,16 +101,6 @@ export default function MyBookingsPage() {
     return new Date(dateString).toLocaleString('en-ZA', {
       year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
     });
-  };
-
-  const getStatusClass = (status: PopulatedBooking['status']) => {
-    switch (status) {
-      case 'PENDING': return styles.statusPending;
-      case 'CONFIRMED': return styles.statusConfirmed;
-      case 'DECLINED': return styles.statusDeclined;
-      case 'COMPLETED': return styles.statusCompleted;
-      default: return '';
-    }
   };
 
   const upcomingBookings = bookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED');

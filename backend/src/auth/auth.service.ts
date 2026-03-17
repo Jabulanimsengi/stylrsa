@@ -15,6 +15,22 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { randomBytes } from 'crypto';
 import { MailService } from '../mail/mail.service';
 
+const PUBLIC_SIGNUP_ROLES = ['CLIENT', 'SALON_OWNER'] as const;
+type PublicSignupRole = (typeof PUBLIC_SIGNUP_ROLES)[number];
+
+function normalizePublicSignupRole(role?: string | null): PublicSignupRole {
+  const normalizedRole = role?.toUpperCase();
+
+  if (
+    normalizedRole &&
+    PUBLIC_SIGNUP_ROLES.includes(normalizedRole as PublicSignupRole)
+  ) {
+    return normalizedRole as PublicSignupRole;
+  }
+
+  return 'CLIENT';
+}
+
 @Injectable()
 export class AuthService {
   // Cutoff date for email verification enforcement
@@ -35,6 +51,8 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
+    const userRole = normalizePublicSignupRole(dto.role);
+
     // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -106,7 +124,7 @@ export class AuthService {
           password: hash,
           firstName: dto.firstName,
           lastName: dto.lastName,
-          role: dto.role,
+          role: userRole,
           verificationToken: verificationCode,
           verificationExpires,
           emailVerified: false,
@@ -441,10 +459,7 @@ export class AuthService {
       const lastName = rest.join(' ') || 'Account';
       const tempPassword = randomBytes(16).toString('hex');
       const passwordHash = await argon2.hash(tempPassword);
-
-      // Validate role or default to CLIENT
-      const validRoles = ['CLIENT', 'SALON_OWNER', 'PRODUCT_SELLER'];
-      const userRole = role && validRoles.includes(role.toUpperCase()) ? role.toUpperCase() : 'CLIENT';
+      const userRole = normalizePublicSignupRole(role);
       console.log('[SSO] Creating new user with role:', userRole);
 
       user = await this.prisma.user.create({

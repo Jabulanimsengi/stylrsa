@@ -245,38 +245,6 @@ const articles = {
       }
     ]
   },
-  'local-beauty-products': {
-    title: 'Support Local: 5 Must-Have South African Beauty Products You Can Buy Online',
-    description: 'It\'s an amazing time for the South African beauty scene! We are seeing more and more incredible, locally-made products that are designed for our unique climate and needs. The best part? You can support these local entrepreneurs right here on the Stylr SA product marketplace.',
-    category: 'E-commerce / Products',
-    readTime: '6 min read',
-    content: [
-      {
-        heading: 'Local Hair Care (e.g., Natural Oils & Butters)',
-        content: 'Look for locally-sourced ingredients. Many South African brands are creating stunning hair butters, scalp oils, and deep conditioners using ingredients like Marula oil, Mafura butter, and African Black Soap. They\'re perfect for natural hair care.'
-      },
-      {
-        heading: 'Handcrafted Soaps & Body Bars',
-        content: 'Ditch the plastic bottle and discover artisanal soaps. Local makers are crafting beautiful bars with fynbos extracts, rooibos, and essential oils that look, smell, and feel incredible.'
-      },
-      {
-        heading: 'Targeted Skincare Serums',
-        content: 'South African skincare brands are world-class. You can find high-performance serums (like Vitamin C or Niacinamide) from local sellers that are formulated to tackle issues like hyperpigmentation and dehydration from our strong sun.'
-      },
-      {
-        heading: 'Men\'s Grooming (Beard Oils)',
-        content: 'A great-looking beard needs a great beard oil. Local sellers offer handcrafted oils with woody or spicy scents that soften the beard and nourish the skin underneath.'
-      },
-      {
-        heading: 'Press-On Nails',
-        content: 'Can\'t get to the salon? Local nail artists are now selling their intricate, hand-painted designs as custom, reusable press-on nail sets. You get salon-quality art at home!'
-      },
-      {
-        heading: 'Why Shop on Stylr SA?',
-        content: 'When you buy from the "Products" page, you are buying directly from a registered South African seller. It\'s the best way to support a small business and discover your next holy-grail product.'
-      }
-    ]
-  },
   'matric-dance-prep': {
     title: 'Your Ultimate Matric Dance Prep Checklist: Hair, Nails & Makeup',
     description: 'Your Matric dance is one of the most memorable nights of your life. The dress, the date, the after-party... it\'s a huge deal! But the perfect night starts with the perfect prep. To avoid any last-minute panic, here is your ultimate beauty booking checklist.',
@@ -430,5 +398,4 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     </div>
   );
 }
-
 

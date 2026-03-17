@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getSitemapStats } from '@/lib/sitemap-generator';
+import {
+  buildMinimalSitemapIndexXml,
+  hasUnsafeXmlPayload,
+  isValidSitemapIndexXml,
+} from '@/lib/sitemap-response';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN || process.env.BACKEND_URL || 'http://localhost:5000';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
@@ -19,15 +24,7 @@ export async function GET() {
     if (response.ok) {
       const xml = await response.text();
 
-      // Validate it's actually XML and doesn't contain JS code
-      const isValidXml = xml.includes('<?xml') && xml.includes('<sitemapindex');
-      const hasJsPattern = xml.includes(';// ') ||
-        xml.includes('function(') ||
-        xml.includes('<!DOCTYPE html') ||
-        xml.includes('<script') ||
-        xml.includes('webpack');
-
-      if (isValidXml && !hasJsPattern) {
+      if (isValidSitemapIndexXml(xml) && !hasUnsafeXmlPayload(xml)) {
         return new NextResponse(xml, {
           status: 200,
           headers: {
@@ -77,12 +74,6 @@ export async function GET() {
     <lastmod>${today}</lastmod>
   </sitemap>`);
 
-    // Jobs
-    sitemaps.push(`  <sitemap>
-    <loc>${SITE_URL}/sitemap-jobs.xml</loc>
-    <lastmod>${today}</lastmod>
-  </sitemap>`);
-
     // Trends
     sitemaps.push(`  <sitemap>
     <loc>${SITE_URL}/sitemap-trends.xml</loc>
@@ -104,16 +95,7 @@ ${sitemaps.join('\n')}
     });
   } catch (error) {
     console.error('Error generating sitemap:', error);
-
-    // Return a minimal valid sitemap index
-    const fallbackSitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap>
-    <loc>${SITE_URL}/sitemap-static.xml</loc>
-  </sitemap>
-</sitemapindex>`;
-
-    return new NextResponse(fallbackSitemap, {
+    return new NextResponse(buildMinimalSitemapIndexXml(), {
       status: 200,
       headers: {
         'Content-Type': 'application/xml; charset=utf-8',

@@ -39,7 +39,7 @@ export async function DELETE(request: NextRequest) {
 async function proxyToBackend(request: NextRequest) {
   // Use a dedicated backend origin for server-to-server proxying.
   // In our Hetzner Docker setup, this must be http://backend:3001 to avoid hairpin NAT issues with public IPs.
-  const isDockerProd = process.env.NODE_ENV === 'production' && !process.env.VERCEL;
+  const isDockerProd = process.env.NODE_ENV === 'production';
   let apiOrigin = process.env.INTERNAL_BACKEND_URL ||
     process.env.NEXT_PUBLIC_API_ORIGIN;
 

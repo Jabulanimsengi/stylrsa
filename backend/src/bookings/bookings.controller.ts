@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { CreateBookingWhatsAppIntentDto } from './dto/create-booking-whatsapp-intent.dto';
 import { JwtGuard } from '../auth/guard/jwt.guard';
 import { GetUser } from '../auth/decorator/get-user.decorator';
 
@@ -23,6 +24,11 @@ export class BookingsController {
     @Query('date') date: string,
   ) {
     return this.bookingsService.getAvailability(serviceId, date);
+  }
+
+  @Post('whatsapp-intent')
+  createWhatsAppIntent(@Body() createBookingWhatsAppIntentDto: CreateBookingWhatsAppIntentDto) {
+    return this.bookingsService.createWhatsAppIntent(createBookingWhatsAppIntentDto);
   }
 
   @Post()

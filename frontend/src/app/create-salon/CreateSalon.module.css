@@ -1161,15 +1161,33 @@
   margin: 0.5rem 0;
 }
 
-.whatsappNumber {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #000;
-  padding: 0.75rem;
-  background: white;
-  border-radius: 8px;
-  text-align: center;
+.bankDetailsCard {
+  display: grid;
+  gap: 0.75rem;
   margin: 1rem 0;
+  padding: 1rem;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid rgba(146, 64, 14, 0.12);
+}
+
+.bankDetailRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.bankDetailLabel {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.bankDetailValue {
+  font-size: 1rem;
+  color: #111827;
+  text-align: right;
 }
 
 .paymentNote {
@@ -1205,4 +1223,15 @@
   color: var(--color-text-strong);
   font-weight: 500;
   font-size: 0.95rem;
+}
+
+@media (max-width: 640px) {
+  .bankDetailRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bankDetailValue {
+    text-align: left;
+  }
 }

@@ -57,8 +57,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(newUrl, 301);
   }
   
-  // WWW redirect is handled by Vercel at the edge (faster)
-  // No need to handle it here to avoid redirect loops
+  // WWW redirect is handled by the production edge or reverse proxy layer.
+  // Avoid duplicating it here to prevent redirect loops.
   
   return NextResponse.next();
 }

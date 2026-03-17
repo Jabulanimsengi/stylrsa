@@ -301,18 +301,25 @@
 }
 
 .primaryButton {
-  padding: 0.75rem 1.5rem;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
+  min-height: var(--button-height-md, 3rem);
+  padding: var(--button-padding-md, 0 1.25rem);
+  background: var(--btn-primary-bg, var(--color-primary));
+  color: var(--btn-primary-text, white);
+  border: 1px solid var(--btn-primary-bg, var(--color-primary));
+  border-radius: var(--radius-full, 999px);
+  font-size: var(--button-font-size-md, 0.9375rem);
+  font-weight: var(--button-font-weight, 700);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  box-shadow: var(--button-shadow, 0 10px 22px rgba(17, 19, 24, 0.08));
 }
 
 .primaryButton:hover {
-  filter: brightness(1.1);
+  background: var(--btn-primary-hover, #667085);
+  color: var(--btn-primary-text, white);
+  border-color: var(--btn-primary-hover, #667085);
+  box-shadow: var(--button-shadow-hover, 0 14px 28px rgba(17, 19, 24, 0.12));
+  transform: translateY(-1px);
 }
 
 .disclaimer {

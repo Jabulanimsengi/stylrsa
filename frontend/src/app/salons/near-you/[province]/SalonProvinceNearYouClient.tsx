@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { transformCloudinary } from '@/utils/cloudinary';
@@ -154,7 +154,7 @@ export default function SalonProvinceNearYouClient({ provinceSlug }: Props) {
       const message = favorited ? 'Added to favorites!' : 'Removed from favorites.';
       toast.success(message);
 
-    } catch (error) {
+    } catch {
       toast.error('Could not update favorites. Please try again.');
       setSalons(originalSalons);
     }

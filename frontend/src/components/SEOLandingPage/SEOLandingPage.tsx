@@ -13,40 +13,31 @@ interface RelatedLink {
   type: 'service' | 'location';
 }
 
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 interface SEOLandingPageProps {
-  // Core SEO data
   h1: string;
   h2Headings: string[];
   h3Headings?: string[];
   introText: string;
   metaTitle: string;
   metaDescription: string;
-
-  // Breadcrumbs
   breadcrumbs: Breadcrumb[];
-
-  // Schema markup
-  schemaMarkup?: any;
-
-  // Stats
+  schemaMarkup?: unknown;
   serviceCount: number;
   salonCount: number;
   avgPrice?: number;
-
-  // Internal linking
   relatedServices?: RelatedLink[];
   nearbyLocations?: RelatedLink[];
-
-  // Content sections
+  faqItems?: FaqItem[];
   children?: React.ReactNode;
-
-  // CTA
   ctaTitle?: string;
   ctaDescription?: string;
   ctaButtonText?: string;
   ctaButtonLink?: string;
-
-  // Keyword and location for dynamic content
   keyword: string;
   locationName: string;
 }
@@ -54,7 +45,6 @@ interface SEOLandingPageProps {
 export default function SEOLandingPage({
   h1,
   h2Headings,
-  h3Headings,
   introText,
   breadcrumbs,
   schemaMarkup,
@@ -63,6 +53,7 @@ export default function SEOLandingPage({
   avgPrice,
   relatedServices,
   nearbyLocations,
+  faqItems,
   children,
   ctaTitle,
   ctaDescription,
@@ -73,19 +64,17 @@ export default function SEOLandingPage({
 }: SEOLandingPageProps) {
   return (
     <div className={styles.container}>
-      {/* Schema.org JSON-LD */}
-      {schemaMarkup && (
+      {schemaMarkup ? (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaMarkup) }}
         />
-      )}
+      ) : null}
 
-      {/* Breadcrumbs */}
       <nav className={styles.breadcrumbs} aria-label="Breadcrumb">
         <ol className={styles.breadcrumbList}>
           {breadcrumbs.map((crumb, index) => (
-            <li key={index} className={styles.breadcrumbItem}>
+            <li key={`${crumb.url}-${index}`} className={styles.breadcrumbItem}>
               {index < breadcrumbs.length - 1 ? (
                 <>
                   <Link href={crumb.url} className={styles.breadcrumbLink}>
@@ -101,12 +90,10 @@ export default function SEOLandingPage({
         </ol>
       </nav>
 
-      {/* H1 Heading */}
       <header className={styles.header}>
         <h1 className={styles.h1}>{h1}</h1>
       </header>
 
-      {/* Stats Bar */}
       {(serviceCount > 0 || salonCount > 0) && (
         <div className={styles.statsBar}>
           {serviceCount > 0 && (
@@ -125,36 +112,32 @@ export default function SEOLandingPage({
               </span>
             </div>
           )}
-          {avgPrice && (
+          {avgPrice ? (
             <div className={styles.statItem}>
               <span className={styles.statValue}>R{avgPrice.toFixed(0)}</span>
               <span className={styles.statLabel}>Average Price</span>
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
-      {/* Intro Text */}
       <section className={styles.introSection}>
         <div className={styles.introText}>
-          {introText.split('\n\n').map((paragraph, index) => (
-            <p key={index} className={styles.paragraph}>
+          {introText.split('\n\n').map((paragraph) => (
+            <p key={paragraph} className={styles.paragraph}>
               {paragraph}
             </p>
           ))}
         </div>
       </section>
 
-      {/* Main Content Sections */}
-      {children && <div className={styles.mainContent}>{children}</div>}
-
-      {/* H2 Sections (if no children provided) */}
-      {!children &&
-        h2Headings.map((heading, index) => (
-          <section key={index} className={styles.contentSection}>
+      {children ? (
+        <div className={styles.mainContent}>{children}</div>
+      ) : (
+        h2Headings.map((heading) => (
+          <section key={heading} className={styles.contentSection}>
             <h2 className={styles.h2}>{heading}</h2>
             <div className={styles.sectionContent}>
-              {/* Placeholder content - will be replaced by actual service/salon listings */}
               <p className={styles.paragraph}>
                 Discover the best {keyword.toLowerCase()} services in{' '}
                 {locationName}. Our verified professionals are ready to serve
@@ -162,49 +145,61 @@ export default function SEOLandingPage({
               </p>
             </div>
           </section>
-        ))}
+        ))
+      )}
 
-      {/* Related Services Section (CRITICAL for internal linking) */}
       {relatedServices && relatedServices.length > 0 && (
         <section className={styles.linksSection}>
           <h2 className={styles.h2}>Related Services in {locationName}</h2>
           <div className={styles.linksGrid}>
-            {relatedServices.map((service, index) => (
+            {relatedServices.map((service) => (
               <Link
-                key={index}
+                key={service.url}
                 href={service.url}
                 className={styles.linkCard}
                 prefetch={false}
               >
                 <span className={styles.linkLabel}>{service.label}</span>
-                <span className={styles.linkArrow}>→</span>
+                <span className={styles.linkArrow} aria-hidden="true">{'->'}</span>
               </Link>
             ))}
           </div>
         </section>
       )}
 
-      {/* Nearby Locations Section (CRITICAL for internal linking) */}
       {nearbyLocations && nearbyLocations.length > 0 && (
         <section className={styles.linksSection}>
           <h2 className={styles.h2}>{keyword} in Nearby Areas</h2>
           <div className={styles.linksGrid}>
-            {nearbyLocations.map((location, index) => (
+            {nearbyLocations.map((location) => (
               <Link
-                key={index}
+                key={location.url}
                 href={location.url}
                 className={styles.linkCard}
                 prefetch={false}
               >
                 <span className={styles.linkLabel}>{location.label}</span>
-                <span className={styles.linkArrow}>→</span>
+                <span className={styles.linkArrow} aria-hidden="true">{'->'}</span>
               </Link>
             ))}
           </div>
         </section>
       )}
 
-      {/* CTA Section */}
+      {faqItems && faqItems.length > 0 && (
+        <section className={styles.faqSection}>
+          <h2 className={styles.h2}>Frequently Asked Questions</h2>
+          <div className={styles.faqList}>
+            {faqItems.map((item) => (
+              <article key={item.question} className={styles.faqItem}>
+                <h3 className={styles.faqQuestion}>{item.question}</h3>
+                <p className={styles.faqAnswer}>{item.answer}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className={styles.ctaSection}>
         <div className={styles.ctaContent}>
           <h2 className={styles.ctaTitle}>
@@ -212,7 +207,11 @@ export default function SEOLandingPage({
           </h2>
           <p className={styles.ctaDescription}>
             {ctaDescription ||
-              `Browse ${serviceCount > 0 ? `${serviceCount} verified services` : 'our verified professionals'} and book your appointment online today.`}
+              `Browse ${
+                serviceCount > 0
+                  ? `${serviceCount} verified services`
+                  : 'our verified professionals'
+              } and book your appointment online today.`}
           </p>
           <Link href={ctaButtonLink} className={styles.ctaButton}>
             {ctaButtonText}

@@ -5,16 +5,16 @@ import { useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { Salon, Service, GalleryImage, Review } from '@/types';
 import BookingModal from '@/components/BookingModal/BookingModal';
-import BookingConfirmationModal from '@/components/BookingConfirmationModal/BookingConfirmationModal';
 import ImageLightbox from '@/components/ImageLightbox';
 import { useSocket } from '@/context/SocketContext';
 import { useAuth } from '@/hooks/useAuth';
-import { useAuthModal } from '@/context/AuthModalContext';
 import { usePagePerformance } from '@/hooks/usePagePerformance';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
+import SimilarSalons from '@/components/SimilarSalons/SimilarSalons';
 import MobileSalonProfile from './MobileSalonProfile';
 import DesktopSalonProfile from './DesktopSalonProfile';
+import { getGuestFavoriteSalonIds, toggleGuestFavoriteSalon } from '@/lib/guestFavorites';
 
 type Props = {
   initialSalon: Salon | null;
@@ -26,7 +26,6 @@ const EMPTY_REVIEWS: Review[] = [];
 export default function SalonProfileClient({ initialSalon, salonId }: Props) {
   const searchParams = useSearchParams();
   const { authStatus } = useAuth();
-  const { openModal } = useAuthModal();
   const socket = useSocket();
   usePagePerformance('salon_detail');
 
@@ -38,12 +37,26 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxStartIndex, setLightboxStartIndex] = useState(0);
-  const [showBookingConfirmation, setShowBookingConfirmation] = useState(false);
-  const [pendingBookingService, setPendingBookingService] = useState<Service | null>(null);
   const [logoError, setLogoError] = useState(false);
   const [activeSection, setActiveSection] = useState('services-section');
 
   const reviews = salon?.reviews ?? EMPTY_REVIEWS;
+
+  useEffect(() => {
+    if (!salon || authStatus === 'authenticated') {
+      return;
+    }
+
+    const guestFavoriteIds = getGuestFavoriteSalonIds();
+    const isGuestFavorited = guestFavoriteIds.has(salon.id);
+    if (salon.isFavorited === isGuestFavorited) {
+      return;
+    }
+
+    setSalon((prev) => (
+      prev ? { ...prev, isFavorited: isGuestFavorited } : null
+    ));
+  }, [authStatus, salon]);
 
   useEffect(() => {
     const serviceId = searchParams.get('serviceId');
@@ -249,12 +262,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
   };
 
   const handleBookClick = (service: Service) => {
-    if (salon.bookingMessage) {
-      setPendingBookingService(service);
-      setShowBookingConfirmation(true);
-      return;
-    }
-
     setSelectedService(service);
     setShowBookingModal(true);
   };
@@ -265,27 +272,23 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
       return;
     }
 
+    if (selectedSvcs.length > 1) {
+      toast.info('Bookings currently start with one service at a time. We selected the first service for checkout.');
+    }
+
     const primaryService = selectedSvcs[0];
     handleBookClick(primaryService);
   };
 
-  const handleBookingConfirmationAccept = () => {
-    setShowBookingConfirmation(false);
-    if (!pendingBookingService) return;
-    setSelectedService(pendingBookingService);
-    setShowBookingModal(true);
-    setPendingBookingService(null);
-  };
-
-  const handleBookingConfirmationClose = () => {
-    setShowBookingConfirmation(false);
-    setPendingBookingService(null);
-  };
-
   const handleToggleFavorite = async () => {
+    if (!salon) {
+      return;
+    }
+
     if (authStatus !== 'authenticated') {
-      toast.info('Please log in to add to favorites.');
-      openModal('login');
+      const { favorited } = toggleGuestFavoriteSalon(salon);
+      setSalon((prev) => (prev ? { ...prev, isFavorited: favorited } : null));
+      toast.success(favorited ? 'Saved to favorites on this device.' : 'Removed from saved salons.');
       return;
     }
 
@@ -333,15 +336,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
         />
       )}
 
-      <BookingConfirmationModal
-        isOpen={showBookingConfirmation}
-        onClose={handleBookingConfirmationClose}
-        onAccept={handleBookingConfirmationAccept}
-        salonName={salon.name || ''}
-        salonLogo={salon.backgroundImage || undefined}
-        message={salon.bookingMessage || ''}
-      />
-
       <MobileSalonProfile
         salon={salon}
         services={services}
@@ -354,11 +348,11 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
         longitude={salon.longitude}
         mapsHref={mapsHref}
         onOpenLightbox={openLightbox}
+        onToggleFavorite={handleToggleFavorite}
         onBookService={handleBookClick}
         onBookNow={() => {
           if (services.length > 0) {
-            setSelectedService(null);
-            setShowBookingModal(true);
+            handleBookClick(services[0]);
           }
         }}
       />
@@ -380,10 +374,15 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
         openLightbox={openLightbox}
         onToggleFavorite={handleToggleFavorite}
         onBookServices={handleMultiServiceBook}
-        onBookNow={() => {
-          setSelectedService(null);
-          setShowBookingModal(true);
-        }}
+      />
+
+      <SimilarSalons
+        currentSalonId={salon.id}
+        city={salon.city}
+        province={salon.province}
+        latitude={salon.latitude}
+        longitude={salon.longitude}
+        currentServices={services}
       />
     </>
   );

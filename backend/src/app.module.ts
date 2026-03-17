@@ -27,22 +27,15 @@ import { ProductOrdersModule } from './product-orders/product-orders.module';
 import { SellersModule } from './sellers/sellers.module';
 import { MailModule } from './mail/mail.module';
 import { CsrfModule } from './common/csrf/csrf.module';
-import { BeforeAfterModule } from './before-after/before-after.module';
-import { VideosModule } from './videos/videos.module';
 import { TrendsModule } from './trends/trends.module';
 import { BlogsModule } from './blogs/blogs.module';
-import { AvailabilityModule } from './availability/availability.module';
 import { SeoModule } from './seo/seo.module';
-import { CandidatesModule } from './candidates/candidates.module';
 import { TeamMembersModule } from './team-members/team-members.module';
-import { JobPostingsModule } from './job-postings/job-postings.module';
 import { Top10RequestsModule } from './top10-requests/top10-requests.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TasksModule } from './tasks/tasks.module';
 import { UserAddressesModule } from './user-addresses/user-addresses.module';
 import { SalonMaterialsModule } from './salon-materials/salon-materials.module';
-import { VideoShortsModule } from './video-shorts/video-shorts.module';
-import { CashbackModule } from './cashback/cashback.module';
 
 @Module({
   imports: [
@@ -88,22 +81,15 @@ import { CashbackModule } from './cashback/cashback.module';
     SellersModule,
     MailModule,
     CsrfModule,
-    BeforeAfterModule,
-    VideosModule,
     TrendsModule,
     BlogsModule,
-    AvailabilityModule,
     SeoModule,
-    CandidatesModule,
     TeamMembersModule,
-    JobPostingsModule,
     Top10RequestsModule,
     ScheduleModule.forRoot(),
     TasksModule,
     UserAddressesModule,
     SalonMaterialsModule,
-    VideoShortsModule,
-    CashbackModule,
   ],
   controllers: [AppController],
   providers: [

@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "node .next/standalone/server.js",
+    "start": "node scripts/start-standalone.cjs",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "clear-cache": "node -e \"const fs = require('fs'); const path = require('path'); function rmDir(dir) { if (fs.existsSync(dir)) { fs.readdirSync(dir).forEach(f => { const filePath = path.join(dir, f); fs.statSync(filePath).isDirectory() ? rmDir(filePath) : fs.unlinkSync(filePath); }); fs.rmdirSync(dir); } } rmDir('.next'); console.log('Cache cleared!');\""

@@ -1,31 +1,35 @@
-import type { Metadata } from 'next';
-
 type Props = {
   children: React.ReactNode;
   params: Promise<{ location: string; city: string }>;
 };
 
 // City data with SEO information
-const CITY_DATA: Record<string, Record<string, {
-  name: string;
-  province: string;
-  description: string;
-  keywords: string[];
-  population?: string;
-}>> = {
+const CITY_DATA: Record<
+  string,
+  Record<
+    string,
+    {
+      name: string;
+      province: string;
+      description: string;
+      keywords: string[];
+      population?: string;
+    }
+  >
+> = {
   'gauteng': {
     'johannesburg': {
       name: 'Johannesburg',
       province: 'Gauteng',
-      description: 'Find the best hair salons, nail salons, spas, and beauty services near you in Johannesburg.',
-      keywords: ['hair salon near me Johannesburg', 'nail salon near me Johannesburg', 'spa near me Johannesburg']
+      description: 'Browse hair salons, nail salons, spas, and beauty services in Johannesburg.',
+      keywords: ['hair salon near me Johannesburg', 'nail salon near me Johannesburg', 'spa near me Johannesburg'],
     },
 
     'pretoria': {
       name: 'Pretoria',
       province: 'Gauteng',
       population: '2.5M',
-      description: 'Discover top beauty salons, hair stylists, nail technicians, and spa services near you in Pretoria. Book appointments for hair braiding, weaving, natural hair care, gel nails, acrylic nails, full body massages, facials, microblading, lash extensions, and professional makeup in Tshwane. Find affordable salons and luxury wellness centers.',
+      description: 'Browse beauty salons, hair stylists, nail technicians, and spa services in Pretoria. Discover hair braiding, weaving, natural hair care, gel nails, acrylic nails, massages, facials, microblading, lash extensions, and makeup services across Tshwane.',
       keywords: [
         'hair salon near me Pretoria',
         'nail salon near me Pretoria',
@@ -46,13 +50,13 @@ const CITY_DATA: Record<string, Record<string, {
         'bridal hairstylist near me Pretoria',
         'day spa near me Pretoria',
         'waxing near me Pretoria',
-        'beauty therapist near me Pretoria'
-      ]
+        'beauty therapist near me Pretoria',
+      ],
     },
     'sandton': {
       name: 'Sandton',
       province: 'Gauteng',
-      description: 'Book luxury beauty services, premium hair salons, upscale nail bars, and exclusive spa treatments in Sandton. Find top-rated salons for balayage, keratin treatments, hair highlights, luxury manicures, gel nails, hot stone massages, hydrafacials, microblading, lash extensions, and bridal beauty packages. Experience world-class beauty and wellness.',
+      description: 'Browse luxury beauty services, premium hair salons, upscale nail bars, and spa treatments in Sandton. Discover balayage, keratin treatments, hair highlights, manicures, gel nails, massages, hydrafacials, microblading, lash extensions, and bridal beauty services.',
       keywords: [
         'luxury spa near me Sandton',
         'best hair salon in Sandton',
@@ -73,14 +77,14 @@ const CITY_DATA: Record<string, Record<string, {
         'full body massage Sandton',
         'beauty salon packages Sandton',
         'medical spa near me Sandton',
-        'premium beauty services Sandton'
-      ]
+        'premium beauty services Sandton',
+      ],
     },
     'soweto': {
       name: 'Soweto',
       province: 'Gauteng',
       population: '1.3M',
-      description: 'Find affordable hair salons, nail technicians, beauty therapists, and wellness services near you in Soweto. Book appointments for african hair braiding, weaving, dreadlocks, natural hair styling, gel nails, manicures, pedicures, massages, facials, makeup, and beauty treatments. Support local salons and mobile hairstylists.',
+      description: 'Browse affordable hair salons, nail technicians, beauty therapists, and wellness services in Soweto. Discover braiding, weaving, dreadlocks, natural hair styling, gel nails, manicures, pedicures, massages, facials, makeup, and other beauty treatments.',
       keywords: [
         'hair salon near me Soweto',
         'african hair braiding near me Soweto',
@@ -101,13 +105,13 @@ const CITY_DATA: Record<string, Record<string, {
         'facial near me Soweto',
         'braiding salon Soweto',
         'beauty therapist Soweto',
-        'walk-in salon near me Soweto'
-      ]
+        'walk-in salon near me Soweto',
+      ],
     },
     'midrand': {
       name: 'Midrand',
       province: 'Gauteng',
-      description: 'Discover quality hair salons, nail bars, spas, and beauty services in Midrand. Book appointments for hair styling, braiding, weaving, gel nails, manicures, massages, facials, makeup, lash extensions, and wellness treatments. Find convenient beauty salons between Johannesburg and Pretoria.',
+      description: 'Browse hair salons, nail bars, spas, and beauty services in Midrand. Discover hair styling, braiding, weaving, gel nails, manicures, massages, facials, makeup, lash extensions, and wellness treatments between Johannesburg and Pretoria.',
       keywords: [
         'hair salon near me Midrand',
         'nail salon near me Midrand',
@@ -123,16 +127,16 @@ const CITY_DATA: Record<string, Record<string, {
         'lash extensions near me Midrand',
         'nail bar Midrand',
         'beauty services Midrand',
-        'spa packages Midrand'
-      ]
-    }
+        'spa packages Midrand',
+      ],
+    },
   },
   'western-cape': {
     'cape-town': {
       name: 'Cape Town',
       province: 'Western Cape',
       population: '4.7M',
-      description: 'Find premium hair salons, nail spas, luxury day spas, and beauty professionals near you in Cape Town. Book appointments for hair styling, balayage, keratin treatments, gel nails, nail art, Swedish massages, hot stone therapy, hydrafacials, microblading, lash extensions, and bridal beauty packages. Experience Mother City beauty excellence.',
+      description: 'Browse hair salons, nail spas, day spas, and beauty professionals in Cape Town. Discover hair styling, balayage, keratin treatments, gel nails, nail art, massages, hydrafacials, microblading, lash extensions, and bridal beauty services across the city.',
       keywords: [
         'hair salon near me Cape Town',
         'nail salon near me Cape Town',
@@ -153,13 +157,13 @@ const CITY_DATA: Record<string, Record<string, {
         'lash extensions Cape Town',
         'nail art near me Cape Town',
         'bridal makeup Cape Town',
-        'keratin treatment Cape Town'
-      ]
+        'keratin treatment Cape Town',
+      ],
     },
     'stellenbosch': {
       name: 'Stellenbosch',
       province: 'Western Cape',
-      description: 'Book quality hair salons, nail services, spa treatments, and beauty professionals in Stellenbosch. Find salons offering hair styling, coloring, gel nails, manicures, massages, facials, makeup, and wellness treatments in the Winelands.',
+      description: 'Browse hair salons, nail services, spa treatments, and beauty professionals in Stellenbosch. Discover hair styling, coloring, gel nails, manicures, massages, facials, makeup, and wellness treatments in the Winelands.',
       keywords: [
         'hair salon near me Stellenbosch',
         'nail salon near me Stellenbosch',
@@ -170,61 +174,15 @@ const CITY_DATA: Record<string, Record<string, {
         'gel nails near me Stellenbosch',
         'manicure near me Stellenbosch',
         'makeup artist near me Stellenbosch',
-        'facial near me Stellenbosch'
-      ]
-    }
+        'facial near me Stellenbosch',
+      ],
+    },
   },
 };
 
 // All city layout pages generated on-demand
 export async function generateStaticParams() {
   return [];
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { location, city } = await params;
-
-  const cityInfo = CITY_DATA[location]?.[city];
-
-  if (!cityInfo) {
-    return {
-      title: '💇 Salons & Beauty Services Near Me | Stylr SA',
-      description: '✓ Find verified salons and beauty professionals near you in South Africa. Book online instantly!',
-    };
-  }
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
-  const canonicalUrl = `${siteUrl}/salons/location/${location}/${city}`;
-
-  // Enhanced title with emojis and trust signals
-  const title = `⭐ Best Salons in ${cityInfo.name} | Book Online Today | Stylr SA`;
-
-  // Enhanced description with trust signals and CTAs
-  const description = `✓ Top-rated salons in ${cityInfo.name} ✓ Instant online booking ✓ Verified reviews ✓ 5% cashback. Find hair, nails, spa & beauty services near you!`;
-
-  const keywords = cityInfo.keywords.join(', ');
-
-  return {
-    title,
-    description,
-    keywords,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    openGraph: {
-      title: `Best Salons in ${cityInfo.name} | Stylr SA`,
-      description,
-      url: canonicalUrl,
-      siteName: 'Stylr SA',
-      type: 'website',
-      locale: 'en_ZA',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `Best Salons in ${cityInfo.name} | Stylr SA`,
-      description,
-    },
-  };
 }
 
 export default async function CityLayout({ children, params }: Props) {

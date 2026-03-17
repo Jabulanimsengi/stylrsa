@@ -101,25 +101,7 @@ export default function GalleryUploadModal({ salonId, onClose, onImageAdded }: G
     setError('');
 
     try {
-      // Check salon plan to enforce FREE limit client-side and avoid partial batch failures
-      let allowed = files.length;
-      try {
-        const salon = await apiJson<{ planCode?: string | null }>(`/api/salons/${salonId}`);
-        if (salon?.planCode === 'FREE') {
-          const existing = await apiJson<GalleryImage[]>(`/api/gallery/salon/${salonId}`);
-          const remaining = Math.max(0, 5 - (existing?.length ?? 0));
-          if (remaining <= 0) {
-            toast.error('Free plan limit reached: you already have 5 gallery images.');
-            setIsLoading(false);
-            return;
-          }
-          allowed = Math.min(allowed, remaining);
-        }
-      } catch {
-        // If plan check fails, proceed with best effort (server will enforce)
-      }
-
-      const toUpload = files.slice(0, allowed);
+      const toUpload = files;
       let successCount = 0;
       
       if (toUpload.length > 0) {
@@ -139,10 +121,7 @@ export default function GalleryUploadModal({ salonId, onClose, onImageAdded }: G
       }
 
       if (successCount > 0) {
-        toast.success(`${successCount} image(s) uploaded successfully${successCount < files.length ? ' (limit reached)' : ''}.`);
-      }
-      if (successCount < files.length) {
-        toast.info('Some images were not uploaded due to the free plan gallery limit (5).');
+        toast.success(`${successCount} image(s) uploaded successfully.`);
       }
       cleanupPreviews();
       onClose();
@@ -173,12 +152,12 @@ export default function GalleryUploadModal({ salonId, onClose, onImageAdded }: G
       title="Upload to Gallery"
       description="Add new portfolio images to your salon gallery."
       size="lg"
-      className={styles.modalContent}
+      className={styles.modalShell}
       bodyClassName="px-0 py-0"
     >
-      <div className={styles.modalContent}>
+      <div className={styles.modalBody}>
         <div className={styles.header}>
-            <button onClick={handleClose} className={styles.closeButton}><FaTimes /></button>
+            <button type="button" onClick={handleClose} className={styles.closeButton}><FaTimes /></button>
         </div>
         
         <form onSubmit={handleSubmit} className={styles.form}>

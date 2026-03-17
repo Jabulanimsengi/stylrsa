@@ -70,7 +70,7 @@
   margin-top: 1rem;
 }
 
-/* Sections for AddressBook and CashbackWallet */
+/* Shared profile sections */
 .section {
   max-width: 600px;
   margin: 0 auto 1.5rem;
@@ -139,7 +139,7 @@
 /* ===== 375px breakpoint for iPhone SE, iPhone 12 mini ===== */
 @media (max-width: 375px) {
   .container {
-    --page-inline-padding: 0.625rem;
+    --page-inline-padding: 0.75rem;
   }
 
   .title {
@@ -169,7 +169,7 @@
 /* ===== 320px breakpoint for very small devices ===== */
 @media (max-width: 320px) {
   .container {
-    --page-inline-padding: 0.5rem;
+    --page-inline-padding: 0.75rem;
   }
 
   .title {

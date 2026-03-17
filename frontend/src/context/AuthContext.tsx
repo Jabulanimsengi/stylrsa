@@ -2,6 +2,7 @@
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { STORAGE_KEYS } from '@/constants/config';
 import { User } from '@/types';
 
 type AuthStatus = 'authenticated' | 'unauthenticated' | 'loading';
@@ -35,11 +36,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    if (sessionStatus === 'unauthenticated') {
+      setAuthStatus('unauthenticated');
+      setUser(null);
+      attachedRef.current = null;
+      return;
+    }
+
     verifyingRef.current = true;
 
     try {
       // If NextAuth session exists, attach backend JWT cookie first (idempotent)
-      const backendJwt = (session as any)?.backendJwt as string | undefined;
+      const backendJwt = (session as { backendJwt?: string } | null)?.backendJwt;
       if (sessionStatus === 'authenticated' && backendJwt && attachedRef.current !== backendJwt) {
         attachedRef.current = backendJwt;
         try {
@@ -150,7 +158,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         sessionStorage.clear();
 
         // Selectively clear localStorage - keep theme and cookie consent
-        const keysToKeep = ['theme', 'cookieConsent', 'pwa-install-dismissed'];
+        const keysToKeep = [STORAGE_KEYS.theme, STORAGE_KEYS.cookieConsent, STORAGE_KEYS.guestFavorites, 'pwa-install-dismissed'];
         const keepData: Record<string, string> = {};
 
         // Save data we want to keep

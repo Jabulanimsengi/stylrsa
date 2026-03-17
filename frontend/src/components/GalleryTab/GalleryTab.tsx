@@ -17,7 +17,7 @@ export default function GalleryTab({ images, onAddImage, onDeleteImage }: Galler
         <div className={styles.contentCard}>
             <div className={styles.cardHeader}>
                 <h3 className={styles.cardTitle}>Gallery</h3>
-                <button onClick={onAddImage} className={styles.addButton}>Add Image</button>
+                <button type="button" onClick={onAddImage} className={styles.addButton}>Add Image</button>
             </div>
 
             <div className={styles.galleryGrid}>
@@ -44,7 +44,7 @@ export default function GalleryTab({ images, onAddImage, onDeleteImage }: Galler
                         <p className={styles.emptyStateMessage}>
                             Upload photos to showcase your work and attract more customers.
                         </p>
-                        <button onClick={onAddImage} className={styles.emptyStateAction}>
+                        <button type="button" onClick={onAddImage} className={styles.emptyStateAction}>
                             Upload Your First Image
                         </button>
                     </div>

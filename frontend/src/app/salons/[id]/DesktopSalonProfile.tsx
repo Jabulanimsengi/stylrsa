@@ -10,7 +10,6 @@ import PageNav from '@/components/PageNav';
 import SocialShare from '@/components/SocialShare/SocialShare';
 import VerificationBadge from '@/components/VerificationBadge/VerificationBadge';
 import TeamMembers from '@/components/TeamMembers/TeamMembers';
-import SimilarSalons from '@/components/SimilarSalons/SimilarSalons';
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import {
   HeroGallery,
@@ -20,7 +19,6 @@ import {
 } from './BooksyComponents';
 import FreshaServiceList from '@/components/FreshaServiceList';
 import { getSalonUrl } from '@/utils/salonUrl';
-import SalonBookingRail from './SalonBookingRail';
 
 interface DesktopSalonProfileProps {
   salon: Salon;
@@ -39,7 +37,6 @@ interface DesktopSalonProfileProps {
   openLightbox: (images: string[], index: number) => void;
   onToggleFavorite: () => void;
   onBookServices: (selectedServices: Service[]) => void;
-  onBookNow: () => void;
 }
 
 export default function DesktopSalonProfile({
@@ -59,93 +56,145 @@ export default function DesktopSalonProfile({
   openLightbox,
   onToggleFavorite,
   onBookServices,
-  onBookNow,
 }: DesktopSalonProfileProps) {
   const galleryImageUrls = galleryImages.map((img) => img.imageUrl);
+  const bookingTypeLabel = salon.bookingType === 'BOTH'
+    ? 'Mobile and in-salon bookings'
+    : salon.bookingType === 'MOBILE'
+      ? 'Mobile bookings available'
+      : 'In-salon bookings';
 
   return (
     <div className={mobileStyles.desktopProfile}>
       <PageNav />
-      <div className={styles.stickyHeaderContent}>
-        <div className={styles.headerLeftSection}>
-          {salon.logo && !logoError ? (
-            <div
-              className={styles.logoWrapper}
-              onClick={() => openLightbox([salon.logo || ''], 0)}
-              style={{ cursor: 'pointer' }}
-              title="Click to view full logo"
-            >
+      <div className={styles.container}>
+        <section className={styles.profileHero}>
+          {salon.backgroundImage && (
+            <div className={styles.profileHeroBackdrop}>
               <OptimizedImage
-                src={salon.logo}
-                alt={`${salon.name} logo`}
-                className={styles.salonLogo}
-                width={88}
-                height={88}
-                seoContext={{ salonName: salon.name, city: salon.city }}
-                onError={() => setLogoError(true)}
+                src={salon.backgroundImage}
+                alt={`${salon.name} background`}
+                fill
                 eager
+                className={styles.profileHeroImage}
+                sizes="100vw"
+                seoContext={{ salonName: salon.name, city: salon.city }}
               />
-            </div>
-          ) : (
-            <div className={styles.logoPlaceholder}>
-              <span>{salon.name.charAt(0).toUpperCase()}</span>
+              <div className={styles.profileHeroOverlay} />
             </div>
           )}
-          <div className={styles.headerSalonInfo}>
-            <h1 className={styles.headerSalonName}>
-              {salon.name}
-              {salon.isVerified && <VerificationBadge size="small" />}
-            </h1>
-            {salon.city && (
-              <span className={styles.headerSalonLocation}>
-                <FaMapMarkerAlt /> {salon.city}, {salon.province}
-              </span>
-            )}
-            {(salon.website || salon.whatsapp) && (
-              <div className={styles.headerContactLinks}>
-                {salon.website && (
-                  <a
-                    href={salon.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.headerContactLink}
-                    title="Visit website"
+
+          <div className={styles.profileHeroCard}>
+            <div className={styles.profileHeroTopRow}>
+              <div className={styles.profileIdentityBlock}>
+                {salon.logo && !logoError ? (
+                  <button
+                    type="button"
+                    className={styles.logoButton}
+                    onClick={() => openLightbox([salon.logo || ''], 0)}
+                    title="View full logo"
                   >
-                    <FaGlobe /> Website
-                  </a>
+                    <OptimizedImage
+                      src={salon.logo}
+                      alt={`${salon.name} logo`}
+                      className={styles.salonLogo}
+                      width={88}
+                      height={88}
+                      seoContext={{ salonName: salon.name, city: salon.city }}
+                      onError={() => setLogoError(true)}
+                      eager
+                    />
+                  </button>
+                ) : (
+                  <div className={styles.logoPlaceholder}>
+                    <span>{salon.name.charAt(0).toUpperCase()}</span>
+                  </div>
                 )}
-                {salon.whatsapp && (
-                  <a
-                    href={`https://wa.me/${salon.whatsapp.replace(/[^0-9]/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.headerContactLink}
-                    title="Message on WhatsApp"
-                  >
-                    <FaWhatsapp /> WhatsApp
-                  </a>
+
+                <div className={styles.profileCopy}>
+                  <span className={styles.profileEyebrow}>Salon profile</span>
+                  <h1 className={styles.profileTitle}>
+                    {salon.name}
+                    {salon.isVerified && <VerificationBadge size="small" />}
+                  </h1>
+                  <div className={styles.profileMetaRow}>
+                    {salon.city && (
+                      <span className={styles.profileMetaPill}>
+                        <FaMapMarkerAlt /> {salon.city}, {salon.province}
+                      </span>
+                    )}
+                    <span className={styles.profileMetaPill}>{bookingTypeLabel}</span>
+                    {salon.website && (
+                      <a
+                        href={salon.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.profileMetaPill}
+                      >
+                        <FaGlobe /> Website
+                      </a>
+                    )}
+                    {salon.whatsapp && (
+                      <a
+                        href={`https://wa.me/${salon.whatsapp.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.profileMetaPill}
+                      >
+                        <FaWhatsapp /> WhatsApp
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.profileActionCluster}>
+                <SocialShare
+                  url={`${typeof window !== 'undefined' ? window.location.origin : ''}${getSalonUrl(salon)}`}
+                  title={salon.name}
+                  description={salon.description || `Check out ${salon.name} on Stylr SA`}
+                  image={salon.backgroundImage || ''}
+                  variant="button"
+                />
+                {authStatus === 'authenticated' && (
+                  <button onClick={onToggleFavorite} className={`${styles.favoriteButton} ${salon.isFavorited ? styles.favorited : ''}`}>
+                    <FaHeart />
+                  </button>
                 )}
               </div>
-            )}
-          </div>
-        </div>
-        <div className={styles.headerSpacer}>
-          <SocialShare
-            url={`${typeof window !== 'undefined' ? window.location.origin : ''}${getSalonUrl(salon)}`}
-            title={salon.name}
-            description={salon.description || `Check out ${salon.name} on Stylr SA`}
-            image={salon.backgroundImage || ''}
-            variant="button"
-          />
-          {authStatus === 'authenticated' && (
-            <button onClick={onToggleFavorite} className={`${styles.favoriteButton} ${salon.isFavorited ? styles.favorited : ''}`}>
-              <FaHeart />
-            </button>
-          )}
-        </div>
-      </div>
+            </div>
 
-      <div className={styles.container}>
+            <div className={styles.profileTrustGrid}>
+              <div className={styles.profileTrustCard}>
+                <span className={styles.profileTrustLabel}>Rating</span>
+                <strong className={styles.profileTrustValue}>
+                  {salon.avgRating && salon.avgRating > 0 ? salon.avgRating.toFixed(1) : 'New'}
+                </strong>
+                <span className={styles.profileTrustHint}>
+                  {reviews.length} review{reviews.length === 1 ? '' : 's'}
+                </span>
+              </div>
+              <div className={styles.profileTrustCard}>
+                <span className={styles.profileTrustLabel}>Availability</span>
+                <strong className={styles.profileTrustValue}>
+                  {salon.isAvailableNow ? 'Open now' : 'Closed'}
+                </strong>
+                <span className={styles.profileTrustHint}>Live booking status</span>
+              </div>
+              <div className={styles.profileTrustCard}>
+                <span className={styles.profileTrustLabel}>Services</span>
+                <strong className={styles.profileTrustValue}>{services.length}</strong>
+                <span className={styles.profileTrustHint}>Treatments listed</span>
+              </div>
+              <div className={styles.profileTrustCard}>
+                <span className={styles.profileTrustLabel}>Gallery</span>
+                <strong className={styles.profileTrustValue}>{galleryImages.length}</strong>
+                <span className={styles.profileTrustHint}>Portfolio images</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <StickyTabNavigation
           activeSection={activeSection}
           onTabClick={(sectionId) => {
@@ -213,24 +262,6 @@ export default function DesktopSalonProfile({
             )}
           </div>
 
-          <div className={booksyStyles.booksySidebarColumn}>
-            <SalonBookingRail
-              salon={salon}
-              services={services}
-              reviewsCount={reviews.length}
-              mapsHref={mapsHref}
-              onBookNow={onBookNow}
-              onShowServices={() => setActiveSection('services-section')}
-            />
-          </div>
-
-          <div className={booksyStyles.booksyFullWidth}>
-            <SimilarSalons
-              currentSalonId={salon.id}
-              city={salon.city}
-              province={salon.province}
-            />
-          </div>
         </div>
       </div>
     </div>

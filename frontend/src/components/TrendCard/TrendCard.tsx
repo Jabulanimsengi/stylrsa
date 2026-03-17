@@ -25,7 +25,7 @@ export default function TrendCard({ trend, onLike }: TrendCardProps) {
   const { authStatus } = useAuth();
   const { openModal } = useAuthModal();
   const router = useRouter();
-  const { setIsNavigating } = useNavigationLoading();
+  const { showPageLoader } = useNavigationLoading();
 
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -62,7 +62,7 @@ export default function TrendCard({ trend, onLike }: TrendCardProps) {
       }
 
       onLike?.(trend.id, !isLiked);
-    } catch (error) {
+    } catch {
       // Revert on error
       setIsLiked(previousState);
       setLikeCount(previousCount);
@@ -79,7 +79,7 @@ export default function TrendCard({ trend, onLike }: TrendCardProps) {
     if ((e.target as HTMLElement).closest('button')) {
       return;
     }
-    setIsNavigating(true);
+    showPageLoader();
     router.push(`/trends/${trend.id}`);
   };
 

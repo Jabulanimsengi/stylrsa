@@ -36,7 +36,7 @@ const customerFAQs = [
 const salonOwnerFAQs = [
   {
     question: 'How do I get my salon listed on Stylr SA?',
-    answer: 'Simply click "Register" and choose the "Salon Owner" or "Seller" role. Follow the steps to build your profile, and our team will review and approve your listing.'
+    answer: 'Simply click "Register" and choose the "Service Provider" role. Follow the steps to build your profile, and our team will review and approve your listing.'
   },
   {
     question: 'Why are my gallery photos "Pending"?',
@@ -49,10 +49,6 @@ const salonOwnerFAQs = [
   {
     question: 'How do I respond to a customer review?',
     answer: "From your \"Reviews\" tab in your dashboard, you can see all your reviews. You'll have an option to write a public \"Salon Response\" to any approved review. We highly recommend responding to both positive and negative feedback!"
-  },
-  {
-    question: 'How do I list products for sale?',
-    answer: 'If you registered as a "Seller," you will have a "Product Dashboard." From there, you can add new products, upload images, set prices, and manage your inventory.'
   }
 ];
 
@@ -143,7 +139,7 @@ export default function FaqPage() {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>For Salon Owners &amp; Sellers</h2>
+          <h2 className={styles.sectionTitle}>For Salon Owners</h2>
 
           {salonOwnerFAQs.map((faq, index) => (
             <div key={index} className={styles.faqItem}>

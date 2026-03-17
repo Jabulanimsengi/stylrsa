@@ -3,8 +3,6 @@
  * Implements hub-and-spoke model for SEO internal linking
  */
 
-import { PRIORITY_CITIES } from './seo-optimization-config';
-
 /**
  * Map of nearby cities for each major city
  * Used for generating "Nearby Locations" links

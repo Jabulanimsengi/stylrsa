@@ -60,57 +60,71 @@
       color: #0c5460;
       display: block;
     }
+    .error {
+      background: #f8d7da;
+      color: #842029;
+      display: block;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🔧 Clear Service Worker</h1>
-    <p>Click the button below to unregister the service worker and clear all caches.</p>
+    <h1>Clear Service Worker</h1>
+    <p>This page automatically unregisters stale localhost service workers and clears cached Next.js assets.</p>
     <button id="clearBtn">Clear Service Worker</button>
     <div id="status" class="status"></div>
   </div>
 
   <script>
-    document.getElementById('clearBtn').addEventListener('click', async () => {
+    async function clearServiceWorker() {
       const statusEl = document.getElementById('status');
-      
+      const params = new URLSearchParams(window.location.search);
+      const returnUrl = params.get('return') || '/';
+
       try {
-        // Unregister all service workers
         if ('serviceWorker' in navigator) {
           const registrations = await navigator.serviceWorker.getRegistrations();
-          
+
           if (registrations.length === 0) {
-            statusEl.textContent = '✓ No service workers found';
+            statusEl.textContent = 'No service workers found. Redirecting back...';
             statusEl.className = 'status info';
           } else {
             for (const registration of registrations) {
               await registration.unregister();
             }
-            
-            // Clear all caches
+
             if ('caches' in window) {
               const cacheNames = await caches.keys();
-              await Promise.all(
-                cacheNames.map(cacheName => caches.delete(cacheName))
-              );
+              await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
             }
-            
-            statusEl.textContent = `✓ Successfully cleared ${registrations.length} service worker(s) and all caches! Refresh the page to continue.`;
+
+            try {
+              sessionStorage.setItem('stylrsa-dev-sw-redirected', '1');
+            } catch (storageError) {}
+
+            statusEl.textContent =
+              'Successfully cleared service workers and cached assets. Redirecting back...';
             statusEl.className = 'status success';
-            
-            // Auto-redirect after 3 seconds
-            setTimeout(() => {
-              window.location.href = '/';
-            }, 3000);
           }
-        } else {
-          statusEl.textContent = '⚠ Service workers not supported in this browser';
-          statusEl.className = 'status info';
+
+          setTimeout(() => {
+            window.location.href = returnUrl;
+          }, 1500);
+          return;
         }
+
+        statusEl.textContent = 'Service workers are not supported in this browser.';
+        statusEl.className = 'status info';
       } catch (error) {
-        statusEl.textContent = '✗ Error: ' + error.message;
+        const message = error instanceof Error ? error.message : String(error);
+        statusEl.textContent = 'Error: ' + message;
         statusEl.className = 'status error';
       }
+    }
+
+    document.getElementById('clearBtn').addEventListener('click', clearServiceWorker);
+    window.addEventListener('load', () => {
+      clearServiceWorker();
     });
   </script>
 </body>

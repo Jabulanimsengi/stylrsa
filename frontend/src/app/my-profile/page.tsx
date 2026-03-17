@@ -8,7 +8,6 @@ import { toast } from 'react-toastify';
 import { Skeleton } from '@/components/Skeleton/Skeleton';
 import PageNav from '@/components/PageNav';
 import AddressBook from '@/components/AddressBook/AddressBook';
-import CashbackWallet from '@/components/CashbackWallet/CashbackWallet';
 
 interface UserProfile {
   firstName: string;
@@ -171,11 +170,6 @@ export default function MyProfilePage() {
           </div>
         </form>
       </div>
-
-      {/* Cashback Wallet Section */}
-      <section className={styles.section}>
-        <CashbackWallet />
-      </section>
 
       {/* Address Book Section */}
       <section className={styles.section}>

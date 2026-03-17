@@ -44,9 +44,8 @@ export default function PrivacyPage() {
           <li><strong>Create an account:</strong> Name, email address, phone number, password, profile picture</li>
           <li><strong>Complete your profile:</strong> Location, preferences, bio, links to social media</li>
           <li><strong>Book services:</strong> Booking details, payment information, special requests</li>
-          <li><strong>Purchase products:</strong> Shipping address, billing information, order history</li>
           <li><strong>Communicate with us:</strong> Messages, reviews, ratings, customer support inquiries</li>
-          <li><strong>Register as a service provider or seller:</strong> Business name, registration documents, banking details, licenses, portfolio images/videos</li>
+          <li><strong>Register as a service provider:</strong> Business details, verification information, portfolio images/videos, availability, and related profile information</li>
         </ul>
 
         <h3 className={styles.blockTitle}>2.2 Information Collected Automatically</h3>
@@ -77,7 +76,7 @@ export default function PrivacyPage() {
         </p>
         <ul className={styles.list}>
           <li><strong>Provide and improve our services:</strong> Process bookings, facilitate transactions, manage accounts</li>
-          <li><strong>Personalize your experience:</strong> Recommend salons, services, and products based on your preferences</li>
+          <li><strong>Personalize your experience:</strong> Recommend salons, services, and professionals based on your preferences</li>
           <li><strong>Communicate with you:</strong> Send booking confirmations, updates, promotional offers, newsletters</li>
           <li><strong>Process payments:</strong> Handle transactions securely through our payment partners</li>
           <li><strong>Ensure platform security:</strong> Detect and prevent fraud, abuse, and security incidents</li>
@@ -102,9 +101,9 @@ export default function PrivacyPage() {
           We do not sell your personal information. We may share your information with:
         </p>
         
-        <h3 className={styles.blockTitle}>5.1 Service Providers and Sellers</h3>
+        <h3 className={styles.blockTitle}>5.1 Service Providers and Partners</h3>
         <p className={styles.paragraph}>
-          When you book a service or purchase a product, we share relevant information (name, contact details, booking/order details) with the service provider or seller to fulfill your request.
+          When you book a service, we share relevant information such as your name, contact details, and booking details with the relevant service provider or platform partner to fulfill your request.
         </p>
 
         <h3 className={styles.blockTitle}>5.2 Service Partners</h3>

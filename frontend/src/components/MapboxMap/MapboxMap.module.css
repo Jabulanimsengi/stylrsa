@@ -3,6 +3,7 @@
     border-radius: 8px;
     overflow: hidden;
     position: relative;
+    background: #f6f8f7;
 }
 
 .mapContainer canvas {
@@ -82,6 +83,40 @@
     font-size: 0.875rem;
     color: var(--color-text-muted, #666);
     z-index: -1;
+}
+
+.mapFallback::after {
+    content: none;
+}
+
+.mapFallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(20, 37, 33, 0.08);
+    background:
+        linear-gradient(135deg, rgba(220, 232, 226, 0.9), rgba(246, 248, 247, 0.96));
+}
+
+.mapFallbackContent {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 320px;
+    padding: 20px;
+    text-align: center;
+    color: #17332c;
+}
+
+.mapFallbackContent strong {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.mapFallbackContent span {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: rgba(23, 51, 44, 0.72);
 }
 
 /* Navigation controls styling - nested under mapContainer for CSS modules compatibility */

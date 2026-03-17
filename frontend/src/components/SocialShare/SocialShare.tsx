@@ -17,22 +17,13 @@ export default function SocialShare({
   url,
   title,
   description = '',
-  image = '',
   variant = 'button'
 }: SocialShareProps) {
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const shareData = {
-    url,
-    title,
-    description,
-    image
-  };
-
   const handleShare = async (platform: 'native' | 'facebook' | 'twitter' | 'whatsapp' | 'copy') => {
     const encodedUrl = encodeURIComponent(url);
     const encodedTitle = encodeURIComponent(title);
-    const encodedDescription = encodeURIComponent(description || title);
 
     try {
       switch (platform) {

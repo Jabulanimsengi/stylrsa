@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import styles from '../info-page.module.css';
+import { buildAuthRoute } from '@/constants/routes';
 import PageNav from '@/components/PageNav';
 
 export const metadata: Metadata = {
@@ -16,6 +17,8 @@ export const metadata: Metadata = {
 };
 
 export default function SupportPage() {
+  const providerSignupHref = buildAuthRoute.providerRegister('/create-salon');
+
   return (
     <div className={styles.container}>
       <PageNav />
@@ -77,7 +80,7 @@ export default function SupportPage() {
         
         <h3 className={styles.blockTitle}>Getting Started</h3>
         <ul className={styles.list}>
-          <li><strong>Register as a partner:</strong> Visit <Link href="/create-salon">Create Salon</Link> page</li>
+          <li><strong>Register as a partner:</strong> Visit the <Link href={providerSignupHref}>Create Salon</Link> page</li>
           <li><strong>Profile setup:</strong> Complete all sections for better visibility</li>
           <li><strong>Verification:</strong> Upload required documents for account verification</li>
           <li><strong>Partner guidelines:</strong> Read our <Link href="/partner-guidelines">Partner Guidelines</Link></li>

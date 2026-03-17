@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -51,9 +52,11 @@ function Avatar({
             {...props}
         >
             {showImage ? (
-                <img
+                <Image
                     src={src}
                     alt={alt || 'Avatar'}
+                    fill
+                    unoptimized
                     className="aspect-square h-full w-full object-cover"
                     onError={() => setHasError(true)}
                 />

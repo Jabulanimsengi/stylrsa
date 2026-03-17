@@ -4,7 +4,7 @@ import React from 'react';
 import { FaTrash, FaEdit } from 'react-icons/fa';
 import { Button } from '@/components/ui';
 import StatusBadge from '@/components/StatusBadge';
-import { Service, ApprovalStatus } from '@/types';
+import { Service } from '@/types';
 import styles from '../../app/dashboard/Dashboard.module.css';
 
 interface ServicesTabProps {

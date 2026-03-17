@@ -125,13 +125,13 @@ export default function PendingSalons({
             </div>
 
             {filteredSalons.length > 0 ? filteredSalons.map((salon) => {
-                const planCode = (salon.planCode ?? 'FREE') as PlanCode;
+                const planCode = (salon.planCode ?? 'PREMIUM') as PlanCode;
                 const plan = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
                 const amountDue = typeof salon.planPriceCents === 'number'
                     ? formatRand(salon.planPriceCents)
                     : plan.price;
                 const paymentStatus = (salon.planPaymentStatus ?? 'PENDING_SELECTION') as PlanPaymentStatus;
-                const isFree = planCode === 'FREE';
+                const isFree = paymentStatus === 'VERIFIED';
                 const proofSubmittedAt = salon.planProofSubmittedAt
                     ? new Date(salon.planProofSubmittedAt).toLocaleString('en-ZA')
                     : null;
@@ -163,7 +163,7 @@ export default function PendingSalons({
                             </div>
                             <div className={styles.collapsibleHeaderRight}>
                                 <span className={`${styles.collapsibleStatus} ${isFree ? styles.free : styles.pending}`}>
-                                    {isFree ? 'FREE' : 'Pending'}
+                                    {isFree ? 'Verified' : 'Pending'}
                                 </span>
                                 <span className={`${styles.collapsibleToggle} ${isExpanded ? styles.open : ''}`}>▼</span>
                             </div>
@@ -178,20 +178,15 @@ export default function PendingSalons({
                                     <div className={styles.planInfo}>
                                         <div className={styles.planInfoRow}>
                                             <span><strong>Package:</strong> {plan.name}</span>
-                                            <span><strong>Amount due:</strong> {isFree ? 'R0' : amountDue}</span>
+                                            <span><strong>Amount due:</strong> {amountDue}</span>
                                             <span>
                                                 <strong>Status:</strong>{' '}
-                                                {isFree ? (
-                                                    <span className={`${styles.planBadge} ${styles[`planStatus_verified`]}`}>No payment required</span>
-                                                ) : (
-                                                    <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`}>
-                                                        {PLAN_PAYMENT_LABELS[paymentStatus]}
-                                                    </span>
-                                                )}
+                                                <span className={`${styles.planBadge} ${styles[`planStatus_${paymentStatus.toLowerCase()}`]}`}>
+                                                    {PLAN_PAYMENT_LABELS[paymentStatus]}
+                                                </span>
                                             </span>
                                         </div>
-                                        {!isFree && (
-                                            <>
+                                        <>
                                                 <div className={styles.planInfoRow}>
                                                     <span>
                                                         <strong>Reference:</strong>{' '}
@@ -233,8 +228,7 @@ export default function PendingSalons({
                                                         {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving…' : 'Awaiting proof'}
                                                     </button>
                                                 </div>
-                                            </>
-                                        )}
+                                        </>
                                     </div>
                                 </div>
                                 <div className={styles.actions}>

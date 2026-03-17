@@ -7,6 +7,7 @@ async function main() {
   console.log('Start seeding ...');
   // Seed plans
   const plans = [
+    { code: 'PREMIUM', name: 'Service Listing Plan', priceCents: 39900, visibilityWeight: 5, maxListings: 9999 },
     { code: 'FREE', name: 'Free', priceCents: 0, visibilityWeight: 0, maxListings: 1 },
     { code: 'STARTER', name: 'Starter', priceCents: 4900, visibilityWeight: 1, maxListings: 3 },
     { code: 'ESSENTIAL', name: 'Essential', priceCents: 9900, visibilityWeight: 2, maxListings: 7 },

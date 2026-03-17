@@ -71,6 +71,7 @@ export class SEOPageGeneratorService {
   private readonly logger = new Logger(SEOPageGeneratorService.name);
   private readonly cache = new Map<string, { data: SEOPageData; expiry: number }>();
   private readonly MEMORY_CACHE_TTL = 3600000; // 1 hour in memory only
+  private readonly parentLocationCache = new Map<string, SeoLocation | null>();
 
   constructor(private prisma: PrismaService) { }
 
@@ -92,6 +93,25 @@ export class SEOPageGeneratorService {
       data,
       expiry: Date.now() + this.MEMORY_CACHE_TTL,
     });
+  }
+
+  private async getParentLocation(
+    parentLocationId: string | null,
+  ): Promise<SeoLocation | null> {
+    if (!parentLocationId) {
+      return null;
+    }
+
+    if (this.parentLocationCache.has(parentLocationId)) {
+      return this.parentLocationCache.get(parentLocationId) || null;
+    }
+
+    const parentLocation = await this.prisma.seoLocation.findUnique({
+      where: { id: parentLocationId },
+    });
+
+    this.parentLocationCache.set(parentLocationId, parentLocation);
+    return parentLocation;
   }
 
   /**
@@ -421,11 +441,13 @@ ${avgPrice ? `Competitive pricing from R${avgPrice.toFixed(0)} ` : 'Transparent 
       take: limit,
     });
 
-    const links: RelatedLink[] = relatedKeywords.map(k => ({
-      label: `${k.keyword} in ${location.name}`,
-      url: this.buildUrl(k.slug, location),
-      type: 'service' as const,
-    }));
+    const links: RelatedLink[] = await Promise.all(
+      relatedKeywords.map(async (relatedKeyword) => ({
+        label: `${relatedKeyword.keyword} in ${location.name}`,
+        url: await this.buildUrl(relatedKeyword.slug, location),
+        type: 'service' as const,
+      })),
+    );
 
     this.logger.debug(`Generated ${links.length} related service links`);
     return links;
@@ -490,11 +512,13 @@ ${avgPrice ? `Competitive pricing from R${avgPrice.toFixed(0)} ` : 'Transparent 
       nearbyLocations.push(...samProvince);
     }
 
-    const links: RelatedLink[] = nearbyLocations.map(loc => ({
-      label: `${keyword.keyword} in ${loc.name}`,
-      url: this.buildUrl(keyword.slug, loc),
-      type: 'location' as const,
-    }));
+    const links: RelatedLink[] = await Promise.all(
+      nearbyLocations.map(async (nearbyLocation) => ({
+        label: `${keyword.keyword} in ${nearbyLocation.name}`,
+        url: await this.buildUrl(keyword.slug, nearbyLocation),
+        type: 'location' as const,
+      })),
+    );
 
     this.logger.debug(`Generated ${links.length} nearby location links`);
     return links;
@@ -757,11 +781,11 @@ ${avgPrice ? `Competitive pricing from R${avgPrice.toFixed(0)} ` : 'Transparent 
   /**
    * Generate breadcrumbs for the page
    */
-  generateBreadcrumbs(
+  async generateBreadcrumbs(
     keyword: SeoKeyword,
     location: SeoLocation,
     locationHierarchy?: SeoLocation[],
-  ): Breadcrumb[] {
+  ): Promise<Breadcrumb[]> {
     const breadcrumbs: Breadcrumb[] = [
       { label: 'Home', url: '/' },
       { label: keyword.keyword, url: `/${keyword.slug}` },
@@ -788,10 +812,26 @@ ${avgPrice ? `Competitive pricing from R${avgPrice.toFixed(0)} ` : 'Transparent 
           label: location.province,
           url: `/${keyword.slug}/${location.provinceSlug}`,
         });
-        // Add city/town/suburb
+
+        if (
+          (location.type === 'SUBURB' || location.type === 'TOWNSHIP') &&
+          location.parentLocationId
+        ) {
+          const parentLocation = await this.getParentLocation(
+            location.parentLocationId,
+          );
+
+          if (parentLocation) {
+            breadcrumbs.push({
+              label: parentLocation.name,
+              url: `/${keyword.slug}/${location.provinceSlug}/${parentLocation.slug}`,
+            });
+          }
+        }
+
         breadcrumbs.push({
           label: location.name,
-          url: `/${keyword.slug}/${location.provinceSlug}/${location.slug}`,
+          url: await this.buildUrl(keyword.slug, location),
         });
       }
     }
@@ -802,7 +842,7 @@ ${avgPrice ? `Competitive pricing from R${avgPrice.toFixed(0)} ` : 'Transparent 
   /**
    * Build URL for keyword + location combination
    */
-  buildUrl(keywordSlug: string, location: SeoLocation): string {
+  async buildUrl(keywordSlug: string, location: SeoLocation): Promise<string> {
     // Format: /[keyword]/[province]/[city] or /[keyword]/[province]/[city]/[suburb]
     const parts = [keywordSlug, location.provinceSlug];
 
@@ -819,9 +859,13 @@ ${avgPrice ? `Competitive pricing from R${avgPrice.toFixed(0)} ` : 'Transparent 
       (location.type === 'SUBURB' || location.type === 'TOWNSHIP') &&
       location.parentLocationId
     ) {
-      // This will be handled by the caller to fetch parent location
-      // For now, just use the suburb slug
-      return `/${parts.join('/')}`;
+      const parentLocation = await this.getParentLocation(
+        location.parentLocationId,
+      );
+
+      if (parentLocation) {
+        parts.splice(2, 0, parentLocation.slug);
+      }
     }
 
     return `/${parts.join('/')}`;
@@ -1102,6 +1146,12 @@ ${avgPrice ? `Competitive pricing from R${avgPrice.toFixed(0)} ` : 'Transparent 
     );
 
     try {
+      const cacheKey = this.getCacheKey(keyword, location);
+      const cachedPage = this.getCached(cacheKey);
+      if (cachedPage) {
+        return cachedPage;
+      }
+
       // Get counts and stats with fallbacks
       let serviceCount = 0;
       let salonCount = 0;
@@ -1150,10 +1200,10 @@ ${avgPrice ? `Competitive pricing from R${avgPrice.toFixed(0)} ` : 'Transparent 
       }
 
       // Generate breadcrumbs
-      const breadcrumbs = this.generateBreadcrumbs(keyword, location);
+      const breadcrumbs = await this.generateBreadcrumbs(keyword, location);
 
       // Build URL
-      const url = this.buildUrl(keyword.slug, location);
+      const url = await this.buildUrl(keyword.slug, location);
 
       const pageData: SEOPageData = {
         keyword,
@@ -1173,6 +1223,7 @@ ${avgPrice ? `Competitive pricing from R${avgPrice.toFixed(0)} ` : 'Transparent 
         avgPrice,
       };
 
+      this.setCache(cacheKey, pageData);
       this.logger.debug(`Generated page data for ${url}`);
       return pageData;
     } catch (error) {

@@ -1,9 +1,15 @@
 /* ===== FOOTER - MODERN DARK GREY DESIGN ===== */
 
 .footer {
-  background: #2d2d35;
+  background: linear-gradient(180deg, #2a2b36 0%, #20212a 100%);
   color: #ffffff;
   margin-top: auto;
+  border-top-left-radius: 34px;
+  border-top-right-radius: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: none;
+  box-shadow: 0 -18px 40px rgba(12, 16, 28, 0.16);
+  overflow: hidden;
 }
 
 /* ===== MAIN CONTENT GRID ===== */
@@ -81,12 +87,24 @@
 }
 
 .columnTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #ffffff;
   margin: 0 0 0.25rem 0;
+}
+
+.columnIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .linkList {
@@ -112,6 +130,13 @@
 
 .linkList a:hover {
   color: #ffffff;
+}
+
+.columnNote {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.58);
 }
 
 /* ===== CONTACT SECTION ===== */
@@ -147,43 +172,6 @@ a.contactItem:hover {
 }
 
 /* ===== APP BANNER ===== */
-.appBanner {
-  background: rgba(255, 255, 255, 0.05);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.appBannerContent {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 1rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.875rem;
-}
-
-.appIcon {
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
-.appText {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: #ffffff;
-}
-
-.appText strong {
-  font-weight: 700;
-}
-
-.appText span {
-  color: rgba(255, 255, 255, 0.7);
-}
-
 /* ===== BOTTOM BAR ===== */
 .bottomBar {
   max-width: 1280px;
@@ -220,11 +208,7 @@ a.contactItem:hover {
 
 /* ===== DARK MODE - Same styling ===== */
 [data-theme='dark'] .footer {
-  background: #1a1a24;
-}
-
-[data-theme='dark'] .appBanner {
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(180deg, #20212b 0%, #171821 100%);
 }
 
 /* ===== TABLET RESPONSIVE ===== */
@@ -270,6 +254,11 @@ a.contactItem:hover {
 
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 768px) {
+  .footer {
+    border-top-left-radius: 26px;
+    border-top-right-radius: 26px;
+  }
+
   .footerContent {
     grid-template-columns: 1fr;
     gap: 2rem;
@@ -286,6 +275,10 @@ a.contactItem:hover {
     margin-bottom: 0.5rem;
   }
 
+  .columnNote {
+    font-size: 0.74rem;
+  }
+
   .linkList {
     gap: 0.5rem;
   }
@@ -297,17 +290,6 @@ a.contactItem:hover {
   .contactItems {
     flex-direction: column;
     gap: 0.75rem;
-  }
-
-  .appBannerContent {
-    padding: 0.875rem 1rem;
-  }
-
-  .appText {
-    flex-direction: column;
-    gap: 0.25rem;
-    text-align: center;
-    font-size: 0.8rem;
   }
 
   .bottomBar {
@@ -331,6 +313,11 @@ a.contactItem:hover {
 
 /* ===== SMALL MOBILE ===== */
 @media (max-width: 480px) {
+  .footer {
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+  }
+
   .footerContent {
     padding: 1.5rem 0.75rem 1.25rem;
     gap: 1.5rem;
@@ -369,13 +356,6 @@ a.contactItem:hover {
     font-size: 0.75rem;
   }
 
-  .appIcon {
-    font-size: 1.25rem;
-  }
-
-  .appText {
-    font-size: 0.75rem;
-  }
 }
 
 /* ===== VERY SMALL MOBILE ===== */
@@ -404,9 +384,6 @@ a.contactItem:hover {
     gap: 0.4rem;
   }
 
-  .appBannerContent {
-    gap: 0.5rem;
-  }
 }
 
 /* ===== REDUCED MOTION ===== */

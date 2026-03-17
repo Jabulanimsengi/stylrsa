@@ -6,7 +6,6 @@ import { FaHeart, FaStar } from 'react-icons/fa';
 import { transformCloudinary } from '@/utils/cloudinary';
 import { getImageWithFallback } from '@/lib/placeholders';
 import ImageLightbox from '@/components/ImageLightbox';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { useNavigationLoading } from '@/context/NavigationLoadingContext';
 import { Salon } from '@/types';
 import { getSalonUrl } from '@/utils/salonUrl';
@@ -23,6 +22,7 @@ interface SalonCardProps {
   onToggleFavorite?: (e: React.MouseEvent, salonId: string) => void;
   showHours?: boolean;
   compact?: boolean;
+  showPrice?: boolean;
   enableLightbox?: boolean;
   onViewCountUpdate?: (salonId: string, newCount: number) => void;
   showPromoted?: boolean;
@@ -51,6 +51,7 @@ function SalonCard({
   showFavorite = true,
   onToggleFavorite,
   compact = false,
+  showPrice = true,
   enableLightbox = false,
   onViewCountUpdate,
   showPromoted = false,
@@ -58,7 +59,7 @@ function SalonCard({
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [isCardNavigating, setIsCardNavigating] = useState(false);
-  const { setIsNavigating } = useNavigationLoading();
+  const { showPageLoader } = useNavigationLoading();
 
   useEffect(() => () => setIsCardNavigating(false), []);
 
@@ -97,39 +98,40 @@ function SalonCard({
       return s.title;
     }).filter(Boolean) as string[]
   )].slice(0, 3);
+  const primaryCategoryTags = compact ? categoryTags.slice(0, 1) : categoryTags.slice(0, 2);
+  const hiddenCategoryCount = Math.max(categoryTags.length - primaryCategoryTags.length, 0);
+  const displayCategoryTags = hiddenCategoryCount > 0
+    ? [...primaryCategoryTags, `+${hiddenCategoryCount}`]
+    : primaryCategoryTags;
 
   const hasRating =
     salon.reviewCount !== undefined &&
     salon.avgRating !== undefined &&
     salon.reviewCount > 0;
 
+  const handleCardNavigation = () => {
+    setIsCardNavigating(true);
+    showPageLoader();
+  };
+
+  const shouldShowFooter = (showPrice && startingPrice !== null) || salon.distance != null;
+
   return (
     <>
-      <Link
+      <article
         ref={compact ? impressionRef : undefined}
-        href={getSalonUrl(salon)}
         className={`${styles.salonCard} ${compact ? styles.compact : ''} ${isCardNavigating ? styles.navigating : ''}`}
-        onClick={() => { setIsCardNavigating(true); setIsNavigating(true); }}
       >
-        {isCardNavigating && (
-          <div className={styles.loadingOverlay}>
-            <LoadingSpinner size="md" color="white" />
-          </div>
-        )}
-
-        {/* Favourite */}
-        {showFavorite && onToggleFavorite && (
-          <button
-            onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(e, salon.id); }}
-            className={`${styles.favoriteButton} ${salon.isFavorited ? styles.favorited : ''}`}
-            aria-label={salon.isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            <FaHeart />
-          </button>
-        )}
+        {isCardNavigating && <span className={styles.loadingBar} aria-hidden="true" />}
 
         {/* Image area */}
-        <div className={styles.imageWrapper} onClick={enableLightbox ? handleImageClick : undefined}>
+        <Link
+          href={getSalonUrl(salon)}
+          className={styles.salonLink}
+          onClick={handleCardNavigation}
+          aria-label={`View ${salon.name}`}
+        >
+          <div className={styles.imageWrapper} onClick={enableLightbox ? handleImageClick : undefined}>
           {hasRating && (
             <div className={styles.ratingBadge}>
               <div className={styles.ratingValue}>{salon.avgRating!.toFixed(1)}</div>
@@ -161,46 +163,76 @@ function SalonCard({
             sizes="(max-width: 479px) 45vw, (max-width: 767px) 40vw, (max-width: 1023px) 33vw, 25vw"
             seoContext={{ salonName: salon.name, city: salon.city }}
           />
-        </div>
+          </div>
+        </Link>
 
         {/* Text content */}
         <div className={styles.cardContent}>
           <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>{salon.name}</h2>
-            {salon.isVerified && <VerificationBadge size="small" />}
+            <Link
+              href={getSalonUrl(salon)}
+              className={styles.cardSummaryLink}
+              onClick={handleCardNavigation}
+              aria-label={`View details for ${salon.name}`}
+            >
+              <div className={styles.titleGroup}>
+                <h2 className={styles.cardTitle}>{salon.name}</h2>
+                {salon.isVerified && <VerificationBadge size="small" />}
+              </div>
+            </Link>
+            {showFavorite && onToggleFavorite && (
+              <button
+                type="button"
+                onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(e, salon.id); }}
+                className={`${styles.favoriteButton} ${salon.isFavorited ? styles.favorited : ''}`}
+                aria-label={salon.isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+                aria-pressed={Boolean(salon.isFavorited)}
+              >
+                <FaHeart />
+              </button>
+            )}
           </div>
 
-          <p className={styles.cardLocation}>{salon.city}, {salon.province}</p>
+          <Link
+            href={getSalonUrl(salon)}
+            className={styles.cardSummaryLink}
+            onClick={handleCardNavigation}
+            aria-label={`Open ${salon.name}`}
+          >
+            <p className={styles.cardLocation}>{salon.city}, {salon.province}</p>
 
-          {hasRating && <StarRow rating={salon.avgRating!} count={salon.reviewCount!} />}
+            {hasRating && <StarRow rating={salon.avgRating!} count={salon.reviewCount!} />}
 
-          {categoryTags.length > 0 && (
-            <div className={styles.categoryTags}>
-              {categoryTags.map(tag => (
-                <span key={tag} className={styles.categoryTag}>{tag}</span>
-              ))}
-            </div>
-          )}
-
-          <div className={styles.cardFooter}>
-            {startingPrice !== null && (
-              <span className={styles.startingPrice}>from R{startingPrice}</span>
-            )}
-            {salon.distance != null && (
-              <div className={styles.distanceBadge}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                </svg>
-                <span>
-                  {salon.distance < 1 ? `${Math.round(salon.distance * 1000)}m` : `${salon.distance.toFixed(1)}km`}
-                </span>
+            {displayCategoryTags.length > 0 && (
+              <div className={styles.categoryTags}>
+                {displayCategoryTags.map(tag => (
+                  <span key={tag} className={styles.categoryTag}>{tag}</span>
+                ))}
               </div>
             )}
-          </div>
 
-          {showPromoted && <div className={styles.promotedLabel}>Promoted</div>}
+            {shouldShowFooter && (
+              <div className={styles.cardFooter}>
+                {showPrice && startingPrice !== null && (
+                <span className={styles.startingPrice}>R{startingPrice}</span>
+                )}
+                {salon.distance != null && (
+                  <div className={styles.distanceBadge}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                    </svg>
+                    <span>
+                      {salon.distance < 1 ? `${Math.round(salon.distance * 1000)}m` : `${salon.distance.toFixed(1)}km`}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {showPromoted && <div className={styles.promotedLabel}>Promoted</div>}
+          </Link>
         </div>
-      </Link>
+      </article>
 
       {enableLightbox && isLightboxOpen && (
         <ImageLightbox

@@ -15,11 +15,12 @@ export default function AdminPromotionsSection({
   return (
     <>
       {promotions.length > 0 ? promotions.map((promo) => {
-        const isService = Boolean(promo.service);
-        const itemName = isService ? promo.service?.title : promo.product?.name;
-        const providerName = isService
-          ? promo.service?.salon?.name
-          : `${promo.product?.seller?.firstName || ''} ${promo.product?.seller?.lastName || ''}`.trim();
+        if (!promo.service) {
+          return null;
+        }
+
+        const itemName = promo.service.title;
+        const providerName = promo.service.salon?.name;
         const endDate = new Date(promo.endDate);
         const daysLeft = Math.ceil((endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 
@@ -28,7 +29,7 @@ export default function AdminPromotionsSection({
             <div className={styles.info}>
               <h4>{itemName}</h4>
               <p>
-                <strong>Provider:</strong> {providerName || 'Unknown'} | <strong>Type:</strong> {isService ? 'Service' : 'Product'}
+                <strong>Provider:</strong> {providerName || 'Unknown'} | <strong>Type:</strong> Service
               </p>
               <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                 <span>

@@ -14,8 +14,4 @@ export class UpdatePlanDto {
   @IsOptional()
   @IsNumber()
   maxListings?: number;
-
-  @IsOptional()
-  @IsString()
-  featuredUntil?: string; // ISO date string
 }

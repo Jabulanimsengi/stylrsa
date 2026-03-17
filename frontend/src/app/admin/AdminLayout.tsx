@@ -14,7 +14,6 @@ interface AdminLayoutProps {
         salons: number;
         services: number;
         reviews: number;
-        products: number;
         promotions: number;
         payments: number;
     };

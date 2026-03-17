@@ -164,7 +164,7 @@ export function applyZoom(zoomLevel: number): void {
     localStorage.setItem('desktop-zoom-level', zoomLevel.toString());
     localStorage.setItem('desktop-zoom-applied', 'true');
     localStorage.setItem('desktop-zoom-browser', browser);
-  } catch (e) {
+  } catch {
     // localStorage not available, continue
   }
 }
@@ -184,7 +184,7 @@ export function removeZoom(): void {
   try {
     localStorage.removeItem('desktop-zoom-level');
     localStorage.removeItem('desktop-zoom-applied');
-  } catch (e) {
+  } catch {
     // localStorage not available, continue
   }
 }
@@ -223,7 +223,7 @@ export function applyDefaultZoomOnLogin(): void {
         }
       }
     }
-  } catch (e) {
+  } catch {
     // localStorage not available, continue
   }
 
@@ -238,7 +238,7 @@ export function applyDefaultZoomOnLogin(): void {
  * Check if zoom should be applied (desktop only, regardless of auth status)
  * Updated to apply zoom for all desktop users to ensure proper screen fit
  */
-export function shouldApplyZoom(isAuthenticated: boolean): boolean {
+export function shouldApplyZoom(): boolean {
   const browserInfo = getBrowserInfo();
   return browserInfo.isDesktop; // Apply zoom for all desktop users
 }

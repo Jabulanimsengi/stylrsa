@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import styles from './HomePage.module.css';
@@ -7,7 +8,6 @@ import { type FilterValues } from '@/components/FilterBar/FilterBar';
 import { useEffect, useState, useRef } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import MobileSearch from '@/components/MobileSearch/MobileSearch';
-import FeaturedSalons from '@/components/FeaturedSalons';
 import ServiceCategoryCircles from '@/components/ServiceCategoryCircles/ServiceCategoryCircles';
 import SalonCarouselSection from '@/components/SalonCarouselSection';
 import dynamic from 'next/dynamic';
@@ -15,6 +15,7 @@ import { getSalonUrl } from '@/utils/salonUrl';
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import { usePagePerformance } from '@/hooks/usePagePerformance';
 import type { Salon } from '@/types';
+import { useNavigationLoading } from '@/context/NavigationLoadingContext';
 
 type SearchCategorySuggestion = { id: string; title: string; slug: string };
 type SearchVenueSuggestion = { id: string; title: string; slug?: string | null; city: string | null };
@@ -23,7 +24,7 @@ type SearchServiceSuggestion = { id: string; title: string; salon?: { id?: strin
 const TypingAnimation = dynamic(() => import('@/components/TypingAnimation/TypingAnimation'), {
   ssr: false,
   // Add an empty placeholder of similar size back so layout doesn't jump
-  loading: () => <span style={{ display: 'inline-block', minWidth: '9em' }}></span>
+  loading: () => <span style={{ display: 'inline-block', width: '14ch', minHeight: '1.1em' }} />
 });
 const SEARCHABLE_CATEGORIES = [
   { name: 'Hair', slug: 'haircuts-styling' },
@@ -44,20 +45,38 @@ const SEARCHABLE_CATEGORIES = [
   { name: 'Color', slug: 'hair-color-treatments' },
 ] as const;
 
+const HERO_TRUST_POINTS = [
+  'Verified salons and professionals',
+  'Live availability across major cities',
+  'Direct booking without extra clutter',
+];
+
+const WHY_BOOK_WITH_STYLR = [
+  {
+    title: 'Verified profiles',
+    copy: 'Book with more confidence by browsing salons that show stronger trust signals, clearer service menus, and fuller profiles.',
+  },
+  {
+    title: 'Better discovery',
+    copy: 'Filter by treatment, city, availability, and mobile service options without losing your place or starting over.',
+  },
+  {
+    title: 'Cleaner booking flow',
+    copy: 'Move from discovery to booking with a clearer next step, less friction, and a smoother salon profile journey.',
+  },
+];
+
 interface HomePageClientProps {
   initialFeaturedSalons: Salon[];
-  initialAllSalons: Salon[];
   initialAvailableNowSalons: Salon[];
-  initialMobileSalons: Salon[];
 }
 
 export default function HomePageClient({
   initialFeaturedSalons,
-  initialAllSalons,
   initialAvailableNowSalons,
-  initialMobileSalons,
 }: HomePageClientProps) {
   const router = useRouter();
+  const { showPageLoader } = useNavigationLoading();
   useMediaQuery('(max-width: 768px)');
   usePagePerformance('home');
 
@@ -73,6 +92,10 @@ export default function HomePageClient({
   const heroSearchRef = useRef<HTMLDivElement>(null);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
+  const navigateWithPageLoader = (href: string) => {
+    showPageLoader();
+    router.push(href);
+  };
 
   // Hero search autocomplete effect
   useEffect(() => {
@@ -170,7 +193,7 @@ export default function HomePageClient({
     const shouldSearchServices = hasServiceQuery || hasCategoryQuery;
 
     const targetPath = shouldSearchServices ? '/services' : '/salons';
-    router.push(`${targetPath}${queryString ? `?${queryString}` : ''}`);
+    navigateWithPageLoader(`${targetPath}${queryString ? `?${queryString}` : ''}`);
   };
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -200,17 +223,24 @@ export default function HomePageClient({
         </div>
 
         <div className={styles.heroContent}>
+          <span className={styles.heroEyebrow}>Book premium beauty and wellness experiences</span>
           <h1 className={styles.heroTitle} id="hero-title">
-            The hub for&nbsp;
-            <TypingAnimation
-              words={['Hairdressers', 'Nail Techs', 'Barbers', 'Makeup Artists', 'Braiders', 'Estheticians']}
-              typingSpeed={200}
-              deletingSpeed={100}
-              delayBetweenWords={2500}
-            />
+            <span className={styles.heroTitleLead}>The hub for</span>
+            <span className={styles.heroTitleAnimated}>
+              <TypingAnimation
+                words={['Hairdressers', 'Nail Techs', 'Barbers', 'Braiders']}
+                typingSpeed={175}
+                deletingSpeed={80}
+                delayBetweenWords={2800}
+              />
+            </span>
           </h1>
+          <p className={styles.heroDescription}>
+            Discover verified salons, trusted specialists, and mobile beauty professionals across South Africa in a calmer, more focused booking experience.
+          </p>
 
           <div className={styles.heroSearchContainer}>
+            <span className={styles.heroSearchLabel}>Search salons, treatments, and categories</span>
             <div className={styles.heroSearchBox} ref={heroSearchRef}>
               <div className={styles.searchIconWrapper}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -239,7 +269,7 @@ export default function HomePageClient({
                     const value = heroSearchQuery.trim();
                     if (value) {
                       setShowHeroSuggestions(false);
-                      router.push(`/salons?service=${encodeURIComponent(value)}`);
+                      navigateWithPageLoader(`/salons?service=${encodeURIComponent(value)}`);
                     }
                   }
                 }}
@@ -250,9 +280,9 @@ export default function HomePageClient({
                   const value = heroSearchQuery.trim();
                   setShowHeroSuggestions(false);
                   if (value) {
-                    router.push(`/salons?service=${encodeURIComponent(value)}`);
+                    navigateWithPageLoader(`/salons?service=${encodeURIComponent(value)}`);
                   } else {
-                    router.push('/salons');
+                    navigateWithPageLoader('/salons');
                   }
                 }}
               >
@@ -277,7 +307,7 @@ export default function HomePageClient({
                             onMouseDown={(e) => {
                               e.preventDefault();
                               setShowHeroSuggestions(false);
-                              router.push(getSalonUrl(venue));
+                              navigateWithPageLoader(getSalonUrl(venue));
                             }}
                           >
                             <span className={styles.suggestionIcon}>🏠</span>
@@ -304,7 +334,7 @@ export default function HomePageClient({
                               e.preventDefault();
                               setHeroSearchQuery(service.title);
                               setShowHeroSuggestions(false);
-                              router.push(`/salons?service=${encodeURIComponent(service.title)}`);
+                              navigateWithPageLoader(`/salons?service=${encodeURIComponent(service.title)}`);
                             }}
                           >
                             <span className={styles.suggestionIcon}>✨</span>
@@ -328,7 +358,7 @@ export default function HomePageClient({
                               e.preventDefault();
                               setHeroSearchQuery(category.title);
                               setShowHeroSuggestions(false);
-                              router.push(`/salons?category=${category.slug}`);
+                              navigateWithPageLoader(`/salons?category=${category.slug}`);
                             }}
                           >
                             <span className={styles.suggestionIcon}>🔍</span>
@@ -346,36 +376,68 @@ export default function HomePageClient({
         </div>
       </section>
 
+      <section className={styles.heroTrustStrip} aria-label="Why users choose Stylr SA">
+        <div className={styles.heroTrustStripInner}>
+          {HERO_TRUST_POINTS.map((point) => (
+            <span key={point} className={styles.heroTrustPill}>{point}</span>
+          ))}
+        </div>
+      </section>
 
-      {/* Service Category Circles - Quick navigation */}
-      <ServiceCategoryCircles />
+      <section className={styles.editorialBand}>
+        <div className={styles.sectionIntro}>
+          <span className={styles.sectionEyebrow}>Browse by category</span>
+          <h2 className={styles.sectionHeading}>Start with the treatment you already know you want.</h2>
+          <p className={styles.sectionDescription}>
+            Choose a treatment first and jump straight into salons that match what you already have in mind.
+          </p>
+        </div>
+        <ServiceCategoryCircles />
+      </section>
 
-      {/* 1. Recommended Section - Trust building (personalized) */}
-      <FeaturedSalons initialSalons={initialFeaturedSalons} />
-
-      {/* 2. Featured Salons Section - All salons */}
       <SalonCarouselSection
         title="Featured Salons"
-        salons={initialAllSalons}
+        eyebrow="Admin ranked"
+        description="All approved salons, ordered by the featured ranking weight managed by admin so the strongest placements appear first."
+        salons={initialFeaturedSalons}
         viewAllLink="/salons"
-        showViewAll={false}
+        showViewAll
       />
 
-      {/* 3. Available Now Section - Salons currently open */}
       <SalonCarouselSection
         title="Available Now"
+        eyebrow="Open right now"
+        description="For users who want speed, these salons are currently available and ready to be explored without extra steps."
         salons={initialAvailableNowSalons}
         viewAllLink="/salons?openNow=true"
-        showViewAll={false}
+        showViewAll
+        surface="muted"
       />
 
-      {/* 4. Mobile Salons Section - Salons offering mobile services */}
-      <SalonCarouselSection
-        title="Mobile Salons"
-        salons={initialMobileSalons}
-        viewAllLink="/salons?offersMobile=true"
-        showViewAll={false}
-      />
+      <section className={`${styles.editorialBand} ${styles.mutedBand}`}>
+        <div className={styles.sectionIntro}>
+          <span className={styles.sectionEyebrow}>Why book with Stylr SA</span>
+          <h2 className={styles.sectionHeading}>A cleaner, calmer way to discover and book beauty services.</h2>
+          <p className={styles.sectionDescription}>
+            Discover trusted salons faster, compare them more clearly, and book with more confidence from the start.
+          </p>
+        </div>
+
+        <div className={styles.valueGrid}>
+          {WHY_BOOK_WITH_STYLR.map((item) => (
+            <article key={item.title} className={styles.valueCard}>
+              <h3 className={styles.valueTitle}>{item.title}</h3>
+              <p className={styles.valueCopy}>{item.copy}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className={styles.whyBookCta}>
+          <Link href="/salons" className={styles.whyBookLink} onClick={() => showPageLoader()}>
+            Explore all salons
+          </Link>
+        </div>
+      </section>
 
       <Script
         id="organization-schema"

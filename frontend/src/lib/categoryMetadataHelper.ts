@@ -44,9 +44,9 @@ export function generateCategoryMetadata(params: CategoryMetadataParams): Metada
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 
     // Build title components
-    let titleParts: string[] = [];
-    let descriptionParts: string[] = [];
-    let keywords: string[] = [];
+    const titleParts: string[] = [];
+    const descriptionParts: string[] = [];
+    const keywords: string[] = [];
 
     // Category or Service as primary focus
     if (category && CATEGORY_INFO[category]) {
@@ -103,21 +103,18 @@ export function generateCategoryMetadata(params: CategoryMetadataParams): Metada
         );
     }
 
-    // Build canonical URL
-    let canonicalUrl = `${siteUrl}/salons`;
-    const queryParams = new URLSearchParams();
-    if (category) queryParams.append('category', category);
-    if (service) queryParams.append('service', service);
-    if (city) queryParams.append('city', city);
-    if (province) queryParams.append('province', province);
-    if (queryParams.toString()) {
-        canonicalUrl += `?${queryParams.toString()}`;
-    }
+    // Filtered /salons pages are useful for users, but dedicated SEO landing pages
+    // should carry indexation for service/location discovery.
+    const canonicalUrl = `${siteUrl}/salons`;
 
     return {
         title,
         description,
         keywords: keywords.join(', '),
+        robots: {
+            index: false,
+            follow: true,
+        },
         alternates: {
             canonical: canonicalUrl,
         },

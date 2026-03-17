@@ -122,8 +122,8 @@ export class CreateSalonDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsIn(['FREE', 'STARTER', 'ESSENTIAL', 'GROWTH', 'PRO', 'ELITE'])
-  planCode!: 'FREE' | 'STARTER' | 'ESSENTIAL' | 'GROWTH' | 'PRO' | 'ELITE';
+  @IsIn(['PREMIUM'])
+  planCode!: 'PREMIUM';
 
   @IsOptional()
   @IsBoolean()
@@ -133,4 +133,8 @@ export class CreateSalonDto {
   @IsString()
   @MaxLength(160)
   paymentReference?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  adminConfirmEmailVerified?: boolean;
 }

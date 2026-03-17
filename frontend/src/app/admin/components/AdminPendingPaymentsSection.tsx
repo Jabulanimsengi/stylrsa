@@ -26,7 +26,7 @@ export default function AdminPendingPaymentsSection({
         </p>
       </div>
       {pendingPaymentSalons.length > 0 ? pendingPaymentSalons.map((salon) => {
-        const planCode = (salon.planCode ?? 'FREE') as PlanCode;
+        const planCode = (salon.planCode ?? 'PREMIUM') as PlanCode;
         const plan = PLAN_BY_CODE[planCode] ?? APP_PLANS[0];
         const planAmount =
           typeof salon.planPriceCents === 'number'

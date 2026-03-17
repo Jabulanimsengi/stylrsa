@@ -44,6 +44,12 @@ export interface SeoLocation {
   parentLocationId: number | null;
 }
 
+interface SeoRelatedLink {
+  label: string;
+  url: string;
+  type?: 'service' | 'location';
+}
+
 export interface SeoPageCache {
   id: number;
   keywordId: number;
@@ -55,9 +61,9 @@ export interface SeoPageCache {
   introText: string;
   metaTitle: string;
   metaDescription: string;
-  schemaMarkup: any;
-  relatedServices: any[];
-  nearbyLocations: any[];
+  schemaMarkup: unknown;
+  relatedServices: SeoRelatedLink[];
+  nearbyLocations: SeoRelatedLink[];
   serviceCount: number;
   salonCount: number;
   avgPrice: number | null;
@@ -84,7 +90,7 @@ export async function getSeoPageByUrl(url: string): Promise<SeoPageCache | null>
     }
 
     return await response.json();
-  } catch (error) {
+  } catch {
     // Silently return null to allow fallback - don't log during build
     return null;
   }
@@ -186,7 +192,7 @@ export async function getLocationById(id: number): Promise<SeoLocation | null> {
     }
 
     return await response.json();
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -208,7 +214,7 @@ export async function getFirstPageForKeyword(slug: string): Promise<SeoPageCache
     }
 
     return await response.json();
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -230,7 +236,7 @@ export async function getKeywordBySlug(slug: string): Promise<SeoKeyword | null>
     }
 
     return await response.json();
-  } catch (error) {
+  } catch {
     return null;
   }
 }

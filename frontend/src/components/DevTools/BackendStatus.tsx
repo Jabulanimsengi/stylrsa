@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import styles from './BackendStatus.module.css';
 
 export default function BackendStatus() {
@@ -9,7 +9,7 @@ export default function BackendStatus() {
   const [isChecking, setIsChecking] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  const checkConnection = async () => {
+  const checkConnection = useCallback(async () => {
     if (!isDevelopment) return;
     setIsChecking(true);
     try {
@@ -36,7 +36,7 @@ export default function BackendStatus() {
     } finally {
       setIsChecking(false);
     }
-  };
+  }, [isDevelopment]);
 
   useEffect(() => {
     if (!isDevelopment) return;
@@ -47,7 +47,7 @@ export default function BackendStatus() {
       clearTimeout(initialCheck);
       clearInterval(interval);
     };
-  }, [isDevelopment]);
+  }, [checkConnection, isDevelopment]);
 
   if (!isDevelopment) {
     return null;

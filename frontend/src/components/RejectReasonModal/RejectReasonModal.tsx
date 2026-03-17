@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import styles from './RejectReasonModal.module.css';
-import { FiAlertCircle, FiX } from 'react-icons/fi';
+import { FiAlertCircle } from 'react-icons/fi';
 
 interface RejectReasonModalProps {
     isOpen: boolean;

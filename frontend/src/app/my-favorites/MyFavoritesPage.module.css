@@ -136,7 +136,7 @@
 /* ===== 375px breakpoint for iPhone SE, iPhone 12 mini ===== */
 @media (max-width: 375px) {
   .container {
-    --page-inline-padding: 0.625rem;
+    --page-inline-padding: 0.75rem;
   }
   .title {
     font-size: 1rem;
@@ -161,7 +161,7 @@
 /* ===== 320px breakpoint for very small devices ===== */
 @media (max-width: 320px) {
   .container {
-    --page-inline-padding: 0.5rem;
+    --page-inline-padding: 0.75rem;
   }
   .title {
     font-size: 0.9375rem;

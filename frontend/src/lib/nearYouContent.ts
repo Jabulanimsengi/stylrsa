@@ -1,6 +1,6 @@
 // Helper functions for generating "near you" content and SEO metadata
 
-import { PROVINCES, getProvinceInfo, getCityInfo, CityInfo, ProvinceInfo } from './locationData';
+import { PROVINCES, getProvinceInfo, getCityInfo } from './locationData';
 
 // Service category information for content generation
 export const CATEGORY_INFO: Record<string, {
@@ -120,17 +120,17 @@ export function generateNearYouTitle(
   const city = provinceSlug && citySlug ? getCityInfo(provinceSlug, citySlug) : null;
 
   if (category && city) {
-    return `${category.name} Near You in ${city.name} | Stylr SA`;
+    return `${category.name} in ${city.name}, ${city.province} | Stylr SA`;
   } else if (category && province) {
-    return `${category.name} Near You in ${province.name} | Stylr SA`;
+    return `${category.name} in ${province.name} | Stylr SA`;
   } else if (category) {
-    return `${category.name} Near You | Stylr SA`;
+    return `${category.name} in South Africa | Stylr SA`;
   } else if (city) {
-    return `Salons Near You in ${city.name} | Stylr SA`;
+    return `Salons in ${city.name}, ${city.province} | Stylr SA`;
   } else if (province) {
-    return `Salons Near You in ${province.name} | Stylr SA`;
+    return `Salons in ${province.name} | Stylr SA`;
   }
-  return 'Salons Near You | Stylr SA';
+  return 'Salons in South Africa | Stylr SA';
 }
 
 /**
@@ -146,17 +146,17 @@ export function generateNearYouH1(
   const city = provinceSlug && citySlug ? getCityInfo(provinceSlug, citySlug) : null;
 
   if (category && city) {
-    return `${category.name} Near You in ${city.name}`;
+    return `${category.name} in ${city.name}`;
   } else if (category && province) {
-    return `${category.name} Near You in ${province.name}`;
+    return `${category.name} in ${province.name}`;
   } else if (category) {
-    return `${category.name} Near You`;
+    return `${category.name} in South Africa`;
   } else if (city) {
-    return `Salons Near You in ${city.name}`;
+    return `Salons in ${city.name}`;
   } else if (province) {
-    return `Salons Near You in ${province.name}`;
+    return `Salons in ${province.name}`;
   }
-  return 'Salons Near You';
+  return 'Salons in South Africa';
 }
 
 /**
@@ -173,41 +173,41 @@ export function generateNearYouDescription(
 
   if (category && city) {
     const serviceName = category.serviceName;
-    let description = `Find the best ${serviceName} services near you in ${city.name}, ${city.province}. ${category.descriptionBase}.`;
+    let description = `Browse ${serviceName} services in ${city.name}, ${city.province}. ${category.descriptionBase}.`;
     
     // Add popular areas if available
     if (city.popularAreas && city.popularAreas.length > 0) {
       const areas = city.popularAreas.slice(0, 2).join(' and ');
-      description += ` Book appointments at top-rated professionals in ${areas} and throughout ${city.name}.`;
+      description += ` Discover providers in ${areas} and throughout ${city.name}.`;
     } else {
-      description += ` Book appointments at top-rated salons and beauty professionals in ${city.name}.`;
+      description += ` Discover salons and beauty professionals across ${city.name}.`;
     }
     
     return description;
   } else if (category && province) {
     const serviceName = category.serviceName;
     const cityNames = province.cities.slice(0, 3).map(c => c.name).join(', ');
-    return `Find the best ${serviceName} services near you in ${province.name}. ${category.descriptionBase}. Book appointments at top-rated salons in ${cityNames} and surrounding areas.`;
+    return `Browse ${serviceName} services in ${province.name}. ${category.descriptionBase}. Discover salons in ${cityNames} and surrounding areas.`;
   } else if (category) {
     const serviceName = category.serviceName;
-    return `Find the best ${serviceName} services near you in South Africa. ${category.descriptionBase}. Book appointments at top-rated salons and beauty professionals across the country.`;
+    return `Browse ${serviceName} services across South Africa. ${category.descriptionBase}. Discover salons and beauty professionals around the country.`;
   } else if (city) {
-    let description = `Find the best salons, nail salons, spas, and beauty services near you in ${city.name}, ${city.province}.`;
+    let description = `Browse salons, nail salons, spas, and beauty services in ${city.name}, ${city.province}.`;
     
     // Add popular areas if available
     if (city.popularAreas && city.popularAreas.length > 0) {
       const areas = city.popularAreas.slice(0, 2).join(' and ');
-      description += ` Book appointments at top-rated salons in ${areas} and throughout ${city.name}.`;
+      description += ` Discover salons in ${areas} and throughout ${city.name}.`;
     } else {
-      description += ` Book appointments at top-rated hair salons, nail studios, barbershops, and wellness centers.`;
+      description += ` Discover hair salons, nail studios, barbershops, and wellness centers nearby.`;
     }
     
     return description;
   } else if (province) {
     const cityNames = province.cities.slice(0, 3).map(c => c.name).join(', ');
-    return `Find the best salons, nail salons, spas, and beauty services near you in ${province.name}. Book appointments at top-rated establishments in ${cityNames} and surrounding areas.`;
+    return `Browse salons, nail salons, spas, and beauty services in ${province.name}. Discover establishments in ${cityNames} and surrounding areas.`;
   }
-  return 'Find the best salons, nail salons, spas, and beauty services near you in South Africa. Book appointments at top-rated salons and beauty professionals across the country.';
+  return 'Browse salons, nail salons, spas, and beauty services across South Africa. Discover salons and beauty professionals around the country.';
 }
 
 /**

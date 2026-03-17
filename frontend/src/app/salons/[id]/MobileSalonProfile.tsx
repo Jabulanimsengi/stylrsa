@@ -36,9 +36,9 @@ import { SERVICE_CATEGORIES } from '@/constants/categories';
 import MapboxMap from '@/components/MapboxMap';
 import styles from './MobileSalonProfile.module.css';
 import MaterialsShowcase from '@/components/MaterialsShowcase/MaterialsShowcase';
-import SimilarSalons from '@/components/SimilarSalons/SimilarSalons';
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import { notify } from '@/lib/notify';
+import { getSalonOpenStatus } from './salonOpenStatus';
 
 type TabType = 'photos' | 'services' | 'details' | 'reviews';
 
@@ -54,6 +54,7 @@ interface MobileSalonProfileProps {
     longitude?: number | null;
     mapsHref: string;
     onOpenLightbox: (images: string[], index: number) => void;
+    onToggleFavorite: () => void | Promise<void>;
     onBookService: (service: Service) => void;
     onBookNow: () => void;
 }
@@ -101,48 +102,24 @@ const CATEGORY_ALIASES: Record<string, string> = {
     'beauty': 'Makeup & Beauty'
 };
 
-// Helper to check if salon is currently open
-function getOpenStatus(hoursRecord: Record<string, string> | null, todayLabel: string): { isOpen: boolean; statusText: string } {
-    if (!hoursRecord) return { isOpen: false, statusText: 'Hours not available' };
-
-    const todayHours = hoursRecord[todayLabel];
-    if (!todayHours || todayHours.toLowerCase() === 'closed') {
-        // Find next open day
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        const todayIndex = days.indexOf(todayLabel);
-        for (let i = 1; i <= 7; i++) {
-            const nextDay = days[(todayIndex + i) % 7];
-            const nextHours = hoursRecord[nextDay];
-            if (nextHours && nextHours.toLowerCase() !== 'closed') {
-                return { isOpen: false, statusText: `Opens ${nextDay} at ${nextHours.split('-')[0]?.trim() || '09:00'}` };
-            }
-        }
-        return { isOpen: false, statusText: 'Closed' };
+function normalizeCategoryValue(value: unknown): string {
+    if (typeof value === 'string') {
+        return value.trim();
     }
 
-    // Parse hours (e.g., "09:00 - 18:00")
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTime = currentHour * 60 + currentMinute;
+    if (value == null) {
+        return '';
+    }
 
-    const [openTime, closeTime] = todayHours.split('-').map(t => t.trim());
-    if (openTime && closeTime) {
-        const [openH, openM] = openTime.split(':').map(Number);
-        const [closeH, closeM] = closeTime.split(':').map(Number);
-        const openMinutes = (openH || 0) * 60 + (openM || 0);
-        const closeMinutes = (closeH || 0) * 60 + (closeM || 0);
-
-        if (currentTime >= openMinutes && currentTime < closeMinutes) {
-            return { isOpen: true, statusText: `Open until ${closeTime}` };
-        } else if (currentTime < openMinutes) {
-            return { isOpen: false, statusText: `Opens at ${openTime}` };
-        } else {
-            return { isOpen: false, statusText: `Closed - Opens tomorrow` };
+    if (typeof value === 'object') {
+        const record = value as Record<string, unknown>;
+        const nestedName = record.name ?? record.title ?? record.label ?? record.slug;
+        if (typeof nestedName === 'string') {
+            return nestedName.trim();
         }
     }
 
-    return { isOpen: false, statusText: todayHours };
+    return String(value).trim();
 }
 
 export default function MobileSalonProfile({
@@ -157,12 +134,13 @@ export default function MobileSalonProfile({
     longitude,
     mapsHref,
     onOpenLightbox,
+    onToggleFavorite,
     onBookService,
     onBookNow,
 }: MobileSalonProfileProps) {
     const [activeTab, setActiveTab] = useState<TabType>('services');
-    const [selectedServices, setSelectedServices] = useState<Service[]>([]);
-    const [isFavorited, setIsFavorited] = useState(false);
+    const [selectedService, setSelectedService] = useState<Service | null>(null);
+    const [isFavorited, setIsFavorited] = useState(Boolean(salon.isFavorited));
     const [showCopied, setShowCopied] = useState(false);
     const [activeCategory, setActiveCategory] = useState<string>('all');
     const tabsRef = useRef<HTMLDivElement>(null);
@@ -185,8 +163,12 @@ export default function MobileSalonProfile({
         });
     }, [api]);
 
+    useEffect(() => {
+        setIsFavorited(Boolean(salon.isFavorited));
+    }, [salon.isFavorited]);
+
     // Get open status
-    const { isOpen, statusText } = getOpenStatus(hoursRecord, todayLabel);
+    const { isOpen, statusText } = getSalonOpenStatus(hoursRecord, todayLabel);
 
     // Get all gallery images
     const allImages = useMemo(() => {
@@ -208,8 +190,8 @@ export default function MobileSalonProfile({
 
         services.forEach(service => {
             // Get category name from service
-            const categoryName = service.category || '';
-            const categorySlug = service.categoryId || '';
+            const categoryName = normalizeCategoryValue(service.category);
+            const categorySlug = normalizeCategoryValue(service.categoryId);
 
             // Determine the valid category name
             let validCategoryName = '';
@@ -277,23 +259,17 @@ export default function MobileSalonProfile({
 
     // Toggle service selection
     const toggleService = (service: Service) => {
-        setSelectedServices(prev => {
-            const isSelected = prev.some(s => s.id === service.id);
-            if (isSelected) {
-                return prev.filter(s => s.id !== service.id);
-            }
-            return [...prev, service];
-        });
+        setSelectedService(prev => (prev?.id === service.id ? null : service));
     };
 
     // Check if service is selected
     const isServiceSelected = (serviceId: string) => {
-        return selectedServices.some(s => s.id === serviceId);
+        return selectedService?.id === serviceId;
     };
 
     // Calculate totals
-    const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
-    const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
+    const totalPrice = selectedService?.price ?? 0;
+    const totalDuration = selectedService?.duration ?? 0;
 
     // Format duration
     const formatDuration = (minutes: number) => {
@@ -305,11 +281,12 @@ export default function MobileSalonProfile({
 
     // Handle continue booking
     const handleContinue = () => {
-        if (selectedServices.length > 0) {
-            selectedServices.forEach(service => onBookService(service));
-        } else {
-            onBookNow();
+        if (selectedService) {
+            onBookService(selectedService);
+            return;
         }
+
+        onBookNow();
     };
 
     // Copy address to clipboard
@@ -345,6 +322,11 @@ export default function MobileSalonProfile({
     const primaryWhatsappHref = salon.whatsapp
         ? `https://wa.me/${salon.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi! I found your salon on Stylr SA and I'd like to make a booking.`)}`
         : null;
+    const bookingModeLabel = salon.bookingType === 'BOTH'
+        ? 'Mobile and in-salon bookings'
+        : salon.bookingType === 'MOBILE'
+            ? 'Mobile bookings available'
+            : 'In-salon bookings';
 
     return (
         <>
@@ -439,7 +421,10 @@ export default function MobileSalonProfile({
                         </button>
                         <button
                             className={`${styles.actionBtn} ${isFavorited ? styles.favorited : ''}`}
-                            onClick={() => setIsFavorited(!isFavorited)}
+                            onClick={() => {
+                                setIsFavorited((prev) => !prev);
+                                void onToggleFavorite();
+                            }}
                         >
                             {isFavorited ? <FaHeart /> : <FaRegHeart />}
                         </button>
@@ -448,6 +433,7 @@ export default function MobileSalonProfile({
 
                 {/* Salon Header */}
                 <div className={styles.salonHeader}>
+                    <span className={styles.salonEyebrow}>Salon profile</span>
                     <h1 className={styles.salonName}>
                         {salon.name}
                         {salon.isVerified && <VerificationBadge size="small" />}
@@ -475,19 +461,19 @@ export default function MobileSalonProfile({
                         )}
                     </div>
 
-                    {/* Open/Closed Status */}
-                    <div className={`${styles.statusRow} ${isOpen ? styles.open : styles.closed}`}>
-                        <FaRegClock />
-                        <span className={styles.statusDot} />
-                        <span className={styles.statusText}>
-                            {isOpen ? 'Open' : 'Closed'} - {statusText}
-                        </span>
-                    </div>
-
-                    {/* Location */}
-                    <div className={styles.locationRow}>
-                        <FaMapMarkerAlt />
-                        <span>{addressText}</span>
+                    <div className={styles.trustRow}>
+                        <div className={`${styles.statusPill} ${isOpen ? styles.statusPillOpen : styles.statusPillClosed}`}>
+                            <FaRegClock />
+                            <span>{isOpen ? 'Open' : 'Closed'} - {statusText}</span>
+                        </div>
+                        <div className={styles.trustPill}>
+                            <FaMapMarkerAlt />
+                            <span>{addressText}</span>
+                        </div>
+                        <div className={styles.trustPill}>
+                            <FaCheckCircle />
+                            <span>{bookingModeLabel}</span>
+                        </div>
                     </div>
 
                     {/* Feature badges */}
@@ -519,11 +505,18 @@ export default function MobileSalonProfile({
                         <span className={styles.quickFactPill}>{services.length} services</span>
                         <span className={styles.quickFactPill}>{allImages.length} photos</span>
                         <span className={styles.quickFactPill}>{reviews.length} reviews</span>
+                        {salon.isVerified && <span className={styles.quickFactPill}>Verified</span>}
                     </div>
                 </div>
 
                 {/* Tab Navigation - Fresha Style */}
                 <div className={styles.tabNav} ref={tabsRef}>
+                    <button
+                        className={`${styles.tabButton} ${activeTab === 'services' ? styles.active : ''}`}
+                        onClick={() => setActiveTab('services')}
+                    >
+                        Services
+                    </button>
                     <button
                         className={`${styles.tabButton} ${activeTab === 'photos' ? styles.active : ''}`}
                         onClick={() => setActiveTab('photos')}
@@ -532,22 +525,16 @@ export default function MobileSalonProfile({
                         {allImages.length > 0 && <span className={styles.tabBadge}>{allImages.length}</span>}
                     </button>
                     <button
-                        className={`${styles.tabButton} ${activeTab === 'services' ? styles.active : ''}`}
-                        onClick={() => setActiveTab('services')}
+                        className={`${styles.tabButton} ${activeTab === 'reviews' ? styles.active : ''}`}
+                        onClick={() => setActiveTab('reviews')}
                     >
-                        Services
+                        Reviews {reviews.length > 0 && <span className={styles.tabBadge}>{reviews.length}</span>}
                     </button>
                     <button
                         className={`${styles.tabButton} ${activeTab === 'details' ? styles.active : ''}`}
                         onClick={() => setActiveTab('details')}
                     >
                         About
-                    </button>
-                    <button
-                        className={`${styles.tabButton} ${activeTab === 'reviews' ? styles.active : ''}`}
-                        onClick={() => setActiveTab('reviews')}
-                    >
-                        Reviews {reviews.length > 0 && <span className={styles.tabBadge}>{reviews.length}</span>}
                     </button>
                 </div>
 
@@ -850,22 +837,16 @@ export default function MobileSalonProfile({
                     )}
                 </div>
 
-                {/* Similar Salons Section */}
-                <SimilarSalons
-                    currentSalonId={salon.id}
-                    city={salon.city}
-                    province={salon.province}
-                />
             </div>
 
             {/* Mobile Sticky Book Bar - Enhanced */}
-            <div className={`${styles.mobileBookBar} ${selectedServices.length > 0 ? styles.expanded : ''}`}>
-                {selectedServices.length > 0 ? (
+            <div className={`${styles.mobileBookBar} ${selectedService ? styles.expanded : ''}`}>
+                {selectedService ? (
                     <>
                         <div className={styles.bookBarSummary}>
                             <div className={styles.bookBarInfo}>
                                 <span className={styles.bookBarCount}>
-                                    {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                                    {selectedService.title || selectedService.name}
                                 </span>
                                 <span className={styles.bookBarDuration}>
                                     <FaClock /> {formatDuration(totalDuration)}
@@ -878,7 +859,7 @@ export default function MobileSalonProfile({
                         </button>
                         <button
                             className={styles.clearBtn}
-                            onClick={() => setSelectedServices([])}
+                            onClick={() => setSelectedService(null)}
                         >
                             <FaTimes />
                         </button>

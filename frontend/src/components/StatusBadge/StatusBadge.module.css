@@ -2,11 +2,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600;
+    font-weight: 700;
     border-radius: 9999px;
     text-transform: capitalize;
     white-space: nowrap;
     border: 1px solid transparent;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 2px rgba(17, 24, 39, 0.08);
 }
 
 /* Sizes */
@@ -27,84 +29,84 @@
 
 /* Variants — solid enough backgrounds so text is always legible on white */
 .default {
-    background-color: #e2e8f0;
-    color: #475569;
-    border-color: #cbd5e1;
+    background-color: #475569;
+    color: #ffffff;
+    border-color: #475569;
 }
 
 /* APPROVED / COMPLETED / DELIVERED / VERIFIED — green */
 .approved {
-    background-color: #d1fae5;
-    color: #065f46;
-    border-color: #6ee7b7;
+    background-color: #15803d;
+    color: #ffffff;
+    border-color: #15803d;
 }
 
 /* PENDING / AWAITING — amber */
 .pending {
-    background-color: #fef3c7;
-    color: #92400e;
-    border-color: #fcd34d;
+    background-color: #b45309;
+    color: #ffffff;
+    border-color: #b45309;
 }
 
 /* REJECTED / CANCELLED — red */
 .rejected {
-    background-color: #fee2e2;
-    color: #991b1b;
-    border-color: #fca5a5;
+    background-color: #b91c1c;
+    color: #ffffff;
+    border-color: #b91c1c;
 }
 
 /* CONFIRMED — blue */
 .confirmed {
-    background-color: #dbeafe;
-    color: #1e40af;
-    border-color: #93c5fd;
+    background-color: #1d4ed8;
+    color: #ffffff;
+    border-color: #1d4ed8;
 }
 
 .cancelled {
-    background-color: #fee2e2;
-    color: #991b1b;
-    border-color: #fca5a5;
+    background-color: #b91c1c;
+    color: #ffffff;
+    border-color: #b91c1c;
 }
 
 .completed {
-    background-color: #d1fae5;
-    color: #065f46;
-    border-color: #6ee7b7;
+    background-color: #15803d;
+    color: #ffffff;
+    border-color: #15803d;
 }
 
 /* SHIPPED — purple */
 .shipped {
-    background-color: #ede9fe;
-    color: #5b21b6;
-    border-color: #c4b5fd;
+    background-color: #6d28d9;
+    color: #ffffff;
+    border-color: #6d28d9;
 }
 
 /* DELIVERED — green */
 .delivered {
-    background-color: #d1fae5;
-    color: #065f46;
-    border-color: #6ee7b7;
+    background-color: #15803d;
+    color: #ffffff;
+    border-color: #15803d;
 }
 
 /* PROCESSING — orange-amber */
 .processing {
-    background-color: #ffedd5;
-    color: #9a3412;
-    border-color: #fdba74;
+    background-color: #c2410c;
+    color: #ffffff;
+    border-color: #c2410c;
 }
 
 /* VERIFIED — green */
 .verified {
-    background-color: #d1fae5;
-    color: #065f46;
-    border-color: #6ee7b7;
+    background-color: #047857;
+    color: #ffffff;
+    border-color: #047857;
 }
 
 /* AWAITING — amber */
 .awaiting {
-    background-color: #fef3c7;
-    color: #92400e;
-    border-color: #fcd34d;
+    background-color: #b45309;
+    color: #ffffff;
+    border-color: #b45309;
 }
 
 /* Dark mode — keep readable on dark surfaces */

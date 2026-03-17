@@ -1,10 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { FaChevronLeft, FaChevronRight, FaHeart, FaRegHeart, FaTag } from 'react-icons/fa';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Service } from '@/types';
+import { Promotion, Service } from '@/types';
 import styles from './ServiceCard.module.css';
 import { toast } from 'react-toastify';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,31 +20,50 @@ interface ServiceCardProps {
   service: Service;
   onBook: (service: Service) => void;
   onImageClick: (images: string[], index: number) => void;
-  promotion?: any;
-  onPromotionClick?: (promotion: any) => void;
+  promotion?: Promotion | null;
+  onPromotionClick?: (promotion: Promotion) => void;
   variant?: 'featured' | 'salonProfile' | 'listing';
 }
 
-export default function ServiceCard({ service, onBook, onImageClick, promotion, onPromotionClick, variant = 'listing' }: ServiceCardProps) {
+function formatRand(value: number) {
+  return Number.isInteger(value) ? `R${value}` : `R${value.toFixed(2)}`;
+}
+
+export default function ServiceCard({
+  service,
+  onBook,
+  onImageClick,
+  promotion,
+  onPromotionClick,
+  variant = 'listing',
+}: ServiceCardProps) {
   const { authStatus } = useAuth();
   const { openModal } = useAuthModal();
-  const { setIsNavigating } = useNavigationLoading();
+  const { showPageLoader } = useNavigationLoading();
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(Boolean(service.isLikedByCurrentUser));
   const [likeCount, setLikeCount] = useState(service.likeCount ?? 0);
   const [isExpanded, setIsExpanded] = useState(false);
-  const serviceTitle = service.title ?? service.name ?? 'Service';
-  const images = useMemo(() => {
-    const unique = Array.isArray(service.images)
-      ? service.images.filter((img, idx, arr) => img && arr.indexOf(img) === idx)
-      : [];
-    return unique.length > 0 ? unique : [getPlaceholder('wide')];
-  }, [service.images]);
   const [activeImage, setActiveImage] = useState(0);
+
+  const serviceTitle = service.title ?? service.name ?? 'Service';
+  const realImages = useMemo(() => {
+    if (!Array.isArray(service.images)) {
+      return [];
+    }
+
+    return service.images.filter((img, idx, arr) => img && arr.indexOf(img) === idx);
+  }, [service.images]);
+  const images = realImages.length > 0 ? realImages : [getPlaceholder('wide')];
 
   const isSalonProfile = variant === 'salonProfile';
   const isFeatured = variant === 'featured';
   const showSalonInfo = !isSalonProfile;
+  const promotionLabel = promotion
+    ? promotion.discountPercentage > 0
+      ? `${promotion.discountPercentage}% Off`
+      : promotion.title?.trim() || 'Special offer'
+    : null;
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -58,7 +77,7 @@ export default function ServiceCard({ service, onBook, onImageClick, promotion, 
 
   const handleLikeClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (authStatus !== 'authenticated') {
       toast.info('Please log in to like a service.');
       openModal('login');
@@ -67,9 +86,9 @@ export default function ServiceCard({ service, onBook, onImageClick, promotion, 
 
     const originalLikedState = isLiked;
     const originalLikeCount = likeCount;
-    
+
     setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+    setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
 
     try {
       await apiFetch(`/api/likes/service/${service.id}/toggle`, { method: 'POST' });
@@ -84,21 +103,23 @@ export default function ServiceCard({ service, onBook, onImageClick, promotion, 
 
   return (
     <div className={cardClassName}>
-      {/* Favorite button - shown for featured variant */}
-      {isFeatured && (
-        <button 
-          onClick={handleLikeClick} 
-          className={`${styles.favoriteButton} ${isLiked ? styles.favorited : ''}`} 
-          aria-label={isLiked ? 'Remove from favorites' : 'Add to favorites'}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={handleLikeClick}
+        className={`${styles.favoriteButton} ${isLiked ? styles.favorited : ''}`}
+        aria-label={isLiked ? 'Remove from favorites' : 'Add to favorites'}
+        aria-pressed={isLiked}
+      >
+        {isLiked ? <FaHeart aria-hidden="true" /> : <FaRegHeart aria-hidden="true" />}
+      </button>
 
-      {/* Image Container */}
-      <div className={styles.imageContainer} onClick={() => images.length > 0 && onImageClick(images, activeImage)}>
+      <button
+        type="button"
+        className={styles.imageContainer}
+        onClick={() => onImageClick(images, activeImage)}
+        aria-label={`Open image gallery for ${serviceTitle}`}
+      >
+        {!realImages.length && <span className={styles.placeholderMark}>Stylr SA</span>}
         <Image
           key={images[activeImage]}
           src={images[activeImage]}
@@ -107,41 +128,61 @@ export default function ServiceCard({ service, onBook, onImageClick, promotion, 
           fill
           sizes="(max-width: 480px) 50vw, (max-width: 768px) 33vw, 25vw"
         />
-        
-        {/* Carousel controls - hidden on mobile via CSS */}
+
         {images.length > 1 && (
           <>
-            <button className={`${styles.carouselButton} ${styles.prev}`} onClick={handlePrevImage} aria-label="Previous image">‹</button>
-            <button className={`${styles.carouselButton} ${styles.next}`} onClick={handleNextImage} aria-label="Next image">›</button>
+            <button
+              type="button"
+              className={`${styles.carouselButton} ${styles.prev}`}
+              onClick={handlePrevImage}
+              aria-label="Previous image"
+            >
+              <FaChevronLeft aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className={`${styles.carouselButton} ${styles.next}`}
+              onClick={handleNextImage}
+              aria-label="Next image"
+            >
+              <FaChevronRight aria-hidden="true" />
+            </button>
             <div className={styles.imageCounter}>{activeImage + 1}/{images.length}</div>
           </>
         )}
-        
-        {/* Promotion badge */}
-        {promotion && (
-          <div className={styles.promotionBadge} onClick={(e) => { e.stopPropagation(); onPromotionClick?.(promotion); }}>
-            <span className={styles.badgeIcon}>🏷️</span>
-            <span className={styles.badgeText}>Promo</span>
-          </div>
-        )}
-      </div>
 
-      {/* Content */}
+        {promotion && promotionLabel && (
+          <button
+            type="button"
+            className={styles.promotionBadge}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPromotionClick?.(promotion);
+            }}
+            aria-label={`View promotion details for ${serviceTitle}`}
+          >
+            <FaTag aria-hidden="true" />
+            <span className={styles.badgeText}>{promotionLabel}</span>
+          </button>
+        )}
+      </button>
+
       <div className={styles.content}>
         <div className={styles.header}>
           <h3 className={styles.title}>{serviceTitle}</h3>
         </div>
 
-        {/* Salon info - hidden on salon profile page */}
         {showSalonInfo && service.salon && (
           <div className={styles.locationInfo}>
-            <button 
-              className={styles.salonNameLink} 
+            <button
+              type="button"
+              className={styles.salonNameLink}
               onClick={(e) => {
                 e.stopPropagation();
-                setIsNavigating(true);
+                showPageLoader();
                 router.push(getSalonUrl(service.salon!));
               }}
+              aria-label={`View salon ${service.salon.name}`}
             >
               {service.salon.name}
             </button>
@@ -153,9 +194,8 @@ export default function ServiceCard({ service, onBook, onImageClick, promotion, 
           </div>
         )}
 
-        {/* Price */}
         <div className={styles.priceWrapper}>
-          <span className={styles.price}>R{service.price.toFixed(2)}</span>
+          <span className={styles.price}>{formatRand(service.price)}</span>
           {service.pricingType && (
             <span className={styles.pricingType}>
               {service.pricingType === 'PER_PERSON' ? 'per person' : 'per couple'}
@@ -163,25 +203,31 @@ export default function ServiceCard({ service, onBook, onImageClick, promotion, 
           )}
         </div>
 
-        {/* Description & Expand - only for salonProfile variant */}
         {isSalonProfile && (
           <>
             <p className={`${styles.description} ${isExpanded ? styles.expanded : ''}`}>
               {sanitizeText(service.description || '')}
             </p>
             {service.description && (
-              <button onClick={() => setIsExpanded(!isExpanded)} className={styles.expandButton}>
+              <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className={styles.expandButton}
+              >
                 {isExpanded ? 'View Less' : 'View More'}
               </button>
             )}
           </>
         )}
 
-        {/* Footer with Book button - only for salonProfile variant */}
         {isSalonProfile && (
           <div className={styles.footer}>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onBook(service); }} 
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onBook(service);
+              }}
               className={`btn btn-primary ${styles.salonProfileBookButton}`}
             >
               Book Now

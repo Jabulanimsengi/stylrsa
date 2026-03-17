@@ -9,7 +9,6 @@ export const ROUTES = {
   HOME: '/',
   SALONS: '/salons',
   SERVICES: '/services',
-  PRODUCTS: '/products',
   PROMOTIONS: '/promotions',
   TRENDS: '/trends',
   BLOG: '/blog',
@@ -47,8 +46,9 @@ export const ROUTES = {
   FAQ: '/faq',
   TERMS: '/terms',
   PRIVACY: '/privacy',
-  CAREERS: '/careers',
 } as const;
+
+export type RegisterRouteRole = 'CLIENT' | 'SALON_OWNER';
 
 /**
  * Dynamic route builders
@@ -57,7 +57,6 @@ export const buildRoute = {
   salon: (id: string) => `/salons/${id}`,
   service: (id: string) => `/services/${id}`,
   serviceCategory: (slug: string) => `/services/${slug}`,
-  product: (slugOrId: string) => `/products/${slugOrId}`,
   blog: (slug: string) => `/blog/${slug}`,
   trend: (category: string) => `/trends/${category}`,
   booking: (id: string) => `/bookings/${id}`,
@@ -70,6 +69,25 @@ export const buildRoute = {
     `/${keyword}/${province}/${city}`,
   seoKeywordSuburb: (keyword: string, province: string, city: string, suburb: string) =>
     `/${keyword}/${province}/${city}/${suburb}`,
+};
+
+export const buildAuthRoute = {
+  register: (options?: { callbackUrl?: string; role?: RegisterRouteRole }) => {
+    const params = new URLSearchParams();
+
+    if (options?.callbackUrl) {
+      params.set('callbackUrl', options.callbackUrl);
+    }
+
+    if (options?.role) {
+      params.set('role', options.role);
+    }
+
+    const query = params.toString();
+    return query ? `${ROUTES.REGISTER}?${query}` : ROUTES.REGISTER;
+  },
+  providerRegister: (callbackUrl = '/create-salon') =>
+    buildAuthRoute.register({ callbackUrl, role: 'SALON_OWNER' }),
 };
 
 /**

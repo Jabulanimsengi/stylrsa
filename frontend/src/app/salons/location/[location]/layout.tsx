@@ -1,5 +1,3 @@
-import type { Metadata } from 'next';
-
 type Props = {
   children: React.ReactNode;
   params: Promise<{ location: string }>;
@@ -13,59 +11,18 @@ export async function generateStaticParams() {
   ];
 }
 
-const LOCATION_INFO: Record<string, { name: string; description: string; keywords: string }> = {
+const LOCATION_INFO: Record<string, { name: string }> = {
   'gauteng': {
     name: 'Gauteng',
-    description: 'Find top-rated salons and beauty professionals in Gauteng, South Africa. Book appointments at the best hair salons, nail salons, spas, and barbershops in Johannesburg, Pretoria, and surrounding areas.',
-    keywords: 'Gauteng salons, Johannesburg hair salon, Pretoria beauty salon, Gauteng spa, Johannesburg nail salon, Pretoria barbershop, Gauteng braiding salon',
   },
   'western-cape': {
     name: 'Western Cape',
-    description: 'Discover premier salons and beauty services in the Western Cape. Book appointments at top-rated hair salons, nail salons, and spas in Cape Town, Stellenbosch, and the Garden Route.',
-    keywords: 'Western Cape salons, Cape Town hair salon, Cape Town beauty salon, Western Cape spa, Cape Town nail salon, Stellenbosch salon',
   },
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { location } = await params;
-  const locationInfo = LOCATION_INFO[location] || {
-    name: 'South Africa',
-    description: 'Find the best salons and beauty professionals in South Africa',
-    keywords: 'South Africa salons, beauty services, hair salon',
-  };
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
-  const canonicalUrl = `${siteUrl}/salons/${location}`;
-
-  const title = `Salons in ${locationInfo.name} | Hair, Nails, Spa & Beauty Services`;
-  const description = locationInfo.description;
-
-  return {
-    title,
-    description,
-    keywords: locationInfo.keywords,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    openGraph: {
-      title,
-      description,
-      url: canonicalUrl,
-      siteName: 'Stylr SA',
-      type: 'website',
-      locale: 'en_ZA',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-    },
-  };
-}
-
 export default async function SalonsLocationLayout({ children, params }: Props) {
   const { location } = await params;
-  const locationInfo = LOCATION_INFO[location] || { name: 'South Africa', description: '', keywords: '' };
+  const locationInfo = LOCATION_INFO[location] || { name: 'South Africa' };
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 
   const breadcrumbSchema = {
@@ -88,7 +45,7 @@ export default async function SalonsLocationLayout({ children, params }: Props) 
         '@type': 'ListItem',
         position: 3,
         name: locationInfo.name,
-        item: `${siteUrl}/salons/${location}`,
+        item: `${siteUrl}/salons/location/${location}`,
       },
     ],
   };

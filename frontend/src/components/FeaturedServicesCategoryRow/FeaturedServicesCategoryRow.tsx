@@ -22,7 +22,7 @@ interface FeaturedServicesCategoryRowProps {
 export default function FeaturedServicesCategoryRow({ categoryName, services, categorySlug }: FeaturedServicesCategoryRowProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const router = useRouter();
-  const { setIsNavigating } = useNavigationLoading();
+  const { showPageLoader } = useNavigationLoading();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const leftButtonRef = useRef<HTMLButtonElement>(null);
   const rightButtonRef = useRef<HTMLButtonElement>(null);
@@ -141,9 +141,9 @@ export default function FeaturedServicesCategoryRow({ categoryName, services, ca
   const handleViewAll = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     const slug = categorySlug || getCategorySlug(categoryName);
-    setIsNavigating(true);
+    showPageLoader();
     router.push(`/services?category=${slug}`);
-  }, [categorySlug, categoryName, router, setIsNavigating]);
+  }, [categorySlug, categoryName, router, showPageLoader]);
 
   if (!services || services.length === 0) {
     return null;

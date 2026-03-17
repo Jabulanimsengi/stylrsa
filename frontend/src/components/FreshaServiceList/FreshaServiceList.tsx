@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { Service, Salon } from '@/types';
 import styles from './FreshaServiceList.module.css';
-import { FaPlus, FaCheck, FaImages, FaChevronDown, FaChevronUp, FaStar, FaTimes, FaShoppingCart, FaArrowUp } from 'react-icons/fa';
+import { FaPlus, FaCheck, FaImages, FaChevronDown, FaChevronUp, FaStar, FaTimes, FaArrowUp } from 'react-icons/fa';
 import Image from 'next/image';
 import { transformCloudinary } from '@/utils/cloudinary';
 import { SERVICE_CATEGORIES } from '@/constants/categories';
+import { EmptyState } from '@/components/ui';
+import { buildSalonServicePath } from '@/lib/salonSeoHelpers';
 
 interface FreshaServiceListProps {
     services: Service[];
@@ -20,6 +23,11 @@ interface CategoryService {
     categoryId: string;
     services: Service[];
 }
+
+type ServiceCategoryMeta = {
+    name?: string;
+    slug?: string;
+};
 
 // Map category slugs to names for lookup
 const CATEGORY_NAME_BY_SLUG = new Map(
@@ -127,7 +135,7 @@ export default function FreshaServiceList({
     onBook,
     onImageClick
 }: FreshaServiceListProps) {
-    const [selectedServices, setSelectedServices] = useState<Service[]>([]);
+    const [selectedService, setSelectedService] = useState<Service | null>(null);
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
     const categoryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
     const containerRef = useRef<HTMLDivElement>(null);
@@ -168,8 +176,13 @@ export default function FreshaServiceList({
 
         services.forEach(service => {
             // Get category name from service
-            const categoryName = (service as any).category?.name || '';
-            const categorySlug = (service as any).category?.slug || (service as any).categoryId || '';
+            const category = typeof service.category === 'string'
+                ? undefined
+                : (service.category as ServiceCategoryMeta | undefined);
+            const categoryName = typeof service.category === 'string'
+                ? service.category
+                : category?.name || '';
+            const categorySlug = category?.slug || service.categoryId || '';
 
             // Determine the valid category name
             let validCategoryName = '';
@@ -224,6 +237,20 @@ export default function FreshaServiceList({
         return sorted;
     }, [services]);
 
+    useEffect(() => {
+        if (groupedServices.length === 0) {
+            setExpandedCategories(new Set());
+            return;
+        }
+
+        setExpandedCategories(prev => {
+            if (prev.size > 0) {
+                return prev;
+            }
+            return new Set([groupedServices[0].categoryId]);
+        });
+    }, [groupedServices]);
+
     // Toggle category expansion
     const toggleCategory = (categoryId: string) => {
         setExpandedCategories(prev => {
@@ -239,23 +266,17 @@ export default function FreshaServiceList({
 
     // Toggle service selection
     const toggleService = (service: Service) => {
-        setSelectedServices(prev => {
-            const isSelected = prev.some(s => s.id === service.id);
-            if (isSelected) {
-                return prev.filter(s => s.id !== service.id);
-            }
-            return [...prev, service];
-        });
+        setSelectedService(prev => (prev?.id === service.id ? null : service));
     };
 
     // Check if service is selected
     const isServiceSelected = (serviceId: string) => {
-        return selectedServices.some(s => s.id === serviceId);
+        return selectedService?.id === serviceId;
     };
 
     // Calculate totals
-    const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
-    const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
+    const totalPrice = selectedService?.price ?? 0;
+    const totalDuration = selectedService?.duration ?? 0;
 
     // Format duration display - supports duration ranges
     const formatDuration = (service: Service) => {
@@ -291,8 +312,8 @@ export default function FreshaServiceList({
 
     // Handle continue to booking
     const handleContinue = () => {
-        if (selectedServices.length > 0) {
-            onBook(selectedServices);
+        if (selectedService) {
+            onBook([selectedService]);
         }
     };
 
@@ -301,14 +322,26 @@ export default function FreshaServiceList({
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    if (groupedServices.length === 0) {
+        return (
+            <div className={styles.emptyStateShell}>
+                <EmptyState
+                    icon="search"
+                    title="No bookable services available"
+                    description="This salon has not published categorized services yet. Please check back soon or explore another salon."
+                />
+            </div>
+        );
+    }
+
     return (
         <div className={styles.container} ref={containerRef}>
 
             {/* Selected Services Indicator */}
-            {selectedServices.length > 0 && (
+            {selectedService && (
                 <button className={styles.selectedIndicator} onClick={scrollToTop}>
                     <FaArrowUp />
-                    {selectedServices.length} selected service{selectedServices.length > 1 ? 's' : ''}
+                    Ready to book {selectedService.title || selectedService.name}
                 </button>
             )}
 
@@ -364,6 +397,13 @@ export default function FreshaServiceList({
                                                                 </span>
                                                             )}
                                                         </div>
+                                                        <Link
+                                                            href={buildSalonServicePath(salon, service)}
+                                                            className={styles.serviceDetailLink}
+                                                            onClick={(event) => event.stopPropagation()}
+                                                        >
+                                                            View service details
+                                                        </Link>
                                                         <p className={styles.serviceDuration}>
                                                             {formatDuration(service)}
                                                         </p>
@@ -410,7 +450,7 @@ export default function FreshaServiceList({
 
 
                 {/* Cart Sidebar (Desktop) - Only visible when services are selected and footer is not visible */}
-                {selectedServices.length > 0 && !isFooterVisible && (
+                {selectedService && !isFooterVisible && (
                     <div className={styles.cartColumn}>
                         <div className={styles.cartSidebar}>
                             {/* Salon Info */}
@@ -442,28 +482,26 @@ export default function FreshaServiceList({
 
                             {/* Cart Items */}
                             <div className={styles.cartItems}>
-                                {selectedServices.map(service => (
-                                    <div key={service.id} className={styles.cartItem}>
+                                <div className={styles.cartItem}>
                                         <div className={styles.cartItemInfo}>
                                             <p className={styles.cartItemName}>
-                                                {service.title || service.name}
+                                                {selectedService.title || selectedService.name}
                                             </p>
                                             <p className={styles.cartItemDetails}>
-                                                {formatDuration(service)} • with any professional
+                                                {formatDuration(selectedService)} - with any professional
                                             </p>
                                         </div>
                                         <span className={styles.cartItemPrice}>
-                                            R {service.price.toFixed(0)}
+                                            R {selectedService.price.toFixed(0)}
                                         </span>
                                         <button
                                             className={styles.cartItemRemove}
-                                            onClick={() => toggleService(service)}
+                                            onClick={() => toggleService(selectedService)}
                                             aria-label="Remove service"
                                         >
                                             <FaTimes />
                                         </button>
                                     </div>
-                                ))}
                             </div>
 
                             <div className={styles.cartTotal}>
@@ -482,12 +520,12 @@ export default function FreshaServiceList({
                 )}
 
                 {/* Mobile Sticky Footer Cart - Hidden when footer is visible */}
-                {selectedServices.length > 0 && !isFooterVisible && (
+                {selectedService && !isFooterVisible && (
                     <div className={styles.mobileCartFooter}>
                         <div className={styles.mobileCartContent}>
                             <div className={styles.mobileCartInfo}>
                                 <p className={styles.mobileCartCount}>
-                                    {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} • {formatTotalDuration(totalDuration)}
+                                    {selectedService.title || selectedService.name} - {formatTotalDuration(totalDuration)}
                                 </p>
                                 <p className={styles.mobileCartTotal}>R {totalPrice.toFixed(0)}</p>
                             </div>

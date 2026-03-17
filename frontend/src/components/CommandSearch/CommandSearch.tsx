@@ -11,12 +11,12 @@ import {
     CommandItem,
     Kbd,
 } from '@/components/ui';
-import { FaSearch, FaCut, FaStore, FaShoppingBag, FaChartLine, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaSearch, FaCut, FaStore, FaChartLine, FaMapMarkerAlt } from 'react-icons/fa';
 import { getSalonUrl } from '@/utils/salonUrl';
 
 interface SearchResult {
     id: string;
-    type: 'salon' | 'service' | 'product' | 'trend' | 'location';
+    type: 'salon' | 'service' | 'trend' | 'location';
     title: string;
     subtitle?: string;
     url: string;
@@ -46,7 +46,6 @@ type ServiceSearchMatch = {
 const QUICK_LINKS = [
     { title: 'Find Salons', url: '/salons', icon: FaStore },
     { title: 'Browse Services', url: '/services', icon: FaCut },
-    { title: 'Shop Products', url: '/marketplace', icon: FaShoppingBag },
     { title: 'View Trends', url: '/trends', icon: FaChartLine },
     { title: 'Near Me', url: '/salons/near-me', icon: FaMapMarkerAlt },
 ];
@@ -139,7 +138,6 @@ export function CommandSearch() {
         switch (type) {
             case 'salon': return <FaStore className="mr-2 h-4 w-4" />;
             case 'service': return <FaCut className="mr-2 h-4 w-4" />;
-            case 'product': return <FaShoppingBag className="mr-2 h-4 w-4" />;
             case 'trend': return <FaChartLine className="mr-2 h-4 w-4" />;
             default: return <FaSearch className="mr-2 h-4 w-4" />;
         }
@@ -161,7 +159,7 @@ export function CommandSearch() {
             {/* Command dialog */}
             <CommandDialog open={open} onOpenChange={setOpen}>
                 <CommandInput
-                    placeholder="Search salons, services, products..."
+                    placeholder="Search salons and services..."
                     value={query}
                     onValueChange={setQuery}
                 />

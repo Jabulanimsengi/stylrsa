@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, type FormEvent, useEffect, useRef, useCallback, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import styles from './CreateSalon.module.css';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
 import PageNav from '@/components/PageNav';
 import { type PlanCode } from '@/constants/plans';
+import { buildAuthRoute } from '@/constants/routes';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import MapboxMap from '@/components/MapboxMap';
@@ -53,6 +54,7 @@ type CreateSalonPayload = {
   longitude: number;
   planCode: PlanCode;
   hasSentProof: boolean;
+  adminConfirmEmailVerified?: boolean;
   website?: string;
   whatsapp?: string;
   mobileFee?: number;
@@ -96,8 +98,17 @@ function CreateSalonPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const selectedPlan: PlanCode = 'PREMIUM';
   const [hasConfirmedPayment, setHasConfirmedPayment] = useState(false);
+  const [adminConfirmEmailVerified, setAdminConfirmEmailVerified] = useState(false);
   const { authStatus, user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isAdmin = user?.role === 'ADMIN';
+  const canCreateSalon = user?.role === 'SALON_OWNER' || isAdmin;
+
+  useEffect(() => {
+    setAdminConfirmEmailVerified(Boolean(user?.emailVerified));
+  }, [user?.emailVerified]);
 
   // Save draft to localStorage
   const saveDraft = useCallback(() => {
@@ -221,9 +232,16 @@ function CreateSalonPageContent() {
     }
 
     if (authStatus === 'unauthenticated') {
-      // Redirect to home with auth modal instead of /login page
-      router.push('/?auth=login&redirect=/create-salon');
+      const query = searchParams.toString();
+      const callbackUrl = `${pathname}${query ? `?${query}` : ''}`;
+      router.push(buildAuthRoute.providerRegister(callbackUrl));
     } else if (authStatus === 'authenticated' && user?.email) {
+      if (!canCreateSalon) {
+        notify.error('Only salon owners and admins can create salon profiles.');
+        router.push('/');
+        return;
+      }
+
       // Pre-fill email from user registration
       setEmail(user.email);
 
@@ -247,7 +265,7 @@ function CreateSalonPageContent() {
 
       checkExistingSalon();
     }
-  }, [authStatus, router, user]);
+  }, [authStatus, canCreateSalon, router, user]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -277,9 +295,9 @@ function CreateSalonPageContent() {
         return;
       }
 
-      // Validate WhatsApp confirmation
-      if (!hasConfirmedPayment) {
-        notify.error('Please confirm that you have sent proof of payment to WhatsApp.');
+      // Validate payment confirmation
+      if (!isAdmin && !hasConfirmedPayment) {
+        notify.error('Please confirm that you have completed the bank transfer.');
         return;
       }
 
@@ -296,10 +314,13 @@ function CreateSalonPageContent() {
         latitude,
         longitude,
         planCode: selectedPlan,
-        hasSentProof: true, // User confirmed payment proof sent
+        hasSentProof: isAdmin ? true : hasConfirmedPayment,
         operatingHours: [],
         operatingDays: [],
       };
+      if (isAdmin) {
+        payload.adminConfirmEmailVerified = adminConfirmEmailVerified;
+      }
       if (website && website.trim().length > 0 && isValidUrl(website.trim())) {
         payload.website = website.trim();
       }
@@ -385,34 +406,63 @@ function CreateSalonPageContent() {
         {/* Selected Package Banner - Always Premium */}
         <div className={styles.selectedPackageBanner}>
           <div className={styles.bannerContent}>
-            <h3>Selected Package: Premium</h3>
+            <h3>Selected Package: Service Listing Plan</h3>
             <p>
               <strong>R399/month</strong> • 5x visibility boost • 0% commission on bookings
             </p>
           </div>
         </div>
 
-        {/* WhatsApp Payment Confirmation */}
-        <div className={styles.paymentConfirmation}>
-          <h3 className={styles.sectionTitle}>Payment Confirmation</h3>
-          <div className={styles.paymentInstructions}>
-            <p><strong>Bank Transfer Details:</strong></p>
-            <p>Please transfer <strong>R399</strong> and send proof of payment to:</p>
-            <p className={styles.whatsappNumber}>
-              <strong>WhatsApp: 078 777 0524</strong>
-            </p>
-            <p className={styles.paymentNote}>Include your salon name in the payment reference.</p>
+        {isAdmin ? (
+          <div className={styles.paymentConfirmation}>
+            <h3 className={styles.sectionTitle}>Admin Override</h3>
+            <div className={styles.paymentInstructions}>
+              <p><strong>Admin-created salon profiles skip the normal proof-of-payment gate.</strong></p>
+              <p>You can create the profile immediately, and it will open with full owner-style management access on your dashboard.</p>
+            </div>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={adminConfirmEmailVerified}
+                onChange={(e) => setAdminConfirmEmailVerified(e.target.checked)}
+                className={styles.checkbox}
+              />
+              <span>Confirm that this admin account email has been authenticated</span>
+            </label>
           </div>
-          <label className={styles.checkboxLabel}>
-            <input
-              type="checkbox"
-              checked={hasConfirmedPayment}
-              onChange={(e) => setHasConfirmedPayment(e.target.checked)}
-              className={styles.checkbox}
-            />
-            <span>I confirm that I have sent proof of payment to the WhatsApp number above</span>
-          </label>
-        </div>
+        ) : (
+          <div className={styles.paymentConfirmation}>
+            <h3 className={styles.sectionTitle}>Payment Confirmation</h3>
+            <div className={styles.paymentInstructions}>
+              <p><strong>Bank Transfer Details:</strong></p>
+              <p>Please transfer <strong>R399</strong> to the account below before submitting your salon profile.</p>
+              <div className={styles.bankDetailsCard}>
+                <div className={styles.bankDetailRow}>
+                  <span className={styles.bankDetailLabel}>Account name</span>
+                  <strong className={styles.bankDetailValue}>SOFTKORE DEV</strong>
+                </div>
+                <div className={styles.bankDetailRow}>
+                  <span className={styles.bankDetailLabel}>Account number</span>
+                  <strong className={styles.bankDetailValue}>2486612161</strong>
+                </div>
+                <div className={styles.bankDetailRow}>
+                  <span className={styles.bankDetailLabel}>Bank</span>
+                  <strong className={styles.bankDetailValue}>Capitec Bank</strong>
+                </div>
+              </div>
+              <p className={styles.paymentNote}>Use your salon name as the payment reference.</p>
+            </div>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={hasConfirmedPayment}
+                onChange={(e) => setHasConfirmedPayment(e.target.checked)}
+                className={styles.checkbox}
+              />
+              <span>I confirm that I have paid R399 to the bank account above</span>
+            </label>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={`${styles.inputGroup} ${styles.fullWidth}`}>

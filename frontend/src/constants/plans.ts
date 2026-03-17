@@ -6,8 +6,7 @@ export type AllPlanCodes = PlanCode | LegacyPlanCode;
 
 export interface PlanFeature {
   name: string;
-  free: string | boolean;
-  premium: string | boolean;
+  value: string | boolean;
 }
 
 export interface AppPlan {
@@ -26,76 +25,60 @@ export interface AppPlan {
   isLegacy?: boolean;
 }
 
-// Commission breakdown (32% total on FREE plan)
-export const COMMISSION_RATES = {
-  TOTAL: 0.32,        // 32% total commission
-  PLATFORM: 0.25,     // 25% platform fee
-  CASHBACK: 0.05,     // 5% client cashback
-  PAYMENT: 0.02,      // 2% payment processing
-};
+export const SALON_LISTING_PLAN_CODE: PlanCode = 'PREMIUM';
+export const SALON_LISTING_PRICE_CENTS = 39900;
 
-// Feature comparison for pricing table
+// Single salon listing plan details for the public pricing page.
 export const PLAN_FEATURES: PlanFeature[] = [
-  { name: 'Listing Fee', free: 'FREE', premium: 'R399/month' },
-  { name: 'Service Listings', free: 'Unlimited', premium: 'Unlimited' },
-  { name: 'Gallery Images', free: 'Unlimited', premium: 'Unlimited' },
-  { name: 'Short Video Uploads', free: true, premium: true },
-  { name: 'Before & After Gallery', free: true, premium: true },
-  { name: 'Analytics Dashboard', free: 'Basic', premium: 'Advanced' },
-  { name: 'Search Visibility', free: 'Standard', premium: '5x Boosted' },
-  { name: 'Team Member Profiles', free: 'Unlimited', premium: 'Unlimited' },
-  { name: 'Job Posting Board', free: true, premium: true },
-  { name: 'Support', free: 'Email', premium: 'Priority' },
-  { name: 'Commission on Bookings', free: '32%', premium: '0%' },
-  { name: 'Featured Salon Badge', free: false, premium: true },
-  { name: 'Priority Search Ranking', free: false, premium: true },
+  { name: 'Monthly listing fee', value: 'R399/month' },
+  { name: 'Service listings', value: 'Unlimited' },
+  { name: 'Gallery images', value: 'Unlimited' },
+  { name: 'Short video uploads', value: true },
+  { name: 'Before & after gallery', value: true },
+  { name: 'Search visibility', value: '5x boosted' },
+  { name: 'Featured profile badge', value: true },
+  { name: 'WhatsApp bookings', value: true },
+  { name: 'Commission on bookings', value: '0%' },
+  { name: 'Support', value: 'Priority' },
 ];
 
 // Active plans available for new signups
 export const APP_PLANS: AppPlan[] = [
   {
     code: 'PREMIUM',
-    name: 'Premium',
+    name: 'Service Listing Plan',
     price: 'R399',
-    priceCents: 39900,
+    priceCents: SALON_LISTING_PRICE_CENTS,
     maxListings: 'Unlimited',
     visibilityWeight: 5,
-    description: 'Maximum visibility and zero commission. Grow your business without limits.',
+    description: 'List your services, upload images, and receive WhatsApp bookings with 0% commission.',
     features: [
       'Unlimited service listings',
       'Unlimited gallery images',
-      'Unlimited treatments listed',
-      'Priority search ranking',
+      'Short video uploads',
+      'Before and after gallery',
       '5x visibility boost',
       'Featured salon badge',
-      'Advanced analytics & insights',
-      'Prioritised support',
-      'No commission on bookings (0%)',
+      'WhatsApp booking handoff',
+      '0% commission on bookings',
+      'Priority support',
     ],
     popular: true,
   },
 ];
 
-// Legacy plans for existing users only (grandfathered)
+// Legacy plans remain available only for displaying grandfathered records.
 export const LEGACY_PLANS: AppPlan[] = [
   {
     code: 'FREE',
-    name: 'Free',
+    name: 'Legacy Free',
     price: 'R0',
     priceCents: 0,
     maxListings: 'Unlimited',
     visibilityWeight: 1,
-    description: 'Perfect for getting started. List your services for free with commission-based earnings.',
+    description: 'Grandfathered salon plan. No longer offered to new service providers.',
     features: [
-      '100% FREE to list',
-      'Unlimited service listings',
-      'Unlimited gallery images',
-      'Video uploads & before/after gallery',
-      'Basic analytics dashboard',
-      'Standard search visibility',
-      'Unlimited team profiles',
-      'Job posting access',
-      '32% commission on completed bookings',
+      'Grandfathered legacy salon plan',
     ],
     isLegacy: true,
   },
@@ -168,5 +151,5 @@ export const PLAN_BY_CODE: Record<AllPlanCodes, AppPlan> = ALL_PLANS.reduce(
   {} as Record<AllPlanCodes, AppPlan>,
 );
 
-// Default plan for new signups
-export const DEFAULT_PLAN: PlanCode = 'PREMIUM';
+// Default salon plan for new service-provider signups
+export const DEFAULT_PLAN: PlanCode = SALON_LISTING_PLAN_CODE;

@@ -10,7 +10,7 @@
  * from the database using: npx ts-node scripts/sync-keywords-to-frontend.ts
  */
 
-import { PROVINCES, getAllCities } from './locationData';
+import { PROVINCES, getAllCities, getCitiesByProvince } from './locationData';
 import { CATEGORY_INFO } from './nearYouContent';
 // Import synced keywords from database
 import { SEO_KEYWORDS as DB_KEYWORDS, SEO_KEYWORDS_SET, isValidKeyword } from './seo-keywords.generated';
@@ -48,31 +48,6 @@ export const HIGH_PRIORITY_KEYWORDS = [
 // Use this for static generation to keep build times reasonable
 // Full SEO_KEYWORDS are still valid at runtime via ISR
 export const STATIC_BUILD_KEYWORDS = HIGH_PRIORITY_KEYWORDS;
-
-// Job role keywords for SEO pages (expanded)
-export const JOB_ROLES = [
-    'hairdresser',
-    'nail-tech',
-    'makeup-artist',
-    'barber',
-    'massage-therapist',
-    'esthetician',
-    'lash-technician',
-    'brow-artist',
-    'braider',
-    'wig-specialist',
-    'beauty-professional',
-    // New job roles
-    'loctician',
-    'colorist',
-    'spa-therapist',
-    'beauty-therapist',
-    'wax-specialist',
-    'salon-manager',
-    'salon-receptionist',
-    'freelance-stylist',
-    'mobile-beautician',
-];
 
 // Get all province slugs
 export function getAllProvinces() {
@@ -132,54 +107,6 @@ export function getAllKeywordCityParams(): { keyword: string; province: string; 
                     province: provinceSlug,
                     city: city.slug,
                 });
-            }
-        }
-    }
-
-    return params;
-}
-
-/**
- * Generate static params for candidate location pages
- * e.g., /candidates/gauteng, /candidates/gauteng/johannesburg
- */
-export function getAllCandidateLocationParams(): { location: string[] }[] {
-    const params: { location: string[] }[] = [];
-
-    // Province-level pages
-    for (const provinceSlug of Object.keys(PROVINCES)) {
-        params.push({ location: [provinceSlug] });
-    }
-
-    // City-level pages
-    for (const provinceSlug of Object.keys(PROVINCES)) {
-        const province = PROVINCES[provinceSlug];
-        for (const city of province.cities) {
-            params.push({ location: [provinceSlug, city.slug] });
-        }
-    }
-
-    return params;
-}
-
-/**
- * Generate static params for job pages
- * e.g., /jobs/hairdresser/gauteng, /jobs/loctician/johannesburg
- */
-export function getAllJobParams(): { slug: string[] }[] {
-    const params: { slug: string[] }[] = [];
-
-    for (const role of JOB_ROLES) {
-        // Role + Province
-        for (const provinceSlug of Object.keys(PROVINCES)) {
-            params.push({ slug: [role, provinceSlug] });
-        }
-
-        // Role + City
-        for (const provinceSlug of Object.keys(PROVINCES)) {
-            const province = PROVINCES[provinceSlug];
-            for (const city of province.cities) {
-                params.push({ slug: [role, city.slug] });
             }
         }
     }
@@ -276,14 +203,11 @@ export function getStaticGenerationStats() {
     return {
         originalCategories: ORIGINAL_CATEGORIES.length,
         totalKeywords: SEO_KEYWORDS.length, // All keywords from database
-        jobRoles: JOB_ROLES.length,
         provinces: Object.keys(PROVINCES).length,
         cities: getAllCities().length,
         totalKeywordPages: getAllStaticKeywordParams().length,
         totalKeywordProvincePages: getAllKeywordProvinceParams().length,
         totalKeywordCityPages: getAllKeywordCityParams().length,
-        totalCandidatePages: getAllCandidateLocationParams().length,
-        totalJobPages: getAllJobParams().length,
         totalSalonCityPages: getAllSalonCityParams().length,
         totalServiceProvincePages: getAllServiceProvinceParams().length * ORIGINAL_CATEGORIES.length,
         totalServiceCityPages: getAllServiceCityParams().length * ORIGINAL_CATEGORIES.length,
@@ -299,6 +223,73 @@ export function slugToName(slug: string): string {
         .split('-')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
+}
+
+function buildRelatedServiceLinks(
+    keyword: string,
+    province?: string,
+    city?: string
+) {
+    const preferredKeywords = [
+        'hair-salon',
+        'nail-salon',
+        'braiding',
+        'barbershop',
+        'makeup',
+        'massage',
+        'waxing',
+        'spa',
+    ];
+
+    const keywordPool = Array.from(new Set([...preferredKeywords, ...SEO_KEYWORDS]));
+
+    return keywordPool
+        .filter(slug => slug !== keyword)
+        .slice(0, 6)
+        .map(slug => ({
+            label: `${slugToName(slug)}${city ? ` in ${slugToName(city)}` : province ? ` in ${slugToName(province)}` : ' in South Africa'}`,
+            url: city
+                ? `/${slug}/${province}/${city}`
+                : province
+                    ? `/${slug}/${province}`
+                    : `/${slug}`,
+        }));
+}
+
+function buildNearbyLocationLinks(keyword: string, province?: string, city?: string) {
+    if (!province) {
+        return Object.values(PROVINCES)
+            .slice(0, 8)
+            .map(provinceInfo => ({
+                label: `${slugToName(keyword)} in ${provinceInfo.name}`,
+                url: `/${keyword}/${provinceInfo.slug}`,
+            }));
+    }
+
+    if (!city) {
+        return getCitiesByProvince(province)
+            .slice(0, 8)
+            .map(cityInfo => ({
+                label: `${slugToName(keyword)} in ${cityInfo.name}`,
+                url: `/${keyword}/${province}/${cityInfo.slug}`,
+            }));
+    }
+
+    const siblingCities = getCitiesByProvince(province)
+        .filter(cityInfo => cityInfo.slug !== city)
+        .slice(0, 7)
+        .map(cityInfo => ({
+            label: `${slugToName(keyword)} in ${cityInfo.name}`,
+            url: `/${keyword}/${province}/${cityInfo.slug}`,
+        }));
+
+    return [
+        {
+            label: `${slugToName(keyword)} in ${slugToName(province)}`,
+            url: `/${keyword}/${province}`,
+        },
+        ...siblingCities,
+    ];
 }
 
 /**
@@ -345,23 +336,24 @@ export function generateLocalSeoPageContent(
 
     const locationName = location.name;
     const provinceName = location.province;
+    const keywordLower = keywordName.toLowerCase();
 
     // Generate H1 heading
     const h1 = `${keywordName} in ${locationName}${city ? `, ${provinceName}` : ''}`;
 
     // Generate meta title and description
-    const metaTitle = `${keywordName} in ${locationName} | Book Online | Stylr SA`;
-    const metaDescription = `Find the best ${keywordName.toLowerCase()} services in ${locationName}. Browse verified salons, compare prices, read reviews and book your appointment online. Stylr SA - South Africa's beauty marketplace.`;
+    const metaTitle = `${keywordName} in ${locationName}${city ? `, ${provinceName}` : ''} | Stylr SA`;
+    const metaDescription = `Browse ${keywordLower} services in ${locationName}${city ? `, ${provinceName}` : ''}. Discover salons and beauty professionals, compare options, and book with Stylr SA.`;
 
     // Generate intro text
-    const introText = `Looking for professional ${keywordName.toLowerCase()} services in ${locationName}? Stylr SA connects you with verified beauty professionals and salons offering ${keywordName.toLowerCase()} in ${locationName} and surrounding areas.
+    const introText = `Looking for professional ${keywordLower} services in ${locationName}? Stylr SA connects you with verified beauty professionals and salons offering ${keywordLower} in ${locationName} and surrounding areas.
 
-Whether you need a quick appointment or want to browse multiple options, our platform makes it easy to find, compare, and book ${keywordName.toLowerCase()} services. All providers are verified and reviewed by real customers.`;
+Whether you need a quick appointment or want to browse multiple options, our platform makes it easy to find, compare, and book ${keywordLower} services. All providers are verified and reviewed by real customers.`;
 
     // Generate H2 headings
     const h2Headings = [
-        `Why Choose ${keywordName} Services in ${locationName}?`,
-        `How to Book ${keywordName} Near You`,
+        `Why Explore ${keywordName} Services in ${locationName}?`,
+        `How to Book ${keywordName} in ${locationName}`,
         `Popular ${keywordName} Styles and Options`,
         `${keywordName} Prices in ${locationName}`,
     ];
@@ -378,7 +370,7 @@ Whether you need a quick appointment or want to browse multiple options, our pla
                 "position": 1,
                 "item": {
                     "@type": "LocalBusiness",
-                    "name": `Top Rated ${keywordName} Salons in ${locationName}`,
+                    "name": `${keywordName} Salons in ${locationName}`,
                     "address": {
                         "@type": "PostalAddress",
                         "addressLocality": locationName,
@@ -409,8 +401,8 @@ Whether you need a quick appointment or want to browse multiple options, our pla
             province: provinceName,
             slug: city || province,
         },
-        relatedServices: [],
-        nearbyLocations: [],
+        relatedServices: buildRelatedServiceLinks(keyword, province, city),
+        nearbyLocations: buildNearbyLocationLinks(keyword, province, city),
     };
 }
 
@@ -421,22 +413,23 @@ Whether you need a quick appointment or want to browse multiple options, our pla
 export function generateNationalSeoPageContent(keyword: string) {
     const keywordName = slugToName(keyword);
     const locationName = "South Africa";
+    const keywordLower = keywordName.toLowerCase();
 
     // Generate H1 heading
-    const h1 = `Best ${keywordName} in ${locationName}`;
+    const h1 = `${keywordName} in ${locationName}`;
 
     // Generate meta title and description
-    const metaTitle = `Top ${keywordName} in ${locationName} | Book Online | Stylr SA`;
-    const metaDescription = `Find the best ${keywordName.toLowerCase()} services across ${locationName}. Browse top-rated salons nationwide, compare prices, read reviews and book online. Stylr SA - South Africa's beauty marketplace.`;
+    const metaTitle = `${keywordName} in ${locationName} | Stylr SA`;
+    const metaDescription = `Browse ${keywordLower} services across ${locationName}. Discover salons and beauty professionals nationwide, compare options, and book with Stylr SA.`;
 
     // Generate intro text
-    const introText = `Looking for expert ${keywordName.toLowerCase()} services in ${locationName}? Stylr SA connects you with the highest-rated beauty professionals and salons offering ${keywordName.toLowerCase()} nationwide.
+    const introText = `Looking for expert ${keywordLower} services in ${locationName}? Stylr SA connects you with the highest-rated beauty professionals and salons offering ${keywordLower} nationwide.
 
-Whether you are in Johannesburg, Cape Town, Durban, or anywhere else in the country, our platform makes it easy to find, compare, and book the best ${keywordName.toLowerCase()} services. All providers are verified and reviewed by real customers.`;
+Whether you are in Johannesburg, Cape Town, Durban, or anywhere else in the country, our platform makes it easy to find, compare, and book the best ${keywordLower} services. All providers are verified and reviewed by real customers.`;
 
     // Generate H2 headings
     const h2Headings = [
-        `Why Choose ${keywordName} Services on Stylr SA?`,
+        `Why Explore ${keywordName} Services on Stylr SA?`,
         `How to Book ${keywordName} Anywhere in South Africa`,
         `Popular ${keywordName} Styles and Trends`,
         `Average ${keywordName} Prices Nationwide`,
@@ -446,7 +439,7 @@ Whether you are in Johannesburg, Cape Town, Durban, or anywhere else in the coun
     const schemaMarkup = {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
-        name: `Best ${keywordName} in ${locationName}`,
+        name: `${keywordName} in ${locationName}`,
         description: metaDescription,
         itemListElement: [
             // Placeholder for top provinces to signal national relevance
@@ -490,12 +483,7 @@ Whether you are in Johannesburg, Cape Town, Durban, or anywhere else in the coun
             province: locationName,
             slug: 'south-africa',
         },
-        relatedServices: [],
-        nearbyLocations: [
-            { label: `${keywordName} in Gauteng`, url: `/${keyword}/gauteng` },
-            { label: `${keywordName} in Western Cape`, url: `/${keyword}/western-cape` },
-            { label: `${keywordName} in KwaZulu-Natal`, url: `/${keyword}/kwazulu-natal` },
-            { label: `${keywordName} in Eastern Cape`, url: `/${keyword}/eastern-cape` }
-        ],
+        relatedServices: buildRelatedServiceLinks(keyword),
+        nearbyLocations: buildNearbyLocationLinks(keyword),
     };
 }

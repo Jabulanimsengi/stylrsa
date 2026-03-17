@@ -1,16 +1,10 @@
 export type VisibilityInput = {
   visibilityWeight?: number | null;
-  featuredUntil?: Date | string | null;
   createdAt?: Date | string;
 };
 
 export function calculateVisibilityScore(input: VisibilityInput): number {
-  const w = Number(input.visibilityWeight ?? 1) || 1;
-  const until = input.featuredUntil
-    ? new Date(input.featuredUntil).getTime()
-    : 0;
-  const boost = until > Date.now() ? 10 : 0;
-  return w + boost;
+  return Number(input.visibilityWeight ?? 1) || 1;
 }
 
 export function compareByVisibilityThenRecency<

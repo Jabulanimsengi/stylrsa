@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useTransition, memo } from 'react';
+import { useState, useRef, useCallback, useTransition, memo, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -8,12 +8,13 @@ import { Navigation } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import SalonCard from '../SalonCard';
 import { useAuth } from '@/hooks/useAuth';
-import { useAuthModal } from '@/context/AuthModalContext';
 import { toast } from 'react-toastify';
 import { Salon } from '@/types';
 import styles from './SalonCarouselSection.module.css';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useNavigationLoading } from '@/context/NavigationLoadingContext';
+import { CarouselRowSkeleton, Skeleton } from '@/components/Skeleton/Skeleton';
+import { applyGuestFavoritesToSalons, toggleGuestFavoriteSalon } from '@/lib/guestFavorites';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -22,55 +23,62 @@ type SalonWithFavorite = Salon & { isFavorited?: boolean };
 
 interface SalonCarouselSectionProps {
     title: string;
-    salons: SalonWithFavorite[];
+    eyebrow?: string;
+    description?: string;
+    salons?: SalonWithFavorite[] | null;
     viewAllLink?: string;
     emptyMessage?: string;
     showViewAll?: boolean;
     loading?: boolean;
+    surface?: 'default' | 'muted';
     onSalonsChange?: (salons: SalonWithFavorite[]) => void;
 }
 
 function SalonCarouselSection({
     title,
+    eyebrow,
+    description,
     salons,
     viewAllLink = '/salons',
-    emptyMessage = 'No salons to display',
+    emptyMessage: _emptyMessage = 'No salons to display',
     showViewAll = true,
     loading = false,
+    surface = 'default',
     onSalonsChange,
 }: SalonCarouselSectionProps) {
-    const [salonData, setSalonData] = useState<SalonWithFavorite[]>(salons);
-    const [activeIndex, setActiveIndex] = useState(0);
+    const normalizedSalons = useMemo(() => (Array.isArray(salons) ? salons : []), [salons]);
+    const [salonData, setSalonData] = useState<SalonWithFavorite[]>(normalizedSalons);
     const [showPrevArrow, setShowPrevArrow] = useState(false);
     const [, startTransition] = useTransition();
     const { authStatus } = useAuth();
-    const { openModal } = useAuthModal();
     const prevRef = useRef<HTMLButtonElement>(null);
     const nextRef = useRef<HTMLButtonElement>(null);
     const swiperRef = useRef<SwiperType | null>(null);
     const isMobile = useMediaQuery('(max-width: 768px)');
     const router = useRouter();
-    const { setIsNavigating } = useNavigationLoading();
+    const { showPageLoader } = useNavigationLoading();
 
-    // Update internal state when props change
-    if (salons !== salonData && salons.length !== salonData.length) {
-        setSalonData(salons);
-    }
+    useEffect(() => {
+        setSalonData(
+            authStatus === 'authenticated'
+                ? normalizedSalons
+                : applyGuestFavoritesToSalons(normalizedSalons)
+        );
+    }, [authStatus, normalizedSalons]);
 
     const handleHeadingClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        setIsNavigating(true);
+        showPageLoader();
         router.push(viewAllLink);
     };
 
     const handleViewAllClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        setIsNavigating(true);
+        showPageLoader();
         router.push(viewAllLink);
     };
 
     const handleSlideChange = (swiper: SwiperType) => {
-        setActiveIndex(swiper.activeIndex);
         // Show prev arrow only after scrolling past the first slide
         setShowPrevArrow(swiper.activeIndex > 0);
     };
@@ -80,8 +88,20 @@ function SalonCarouselSection({
         e.stopPropagation();
 
         if (authStatus !== 'authenticated') {
-            toast.info('Please log in to add salons to your favorites.');
-            openModal('login');
+            const salon = salonData.find((item) => item.id === salonId);
+            if (!salon) {
+                return;
+            }
+
+            const { favorited } = toggleGuestFavoriteSalon(salon);
+            const updatedSalons = salonData.map((item) =>
+                item.id === salonId ? { ...item, isFavorited: favorited } : item
+            );
+            startTransition(() => {
+                setSalonData(updatedSalons);
+            });
+            toast.success(favorited ? 'Saved to favorites on this device.' : 'Removed from saved salons.');
+            onSalonsChange?.(updatedSalons);
             return;
         }
 
@@ -114,23 +134,25 @@ function SalonCarouselSection({
                     salon.id === salonId ? { ...salon, isFavorited: favorited } : salon
                 ));
             }
-        } catch (error) {
+        } catch {
             toast.error('Could not update favorites. Please try again.');
             startTransition(() => setSalonData(originalSalons));
         }
-    }, [authStatus, openModal, salonData, onSalonsChange]);
+    }, [authStatus, salonData, onSalonsChange]);
 
     // Loading state
     if (loading) {
         return (
-            <section className={styles.section}>
+            <section className={`${styles.section} ${surface === 'muted' ? styles.sectionMuted : ''}`}>
                 <div className={styles.header}>
-                    <div className={styles.titleSkeleton} />
+                    <div className={styles.headerCopy}>
+                        <Skeleton variant="text" width="8rem" height={12} />
+                        <Skeleton variant="text" width="18rem" height={30} />
+                        <Skeleton variant="text" width="28rem" height={16} />
+                    </div>
                 </div>
                 <div className={styles.skeletonContainer}>
-                    {[1, 2, 3, 4].map(i => (
-                        <div key={i} className={styles.skeletonCard} />
-                    ))}
+                    <CarouselRowSkeleton count={4} />
                 </div>
             </section>
         );
@@ -142,16 +164,22 @@ function SalonCarouselSection({
     }
 
     return (
-        <section className={styles.section}>
+        <section className={`${styles.section} ${surface === 'muted' ? styles.sectionMuted : ''}`}>
             <div className={styles.header}>
-                <Link href={viewAllLink} onClick={handleHeadingClick} className={styles.title}>
-                    <h2>{title}</h2>
-                </Link>
-                {showViewAll && (
-                    <Link href={viewAllLink} onClick={handleViewAllClick} className={styles.viewAll}>
-                        View All
+                <div className={styles.headerCopy}>
+                    {eyebrow && <span className={styles.eyebrow}>{eyebrow}</span>}
+                    <Link href={viewAllLink} onClick={handleHeadingClick} className={styles.title}>
+                        <h2>{title}</h2>
                     </Link>
-                )}
+                    {description && <p className={styles.description}>{description}</p>}
+                </div>
+                <div className={styles.headerAction}>
+                    {showViewAll && (
+                        <Link href={viewAllLink} onClick={handleViewAllClick} className={styles.viewAll}>
+                            View All
+                        </Link>
+                    )}
+                </div>
             </div>
 
             <div className={styles.container}>
@@ -177,7 +205,7 @@ function SalonCarouselSection({
                         width: '100%',
                         maxWidth: '1200px',
                         margin: '0 auto',
-                        minHeight: isMobile ? '240px' : '280px',
+                        minHeight: isMobile ? '244px' : '284px',
                     }}
                     onSlideChange={handleSlideChange}
                     allowTouchMove={true}
@@ -206,8 +234,7 @@ function SalonCarouselSection({
                             className={styles.slide}
                             style={{
                                 width: isMobile ? 'auto' : 'calc((100% - 60px) / 4.1)',
-                                minHeight: isMobile ? '240px' : '280px',
-                                height: isMobile ? '240px' : '280px',
+                                minHeight: isMobile ? '244px' : '284px',
                             }}
                         >
                             <SalonCard
@@ -216,6 +243,7 @@ function SalonCarouselSection({
                                 onToggleFavorite={handleToggleFavorite}
                                 showHours={false}
                                 compact
+                                showPrice={false}
                             />
                         </SwiperSlide>
                     ))}
