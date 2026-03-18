@@ -135,9 +135,7 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
         {step === 'account' && (
           <>
             <div className={styles.stepHeader}>
-              <span className={styles.stepEyebrow}>Step 1 of 2</span>
-              <h3 className={styles.stepTitle}>Start with your email and account type</h3>
-              <p className={styles.stepMeta}>Pick the role that best matches how you use Stylr SA.</p>
+              <h3 className={styles.stepTitle}>Email and account type</h3>
             </div>
 
             <div className={styles.inputGroup}>
@@ -153,20 +151,15 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
             </div>
 
             <div className={styles.roleSelector}>
-              <div className={styles.roleLegend}>Choose your account type</div>
+              <div className={styles.roleLegend}>Account type</div>
               {lockedRole ? (
                 <>
-                  <p className={styles.roleHint}>
-                    You started from a salon or service-listing action, so this signup is set to the service provider flow.
-                  </p>
                   <div className={styles.roleLockedCard}>
                     <strong className={styles.roleLockedTitle}>Service Provider account</strong>
-                    <span className={styles.roleLockedMeta}>You&apos;ll continue to create your salon profile after signup.</span>
                   </div>
                 </>
               ) : (
                 <>
-                  <p className={styles.roleHint}>You can book services or list your salon business.</p>
                   <div className={styles.roleOption}>
                     <input type="radio" id="roleClient" name="role" value="CLIENT" checked={role === 'CLIENT'} onChange={(e) => setRole(e.target.value as RegisterRole)} />
                     <label htmlFor="roleClient">I&apos;m a Client</label>
@@ -184,10 +177,7 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
         {step === 'profile' && (
           <>
             <div className={styles.stepHeader}>
-              <span className={styles.stepEyebrow}>Step 2 of 2</span>
-              <h3 className={styles.stepTitle}>Finish your profile details</h3>
-              <div className={styles.selectedRoleBadge}>{selectedRoleLabel}</div>
-              <p className={styles.stepMeta}>{email}</p>
+              <h3 className={styles.stepTitle}>Profile details</h3>
             </div>
 
             <div className={styles.inputGroupRow}>
@@ -267,9 +257,6 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
       {step === 'account' && (
         <div className={styles.oauthSection}>
           <div className={styles.oauthDivider}>or</div>
-          <p className={styles.oauthMeta}>
-            Selected role: <strong>{selectedRoleLabel}</strong>
-          </p>
           <button
             type="button"
             className={styles.oauthButton}
@@ -286,17 +273,11 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
         open={showGoogleConfirm}
         onOpenChange={setShowGoogleConfirm}
         title="Confirm Account Type"
-        description="Choose the correct account type before continuing with Google."
+        description="Confirm before continuing with Google."
         size="sm"
       >
-        <p style={{ margin: '0 0 0.75rem', fontSize: '0.95rem', color: '#475569' }}>
-          You are signing up as:
-        </p>
         <p style={{ margin: '0 0 1.25rem', fontSize: '1rem', fontWeight: 600, color: 'var(--color-primary)' }}>
           {ROLE_LABELS[role]}
-        </p>
-        <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', lineHeight: 1.6, color: '#64748b' }}>
-          This account type cannot be changed automatically after signup. Confirm before continuing.
         </p>
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
           <Button

@@ -197,10 +197,13 @@ export interface TeamMember {
   role: string;
   bio?: string;
   image?: string;
+  galleryImages?: string[];
   specialties?: string[];
   experience?: number;
   sortOrder?: number;
   isActive?: boolean;
+  serviceIds?: string[];
+  services?: Pick<Service, 'id' | 'title' | 'name' | 'salonId'>[];
 }
 
 export interface Notification {

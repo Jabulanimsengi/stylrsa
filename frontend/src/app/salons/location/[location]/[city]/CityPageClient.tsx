@@ -15,7 +15,6 @@ import { useAuthModal } from '@/context/AuthModalContext';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { getImageWithFallback } from '@/lib/placeholders';
-import PageNav from '@/components/PageNav';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import { getSalonUrl } from '@/utils/salonUrl';
@@ -107,7 +106,6 @@ function SalonsCityContent({ initialSalons = [], cityInfo }: CityPageClientProps
 
   return (
     <div className={styles.container}>
-      <PageNav />
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
         <h1 className={styles.title}>Salons in {cityName}</h1>
         <p style={{ fontSize: '1.1rem', marginBottom: '2rem', color: '#666', lineHeight: '1.6' }}>

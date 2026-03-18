@@ -44,7 +44,7 @@ type ServiceSearchMatch = {
 };
 
 const QUICK_LINKS = [
-    { title: 'Find Salons', url: '/salons', icon: FaStore },
+    { title: 'Salon Map', url: '/salons?map=1', icon: FaStore },
     { title: 'Browse Services', url: '/services', icon: FaCut },
     { title: 'View Trends', url: '/trends', icon: FaChartLine },
     { title: 'Near Me', url: '/salons/near-me', icon: FaMapMarkerAlt },

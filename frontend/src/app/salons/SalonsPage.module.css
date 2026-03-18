@@ -10,6 +10,34 @@
   margin-bottom: 1.75rem;
 }
 
+.mobileToolbar {
+  margin-bottom: 1rem;
+}
+
+.mobileFilterButton {
+  width: 100%;
+  min-height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  border: 1px solid rgba(20, 32, 51, 0.12);
+  border-radius: 18px;
+  background: #ffffff;
+  color: #111318;
+  font-size: 0.98rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.mobileFilterButton:hover {
+  transform: translateY(-1px);
+  border-color: #111318;
+  box-shadow: 0 16px 34px rgba(17, 24, 39, 0.12);
+}
+
 .discoveryShell {
   display: grid;
   gap: 1.25rem;
@@ -259,6 +287,26 @@
   position: relative;
 }
 
+.mobileResultsSection {
+  margin-top: 0.25rem;
+}
+
+.mobileResultsRail {
+  display: flex;
+  align-items: stretch;
+  gap: 0.85rem;
+  overflow-x: auto;
+  padding: 0.15rem 0.1rem 0.85rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mobileResultsRail::-webkit-scrollbar {
+  display: none;
+}
+
 /* Horizontal Scroll Container */
 .horizontalScroll {
   display: flex;
@@ -339,6 +387,21 @@
 /* Grid Card (when filtered by province) */
 .gridCard {
   width: 100%;
+  min-width: 0;
+}
+
+.railCard {
+  flex: 0 0 min(72vw, 260px);
+  width: min(72vw, 260px);
+  min-width: min(72vw, 260px);
+  scroll-snap-align: start;
+}
+
+.scrollCard {
+  flex: 0 0 260px;
+  width: 260px;
+  min-width: 260px;
+  scroll-snap-align: start;
 }
 
 /* Traditional Grid Layout (for single province view) */
@@ -568,6 +631,16 @@
     padding-top: 0.5rem;
   }
 
+  .mobileToolbar {
+    margin-bottom: 0.75rem;
+  }
+
+  .mobileFilterButton {
+    min-height: 50px;
+    border-radius: 16px;
+    font-size: 0.94rem;
+  }
+
   .discoveryShell {
     border-radius: 24px;
     padding: 1rem;
@@ -628,6 +701,18 @@
   .salonCard {
     width: 160px;
     border-radius: 0.5rem;
+  }
+
+  .railCard {
+    flex-basis: min(72vw, 250px);
+    width: min(72vw, 250px);
+    min-width: min(72vw, 250px);
+  }
+
+  .scrollCard {
+    flex-basis: min(72vw, 250px);
+    width: min(72vw, 250px);
+    min-width: min(72vw, 250px);
   }
 
   .imageWrapper {
@@ -694,6 +779,18 @@
     width: 145px;
   }
 
+  .railCard {
+    flex-basis: min(78vw, 235px);
+    width: min(78vw, 235px);
+    min-width: min(78vw, 235px);
+  }
+
+  .scrollCard {
+    flex-basis: min(78vw, 235px);
+    width: min(78vw, 235px);
+    min-width: min(78vw, 235px);
+  }
+
   .imageWrapper {
     height: 90px;
   }
@@ -735,6 +832,18 @@
 
   .salonCard {
     width: 135px;
+  }
+
+  .railCard {
+    flex-basis: min(82vw, 220px);
+    width: min(82vw, 220px);
+    min-width: min(82vw, 220px);
+  }
+
+  .scrollCard {
+    flex-basis: min(82vw, 220px);
+    width: min(82vw, 220px);
+    min-width: min(82vw, 220px);
   }
 
   .imageWrapper {

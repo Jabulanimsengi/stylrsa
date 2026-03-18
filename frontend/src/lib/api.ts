@@ -3,6 +3,8 @@
  * Browser requests use same-origin Next.js routes; server requests use env-configured backend URLs.
  */
 
+import type { ApiError } from './errors';
+
 export interface RetryOptions {
   retries?: number;
   retryDelay?: number;
@@ -101,8 +103,22 @@ export async function apiJson<T = unknown>(
       }, timeout);
 
       if (!response.ok) {
-        const error = new Error(`API error: ${response.status} ${response.statusText}`) as Error & { statusCode?: number };
+        let payload: ApiError | null = null;
+        try {
+          payload = await response.clone().json() as ApiError;
+        } catch {
+          payload = null;
+        }
+
+        const error = new Error(
+          payload?.userMessage ||
+          payload?.message ||
+          `API error: ${response.status} ${response.statusText}`,
+        ) as Error & ApiError;
         error.statusCode = response.status;
+        if (payload?.code) error.code = payload.code;
+        if (payload?.userMessage) error.userMessage = payload.userMessage;
+        if (payload?.referenceId) error.referenceId = payload.referenceId;
         throw error;
       }
 

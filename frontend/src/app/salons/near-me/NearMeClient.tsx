@@ -4,7 +4,6 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import PageNav from '@/components/PageNav';
 import styles from '../SalonsPage.module.css';
 import Link from 'next/link';
 import { PROVINCES } from '@/lib/locationData';
@@ -42,7 +41,6 @@ function NearMeContent() {
 
   return (
     <div className={styles.container}>
-      <PageNav />
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem 1rem', textAlign: 'center' }}>
         {isLoading ? (
           <>

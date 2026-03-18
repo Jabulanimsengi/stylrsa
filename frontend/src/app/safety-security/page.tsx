@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import styles from '../info-page.module.css';
-import PageNav from '@/components/PageNav';
 
 export const metadata: Metadata = {
   title: 'Safety & Security - Stylr SA',
@@ -18,8 +17,6 @@ export const metadata: Metadata = {
 export default function SafetySecurityPage() {
   return (
     <div className={styles.container}>
-      <PageNav />
-      
       <section className={styles.section}>
         <h1 className={styles.pageTitle}>Safety & Security</h1>
         <p className={styles.paragraph}>

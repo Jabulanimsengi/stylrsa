@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import Script from 'next/script';
 import styles from '../info-page.module.css';
-import PageNav from '@/components/PageNav';
 import Link from 'next/link';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
@@ -135,44 +134,43 @@ export default function HowItWorksPage() {
         strategy="beforeInteractive"
       />
 
-      <PageNav />
       <h1 className={styles.pageTitle}>How It Works</h1>
       <p className={styles.paragraph}>
-        Stylr SA keeps discovery simple for clients and gives service providers one clear listing plan.
+        Stylr SA connects South Africans with the hair, beauty, and wellness professionals who are right for them — and gives service providers a simple, affordable place to grow their bookings online.
       </p>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>For Clients</h2>
+        <h2 className={styles.sectionTitle}>How it works for clients</h2>
         <p className={styles.paragraph}>
-          <strong>Discover:</strong> Search salons and services by treatment, city, availability, and profile quality.
+          <strong>Search:</strong> Search by treatment type, city, or salon name. Filter by availability, service category, or area — and see only approved, verified profiles.
         </p>
         <p className={styles.paragraph}>
-          <strong>Choose:</strong> Compare services, prices, galleries, and trust signals before you book.
+          <strong>Compare:</strong> Browse real gallery images, read transparent service menus with actual prices, and check client reviews before you decide. No surprises.
         </p>
         <p className={styles.paragraph}>
-          <strong>Continue:</strong> Enter your booking details and continue through the WhatsApp handoff flow.
+          <strong>Connect:</strong> Tap &ldquo;Book Now&rdquo; on any service. Your details go straight to the salon&apos;s WhatsApp — no apps to download, no accounts to create.
         </p>
         <p className={styles.paragraph}>
-          <strong>Confirm:</strong> Final booking confirmation, deposits, and policies are handled directly with the salon.
+          <strong>Confirm:</strong> Confirm your appointment directly with the salon — dates, deposits, and any special requirements are handled in a real conversation, not a form.
         </p>
       </section>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>For Service Providers</h2>
+        <h2 className={styles.sectionTitle}>How it works for salons and professionals</h2>
         <p className={styles.paragraph}>
-          <strong>Register and verify your email:</strong> Create a service-provider account and complete your email verification code.
+          <strong>Sign up:</strong> Register as a service provider in minutes. Verify your email and you&apos;re in.
         </p>
         <p className={styles.paragraph}>
-          <strong>Create your salon profile:</strong> Submit your salon details and activate the single listing plan for <strong>R399/month</strong>.
+          <strong>Build your profile:</strong> Add your services, prices, location, and contact details. Activate the <strong>R399/month</strong> listing plan to go live.
         </p>
         <p className={styles.paragraph}>
-          <strong>List your services and portfolio:</strong> Add unlimited services, upload gallery images, and showcase your work in one place.
+          <strong>Show your work:</strong> Upload unlimited gallery images, before-and-after photos, and short video clips. Your profile becomes your online portfolio.
         </p>
         <p className={styles.paragraph}>
-          <strong>Receive WhatsApp bookings:</strong> Clients continue through your salon WhatsApp number, and Stylr SA charges <strong>0% commission</strong> on those bookings.
+          <strong>Receive bookings:</strong> When clients are ready, their booking request comes directly to your WhatsApp. You stay in control of pricing, deposits, and scheduling — and Stylr SA takes <strong>0% commission</strong>.
         </p>
         <p className={styles.paragraph}>
-          <strong>Manage your profile:</strong> Use the dashboard to update services, images, availability, promotions, and booking messaging.
+          <strong>Manage everything:</strong> Use your dashboard to update services, run promotions, manage availability, and keep your profile looking its best year-round.
         </p>
         <p className={styles.paragraph}>
           View our <Link href="/prices" className={styles.link}>pricing details</Link>.
@@ -180,14 +178,17 @@ export default function HowItWorksPage() {
       </section>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>What the Plan Includes</h2>
+        <h2 className={styles.sectionTitle}>What the plan includes</h2>
         <ul className={styles.list}>
-          <li>Unlimited service listings</li>
-          <li>Unlimited gallery images</li>
-          <li>Short video uploads and before-and-after content</li>
-          <li>Boosted visibility in search</li>
-          <li>WhatsApp booking handoff</li>
-          <li>0% commission on bookings</li>
+          <li>Verified salon profile badge</li>
+          <li>Unlimited service listings with custom pricing</li>
+          <li>Unlimited gallery image uploads</li>
+          <li>Short video and before-and-after content</li>
+          <li>Boosted search visibility (5× more prominent in results)</li>
+          <li>Direct WhatsApp booking handoff</li>
+          <li>0% commission on every booking</li>
+          <li>Dashboard to manage availability, promotions, and messaging</li>
+          <li>Priority support from the Stylr SA team</li>
         </ul>
       </section>
     </div>

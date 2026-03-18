@@ -517,7 +517,8 @@
 
 @media (max-width: 768px) {
   .hero {
-    padding: 3.75rem 1rem 2.5rem;
+    min-height: min(640px, 88svh);
+    padding: 3.25rem 1rem 1.35rem;
   }
 
   .heroContent {
@@ -525,16 +526,31 @@
     gap: 1rem;
   }
 
+  .heroBackgroundImage {
+    object-fit: contain;
+    object-position: center top;
+    opacity: 0.72;
+    transform: none;
+  }
+
+  .heroEyebrow,
+  .heroTrustStrip,
+  .heroSearchLabel,
+  .sectionEyebrow,
+  .sectionDescription {
+    display: none;
+  }
+
   .heroTitle {
     max-width: 100%;
     font-size: clamp(2.2rem, 10vw, 3.2rem);
-    min-height: 2.35em;
+    min-height: 2.15em;
   }
 
   .heroDescription {
     max-width: 100%;
-    font-size: 0.98rem;
-    line-height: 1.7;
+    font-size: 0.95rem;
+    line-height: 1.55;
   }
 
   .heroSearchContainer {
@@ -551,28 +567,13 @@
     padding: 0 1rem;
     margin: 0.35rem;
   }
-
-  .heroTrustPill {
-    width: 100%;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .heroTrustStrip {
-    padding: 0 1rem 1.1rem;
-  }
-
-  .heroTrustStripInner {
-    gap: 0.55rem;
-  }
-
   .editorialBand,
   .mutedBand {
-    padding: 2rem 1rem;
+    padding: 1.35rem 1rem 2rem;
   }
 
   .sectionIntro {
-    margin-bottom: 1rem;
+    margin-bottom: 0.85rem;
   }
 
   .sectionHeading {

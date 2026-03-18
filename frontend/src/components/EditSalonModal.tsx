@@ -495,7 +495,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
         : '';
 
       toast.success(
-        `✅ Salon profile updated successfully!\n💼 Your changes have been saved and are now live.\n${logoStatus}`,
+        `✅ Salon profile updated successfully!\n⏳ Your changes have been submitted for admin review.\n${logoStatus}`,
         { autoClose: 5000 }
       );
 

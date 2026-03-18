@@ -98,18 +98,17 @@
 .loadingItem,
 .emptyState {
   border-radius: 16px;
-  padding: 0.8rem 0.85rem;
 }
 
 .item {
-  border: none;
   background: rgba(20, 32, 51, 0.03);
-  text-align: left;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  transition: background 0.2s ease, transform 0.2s ease;
+  border: 1px solid rgba(20, 32, 51, 0.06);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem;
+  padding: 0.8rem 0.85rem;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
 }
 
 .item:hover {
@@ -119,22 +118,61 @@
 
 .itemUnread {
   background: rgba(17, 19, 24, 0.08);
+  border-color: rgba(17, 19, 24, 0.1);
+}
+
+.itemButton {
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.deleteButton {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(20, 32, 51, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--color-text-muted, #667085);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.deleteButton:hover {
+  color: #b42318;
+  border-color: rgba(180, 35, 24, 0.18);
+  background: rgba(255, 255, 255, 0.98);
+  transform: translateY(-1px);
 }
 
 .message {
   color: var(--color-text-strong, #142033);
   font-size: 0.9rem;
   line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .meta {
   color: var(--color-text-muted, #667085);
   font-size: 0.75rem;
+  line-height: 1.25;
 }
 
 .loadingItem,
 .emptyState {
   background: rgba(20, 32, 51, 0.03);
+  padding: 0.8rem 0.85rem;
 }
 
 .loadingItem {
@@ -149,4 +187,40 @@
 
 .loadMoreButton {
   align-self: stretch;
+}
+
+@media (max-width: 640px) {
+  .panel {
+    width: min(400px, calc(100vw - 1rem));
+    max-height: min(72vh, 640px);
+    border-radius: 20px;
+    padding: 0.9rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions {
+    justify-content: flex-end;
+  }
+
+  .filters {
+    gap: 0.4rem;
+  }
+
+  .filterButton {
+    min-height: 40px;
+    font-size: 0.8rem;
+  }
+
+  .item {
+    gap: 0.6rem;
+    padding: 0.75rem;
+  }
+
+  .message {
+    font-size: 0.88rem;
+  }
 }

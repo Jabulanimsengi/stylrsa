@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { buildAuthRoute } from '@/constants/routes';
 import styles from '../info-page.module.css';
-import PageNav from '@/components/PageNav';
 
 export const metadata: Metadata = {
   title: 'Partner Guidelines - Stylr SA',
@@ -21,8 +20,6 @@ export default function PartnerGuidelinesPage() {
 
   return (
     <div className={styles.container}>
-      <PageNav />
-
       <section className={styles.section}>
         <h1 className={styles.pageTitle}>Partner Guidelines</h1>
         <p className={styles.paragraph}>

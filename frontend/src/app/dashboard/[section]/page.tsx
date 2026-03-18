@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import PageNav from '@/components/PageNav';
 import DashboardPageClient from '../DashboardPageClient';
 import styles from '../Dashboard.module.css';
 import { isDashboardTab } from '../dashboard-config';
@@ -19,7 +18,7 @@ export default async function DashboardSectionPage({ params }: Props) {
   }
 
   return (
-    <Suspense fallback={<div className={styles.container}><PageNav /><h1 className={styles.title}>Loading...</h1></div>}>
+    <Suspense fallback={<div className={styles.container}><h1 className={styles.title}>Loading...</h1></div>}>
       <DashboardPageClient initialTab={section} />
     </Suspense>
   );

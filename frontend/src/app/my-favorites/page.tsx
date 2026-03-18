@@ -12,7 +12,6 @@ import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { getImageWithFallback } from '@/lib/placeholders';
 import { transformCloudinary } from '@/utils/cloudinary';
-import PageNav from '@/components/PageNav';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import { getSalonUrl } from '@/utils/salonUrl';
 import { notify } from '@/lib/notify';
@@ -68,7 +67,6 @@ export default function MyFavoritesPage() {
   if (authStatus === 'authenticated' && isLoading) {
     return (
       <div className={styles.container}>
-        <PageNav />
         <h1 className={styles.title}>My Favorite Salons</h1>
 
         <SkeletonGroup count={8} className={styles.salonGrid}>
@@ -82,7 +80,6 @@ export default function MyFavoritesPage() {
   if (authStatus === 'loading') {
     return (
       <div className={styles.container}>
-        <PageNav />
         <h1 className={styles.title}>My Favorite Salons</h1>
         <p>Checking your account...</p>
       </div>
@@ -91,7 +88,6 @@ export default function MyFavoritesPage() {
 
   return (
     <div className={styles.container}>
-      <PageNav />
       <h1 className={styles.title}>My Favorite Salons</h1>
 
       {favorites.length === 0 ? (

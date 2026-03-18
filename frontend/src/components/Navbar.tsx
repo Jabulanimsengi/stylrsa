@@ -13,13 +13,11 @@ import {
   FaBell,
   FaUser,
   FaSignOutAlt,
-  FaBuilding,
-  FaChevronUp,
-  FaChevronDown,
+  FaMapMarkedAlt,
 } from 'react-icons/fa';
 import ConfirmationModal from './ConfirmationModal/ConfirmationModal';
 import styles from './Navbar.module.css';
-import { Sheet, SheetContent, SheetHeader, SheetBody, SheetFooter } from './ui';
+import { Sheet, SheetContent, SheetHeader, SheetBody, SheetTitle } from './ui';
 import { useNavigationLoading } from '@/context/NavigationLoadingContext';
 import {
   COMPANY_NAV_LINKS,
@@ -30,6 +28,7 @@ import {
 import { useNotificationCenter } from '@/hooks/useNotificationCenter';
 import NotificationsPanel from './NotificationsPanel';
 import { useLogoutAction } from '@/hooks/useLogoutAction';
+import SalonMapModal from './SalonMapView/SalonMapModal';
 
 export default function Navbar() {
   const { authStatus, user } = useAuth();
@@ -43,7 +42,7 @@ export default function Navbar() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [hasPrefetchedRoutes, setHasPrefetchedRoutes] = useState(false);
-  const [isCompanyMenuOpen, setIsCompanyMenuOpen] = useState(false);
+  const [isSalonMapOpen, setIsSalonMapOpen] = useState(false);
 
   const notificationsRef = useRef<HTMLDivElement>(null);
   const notificationsPortalRef = useRef<HTMLDivElement>(null);
@@ -68,6 +67,7 @@ export default function Navbar() {
     handleNotificationClick,
     handleMarkAllRead,
     handleClearNotifications,
+    handleDeleteNotification,
     handleLoadMore,
   } = useNotificationCenter();
 
@@ -143,21 +143,19 @@ export default function Navbar() {
     const Icon = link.icon;
 
     return (
-      <li key={link.href}>
-        <Link
-          href={link.href}
-          className={cls}
-          onClick={() => {
-            setIsMobileOpen(false);
-            showPageLoader();
-          }}
-        >
-          <span className={styles.navIcon} aria-hidden>
-            <Icon />
-          </span>
-          <span className={styles.navLabel}>{link.label}</span>
-        </Link>
-      </li>
+      <Link
+        href={link.href}
+        className={cls}
+        onClick={() => {
+          setIsMobileOpen(false);
+          showPageLoader();
+        }}
+      >
+        <span className={styles.navIcon} aria-hidden>
+          <Icon />
+        </span>
+        <span className={styles.navLabel}>{link.label}</span>
+      </Link>
     );
   };
 
@@ -181,6 +179,7 @@ export default function Navbar() {
       }}
       onMarkAllRead={handleMarkAllRead}
       onClearNotifications={handleClearNotifications}
+      onDeleteNotification={handleDeleteNotification}
       onLoadMore={handleLoadMore}
     />
   );
@@ -228,30 +227,11 @@ export default function Navbar() {
     </button>
   );
 
-  const authButtons = (
-    <div className={styles.authActions}>
-      <button
-        type="button"
-        className="btn btn-ghost text-sm lowercase"
-        onClick={() => {
-          openModal('login');
-          setIsMobileOpen(false);
-        }}
-      >
-        Login
-      </button>
-      <button
-        type="button"
-        className="btn btn-primary text-sm lowercase"
-        onClick={() => {
-          openModal('register');
-          setIsMobileOpen(false);
-        }}
-      >
-        Register
-      </button>
-    </div>
-  );
+  const mobileMenuSections = [
+    { title: 'Explore', links: PRIMARY_NAV_LINKS, delay: 40 },
+    ...(COMPANY_NAV_LINKS.length > 0 ? [{ title: 'Company', links: COMPANY_NAV_LINKS, delay: 180 }] : []),
+  ];
+  const quickAccessLinks = accountNav.menuLinks.filter((link) => link.href !== accountNav.primaryLink.href);
 
   return (
     <>
@@ -270,7 +250,7 @@ export default function Navbar() {
             <button
               type="button"
               data-notification-trigger="true"
-              className={`${styles.iconOnlyButton} ${styles.notificationButton}`}
+              className={`iconOnlyButton ${styles.iconOnlyButton} ${styles.notificationButton}`}
               onClick={() => setIsNotificationsOpen((prev) => !prev)}
               aria-label="Notifications"
             >
@@ -281,7 +261,7 @@ export default function Navbar() {
 
           <button
             type="button"
-            className={`${styles.iconOnlyButton} ${styles.hamburgerButton}`}
+            className={`iconOnlyButton ${styles.iconOnlyButton} ${styles.hamburgerButton}`}
             onClick={() => setIsMobileOpen((prev) => !prev)}
             aria-label="Toggle navigation"
           >
@@ -293,6 +273,7 @@ export default function Navbar() {
       <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
         <SheetContent side="right" showCloseButton={true}>
           <SheetHeader>
+            <SheetTitle className="sr-only">Mobile navigation menu</SheetTitle>
             <Link
               href="/"
               className={styles.brand}
@@ -304,73 +285,127 @@ export default function Navbar() {
           </SheetHeader>
 
           <SheetBody>
-            <nav>
-              <p className={styles.sectionLabel}>Browse</p>
-              <ul className={styles.navList}>{PRIMARY_NAV_LINKS.map(renderNavLink)}</ul>
-            </nav>
-
-            <div className={styles.companySection}>
+            <div className={styles.mobileMenu}>
               <button
                 type="button"
-                className={`${styles.sectionLabelButton} ${isCompanyMenuOpen ? styles.sectionLabelButtonOpen : ''}`}
-                onClick={() => setIsCompanyMenuOpen((prev) => !prev)}
+                className={styles.mapFeatureCard}
+                onClick={() => {
+                  setIsMobileOpen(false);
+                  setIsSalonMapOpen(true);
+                }}
               >
-                <span className={styles.sectionLabelContent}>
-                  <FaBuilding className={styles.sectionIcon} />
-                  <span>About Stylr SA</span>
+                <span className={styles.mapFeatureIcon} aria-hidden>
+                  <FaMapMarkedAlt />
                 </span>
-                <span className={styles.expandIcon}>
-                  {isCompanyMenuOpen ? <FaChevronUp /> : <FaChevronDown />}
+                <span className={styles.mapFeatureCopy}>
+                  <strong>Salon Map</strong>
+                  <span>Browse approved salon locations across South Africa.</span>
                 </span>
               </button>
 
-              <div className={`${styles.companyMenu} ${isCompanyMenuOpen ? styles.companyMenuOpen : ''}`}>
-                <ul className={styles.navList}>{COMPANY_NAV_LINKS.map(renderNavLink)}</ul>
-              </div>
+              {mobileMenuSections.map((section) => (
+                <nav
+                  key={section.title}
+                  className={styles.menuSection}
+                  style={{ ['--section-delay' as string]: `${section.delay}ms` }}
+                >
+                  <p className={styles.sectionLabel}>{section.title}</p>
+                  <ul className={styles.navList}>
+                    {section.links.map((link, index) => (
+                      <li key={link.href} style={{ ['--nav-delay' as string]: `${section.delay + (index * 55)}ms` }}>
+                        {renderNavLink(link)}
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              ))}
+
+              {authStatus === 'authenticated' && (
+                <div className={styles.menuSection} style={{ ['--section-delay' as string]: '300ms' }}>
+                  <div className={styles.accountCard}>
+                    <div className={styles.accountAvatar} aria-hidden>
+                      {user?.firstName?.[0] || <FaUser />}
+                    </div>
+                    <div className={styles.accountCopy}>
+                      <strong>{user?.firstName || 'Your account'}</strong>
+                      <span>{accountNav.roleLabel}</span>
+                    </div>
+                    <Link
+                      href={accountNav.primaryLink.href}
+                      className={styles.accountShortcut}
+                      onClick={() => {
+                        setIsMobileOpen(false);
+                        showPageLoader();
+                      }}
+                    >
+                      {accountNav.entryLabel}
+                    </Link>
+                  </div>
+
+                  <p className={styles.sectionLabel}>{accountNav.menuLabel}</p>
+                  <div className={styles.supportActions}>
+                    <div className={styles.desktopOnlyActions}>{notificationsButton}</div>
+                    {signOutButton}
+                  </div>
+                </div>
+              )}
+
+              {authStatus === 'authenticated' && quickAccessLinks.length > 0 && (
+                <nav className={styles.menuSection} style={{ ['--section-delay' as string]: '420ms' }}>
+                  <p className={styles.sectionLabel}>Quick access</p>
+                  <ul className={styles.navList}>
+                    {quickAccessLinks.map((link, index) => (
+                      <li key={link.href} style={{ ['--nav-delay' as string]: `${420 + (index * 55)}ms` }}>
+                        {renderNavLink(link)}
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              )}
+
+              {authStatus !== 'authenticated' && (
+                <div className={styles.menuSection} style={{ ['--section-delay' as string]: '300ms' }}>
+                  <p className={styles.sectionLabel}>Account</p>
+                  <div className={styles.guestActions}>
+                    <button
+                      type="button"
+                      className={styles.guestPrimaryAction}
+                      onClick={() => {
+                        openModal('login');
+                        setIsMobileOpen(false);
+                      }}
+                    >
+                      Login
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.guestSecondaryAction}
+                      onClick={() => {
+                        openModal('register');
+                        setIsMobileOpen(false);
+                      }}
+                    >
+                      Register
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.guestTertiaryAction}
+                      onClick={() => {
+                        openModal('login');
+                        setIsMobileOpen(false);
+                      }}
+                    >
+                      Saved salons
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-
-            {authStatus === 'authenticated' && (
-              <div>
-                <div className={styles.accountCard}>
-                  <div className={styles.accountAvatar} aria-hidden>
-                    {user?.firstName?.[0] || <FaUser />}
-                  </div>
-                  <div className={styles.accountCopy}>
-                    <strong>{user?.firstName || 'Your account'}</strong>
-                    <span>{accountNav.roleLabel}</span>
-                  </div>
-                  <Link
-                    href={accountNav.primaryLink.href}
-                    className={styles.accountShortcut}
-                    onClick={() => {
-                      setIsMobileOpen(false);
-                      showPageLoader();
-                    }}
-                  >
-                    {accountNav.entryLabel}
-                  </Link>
-                </div>
-
-                <p className={styles.sectionLabel}>{accountNav.menuLabel}</p>
-                <div className={styles.supportActions}>
-                  <div className={styles.desktopOnlyActions}>{notificationsButton}</div>
-                  {signOutButton}
-                </div>
-              </div>
-            )}
-
-            {authStatus === 'authenticated' && accountNav.menuLinks.length > 0 && (
-              <nav>
-                <p className={styles.sectionLabel}>Quick access</p>
-                <ul className={styles.navList}>{accountNav.menuLinks.map(renderNavLink)}</ul>
-              </nav>
-            )}
           </SheetBody>
-
-          <SheetFooter>{authStatus !== 'authenticated' && authButtons}</SheetFooter>
         </SheetContent>
       </Sheet>
 
+      <SalonMapModal isOpen={isSalonMapOpen} onClose={() => setIsSalonMapOpen(false)} />
       {notificationsPanel}
 
       {isLogoutModalOpen && (

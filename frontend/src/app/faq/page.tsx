@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import Script from 'next/script';
 import styles from '../info-page.module.css';
-import PageNav from '@/components/PageNav';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 
@@ -120,8 +119,6 @@ export default function FaqPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         strategy="beforeInteractive"
       />
-
-      <PageNav />
 
       <section className={styles.section}>
         <h1 className={styles.pageTitle}>Frequently Asked Questions</h1>

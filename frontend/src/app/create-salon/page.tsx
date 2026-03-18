@@ -5,7 +5,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import styles from './CreateSalon.module.css';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
-import PageNav from '@/components/PageNav';
 import { type PlanCode } from '@/constants/plans';
 import { buildAuthRoute } from '@/constants/routes';
 import { toFriendlyMessage } from '@/lib/errors';
@@ -398,7 +397,6 @@ function CreateSalonPageContent() {
 
   return (
     <div className={styles.container}>
-      <PageNav />
       <h1 className={styles.title}>Create Your Salon Profile</h1>
 
       <div className={styles.card}>
@@ -823,7 +821,7 @@ function CreateSalonPageContent() {
 
 export default function CreateSalonPage() {
   return (
-    <Suspense fallback={<div className={styles.container}><PageNav /><LoadingSpinner /></div>}>
+    <Suspense fallback={<div className={styles.container}><LoadingSpinner /></div>}>
       <CreateSalonPageContent />
     </Suspense>
   );

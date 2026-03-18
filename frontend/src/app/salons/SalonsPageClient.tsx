@@ -4,27 +4,23 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { transformCloudinary } from '@/utils/cloudinary';
 import { Salon } from '@/types';
 import styles from './SalonsPage.module.css';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
-import { FaHeart, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import FilterBar, { type FilterValues } from '@/components/FilterBar/FilterBar';
+import { FaChevronLeft, FaChevronRight, FaSlidersH } from 'react-icons/fa';
+import { type FilterValues } from '@/components/FilterBar/FilterBar';
 import { useAuth } from '@/hooks/useAuth';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
-import { getImageWithFallback } from '@/lib/placeholders';
-import PageNav from '@/components/PageNav';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import EmptyState from '@/components/EmptyState/EmptyState';
-import { getSalonUrl } from '@/utils/salonUrl';
 import { usePagePerformance } from '@/hooks/usePagePerformance';
-import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import { notify } from '@/lib/notify';
 import { SalonsPageSkeleton } from '@/components/Skeleton/ServicesPageSkeleton';
 import { applyGuestFavoritesToSalons, toggleGuestFavoriteSalon } from '@/lib/guestFavorites';
+import MobileFilter from '@/components/MobileSearch/MobileFilter';
+import SalonCard from '@/components/SalonCard';
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
 type SalonPageFilters = Partial<FilterValues> & { q?: string; lat?: string | null; lon?: string | null };
@@ -38,16 +34,12 @@ function ProvinceRow({
   province,
   salons,
   onToggleFavorite,
-  onNavigate,
-  navigatingSalonId,
   isMobile,
   showViewAll = true,
 }: {
   province: string;
   salons: SalonWithFavorite[];
   onToggleFavorite: (event: React.MouseEvent, salonId: string) => void;
-  onNavigate: (salon: SalonWithFavorite) => void;
-  navigatingSalonId: string | null;
   isMobile: boolean;
   showViewAll?: boolean;
 }) {
@@ -123,61 +115,17 @@ function ProvinceRow({
         )}
 
         <div ref={scrollContainerRef} className={styles.horizontalScroll}>
-          {salons.map((salon) => {
-            const isNavigating = navigatingSalonId === salon.id;
-
-            return (
-              <div
-                key={salon.id}
-                className={`${styles.salonCard} ${isNavigating ? styles.navigating : ''}`}
-                onClick={(event) => {
-                  if ((event.target as HTMLElement).closest('button')) {
-                    return;
-                  }
-                  onNavigate(salon);
-                }}
-              >
-                {isNavigating && (
-                  <div className={styles.cardLoadingOverlay}>
-                    <LoadingSpinner size="md" color="white" />
-                  </div>
-                )}
-                <button
-                  onClick={(event) => onToggleFavorite(event, salon.id)}
-                  className={`${styles.favoriteButton} ${salon.isFavorited ? styles.favorited : ''}`}
-                  aria-label={salon.isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-                >
-                  <FaHeart />
-                </button>
-                <div className={styles.salonLink}>
-                  <div className={styles.imageWrapper}>
-                    <ReviewBadge
-                      reviewCount={salon.reviews?.length || 0}
-                      avgRating={salon.avgRating || 0}
-                    />
-                    <OptimizedImage
-                      src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), {
-                        width: 600,
-                        quality: 'auto',
-                        format: 'auto',
-                        crop: 'fill',
-                      })}
-                      alt={`A photo of ${salon.name}`}
-                      className={styles.cardImage}
-                      fill
-                      sizes="(max-width: 768px) 160px, 280px"
-                    />
-                  </div>
-                  <div className={styles.cardContent}>
-                    <h3 className={styles.cardTitle}>{salon.name}</h3>
-                    <p className={styles.cardLocation}>
-                      {salon.city}, {salon.province}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {salons.map((salon) => (
+            <div key={salon.id} className={styles.scrollCard}>
+              <SalonCard
+                salon={salon}
+                compact
+                showFavorite
+                showPrice={false}
+                onToggleFavorite={onToggleFavorite}
+              />
+            </div>
+          ))}
         </div>
 
         {!isMobile && canScrollRight && (
@@ -194,32 +142,12 @@ function ProvinceRow({
   );
 }
 
-function buildFilterChips(filters: SalonPageFilters): string[] {
-  const chips: string[] = [];
-
-  if (filters.service) chips.push(filters.service);
-  if (filters.category) chips.push(filters.category);
-  if (filters.city) chips.push(filters.city);
-  if (filters.province) chips.push(filters.province);
-  if (filters.openNow) chips.push('Open now');
-  if (filters.offersMobile) chips.push('Mobile service');
-  if (filters.sortBy === 'top_rated') chips.push('Top rated');
-  if (filters.sortBy === 'distance') {
-    chips.push(filters.radius ? `Within ${filters.radius} km` : 'Nearest');
-  }
-  if (filters.priceMin || filters.priceMax) {
-    chips.push(`Price: R${filters.priceMin || '0'} - R${filters.priceMax || 'Any'}`);
-  }
-
-  return chips;
-}
-
 export default function SalonsPageClient() {
   usePagePerformance('salons_list');
 
   const [salons, setSalons] = useState<SalonWithFavorite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [navigatingSalonId, setNavigatingSalonId] = useState<string | null>(null);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<SalonPageFilters>({
     province: '',
     city: '',
@@ -450,15 +378,6 @@ export default function SalonsPageClient() {
     [currentFilters.q, fetchSalons, syncFiltersToUrl],
   );
 
-  const handleResetFilters = useCallback(() => {
-    const nextFilters = getDefaultFilters();
-    const serialized = JSON.stringify(nextFilters);
-    lastAppliedFiltersRef.current = serialized;
-    setCurrentFilters(nextFilters);
-    syncFiltersToUrl(nextFilters);
-    fetchSalons(nextFilters);
-  }, [fetchSalons, getDefaultFilters, syncFiltersToUrl]);
-
   const handleToggleFavorite = async (event: React.MouseEvent, salonId: string) => {
     event.preventDefault();
     event.stopPropagation();
@@ -504,94 +423,45 @@ export default function SalonsPageClient() {
     }
   };
 
-  const handleNavigate = (salon: SalonWithFavorite) => {
-    const salonUrl = getSalonUrl(salon);
-    setNavigatingSalonId(salon.id);
-    router.push(salonUrl);
-    setTimeout(() => setNavigatingSalonId(null), 5000);
-  };
-
-  const activeFilterChips = useMemo(() => buildFilterChips(currentFilters), [currentFilters]);
-  const hasActiveFilters = activeFilterChips.length > 0 || Boolean(currentFilters.q);
-  const hasLocationFilter = Boolean(currentFilters.city || currentFilters.province);
+  const hasActiveFilters = Boolean(
+    currentFilters.q ||
+    currentFilters.service ||
+    currentFilters.category ||
+    currentFilters.city ||
+    currentFilters.province ||
+    currentFilters.openNow ||
+    currentFilters.offersMobile ||
+    currentFilters.priceMin ||
+    currentFilters.priceMax ||
+    currentFilters.sortBy,
+  );
   const shouldShowProvinceBrowse = !hasActiveFilters && !isMobile && provinceGroups.length > 1;
 
-  const pageTitle = currentFilters.service
-    ? `${currentFilters.service} salons`
-    : currentFilters.offersMobile
-      ? 'Mobile salons near you'
-      : 'Find your next salon';
-
-  const resultHeadline = currentFilters.city
-    ? `${salons.length} salons in ${currentFilters.city}`
-    : currentFilters.province
-      ? `${salons.length} salons in ${currentFilters.province}`
-      : `${salons.length} salons ready to book`;
-
-  const resultCopy = currentFilters.sortBy === 'distance'
-    ? 'Results are ranked to keep nearby options easy to compare.'
-    : hasLocationFilter
-      ? 'Use filters to narrow by service, location, and price without losing your place.'
-      : 'Browse the strongest matches first, then dip into province browsing if you want to explore wider.'
-  ;
-
-  const discoverySignals = [
-    {
-      label: 'Search mode',
-      value: currentFilters.sortBy === 'distance' ? 'Nearby first' : 'Best-match ranking',
-      detail: currentFilters.sortBy === 'distance'
-        ? 'Location-aware sorting keeps closer salons easier to compare.'
-        : 'Browse the strongest overall matches before drilling down.',
-    },
-    {
-      label: 'Coverage',
-      value: currentFilters.province || currentFilters.city || 'Across South Africa',
-      detail: hasLocationFilter
-        ? 'Your current filter set is already narrowed by location.'
-        : 'You can zoom into a province or city whenever you are ready.',
-    },
-    {
-      label: 'Booking style',
-      value: currentFilters.offersMobile ? 'Mobile salons included' : 'In-salon and mobile',
-      detail: currentFilters.offersMobile
-        ? 'Only salons that can travel to the client are being prioritised.'
-        : 'Filter for mobile appointments if convenience is the priority.',
-    },
-  ];
+  const renderSalonCard = (salon: SalonWithFavorite, variant: 'grid' | 'rail') => {
+    return (
+      <div key={salon.id} className={variant === 'grid' ? styles.gridCard : styles.railCard}>
+        <SalonCard
+          salon={salon}
+          compact
+          showFavorite
+          showPrice={false}
+          onToggleFavorite={handleToggleFavorite}
+        />
+      </div>
+    );
+  };
 
   return (
     <div className={styles.container}>
-      <PageNav />
-
-      <section className={styles.discoveryIntro}>
-        <div className={styles.discoveryShell}>
-          <div className={styles.discoveryHero}>
-            <div className={styles.discoveryCopyBlock}>
-              <p className={styles.discoveryEyebrow}>Salon discovery</p>
-              <h1 className={styles.title}>{pageTitle}</h1>
-              <p className={styles.discoveryLead}>
-                Search by service, narrow by location, and compare salons in one ranked view.
-              </p>
-            </div>
-
-            <div className={styles.discoverySignalGrid}>
-              {discoverySignals.map((signal) => (
-                <article key={signal.label} className={styles.discoverySignalCard}>
-                  <p className={styles.discoverySignalLabel}>{signal.label}</p>
-                  <strong className={styles.discoverySignalValue}>{signal.value}</strong>
-                  <p className={styles.discoverySignalDetail}>{signal.detail}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <FilterBar
-            onSearch={handleSearch}
-            initialFilters={currentFilters}
-            showSearchButton={!isMobile}
-            isSearching={isLoading}
-          />
-        </div>
+      <section className={styles.mobileToolbar}>
+        <button
+          type="button"
+          className={styles.mobileFilterButton}
+          onClick={() => setIsMobileFilterOpen(true)}
+        >
+          <FaSlidersH aria-hidden="true" />
+          <span>Filter salons</span>
+        </button>
       </section>
 
       {isLoading ? (
@@ -610,105 +480,17 @@ export default function SalonsPageClient() {
         />
       ) : (
         <>
-          <section className={styles.resultsHeader}>
-            <div className={styles.resultsHeaderTop}>
-              <div>
-                <p className={styles.resultsEyebrow}>Results</p>
-                <h2 className={styles.resultsSummary}>{resultHeadline}</h2>
-                <p className={styles.resultsCopy}>{resultCopy}</p>
+          {isMobile ? (
+            <section className={styles.mobileResultsSection}>
+              <div className={styles.mobileResultsRail}>
+                {salons.map((salon) => renderSalonCard(salon, 'rail'))}
               </div>
-              {hasActiveFilters && (
-                <button type="button" className={styles.clearFiltersButton} onClick={handleResetFilters}>
-                  Clear filters
-                </button>
-              )}
+            </section>
+          ) : (
+            <div className={styles.salonGrid}>
+              {salons.map((salon) => renderSalonCard(salon, 'grid'))}
             </div>
-            {activeFilterChips.length > 0 && (
-              <div className={styles.filterChips}>
-                {activeFilterChips.map((chip) => (
-                  <span key={chip} className={styles.filterChip}>
-                    {chip}
-                  </span>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <div className={styles.salonGrid}>
-            {salons.map((salon) => {
-              const isNavigating = navigatingSalonId === salon.id;
-              const bookingLabel = salon.offersMobile || salon.bookingType === 'MOBILE' || salon.bookingType === 'BOTH'
-                ? 'Mobile available'
-                : 'In-salon bookings';
-              const serviceCount = salon.services?.length;
-
-              return (
-                <div
-                  key={salon.id}
-                  className={`${styles.salonCard} ${styles.gridCard} ${isNavigating ? styles.navigating : ''}`}
-                  onClick={(event) => {
-                    if ((event.target as HTMLElement).closest('button')) {
-                      return;
-                    }
-                    handleNavigate(salon);
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {isNavigating && (
-                    <div className={styles.cardLoadingOverlay}>
-                      <LoadingSpinner size="md" color="white" />
-                    </div>
-                  )}
-
-                  <button
-                    onClick={(event) => handleToggleFavorite(event, salon.id)}
-                    className={`${styles.favoriteButton} ${salon.isFavorited ? styles.favorited : ''}`}
-                    aria-label={salon.isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-                  >
-                    <FaHeart />
-                  </button>
-
-                  <div className={styles.salonLink}>
-                    <div className={styles.imageWrapper}>
-                      <ReviewBadge
-                        reviewCount={salon.reviews?.length || 0}
-                        avgRating={salon.avgRating || 0}
-                      />
-                      <OptimizedImage
-                        src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), {
-                          width: 600,
-                          quality: 'auto',
-                          format: 'auto',
-                          crop: 'fill',
-                        })}
-                        alt={`A photo of ${salon.name}`}
-                        className={styles.cardImage}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                      />
-                    </div>
-
-                    <div className={styles.cardContent}>
-                      <h2 className={styles.cardTitle}>{salon.name}</h2>
-                      <p className={styles.cardLocation}>
-                        {salon.city}, {salon.province}
-                      </p>
-
-                      <div className={styles.cardMetaRow}>
-                        <span className={styles.cardMetaPill}>{bookingLabel}</span>
-                        {typeof salon.distance === 'number' && (
-                          <span className={styles.cardMetaPill}>{salon.distance.toFixed(1)} km away</span>
-                        )}
-                        {serviceCount ? (
-                          <span className={styles.cardMetaPill}>{serviceCount} services</span>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          )}
 
           {shouldShowProvinceBrowse && (
             <section className={styles.secondaryBrowse}>
@@ -728,8 +510,6 @@ export default function SalonsPageClient() {
                     province={group.province}
                     salons={group.salons}
                     onToggleFavorite={handleToggleFavorite}
-                    onNavigate={handleNavigate}
-                    navigatingSalonId={navigatingSalonId}
                     isMobile={isMobile}
                   />
                 ))}
@@ -737,6 +517,14 @@ export default function SalonsPageClient() {
             </section>
           )}
         </>
+      )}
+
+      {isMobileFilterOpen && (
+        <MobileFilter
+          onSearch={handleSearch}
+          initialFilters={currentFilters}
+          onClose={() => setIsMobileFilterOpen(false)}
+        />
       )}
     </div>
   );

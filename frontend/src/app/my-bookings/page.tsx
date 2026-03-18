@@ -9,7 +9,6 @@ import ReviewModal from '@/components/ReviewModal';
 import { useSocket } from '@/context/SocketContext';
 import { toast } from 'react-toastify';
 import { Skeleton, SkeletonGroup } from '@/components/Skeleton/Skeleton';
-import PageNav from '@/components/PageNav';
 import { Button, EmptyState, StarRating } from '@/components/ui';
 import StatusBadge from '@/components/StatusBadge';
 import { getSalonUrl } from '@/utils/salonUrl';
@@ -111,7 +110,6 @@ export default function MyBookingsPage() {
   if (authStatus === 'loading' || isLoading) {
     return (
       <div className={styles.container}>
-        <PageNav />
         <h1 className={styles.title}>My Bookings</h1>
 
         <div className={styles.tabs} aria-hidden>
@@ -150,7 +148,6 @@ export default function MyBookingsPage() {
         />
       )}
       <div className={styles.container}>
-        <PageNav />
         <h1 className={styles.title}>My Bookings</h1>
 
         <div className={styles.tabs}>

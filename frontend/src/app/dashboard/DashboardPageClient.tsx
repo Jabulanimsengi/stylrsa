@@ -16,7 +16,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './Dashboard.module.css';
 import { useSocket } from '@/context/SocketContext';
 import { notify } from '@/lib/notify';
-import PageNav from '@/components/PageNav';
 import { useAuth } from '@/hooks/useAuth';
 import { DashboardPageSkeleton } from '@/components/Skeleton/Skeleton';
 import { APP_PLANS, PLAN_BY_CODE } from '@/constants/plans';
@@ -239,7 +238,6 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
   if (isLoading || authStatus === 'loading') {
     return (
       <div className={styles.container}>
-        <PageNav />
         <h1 className={styles.title}>My Dashboard</h1>
         <DashboardPageSkeleton />
       </div>
@@ -305,7 +303,6 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
       />
 
       <div className={styles.container}>
-        <PageNav />
         <h1 className={styles.title}>{user?.role === 'ADMIN' ? `${salon.name}'s Dashboard` : 'My Dashboard'}</h1>
 
         <DashboardOverviewHero

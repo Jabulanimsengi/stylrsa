@@ -2,8 +2,8 @@
 
 import { ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { FaTimes } from 'react-icons/fa';
 import styles from './Modal.module.css';
+import MobileCloseButton from '@/components/MobileCloseButton';
 
 interface ModalProps {
   isOpen: boolean;
@@ -61,12 +61,7 @@ export default function Modal({
               ))}
               {showCloseButton && (
                 <Dialog.Close asChild>
-                  <button
-                    className={styles.closeButton}
-                    aria-label="Close modal"
-                  >
-                    <FaTimes />
-                  </button>
+                  <MobileCloseButton className={styles.closeButton} label="Close modal" />
                 </Dialog.Close>
               )}
             </div>

@@ -12,7 +12,6 @@ import { toast } from 'react-toastify';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import ImageLightbox from '@/components/ImageLightbox';
 import styles from './TrendDetailPage.module.css';
-import PageNav from '@/components/PageNav';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { getImageWithFallback } from '@/lib/placeholders';
 import { getSalonUrl } from '@/utils/salonUrl';
@@ -239,8 +238,6 @@ export default function TrendDetailPage({ params }: PageProps) {
 
   return (
     <div className={styles.container}>
-      <PageNav />
-
       <div className={styles.content}>
         <div className={styles.imageSection}>
           <div className={styles.mainImage}>
@@ -338,7 +335,7 @@ export default function TrendDetailPage({ params }: PageProps) {
           )}
 
           <button onClick={handleFindSalons} className={styles.findSalonsButton}>
-            <FaMapMarkerAlt /> Find Salons Offering This Style
+            <FaMapMarkerAlt /> Open Salon Map For This Style
           </button>
         </div>
       </div>

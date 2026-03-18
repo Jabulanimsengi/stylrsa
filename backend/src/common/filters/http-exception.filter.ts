@@ -9,6 +9,7 @@ import {
 import { Request, Response } from 'express';
 import {
   PrismaClientKnownRequestError,
+  PrismaClientInitializationError,
   PrismaClientValidationError,
 } from '@prisma/client/runtime/library';
 import { randomUUID } from 'crypto';
@@ -48,6 +49,10 @@ function friendlyFromCode(code: string): string {
       'That information is already in use. Please try something else.',
     DATA_IN_USE:
       'This item is still linked to other information and cannot be removed yet.',
+    DATABASE_UNAVAILABLE:
+      'The database is temporarily unavailable. Please try again shortly.',
+    DATABASE_MISCONFIGURED:
+      'The server database configuration needs attention. Please contact support or try again later.',
     INTERNAL_ERROR: 'Something went wrong. Please try again.',
   };
   return map[code] || map.INTERNAL_ERROR;
@@ -105,6 +110,58 @@ function mapPrismaError(error: PrismaClientKnownRequestError) {
   }
 }
 
+function mapPrismaInitializationError(error: PrismaClientInitializationError) {
+  const message = error.message || '';
+
+  if (
+    message.includes('the URL must start with the protocol `prisma://`') ||
+    message.includes('the URL must start with the protocol `prisma+postgres://`')
+  ) {
+    return {
+      status: HttpStatus.SERVICE_UNAVAILABLE,
+      code: 'DATABASE_MISCONFIGURED',
+      userMessage:
+        'The server database configuration is invalid right now. Please update the backend database URL and restart the server.',
+      devMessage: message,
+    } as const;
+  }
+
+  if (
+    /Environment variable not found/i.test(message) ||
+    /Authentication failed/i.test(message)
+  ) {
+    return {
+      status: HttpStatus.SERVICE_UNAVAILABLE,
+      code: 'DATABASE_MISCONFIGURED',
+      userMessage:
+        'The server database configuration is incomplete or invalid. Please check the backend environment settings.',
+      devMessage: message,
+    } as const;
+  }
+
+  if (
+    /Can\'t reach database server/i.test(message) ||
+    /Timed out/i.test(message) ||
+    /connect/i.test(message)
+  ) {
+    return {
+      status: HttpStatus.SERVICE_UNAVAILABLE,
+      code: 'DATABASE_UNAVAILABLE',
+      userMessage:
+        'The server cannot connect to the database right now. Please try again in a moment.',
+      devMessage: message,
+    } as const;
+  }
+
+  return {
+    status: HttpStatus.SERVICE_UNAVAILABLE,
+    code: 'DATABASE_UNAVAILABLE',
+    userMessage:
+      'The server cannot complete this request because the database is unavailable.',
+    devMessage: message,
+  } as const;
+}
+
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
@@ -124,6 +181,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof PrismaClientKnownRequestError) {
       const mapped = mapPrismaError(exception);
+      status = mapped.status;
+      code = mapped.code;
+      userMessage = mapped.userMessage;
+      devMessage = mapped.devMessage;
+    } else if (exception instanceof PrismaClientInitializationError) {
+      const mapped = mapPrismaInitializationError(exception);
       status = mapped.status;
       code = mapped.code;
       userMessage = mapped.userMessage;

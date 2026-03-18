@@ -245,6 +245,28 @@ export function useNotificationCenter() {
     }
   }, [clearNotificationsCache]);
 
+  const handleDeleteNotification = useCallback(async (notificationId: string) => {
+    try {
+      await fetch(`/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      let nextItems: Notification[] = [];
+      setNotifications((prev) => {
+        nextItems = prev.filter((item) => item.id !== notificationId);
+        return nextItems;
+      });
+
+      const nextUnread = nextItems.filter((item) => !item.isRead).length;
+      setUnreadCountState(nextUnread);
+      updateNotificationsCache(nextItems, nextUnread, nextCursor, user?.id);
+    } catch (error) {
+      logger.error('Failed to delete notification', error);
+      toast.error(toFriendlyMessage(error, 'Failed to delete notification.'));
+    }
+  }, [nextCursor, updateNotificationsCache, user?.id]);
+
   const handleLoadMore = useCallback(async () => {
     if (!nextCursor || isLoadingMore) {
       return;
@@ -274,6 +296,7 @@ export function useNotificationCenter() {
     handleNotificationClick,
     handleMarkAllRead,
     handleClearNotifications,
+    handleDeleteNotification,
     handleLoadMore,
   };
 }

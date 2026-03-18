@@ -231,7 +231,7 @@ export default function PromotionCard({ promotion, onImageClick, onBookNow }: Pr
           {isService && salonId && (
             <Button
               onClick={handleBookNow}
-              className="w-full"
+              className="w-full bookingButton"
               size="sm"
               disabled={isLoadingBooking}
             >

@@ -6,7 +6,6 @@ import styles from './MyProfilePage.module.css';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-toastify';
 import { Skeleton } from '@/components/Skeleton/Skeleton';
-import PageNav from '@/components/PageNav';
 import AddressBook from '@/components/AddressBook/AddressBook';
 
 interface UserProfile {
@@ -104,7 +103,6 @@ export default function MyProfilePage() {
   if (isLoading || authStatus === 'loading') {
     return (
       <div className={styles.container}>
-        <PageNav />
         <h1 className={styles.title}>My Profile</h1>
 
         <div className={styles.card} aria-hidden>
@@ -132,7 +130,6 @@ export default function MyProfilePage() {
 
   return (
     <div className={styles.container}>
-      <PageNav />
       <h1 className={styles.title}>My Profile</h1>
 
       <div className={styles.card}>

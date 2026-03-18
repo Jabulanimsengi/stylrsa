@@ -4,11 +4,13 @@ import {
   FiImage,
   FiStar,
   FiSettings,
+  FiUsers,
 } from 'react-icons/fi';
 
 export type TabId =
   | 'bookings'
   | 'services'
+  | 'team-members'
   | 'reviews'
   | 'gallery'
   | 'booking-settings';
@@ -21,6 +23,7 @@ export const NAV_SECTIONS = [
     items: [
       { id: 'bookings', label: 'Bookings', icon: FiCalendar },
       { id: 'services', label: 'Services', icon: FiScissors },
+      { id: 'team-members', label: 'Team Members', icon: FiUsers },
     ],
   },
   {

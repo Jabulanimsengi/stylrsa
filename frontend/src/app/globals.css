@@ -561,6 +561,9 @@
     --button-shadow: 0 10px 22px rgba(17, 19, 24, 0.08);
     --button-shadow-hover: 0 14px 28px rgba(17, 19, 24, 0.12);
     --button-shadow-soft: 0 8px 18px rgba(15, 23, 42, 0.06);
+    --booking-button-radius: 14px;
+    --booking-button-focus: rgba(17, 19, 24, 0.16);
+    --booking-button-focus-shadow: rgba(17, 19, 24, 0.08);
     --btn-primary-bg: var(--color-brand);
     --btn-primary-text: #ffffff;
     --btn-primary-hover: var(--color-brand-hover);
@@ -1215,6 +1218,19 @@
   transform: none;
 }
 
+.bookingButton {
+  border-radius: var(--booking-button-radius, 14px) !important;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.bookingButton:focus,
+.bookingButton:focus-visible {
+  outline: 2px solid var(--booking-button-focus, rgba(17, 19, 24, 0.16)) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--booking-button-focus-shadow, rgba(17, 19, 24, 0.08)) !important;
+}
+
 @media (max-width: 768px) {
   .ui-button,
   .btn {
@@ -1403,7 +1419,7 @@ h3 {
 /* Mobile bottom navigation spacing */
 @media (max-width: 768px) {
   .main-content {
-    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   }
 }
 

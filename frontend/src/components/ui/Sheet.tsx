@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { FaTimes } from 'react-icons/fa';
 import styles from './Sheet.module.css';
+import MobileCloseButton from '@/components/MobileCloseButton';
 
 const Sheet = DialogPrimitive.Root;
 const SheetTrigger = DialogPrimitive.Trigger;
@@ -42,8 +42,8 @@ const SheetContent = React.forwardRef<
         >
             {children}
             {showCloseButton && (
-                <DialogPrimitive.Close className={styles.closeButton} aria-label="Close">
-                    <FaTimes />
+                <DialogPrimitive.Close asChild>
+                    <MobileCloseButton className={styles.closeButton} label="Close" />
                 </DialogPrimitive.Close>
             )}
         </DialogPrimitive.Content>

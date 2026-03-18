@@ -4,9 +4,6 @@
   margin: 0 auto;
   padding-inline: var(--page-inline-padding);
 }
-
-/* Removed per-page sticky header; using PageNav */
-
 .title {
   font-size: 2.25rem;
   font-weight: 700;

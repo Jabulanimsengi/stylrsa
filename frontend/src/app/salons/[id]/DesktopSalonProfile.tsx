@@ -6,7 +6,6 @@ import { Salon, Service, GalleryImage, Review } from '@/types';
 import styles from './SalonProfile.module.css';
 import booksyStyles from './BooksyLayout.module.css';
 import mobileStyles from './MobileSalonProfile.module.css';
-import PageNav from '@/components/PageNav';
 import SocialShare from '@/components/SocialShare/SocialShare';
 import VerificationBadge from '@/components/VerificationBadge/VerificationBadge';
 import TeamMembers from '@/components/TeamMembers/TeamMembers';
@@ -66,7 +65,6 @@ export default function DesktopSalonProfile({
 
   return (
     <div className={mobileStyles.desktopProfile}>
-      <PageNav />
       <div className={styles.container}>
         <section className={styles.profileHero}>
           {salon.backgroundImage && (
@@ -91,7 +89,7 @@ export default function DesktopSalonProfile({
                   <button
                     type="button"
                     className={styles.logoButton}
-                    onClick={() => openLightbox([salon.logo || ''], 0)}
+                    onClick={() => openLightbox([salon.logo!], 0)}
                     title="View full logo"
                   >
                     <OptimizedImage

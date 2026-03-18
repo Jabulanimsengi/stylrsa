@@ -43,6 +43,38 @@ export class BookingsService {
     private mailService: MailService,
   ) { }
 
+  private async validateTeamMemberSelection(
+    teamMemberId: string | undefined,
+    salonId: string,
+    serviceId: string,
+  ) {
+    if (!teamMemberId) {
+      return null;
+    }
+
+    const teamMember = await this.prisma.teamMember.findUnique({
+      where: { id: teamMemberId },
+      include: {
+        services: {
+          select: {
+            serviceId: true,
+          },
+        },
+      },
+    });
+
+    if (!teamMember || teamMember.salonId !== salonId || !teamMember.isActive) {
+      throw new BadRequestException('Selected professional is not available for this salon.');
+    }
+
+    const assignedServiceIds = teamMember.services.map((item) => item.serviceId);
+    if (assignedServiceIds.length > 0 && !assignedServiceIds.includes(serviceId)) {
+      throw new BadRequestException('Selected professional is not assigned to this service.');
+    }
+
+    return teamMember;
+  }
+
   private buildReferenceBase(firstName: string, lastName: string): string {
     const normalized = `${firstName}${lastName}`
       .replace(/[^a-zA-Z0-9]/g, '')
@@ -67,6 +99,12 @@ export class BookingsService {
     if (service.salonId !== dto.salonId) {
       throw new BadRequestException('Service does not belong to this salon');
     }
+
+    await this.validateTeamMemberSelection(
+      dto.teamMemberId,
+      service.salonId,
+      dto.serviceId,
+    );
 
     const salon = service.salon;
     if (!salon?.whatsapp && !salon?.phoneNumber) {
@@ -271,6 +309,12 @@ export class BookingsService {
     if (!service) {
       throw new NotFoundException('Service not found');
     }
+
+    await this.validateTeamMemberSelection(
+      dto.teamMemberId,
+      service.salonId,
+      dto.serviceId,
+    );
 
     // Validate that the requested time slot is available
     const bookingDate = new Date(dto.bookingTime);

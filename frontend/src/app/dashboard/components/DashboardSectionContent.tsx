@@ -4,6 +4,7 @@ import type { ApprovalStatus, GalleryImage, Salon, Service } from '@/types';
 import ReviewsTab from '@/components/ReviewsTab/ReviewsTab';
 import ServicesTab from '@/components/ServicesTab/ServicesTab';
 import GalleryTab from '@/components/GalleryTab/GalleryTab';
+import TeamMembers from '@/components/TeamMembers/TeamMembers';
 import DashboardBookingsSection from './DashboardBookingsSection';
 import DashboardBookingSettingsSection from './DashboardBookingSettingsSection';
 import type { OperatingHours } from '@/components/OperatingHoursInput';
@@ -84,6 +85,7 @@ interface DashboardSectionContentProps {
 
 export default function DashboardSectionContent({
   activeMainTab,
+  salon,
   services,
   bookings,
   pendingBookings,
@@ -145,6 +147,8 @@ export default function DashboardSectionContent({
           onDeleteService={onDeleteService}
         />
       );
+    case 'team-members':
+      return <TeamMembers salonId={salon.id} isEditable />;
     case 'reviews':
       return <ReviewsTab />;
     case 'gallery':

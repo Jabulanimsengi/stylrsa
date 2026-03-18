@@ -21,6 +21,11 @@ export class CreateTeamMemberDto {
   specialties?: string[];
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  galleryImages?: string[];
+
+  @IsOptional()
   @IsInt()
   @Min(0)
   experience?: number;
@@ -28,4 +33,9 @@ export class CreateTeamMemberDto {
   @IsOptional()
   @IsInt()
   sortOrder?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  serviceIds?: string[];
 }

@@ -35,30 +35,16 @@
 }
 
 .image {
-  width: auto !important;
-  height: auto !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   object-fit: contain !important;
   border-radius: 0.5rem;
-  display: block;
-  margin: auto;
 }
 
 .closeButton {
   position: fixed !important;
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  color: var(--color-text-inverse) !important;
-  border: none !important;
-  border-radius: 50% !important;
-  cursor: pointer !important;
-  font-size: 1.5rem !important;
-  width: 40px !important;
-  height: 40px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: background-color 0.2s !important;
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
@@ -126,23 +112,38 @@
   transform: translateY(-50%) !important;
 }
 
-.counter {
+.dotsContainer {
   position: absolute !important;
-  bottom: 1rem !important;
+  bottom: 1.25rem !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
-  background: rgba(0, 0, 0, 0.7) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  background: rgba(0, 0, 0, 0.5) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
-  color: var(--color-text-inverse) !important;
-  padding: 0.5rem 1rem !important;
-  border-radius: 20px !important;
-  font-size: 0.875rem !important;
-  font-weight: 600 !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  letter-spacing: 0.05em !important;
+  padding: 0.45rem 0.75rem !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   z-index: 1000003 !important;
   pointer-events: none !important;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.dotActive {
+  width: 22px;
+  height: 7px;
+  border-radius: 999px;
+  background: #ffffff;
 }
 
 /* Loading spinner styles */
@@ -203,10 +204,8 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
 
-  .counter {
+  .dotsContainer {
     bottom: 1rem !important;
-    font-size: 0.875rem !important;
-    padding: 0.5rem 1rem !important;
     z-index: 1000003 !important;
   }
   

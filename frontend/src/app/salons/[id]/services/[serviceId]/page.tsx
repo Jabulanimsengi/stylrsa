@@ -289,7 +289,7 @@ export default async function SalonServiceSeoPage({
           </div>
 
           <div className={styles.ctaRow}>
-            <Link href={bookingUrl} className={cn(buttonVariants({ variant: 'default', size: 'lg' }), styles.ctaButton)}>
+            <Link href={bookingUrl} className={cn(buttonVariants({ variant: 'default', size: 'lg' }), 'bookingButton', styles.ctaButton)}>
               Book this service
             </Link>
             <Link href={`/salons/${salon.slug || salon.id}`} className={cn(buttonVariants({ variant: 'secondary', size: 'lg' }), styles.ctaButton)}>

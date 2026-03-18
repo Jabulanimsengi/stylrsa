@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Salon, Service } from '@/types';
+import Image from 'next/image';
+import type { Salon, Service, TeamMember } from '@/types';
 import styles from './BookingModal.module.css';
 import {
   FaBox,
@@ -110,6 +111,8 @@ export default function BookingModal({
   const [isCreatingIntent, setIsCreatingIntent] = useState(false);
   const [colorSelection, setColorSelection] = useState('');
   const [materialSelection, setMaterialSelection] = useState<BookingPreferences['materialSelection']>(null);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | null>(null);
   const hasPrefilledContact = useRef(false);
 
   const booking = useBookingFlow({
@@ -145,6 +148,64 @@ export default function BookingModal({
     resolveServiceCategoryName(selectedService),
     selectedService.title || selectedService.name,
   );
+  const availableTeamMembers = useMemo(() => {
+    if (!selectedService) {
+      return teamMembers;
+    }
+
+    return teamMembers.filter((member) => {
+      const assignedServiceIds =
+        member.serviceIds ||
+        member.services?.map((service) => service.id) ||
+        [];
+
+      return assignedServiceIds.length === 0 || assignedServiceIds.includes(selectedService.id);
+    });
+  }, [selectedService, teamMembers]);
+  const selectedTeamMember = useMemo(
+    () => availableTeamMembers.find((member) => member.id === selectedTeamMemberId) || null,
+    [availableTeamMembers, selectedTeamMemberId],
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchTeamMembers = async () => {
+      try {
+        const data = await apiJson<TeamMember[]>(`/api/team-members/salon/${salon.id}`);
+        if (!isMounted) {
+          return;
+        }
+
+        setTeamMembers(
+          data.map((member) => ({
+            ...member,
+            serviceIds:
+              member.serviceIds ||
+              member.services?.map((service) => service.id) ||
+              [],
+          })),
+        );
+      } catch (error) {
+        console.error('Failed to fetch team members for booking:', error);
+      }
+    };
+
+    void fetchTeamMembers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [salon.id]);
+
+  useEffect(() => {
+    if (
+      selectedTeamMemberId &&
+      !availableTeamMembers.some((member) => member.id === selectedTeamMemberId)
+    ) {
+      setSelectedTeamMemberId(null);
+    }
+  }, [availableTeamMembers, selectedTeamMemberId]);
 
   useEffect(() => {
     if (authStatus === 'loading' || hasPrefilledContact.current) {
@@ -243,6 +304,7 @@ export default function BookingModal({
           clientLastName: booking.state.clientLastName.trim(),
           clientPhone: booking.state.clientPhone.replace(/\s/g, ''),
           clientNotes: booking.state.clientNotes.trim() || null,
+          teamMemberId: selectedTeamMemberId || null,
           colorSelection: colorSelection.trim() || null,
           materialSelection: materialSelection || null,
           totalCost: booking.totalCost,
@@ -264,6 +326,7 @@ export default function BookingModal({
     message += `*Service:* ${service.title || service.name}\n`;
     message += `*Client Name:* ${clientFullName}\n`;
     message += `*Phone:* ${booking.state.clientPhone}\n`;
+    message += `*Professional:* ${selectedTeamMember?.name || 'Any available professional'}\n`;
     message += `*Preferred Date:* ${bookingDate}\n`;
     message += `*Preferred Time:* ${preferredTimeLabel}\n`;
     message += `*Total Cost:* R${booking.totalCost.toFixed(2)}\n`;
@@ -475,6 +538,72 @@ export default function BookingModal({
               />
             </div>
 
+            {availableTeamMembers.length > 0 && (
+              <div className={styles.preferencesSection}>
+                <div className={styles.sectionHeader}>
+                  <FaUser className={styles.sectionIcon} />
+                  <span>Choose Your Professional</span>
+                  <span className={styles.optionalBadge}>Optional</span>
+                </div>
+                <div className={styles.professionalList}>
+                  <button
+                    type="button"
+                    className={`${styles.anyProfessionalCard} ${selectedTeamMemberId === null ? styles.selected : ''}`}
+                    onClick={() => setSelectedTeamMemberId(null)}
+                  >
+                    <div className={styles.anyProfessionalIcon}>
+                      <FaUser />
+                    </div>
+                    <div className={styles.anyProfessionalInfo}>
+                      <h4>Any available professional</h4>
+                      <p>The salon can assign the best available team member for this service.</p>
+                    </div>
+                  </button>
+
+                  {availableTeamMembers.map((member) => (
+                    <button
+                      key={member.id}
+                      type="button"
+                      className={`${styles.professionalCard} ${selectedTeamMemberId === member.id ? styles.selected : ''}`}
+                      onClick={() => setSelectedTeamMemberId(member.id)}
+                    >
+                      <div className={styles.professionalAvatar}>
+                        {member.image ? (
+                          <Image
+                            src={member.image}
+                            alt={member.name}
+                            fill
+                            sizes="56px"
+                            className={styles.professionalAvatarImage}
+                          />
+                        ) : (
+                          <FaUser />
+                        )}
+                      </div>
+                      <div className={styles.professionalInfo}>
+                        <p className={styles.professionalName}>{member.name}</p>
+                        <p className={styles.professionalRole}>{member.role}</p>
+                        {member.specialties && member.specialties.length > 0 && (
+                          <div className={styles.professionalSpecialties}>
+                            {member.specialties.slice(0, 3).map((specialty) => (
+                              <span key={specialty} className={styles.specialtyTag}>
+                                {specialty}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {selectedTeamMemberId === member.id && (
+                        <span className={styles.checkmark}>
+                          <FaCheck />
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {salon.bookingType !== 'ONSITE' && (
               <div className={styles.mobileOption}>
                 <label className={styles.checkboxLabel}>
@@ -560,6 +689,12 @@ export default function BookingModal({
                     day: 'numeric',
                   })}{' '}
                   in the {booking.state.selectedTimePeriod ? TIME_PERIOD_LABELS[booking.state.selectedTimePeriod].toLowerCase() : ''}
+                </span>
+              </div>
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Professional</span>
+                <span className={styles.summaryValue}>
+                  {selectedTeamMember?.name || 'Any available professional'}
                 </span>
               </div>
               <div className={styles.summaryItem}>

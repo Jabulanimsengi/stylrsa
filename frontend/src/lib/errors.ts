@@ -31,6 +31,18 @@ export function toFriendlyMessage(err: unknown, fallback?: string): string {
   try {
     if (!err) return fallback || DEFAULT_MESSAGE;
 
+    if (typeof err === 'object' && err !== null) {
+      const e = err as ApiError & { message?: string };
+      if (e.userMessage) return e.userMessage;
+      if (
+        typeof e.message === 'string' &&
+        /^API error:\s+\d+/i.test(e.message) &&
+        fallback
+      ) {
+        return fallback;
+      }
+    }
+
     // Check for network issues first
     if (isNetworkError(err)) {
       if (!isOnline()) {

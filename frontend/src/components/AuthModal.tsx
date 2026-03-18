@@ -80,23 +80,43 @@ export default function AuthModal({ view: initialView, onClose }: AuthModalProps
 
   const isAuthTab = view === 'login' || view === 'register';
   const isVerificationView = view === 'resend-verification' || view === 'verify-email';
+  const dialogTitle =
+    view === 'verify-email'
+      ? 'Verify Your Email'
+      : view === 'resend-verification'
+        ? 'Resend Verification'
+        : view === 'register'
+          ? 'Register'
+          : 'Sign in';
+  const dialogDescription =
+    view === 'verify-email'
+      ? 'Enter the verification code sent to your email.'
+      : view === 'resend-verification'
+        ? 'Request a new verification email.'
+        : view === 'register'
+          ? 'Create your account to continue.'
+          : 'Sign in to continue.';
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className={`sm:max-w-[560px] p-0 border-0 max-h-[90vh] overflow-y-auto [&>button]:right-4 [&>button]:top-4 ${styles.authDialog}`}>
+        <DialogHeader className="sr-only">
+          <DialogTitle>{dialogTitle}</DialogTitle>
+          <DialogDescription>{dialogDescription}</DialogDescription>
+        </DialogHeader>
         {/* Verification flows */}
         {isVerificationView && (
           <div className={styles.authModalPane}>
-            <DialogHeader className="mb-4">
-              <DialogTitle>
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold text-foreground">
                 {view === 'verify-email' ? 'Verify Your Email' : 'Resend Verification'}
-              </DialogTitle>
-              <DialogDescription>
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
                 {view === 'verify-email'
                   ? 'Enter the verification code sent to your email'
                   : 'Request a new verification email'}
-              </DialogDescription>
-            </DialogHeader>
+              </p>
+            </div>
             {view === 'resend-verification' && <ResendVerification onClose={onClose} />}
             {view === 'verify-email' && pendingVerificationEmail && (
               <VerifyEmailCode
@@ -112,15 +132,9 @@ export default function AuthModal({ view: initialView, onClose }: AuthModalProps
         {isAuthTab && (
           <Tabs value={view} onValueChange={handleTabChange} className="w-full">
             <div className={styles.authModalIntro}>
-              <span className={styles.authModalEyebrow}>Account access</span>
               <h2 className={styles.authModalTitle}>
-                {view === 'login' ? 'Welcome back' : 'Create your account'}
+                {view === 'login' ? 'Sign in' : 'Register'}
               </h2>
-              <p className={styles.authModalDescription}>
-                {view === 'login'
-                  ? 'Sign in to manage bookings, favorites, or your business workspace.'
-                  : 'Start with your role and email, then finish your profile in one calmer flow.'}
-              </p>
             </div>
             <div className={styles.authTabsWrap}>
               <TabsList className={styles.authTabsList}>

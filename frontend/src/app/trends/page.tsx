@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import { Trend, TrendCategory, AgeGroup } from '@/types';
 import TrendCard from '@/components/TrendCard/TrendCard';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
-import PageNav from '@/components/PageNav';
 import { toast } from 'react-toastify';
 import styles from './TrendsPage.module.css';
 
@@ -96,8 +95,6 @@ function TrendsPageContent() {
 
   return (
     <div className={styles.container}>
-      <PageNav />
-
       <div className={styles.header}>
         <h1 className={styles.title}>Trending Styles</h1>
         <p className={styles.subtitle}>

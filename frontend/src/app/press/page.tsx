@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import styles from '../info-page.module.css';
-import PageNav from '@/components/PageNav';
 
 export const metadata: Metadata = {
   title: 'Press & Media - Stylr SA',
@@ -18,8 +17,6 @@ export const metadata: Metadata = {
 export default function PressPage() {
   return (
     <div className={styles.container}>
-      <PageNav />
-      
       <section className={styles.section}>
         <h1 className={styles.pageTitle}>Press & Media</h1>
 

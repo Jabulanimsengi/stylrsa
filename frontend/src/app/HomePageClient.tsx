@@ -6,7 +6,6 @@ import Script from 'next/script';
 import styles from './HomePage.module.css';
 import { type FilterValues } from '@/components/FilterBar/FilterBar';
 import { useEffect, useState, useRef } from 'react';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
 import MobileSearch from '@/components/MobileSearch/MobileSearch';
 import ServiceCategoryCircles from '@/components/ServiceCategoryCircles/ServiceCategoryCircles';
 import SalonCarouselSection from '@/components/SalonCarouselSection';
@@ -46,23 +45,23 @@ const SEARCHABLE_CATEGORIES = [
 ] as const;
 
 const HERO_TRUST_POINTS = [
-  'Verified salons and professionals',
-  'Live availability across major cities',
-  'Direct booking without extra clutter',
+  'Verified salons & independent professionals',
+  'Real galleries, real prices, real reviews',
+  'Book directly via WhatsApp — zero commission',
 ];
 
 const WHY_BOOK_WITH_STYLR = [
   {
-    title: 'Verified profiles',
-    copy: 'Book with more confidence by browsing salons that show stronger trust signals, clearer service menus, and fuller profiles.',
+    title: 'Verified and approved salons',
+    copy: 'Every salon on Stylr SA goes through an approval process before going live. You browse profiles that show real services, real prices, and real gallery images — not stock photos.',
   },
   {
-    title: 'Better discovery',
-    copy: 'Filter by treatment, city, availability, and mobile service options without losing your place or starting over.',
+    title: 'Designed for South African beauty',
+    copy: "Search for braiders, locticians, nail techs, skin-care specialists, barbers, and more — all in your city or suburb. No irrelevant results.",
   },
   {
-    title: 'Cleaner booking flow',
-    copy: 'Move from discovery to booking with a clearer next step, less friction, and a smoother salon profile journey.',
+    title: 'Book straight to WhatsApp',
+    copy: "No accounts to create on the salon side. When you're ready, your booking request goes directly to the salon's WhatsApp so you can confirm dates, ask about deposits, and get an immediate reply.",
   },
 ];
 
@@ -77,7 +76,6 @@ export default function HomePageClient({
 }: HomePageClientProps) {
   const router = useRouter();
   const { showPageLoader } = useNavigationLoading();
-  useMediaQuery('(max-width: 768px)');
   usePagePerformance('home');
 
   // Hero search autocomplete state
@@ -223,9 +221,9 @@ export default function HomePageClient({
         </div>
 
         <div className={styles.heroContent}>
-          <span className={styles.heroEyebrow}>Book premium beauty and wellness experiences</span>
+          <span className={styles.heroEyebrow}>South Africa&apos;s home for beauty and wellness bookings</span>
           <h1 className={styles.heroTitle} id="hero-title">
-            <span className={styles.heroTitleLead}>The hub for</span>
+            <span className={styles.heroTitleLead}>Find the best</span>
             <span className={styles.heroTitleAnimated}>
               <TypingAnimation
                 words={['Hairdressers', 'Nail Techs', 'Barbers', 'Braiders']}
@@ -236,7 +234,7 @@ export default function HomePageClient({
             </span>
           </h1>
           <p className={styles.heroDescription}>
-            Discover verified salons, trusted specialists, and mobile beauty professionals across South Africa in a calmer, more focused booking experience.
+            Search verified salons and beauty professionals near you. Compare prices, browse real work galleries, and connect directly — no apps, no middlemen.
           </p>
 
           <div className={styles.heroSearchContainer}>
@@ -250,7 +248,7 @@ export default function HomePageClient({
               </div>
               <input
                 type="text"
-                placeholder="All treatments and venues"
+                placeholder="Search by treatment, salon name, or city…"
                 className={styles.heroSearchInput}
                 value={heroSearchQuery}
                 onChange={(e) => setHeroSearchQuery(e.target.value)}
@@ -386,10 +384,10 @@ export default function HomePageClient({
 
       <section className={styles.editorialBand}>
         <div className={styles.sectionIntro}>
-          <span className={styles.sectionEyebrow}>Browse by category</span>
-          <h2 className={styles.sectionHeading}>Start with the treatment you already know you want.</h2>
+          <span className={styles.sectionEyebrow}>Browse by treatment</span>
+          <h2 className={styles.sectionHeading}>Browse 16 beauty categories. Find exactly what you&apos;re looking for.</h2>
           <p className={styles.sectionDescription}>
-            Choose a treatment first and jump straight into salons that match what you already have in mind.
+            Whether it&apos;s a blowout, fresh nails, a shape-up, or a full bridal look — tap your treatment and go straight to salons that specialise in it.
           </p>
         </div>
         <ServiceCategoryCircles />
@@ -397,8 +395,6 @@ export default function HomePageClient({
 
       <SalonCarouselSection
         title="Featured Salons"
-        eyebrow="Admin ranked"
-        description="All approved salons, ordered by the featured ranking weight managed by admin so the strongest placements appear first."
         salons={initialFeaturedSalons}
         viewAllLink="/salons"
         showViewAll
@@ -406,8 +402,6 @@ export default function HomePageClient({
 
       <SalonCarouselSection
         title="Available Now"
-        eyebrow="Open right now"
-        description="For users who want speed, these salons are currently available and ready to be explored without extra steps."
         salons={initialAvailableNowSalons}
         viewAllLink="/salons?openNow=true"
         showViewAll
@@ -416,10 +410,10 @@ export default function HomePageClient({
 
       <section className={`${styles.editorialBand} ${styles.mutedBand}`}>
         <div className={styles.sectionIntro}>
-          <span className={styles.sectionEyebrow}>Why book with Stylr SA</span>
-          <h2 className={styles.sectionHeading}>A cleaner, calmer way to discover and book beauty services.</h2>
+          <span className={styles.sectionEyebrow}>Why thousands of South Africans use Stylr SA</span>
+          <h2 className={styles.sectionHeading}>Stop guessing. Start booking with confidence.</h2>
           <p className={styles.sectionDescription}>
-            Discover trusted salons faster, compare them more clearly, and book with more confidence from the start.
+            Stylr SA gives you verified salon profiles, transparent pricing, and a direct line to the professionals who do the work — all in one place.
           </p>
         </div>
 
@@ -434,7 +428,7 @@ export default function HomePageClient({
 
         <div className={styles.whyBookCta}>
           <Link href="/salons" className={styles.whyBookLink} onClick={() => showPageLoader()}>
-            Explore all salons
+            Browse salons near me
           </Link>
         </div>
       </section>

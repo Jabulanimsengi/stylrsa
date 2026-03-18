@@ -19,7 +19,7 @@
 .heroCarousel {
     position: relative;
     width: 100%;
-    height: 284px;
+    height: 320px;
     background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
     overflow: hidden !important;
     border-bottom-left-radius: 24px;
@@ -61,8 +61,8 @@
     overflow: hidden;
 }
 
-/* Carousel Progress Indicators - Max 4 segments with merge animation */
-.carouselIndicators {
+/* Carousel Dot Indicators */
+.carouselDots {
     position: absolute;
     bottom: 12px;
     left: 50%;
@@ -70,65 +70,33 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 5px;
     z-index: 10;
     padding: 6px 10px;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border-radius: 100px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.indicatorSegment {
-    height: 3px;
-    padding: 0;
-    margin: 0;
+.carouselDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.38);
     border: none;
-    border-radius: 100px;
-    background: rgba(255, 255, 255, 0.35);
+    padding: 0;
     cursor: pointer;
-    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-                background 0.3s ease,
-                transform 0.2s ease,
-                box-shadow 0.3s ease;
-    position: relative;
-    overflow: hidden;
     flex-shrink: 0;
+    transition: all 0.25s ease;
 }
 
-/* Passed segments - fully expanded */
-.indicatorSegment.passed {
-    background: rgba(255, 255, 255, 0.7);
-    width: 32px !important;
-}
-
-/* Active segment - currently progressing */
-.indicatorSegment.active {
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-    /* Width is set inline via style prop for smooth animation */
-}
-
-.indicatorSegment:hover:not(.active):not(.passed) {
-    background: rgba(255, 255, 255, 0.55);
-    transform: scaleY(1.3);
-}
-
-.photoCountBadge {
-    position: absolute;
-    bottom: 16px;
-    right: 16px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    border-radius: 16px;
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 500;
-    z-index: 10;
+.carouselDotActive {
+    width: 20px;
+    height: 6px;
+    border-radius: 100px;
+    background: #ffffff;
 }
 
 .headerActions {
@@ -351,7 +319,7 @@
 .primaryBookAction,
 .secondaryAction {
     min-height: 48px;
-    border-radius: 14px;
+    border-radius: var(--booking-button-radius, 14px);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -359,6 +327,8 @@
     font-size: 0.9rem;
     font-weight: 700;
     text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .primaryBookAction {
@@ -366,6 +336,13 @@
     background: #111318;
     color: #fff;
     box-shadow: 0 14px 28px rgba(17, 24, 39, 0.14);
+}
+
+.primaryBookAction:focus,
+.primaryBookAction:focus-visible {
+    outline: 2px solid var(--booking-button-focus, rgba(17, 19, 24, 0.16));
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--booking-button-focus-shadow, rgba(17, 19, 24, 0.08)), 0 14px 28px rgba(17, 24, 39, 0.14);
 }
 
 .secondaryAction {
@@ -398,10 +375,12 @@
 .tabNav {
     display: flex;
     gap: 0;
-    background: transparent;
+    background: rgba(250, 250, 250, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     position: sticky;
-    top: 0;
-    z-index: 50;
+    top: calc(var(--app-shell-top-gap, 56px) + 6px);
+    z-index: 20;
     border-bottom: none;
     padding: 0.85rem 0.75rem 0.1rem;
     overflow-x: auto;
@@ -458,7 +437,7 @@
 /* Tab Content */
 .tabContent {
     flex: 1;
-    overflow-y: auto;
+    overflow: visible;
 }
 
 /* Photos Tab */
@@ -493,14 +472,17 @@
 .categoryFilter {
     display: flex;
     gap: 8px;
-    padding: 12px 16px;
-    background: var(--color-surface, #fff);
+    padding: 12px 16px 14px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     overflow-x: auto;
     scrollbar-width: none;
     border-bottom: 1px solid var(--color-border, #eee);
     position: sticky;
-    top: 50px;
-    z-index: 40;
+    top: calc(var(--app-shell-top-gap, 56px) + 66px);
+    z-index: 19;
+    margin-bottom: 6px;
 }
 
 .categoryFilter::-webkit-scrollbar {
@@ -567,7 +549,7 @@
 }
 
 .serviceCard.selected {
-    background: rgba(124, 58, 237, 0.04);
+    background: rgba(17, 19, 24, 0.04);
     margin: 0 -16px;
     padding: 16px;
     border-radius: 12px;
@@ -604,6 +586,14 @@
     font-weight: 600;
     color: var(--color-text-strong, #1a1a1a);
     margin: 0;
+    line-height: 1.35;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .popularBadge {
@@ -654,6 +644,7 @@
     align-items: flex-end;
     gap: 8px;
     flex-shrink: 0;
+    min-width: 72px;
 }
 
 .servicePrice {
@@ -663,9 +654,9 @@
 }
 
 .addBtn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
     border: 2px solid var(--color-border, #ddd);
     background: #fff;
     display: flex;
@@ -682,9 +673,54 @@
 }
 
 .addBtn.added {
-    background: var(--accent-primary, #7c3aed);
-    border-color: var(--accent-primary, #7c3aed);
+    background: #111318;
+    border-color: #111318;
     color: #fff;
+}
+
+@media (max-width: 480px) {
+    .serviceCard {
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .serviceThumb {
+        width: 64px;
+        height: 64px;
+    }
+
+    .serviceNameRow {
+        gap: 6px;
+        align-items: flex-start;
+    }
+
+    .serviceName {
+        font-size: 0.95rem;
+    }
+
+    .serviceDesc {
+        font-size: 0.78rem;
+        margin-bottom: 6px;
+    }
+
+    .serviceDuration {
+        font-size: 0.76rem;
+    }
+
+    .serviceRight {
+        gap: 6px;
+        min-width: 64px;
+    }
+
+    .servicePrice {
+        font-size: 0.82rem;
+    }
+
+    .addBtn {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+    }
 }
 
 /* Details Tab */
@@ -1212,12 +1248,14 @@
     background: var(--btn-secondary-bg, #fff);
     color: var(--btn-secondary-text, #1f2430);
     border: 1px solid var(--btn-secondary-border, transparent);
-    border-radius: var(--radius-full, 999px);
+    border-radius: var(--booking-button-radius, 14px);
     font-size: var(--button-font-size-lg, 1rem);
     font-weight: var(--button-font-weight, 700);
     cursor: pointer;
     transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
     box-shadow: var(--button-shadow-soft, 0 8px 18px rgba(15, 23, 42, 0.06));
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .bookBarButton:hover {
@@ -1232,10 +1270,17 @@
     transform: translateY(0);
 }
 
+.bookBarButton:focus,
+.bookBarButton:focus-visible {
+    outline: 2px solid var(--booking-button-focus, rgba(17, 19, 24, 0.16));
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--booking-button-focus-shadow, rgba(17, 19, 24, 0.08)), var(--button-shadow-soft, 0 8px 18px rgba(15, 23, 42, 0.06));
+}
+
 .clearBtn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--booking-button-radius, 14px);
     border: none;
     background: rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.8);
@@ -1260,16 +1305,25 @@
     background: #111318;
     color: #fff;
     border: none;
-    border-radius: 16px;
+    border-radius: var(--booking-button-radius, 14px);
     font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .mobileBookBtn:active {
     transform: scale(0.98);
     opacity: 0.9;
+}
+
+.mobileBookBtn:focus,
+.mobileBookBtn:focus-visible {
+    outline: 2px solid var(--booking-button-focus, rgba(17, 19, 24, 0.16));
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--booking-button-focus-shadow, rgba(17, 19, 24, 0.08));
 }
 
 .mobileWhatsappBtn {
@@ -1280,7 +1334,7 @@
     justify-content: center;
     background: #25D366;
     color: #fff;
-    border-radius: 16px;
+    border-radius: var(--booking-button-radius, 14px);
     font-size: 1.5rem;
     text-decoration: none;
     transition: all 0.2s;
@@ -1303,6 +1357,10 @@
 @media (max-width: 768px) {
     .salonHeader {
         margin: -20px 10px 0;
+    }
+
+    .heroCarousel {
+        height: 320px;
     }
 }
 

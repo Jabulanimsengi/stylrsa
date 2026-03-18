@@ -313,7 +313,7 @@ export function useDashboardData({
 
       setSalon(updated);
       setIsEditingHours(false);
-      notify.success('Operating hours saved');
+      notify.success('Operating hours submitted for admin review');
     } catch (e: unknown) {
       notify.error(toFriendlyMessage(e, 'Failed to save'));
     } finally {
@@ -360,7 +360,11 @@ export function useDashboardData({
         branchCode: updated.branchCode || '',
       });
       setIsEditingBankingDetails(false);
-      notify.success(hasAnyValue ? 'Deposit banking details saved' : 'Deposit banking details cleared');
+      notify.success(
+        hasAnyValue
+          ? 'Deposit banking details submitted for admin review'
+          : 'Deposit banking details cleared',
+      );
     } catch (e: unknown) {
       notify.error(toFriendlyMessage(e, 'Failed to save deposit banking details'));
     } finally {

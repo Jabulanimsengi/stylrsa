@@ -15,7 +15,7 @@ import {
     FaImages,
     FaHeart,
     FaRegHeart,
-    FaShare,
+    FaShareAlt,
     FaCopy,
     FaCheckCircle,
     FaRegClock,
@@ -56,7 +56,6 @@ interface MobileSalonProfileProps {
     onOpenLightbox: (images: string[], index: number) => void;
     onToggleFavorite: () => void | Promise<void>;
     onBookService: (service: Service) => void;
-    onBookNow: () => void;
 }
 
 // Map category slugs to names for lookup
@@ -136,7 +135,6 @@ export default function MobileSalonProfile({
     onOpenLightbox,
     onToggleFavorite,
     onBookService,
-    onBookNow,
 }: MobileSalonProfileProps) {
     const [activeTab, setActiveTab] = useState<TabType>('services');
     const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -286,7 +284,20 @@ export default function MobileSalonProfile({
             return;
         }
 
-        onBookNow();
+        setActiveTab('services');
+        tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        notify.warning('Please select a service before continuing with your booking.');
+    };
+
+    const handleBookNowAction = () => {
+        if (selectedService) {
+            onBookService(selectedService);
+            return;
+        }
+
+        setActiveTab('services');
+        tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        notify.warning('Please select a service before continuing with your booking.');
     };
 
     // Copy address to clipboard
@@ -334,80 +345,68 @@ export default function MobileSalonProfile({
                 {/* Hero Carousel Section - Shadcn UI */}
                 <div className={styles.heroCarousel}>
                     {allImages.length > 0 ? (
-                        <Carousel
-                            setApi={setApi}
-                            opts={{
-                                align: 'start',
-                                loop: true,
-                            }}
-                            orientation="horizontal"
-                            style={{ width: '100%', height: '100%' }}
-                        >
-                            <CarouselContent style={{ marginLeft: 0, height: '300px' }}>
-                                {allImages.map((img, idx) => (
-                                    <CarouselItem
-                                        key={idx}
-                                        style={{
-                                            paddingLeft: 0,
-                                            minWidth: '100%',
-                                            height: '300px',
-                                            position: 'relative'
-                                        }}
-                                        onClick={() => onOpenLightbox(allImages, idx)}
-                                    >
-                                        <div style={{ position: 'relative', width: '100%', height: '300px' }}>
-                                            <OptimizedImage
-                                                src={transformCloudinary(img, { width: 800, quality: 'auto', format: 'auto', crop: 'fill' })}
-                                                alt={`${salon.name} photo ${idx + 1}`}
-                                                fill
-                                                sizes="100vw"
-                                                priority={idx === 0}
-                                                style={{ objectFit: 'cover' }}
-                                            />
-                                        </div>
-                                    </CarouselItem>
-                                ))}
-                            </CarouselContent>
-
-                            {/* Progress indicators - Max 4 segments with merge animation */}
-                            {count > 1 && (
-                                <div className={styles.carouselIndicators}>
-                                    {(() => {
-                                        const maxSegments = 4;
-                                        const progress = (current - 1) / (count - 1); // 0 to 1
-                                        const activeSegment = Math.floor(progress * maxSegments);
-
-                                        return Array.from({ length: Math.min(maxSegments, count) }).map((_, idx) => {
-                                            const isActive = idx === activeSegment;
-                                            const isPassed = idx < activeSegment;
-                                            const segmentProgress = idx === activeSegment
-                                                ? ((current - 1) % Math.ceil(count / maxSegments)) / Math.ceil(count / maxSegments)
-                                                : 0;
-
-                                            return (
-                                                <button
-                                                    key={idx}
-                                                    className={`${styles.indicatorSegment} ${isActive ? styles.active : ''} ${isPassed ? styles.passed : ''}`}
-                                                    style={{
-                                                        width: isPassed ? '32px' : isActive ? `${24 + segmentProgress * 16}px` : '24px'
-                                                    }}
-                                                    onClick={() => {
-                                                        const targetSlide = Math.floor((idx / maxSegments) * count);
-                                                        api?.scrollTo(targetSlide);
-                                                    }}
-                                                    aria-label={`Go to section ${idx + 1}`}
+                        <>
+                            <Carousel
+                                setApi={setApi}
+                                opts={{
+                                    align: 'start',
+                                    loop: true,
+                                }}
+                                orientation="horizontal"
+                                style={{ width: '100%', height: '100%' }}
+                            >
+                                <CarouselContent style={{ marginLeft: 0, height: '320px' }}>
+                                    {allImages.map((img, idx) => (
+                                        <CarouselItem
+                                            key={idx}
+                                            style={{
+                                                paddingLeft: 0,
+                                                minWidth: '100%',
+                                                height: '320px',
+                                                position: 'relative'
+                                            }}
+                                            onClick={() => onOpenLightbox(allImages, idx)}
+                                        >
+                                            <div style={{ position: 'relative', width: '100%', height: '320px' }}>
+                                                <OptimizedImage
+                                                    src={transformCloudinary(img, { width: 800, quality: 'auto', format: 'auto', crop: 'fill' })}
+                                                    alt={`${salon.name} photo ${idx + 1}`}
+                                                    fill
+                                                    sizes="100vw"
+                                                    priority={idx === 0}
+                                                    style={{ objectFit: 'cover' }}
                                                 />
-                                            );
-                                        });
-                                    })()}
+                                            </div>
+                                        </CarouselItem>
+                                    ))}
+                                </CarouselContent>
+                            </Carousel>
+
+                            {/* Image counter badge */}
+                            {count > 1 && (
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: '16px',
+                                    right: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '5px 11px',
+                                    background: 'rgba(0,0,0,0.55)',
+                                    backdropFilter: 'blur(8px)',
+                                    WebkitBackdropFilter: 'blur(8px)',
+                                    borderRadius: '999px',
+                                    color: '#fff',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 600,
+                                    zIndex: 10,
+                                    border: '1px solid rgba(255,255,255,0.15)',
+                                    pointerEvents: 'none',
+                                }}>
+                                    <FaImages /> {current}/{count}
                                 </div>
                             )}
-
-                            {/* Photo count badge */}
-                            <div className={styles.photoCountBadge}>
-                                <FaImages /> {current}/{count}
-                            </div>
-                        </Carousel>
+                        </>
                     ) : (
                         <div className={styles.noImage}>
                             <span>{salon.name.charAt(0)}</span>
@@ -416,8 +415,8 @@ export default function MobileSalonProfile({
 
                     {/* Header Actions - Share & Favorite */}
                     <div className={styles.headerActions}>
-                        <button className={styles.actionBtn} onClick={handleShare}>
-                            <FaShare />
+                        <button className={styles.actionBtn} onClick={handleShare} aria-label="Share salon">
+                            <FaShareAlt />
                         </button>
                         <button
                             className={`${styles.actionBtn} ${isFavorited ? styles.favorited : ''}`}
@@ -484,7 +483,7 @@ export default function MobileSalonProfile({
                     </div>
 
                     <div className={styles.quickActionRow}>
-                        <button className={styles.primaryBookAction} onClick={onBookNow}>
+                        <button className={styles.primaryBookAction} onClick={handleBookNowAction}>
                             <FaBolt /> Book now
                         </button>
                         <a href={mapsHref} target="_blank" rel="noopener noreferrer" className={styles.secondaryAction}>
@@ -499,13 +498,6 @@ export default function MobileSalonProfile({
                                 <FaWhatsapp /> WhatsApp
                             </a>
                         ) : null}
-                    </div>
-
-                    <div className={styles.quickFactsRow}>
-                        <span className={styles.quickFactPill}>{services.length} services</span>
-                        <span className={styles.quickFactPill}>{allImages.length} photos</span>
-                        <span className={styles.quickFactPill}>{reviews.length} reviews</span>
-                        {salon.isVerified && <span className={styles.quickFactPill}>Verified</span>}
                     </div>
                 </div>
 
@@ -840,48 +832,30 @@ export default function MobileSalonProfile({
             </div>
 
             {/* Mobile Sticky Book Bar - Enhanced */}
-            <div className={`${styles.mobileBookBar} ${selectedService ? styles.expanded : ''}`}>
-                {selectedService ? (
-                    <>
-                        <div className={styles.bookBarSummary}>
-                            <div className={styles.bookBarInfo}>
-                                <span className={styles.bookBarCount}>
-                                    {selectedService.title || selectedService.name}
-                                </span>
-                                <span className={styles.bookBarDuration}>
-                                    <FaClock /> {formatDuration(totalDuration)}
-                                </span>
-                            </div>
-                            <span className={styles.bookBarPrice}>R{totalPrice.toFixed(0)}</span>
+            {selectedService && (
+                <div className={`${styles.mobileBookBar} ${styles.expanded}`}>
+                    <div className={styles.bookBarSummary}>
+                        <div className={styles.bookBarInfo}>
+                            <span className={styles.bookBarCount}>
+                                {selectedService.title || selectedService.name}
+                            </span>
+                            <span className={styles.bookBarDuration}>
+                                <FaClock /> {formatDuration(totalDuration)}
+                            </span>
                         </div>
-                        <button className={styles.bookBarButton} onClick={handleContinue}>
-                            Continue
-                        </button>
-                        <button
-                            className={styles.clearBtn}
-                            onClick={() => setSelectedService(null)}
-                        >
-                            <FaTimes />
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        <button className={styles.mobileBookBtn} onClick={onBookNow}>
-                            <FaBolt /> Book now
-                        </button>
-                        {primaryWhatsappHref && (
-                            <a
-                                href={primaryWhatsappHref}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.mobileWhatsappBtn}
-                            >
-                                <FaWhatsapp />
-                            </a>
-                        )}
-                    </>
-                )}
-            </div>
+                        <span className={styles.bookBarPrice}>R{totalPrice.toFixed(0)}</span>
+                    </div>
+                    <button className={styles.bookBarButton} onClick={handleContinue}>
+                        Continue
+                    </button>
+                    <button
+                        className={styles.clearBtn}
+                        onClick={() => setSelectedService(null)}
+                    >
+                        <FaTimes />
+                    </button>
+                </div>
+            )}
         </>
     );
 }

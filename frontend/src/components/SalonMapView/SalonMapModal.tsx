@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { FaTimes, FaMapMarkerAlt, FaExternalLinkAlt, FaSearch, FaLocationArrow } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaExternalLinkAlt, FaSearch, FaLocationArrow } from 'react-icons/fa';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './SalonMapView.module.css';
 import Link from 'next/link';
 import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 import { getSalonUrl } from '@/utils/salonUrl';
+import MobileCloseButton from '../MobileCloseButton';
 
 // Set Mapbox access token from runtime env only.
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
@@ -420,11 +421,9 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.modalHeader}>
                     <h2 className={styles.modalTitle}>
-                        <FaMapMarkerAlt /> Find Salons Near You
+                        <FaMapMarkerAlt /> Salon Map
                     </h2>
-                    <button className={styles.closeButton} onClick={onClose} aria-label="Close map">
-                        <FaTimes />
-                    </button>
+                    <MobileCloseButton className={styles.closeButton} onClick={onClose} label="Close map" />
                 </div>
 
                 {/* Location Search Section */}
@@ -526,7 +525,7 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
                         </div>
                     ) : !locationError && (
                         <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#666' }}>
-                            Search for your location or click <FaLocationArrow style={{ color: '#F51957', margin: '0 2px' }} /> to use GPS for distance info
+                            Search for your location or click <FaLocationArrow style={{ color: '#F51957', margin: '0 2px' }} /> to sort the nationwide salon map by distance
                         </div>
                     )}
                 </div>
@@ -551,7 +550,7 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
                 {!loading && salonsWithoutCoords.length > 0 && (
                     <div className={styles.salonListSection}>
                         <h3 className={styles.salonListTitle}>
-                            Salons not on map ({salonsWithoutCoords.length})
+                            Salons without saved coordinates ({salonsWithoutCoords.length})
                         </h3>
                         <div className={styles.salonList}>
                             {salonsWithoutCoords.map((salon) => {

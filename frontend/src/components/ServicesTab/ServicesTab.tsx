@@ -27,11 +27,20 @@ export default function ServicesTab({
                 <Button size="sm" variant="default" onClick={onAddService}>+ Add Service</Button>
             </div>
 
+            <div className={styles.messageDisplay}>
+                Add services here, then assign them to your staff from the Team Members section in the sidebar.
+            </div>
+
             <div className={styles.list}>
                 {services.length > 0 ? services.map((service) => (
                     <div key={service.id} className={styles.listItem}>
                         <div className={styles.serviceMainInfo}>
-                            <span className={styles.serviceTitle}>{service.title}</span>
+                            <div>
+                                <span className={styles.serviceTitle}>{service.title}</span>
+                                {service.approvalStatus === 'PENDING' && (
+                                    <div className={styles.servicePriceInline}>Awaiting admin approval</div>
+                                )}
+                            </div>
                             <span className={styles.servicePriceInline}>R{service.price.toFixed(2)}</span>
                         </div>
                         <div className={styles.serviceActionsCompact}>

@@ -86,6 +86,10 @@
     margin: 0 auto;
 }
 
+.container :global(.swiper-wrapper) {
+    align-items: flex-start;
+}
+
 .container :global(.swiper-slide) {
     margin-right: 20px;
 }
@@ -176,6 +180,9 @@
 
 .slide {
     margin-right: 20px;
+    width: calc((100% - 60px) / 4.1) !important;
+    min-width: calc((100% - 60px) / 4.1);
+    max-width: calc((100% - 60px) / 4.1);
 }
 
 @media (max-width: 768px) {
@@ -216,6 +223,9 @@
     .container :global(.swiper-slide),
     .slide {
         margin-right: 14px;
+        width: calc((100% - 14px) / 1.4) !important;
+        min-width: calc((100% - 14px) / 1.4);
+        max-width: calc((100% - 14px) / 1.4);
     }
 
     .navButton {
@@ -239,5 +249,8 @@
     .container :global(.swiper-slide),
     .slide {
         margin-right: 12px;
+        width: calc((100% - 12px) / 1.35) !important;
+        min-width: calc((100% - 12px) / 1.35);
+        max-width: calc((100% - 12px) / 1.35);
     }
 }

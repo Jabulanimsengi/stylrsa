@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import styles from '../info-page.module.css';
-import PageNav from '@/components/PageNav';
 
 export const metadata: Metadata = {
   title: 'Accessibility Statement - Stylr SA',
@@ -18,8 +17,6 @@ export const metadata: Metadata = {
 export default function AccessibilityPage() {
   return (
     <div className={styles.container}>
-      <PageNav />
-      
       <section className={styles.section}>
         <h1 className={styles.pageTitle}>Accessibility Statement</h1>
         <p className={styles.paragraph}>

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import PageNav from "@/components/PageNav";
 import styles from "./prices.module.css";
 import { APP_PLANS, PLAN_FEATURES } from "@/constants/plans";
 import { buildAuthRoute } from "@/constants/routes";
@@ -74,16 +73,13 @@ export default function PricingPage() {
 
   return (
     <div className={styles.pageShell}>
-      <PageNav />
-
       <main className={styles.container}>
         <section className={styles.heroSection}>
           <div className={styles.heroCopy}>
             <span className={styles.eyebrow}>Pricing</span>
-            <h1 className={styles.title}>One plan designed to make your salon stand out.</h1>
+            <h1 className={styles.title}>One straightforward listing plan. Built for South African beauty professionals.</h1>
             <p className={styles.subtitle}>
-              A premium listing built for salons and beauty professionals who want better visibility,
-              stronger portfolios, and direct WhatsApp bookings without commission.
+              Get discovered online, showcase your best work, and receive WhatsApp booking requests directly from clients — all for a flat R399/month with zero commission taken on your earnings.
             </p>
 
             <div className={styles.heroActions}>
@@ -142,10 +138,9 @@ export default function PricingPage() {
         <section className={styles.valueSection}>
           <div className={styles.sectionHeading}>
             <span className={styles.sectionEyebrow}>Why salons choose this plan</span>
-            <h2>Everything you need to look credible, bookable, and easy to discover.</h2>
+            <h2>Built for the way South African beauty businesses actually work.</h2>
             <p>
-              The page is built around the tools beauty businesses actually need: strong visual
-              storytelling, better search presence, and direct conversations with clients.
+              Most booking platforms take a cut of every appointment. Stylr SA doesn&apos;t. You pay one flat rate, keep 100% of your earnings, and stay in control of your client relationships from first enquiry to final payment.
             </p>
           </div>
 
@@ -236,8 +231,7 @@ export default function PricingPage() {
             <span className={styles.sectionEyebrow}>Ready to be discovered?</span>
             <h2>Start listing your salon on Stylr SA.</h2>
             <p>
-              Join with one flat monthly rate and give clients a stronger first impression the
-              moment they land on your profile.
+              Your profile goes live as soon as you&apos;re approved. Start attracting clients this week.
             </p>
             <div className={styles.ctaActions}>
               <Link href={providerListingHref} className={styles.primaryAction}>

@@ -154,8 +154,14 @@ async function proxyToBackend(request: NextRequest) {
   } catch (error) {
     console.error('Proxy error:', error);
     return NextResponse.json(
-      { error: 'Failed to proxy request to backend' },
-      { status: 502 }
+      {
+        statusCode: 502,
+        code: 'BACKEND_UNAVAILABLE',
+        message: 'Failed to proxy request to backend',
+        userMessage:
+          'The server is temporarily unavailable right now. Please try again in a moment.',
+      },
+      { status: 502 },
     );
   }
 }

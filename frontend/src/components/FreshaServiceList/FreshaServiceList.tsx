@@ -449,8 +449,8 @@ export default function FreshaServiceList({
                 </div>
 
 
-                {/* Cart Sidebar (Desktop) - Only visible when services are selected and footer is not visible */}
-                {selectedService && !isFooterVisible && (
+                {/* Desktop booking panel should appear immediately after selection, even near the footer. */}
+                {selectedService && (
                     <div className={styles.cartColumn}>
                         <div className={styles.cartSidebar}>
                             {/* Salon Info */}
@@ -519,7 +519,7 @@ export default function FreshaServiceList({
                     </div>
                 )}
 
-                {/* Mobile Sticky Footer Cart - Hidden when footer is visible */}
+                {/* Keep the mobile footer cart out of the way when users reach the page footer. */}
                 {selectedService && !isFooterVisible && (
                     <div className={styles.mobileCartFooter}>
                         <div className={styles.mobileCartContent}>

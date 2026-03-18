@@ -844,6 +844,7 @@ model TeamMember {
   role        String
   bio         String?
   image       String?
+  galleryImages String[]          @default([])
   specialties String[]
   experience  Int?
   isActive    Boolean             @default(true)

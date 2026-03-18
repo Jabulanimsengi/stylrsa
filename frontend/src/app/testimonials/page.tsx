@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import styles from '../info-page.module.css';
 import { buildAuthRoute } from '@/constants/routes';
-import PageNav from '@/components/PageNav';
 
 export const metadata: Metadata = {
   title: 'Testimonials - Stylr SA',
@@ -21,8 +20,6 @@ export default function TestimonialsPage() {
 
   return (
     <div className={styles.container}>
-      <PageNav />
-      
       <section className={styles.section}>
         <h1 className={styles.pageTitle}>Testimonials</h1>
         

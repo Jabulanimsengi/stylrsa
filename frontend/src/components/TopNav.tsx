@@ -62,6 +62,7 @@ export default function TopNav() {
         handleNotificationClick,
         handleMarkAllRead,
         handleClearNotifications,
+        handleDeleteNotification,
         handleLoadMore,
     } = useNotificationCenter();
 
@@ -141,6 +142,7 @@ export default function TopNav() {
                 }}
                 onMarkAllRead={handleMarkAllRead}
                 onClearNotifications={handleClearNotifications}
+                onDeleteNotification={handleDeleteNotification}
                 onLoadMore={handleLoadMore}
             />
         </div>,

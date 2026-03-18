@@ -30,6 +30,7 @@ export class PrismaService extends BasePrismaClient implements OnModuleInit {
   private isConnected = false;
   private connectionRetries = 0;
   private readonly maxRetries = 5;
+  private readonly databaseUrl = process.env.DATABASE_URL;
 
   constructor() {
     super({
@@ -59,10 +60,22 @@ export class PrismaService extends BasePrismaClient implements OnModuleInit {
         this.logger.log('Successfully connected to database');
         return;
       } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         this.connectionRetries++;
         this.logger.warn(
-          `Database connection attempt ${this.connectionRetries}/${this.maxRetries} failed: ${error.message}`,
+          `Database connection attempt ${this.connectionRetries}/${this.maxRetries} failed: ${errorMessage}`,
         );
+
+        if (
+          errorMessage.includes('the URL must start with the protocol `prisma://`') ||
+          errorMessage.includes('the URL must start with the protocol `prisma+postgres://`')
+        ) {
+          const currentProtocol = this.databaseUrl?.split(':')[0] || 'missing';
+          this.logger.error(
+            `DATABASE_URL is misconfigured for the current Prisma client. Current protocol: ${currentProtocol}. Expected prisma:// or prisma+postgres://.`,
+          );
+        }
         
         if (this.connectionRetries >= this.maxRetries) {
           this.logger.error(

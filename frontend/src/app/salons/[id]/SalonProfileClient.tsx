@@ -350,11 +350,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
         onOpenLightbox={openLightbox}
         onToggleFavorite={handleToggleFavorite}
         onBookService={handleBookClick}
-        onBookNow={() => {
-          if (services.length > 0) {
-            handleBookClick(services[0]);
-          }
-        }}
       />
 
       <DesktopSalonProfile

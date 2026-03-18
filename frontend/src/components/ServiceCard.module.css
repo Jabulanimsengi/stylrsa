@@ -559,6 +559,16 @@
   font-weight: 600 !important;
   padding: 0.5rem 1.25rem !important;
   min-height: 38px;
+  border-radius: var(--booking-button-radius, 14px) !important;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.salonProfileBookButton:focus,
+.salonProfileBookButton:focus-visible {
+  outline: 2px solid var(--booking-button-focus, rgba(17, 19, 24, 0.16));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--booking-button-focus-shadow, rgba(17, 19, 24, 0.08));
 }
 
 /* salonProfileFooter is handled by .card.salonProfile .footer */

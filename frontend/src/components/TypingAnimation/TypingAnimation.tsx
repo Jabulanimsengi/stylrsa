@@ -73,15 +73,20 @@ export default function TypingAnimation({
 
     if (!words || words.length === 0) return null;
 
-    const longestWordLength = words.reduce((max, word) => Math.max(max, word.length), 0);
+    const longestWord = words.reduce((longest, word) => (
+        word.length > longest.length ? word : longest
+    ), '');
 
     return (
-        <span
-            className={styles.wrapper}
-            style={{ width: `${Math.max(longestWordLength + 1, 9)}ch` }}
-        >
-            <span className={styles.text}>{currentText}</span>
-            <span className={styles.cursor} />
+        <span className={styles.wrapper}>
+            <span className={styles.sizer} aria-hidden="true">
+                {longestWord}
+                <span className={styles.cursorSpacer} />
+            </span>
+            <span className={styles.liveText} aria-live="polite" aria-atomic="true">
+                <span className={styles.text}>{currentText}</span>
+                <span className={styles.cursor} />
+            </span>
         </span>
     );
 }

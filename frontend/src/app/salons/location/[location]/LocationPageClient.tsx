@@ -15,7 +15,6 @@ import { useAuthModal } from '@/context/AuthModalContext';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { getImageWithFallback } from '@/lib/placeholders';
-import PageNav from '@/components/PageNav';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import { PROVINCES, Province, City } from '@/lib/locationData';
 import { getSalonUrl } from '@/utils/salonUrl';
@@ -112,7 +111,6 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
 
   return (
     <div className={styles.container}>
-      <PageNav />
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
         <h1 className={styles.title}>Salons in {locationInfo.name}</h1>
         <p style={{ fontSize: '1.1rem', marginBottom: '2rem', color: '#666', lineHeight: '1.6' }}>

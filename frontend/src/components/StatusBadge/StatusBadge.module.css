@@ -2,6 +2,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.375rem;
     font-weight: 700;
     border-radius: 9999px;
     text-transform: capitalize;
@@ -9,6 +10,16 @@
     border: 1px solid transparent;
     letter-spacing: 0.01em;
     box-shadow: 0 1px 2px rgba(17, 24, 39, 0.08);
+}
+
+.badge::before {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.9;
+    flex-shrink: 0;
 }
 
 /* Sizes */
@@ -36,77 +47,86 @@
 
 /* APPROVED / COMPLETED / DELIVERED / VERIFIED — green */
 .approved {
-    background-color: #15803d;
-    color: #ffffff;
-    border-color: #15803d;
+    background-color: #ffffff;
+    color: #111827;
+    border-color: #d1d5db;
+    box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06);
 }
 
 /* PENDING / AWAITING — amber */
 .pending {
-    background-color: #b45309;
-    color: #ffffff;
-    border-color: #b45309;
+    background-color: #fff7ed;
+    color: #b45309;
+    border-color: #fdba74;
 }
 
 /* REJECTED / CANCELLED — red */
 .rejected {
-    background-color: #b91c1c;
-    color: #ffffff;
-    border-color: #b91c1c;
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border-color: #fca5a5;
 }
 
 /* CONFIRMED — blue */
 .confirmed {
-    background-color: #1d4ed8;
-    color: #ffffff;
-    border-color: #1d4ed8;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-color: #93c5fd;
 }
 
 .cancelled {
-    background-color: #b91c1c;
-    color: #ffffff;
-    border-color: #b91c1c;
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border-color: #fca5a5;
 }
 
 .completed {
-    background-color: #15803d;
-    color: #ffffff;
-    border-color: #15803d;
+    background-color: #ffffff;
+    color: #111827;
+    border-color: #d1d5db;
 }
 
 /* SHIPPED — purple */
 .shipped {
-    background-color: #6d28d9;
-    color: #ffffff;
-    border-color: #6d28d9;
+    background-color: #f5f3ff;
+    color: #6d28d9;
+    border-color: #c4b5fd;
 }
 
 /* DELIVERED — green */
 .delivered {
-    background-color: #15803d;
-    color: #ffffff;
-    border-color: #15803d;
+    background-color: #ffffff;
+    color: #111827;
+    border-color: #d1d5db;
 }
 
 /* PROCESSING — orange-amber */
 .processing {
-    background-color: #c2410c;
-    color: #ffffff;
-    border-color: #c2410c;
+    background-color: #fff7ed;
+    color: #c2410c;
+    border-color: #fdba74;
 }
 
 /* VERIFIED — green */
 .verified {
-    background-color: #047857;
-    color: #ffffff;
-    border-color: #047857;
+    background-color: #ffffff;
+    color: #111827;
+    border-color: #d1d5db;
+}
+
+.approved::before,
+.completed::before,
+.delivered::before,
+.verified::before {
+    background: #16a34a;
+    opacity: 1;
 }
 
 /* AWAITING — amber */
 .awaiting {
-    background-color: #b45309;
-    color: #ffffff;
-    border-color: #b45309;
+    background-color: #fff7ed;
+    color: #b45309;
+    border-color: #fdba74;
 }
 
 /* Dark mode — keep readable on dark surfaces */
@@ -128,9 +148,9 @@
     .completed,
     .delivered,
     .verified {
-        background-color: rgba(34, 197, 94, 0.22);
-        color: #86efac;
-        border-color: rgba(34, 197, 94, 0.35);
+        background-color: rgba(255, 255, 255, 0.96);
+        color: #111827;
+        border-color: rgba(209, 213, 219, 0.95);
     }
 
     .rejected,

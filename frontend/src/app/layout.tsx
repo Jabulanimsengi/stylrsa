@@ -12,7 +12,6 @@ import { NavigationLoadingProvider } from '@/context/NavigationLoadingContext';
 import TopNav from '@/components/TopNav';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import MobileNavIcons from '@/components/MobileNavIcons';
 
 import AuthSessionProvider from '@/components/AuthSessionProvider';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -190,7 +189,6 @@ export default function RootLayout({
                         <TopNav />
                         <Navbar />
                         <EmailVerificationBannerWrapper />
-                        <MobileNavIcons />
                         <div className="app-content">
                           <main className="main-content" id="main-content">{children}</main>
                           <Footer />

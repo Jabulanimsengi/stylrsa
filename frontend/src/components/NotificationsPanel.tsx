@@ -1,6 +1,7 @@
 'use client';
 
 import { Notification } from '@/types';
+import { FaTrashAlt } from 'react-icons/fa';
 import styles from './NotificationsPanel.module.css';
 
 interface NotificationsPanelProps {
@@ -15,6 +16,7 @@ interface NotificationsPanelProps {
   onNotificationClick: (notification: Notification) => void;
   onMarkAllRead: () => void;
   onClearNotifications: () => void;
+  onDeleteNotification: (notificationId: string) => void;
   onLoadMore?: () => void;
   className?: string;
 }
@@ -44,6 +46,7 @@ export default function NotificationsPanel({
   onNotificationClick,
   onMarkAllRead,
   onClearNotifications,
+  onDeleteNotification,
   onLoadMore,
   className,
 }: NotificationsPanelProps) {
@@ -93,15 +96,27 @@ export default function NotificationsPanel({
           ))
         ) : filteredNotifications.length > 0 ? (
           filteredNotifications.map((notification) => (
-            <button
+            <div
               key={notification.id}
-              type="button"
-              onClick={() => onNotificationClick(notification)}
               className={`${styles.item} ${!notification.isRead ? styles.itemUnread : ''}`}
             >
-              <span className={styles.message}>{notification.message}</span>
-              <span className={styles.meta}>{formatTimestamp(notification.createdAt)}</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => onNotificationClick(notification)}
+                className={styles.itemButton}
+              >
+                <span className={styles.message}>{notification.message}</span>
+                <span className={styles.meta}>{formatTimestamp(notification.createdAt)}</span>
+              </button>
+              <button
+                type="button"
+                className={styles.deleteButton}
+                aria-label="Delete notification"
+                onClick={() => onDeleteNotification(notification.id)}
+              >
+                <FaTrashAlt />
+              </button>
+            </div>
           ))
         ) : (
           <div className={styles.emptyState}>No notifications yet.</div>

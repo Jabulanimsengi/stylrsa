@@ -6,7 +6,6 @@ import { Trend } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import TrendCard from '@/components/TrendCard/TrendCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import PageNav from '@/components/PageNav';
 import { toast } from 'react-toastify';
 import styles from './MyTrendsPage.module.css';
 
@@ -63,8 +62,6 @@ export default function MyTrendsPage() {
 
   return (
     <div className={styles.container}>
-      <PageNav />
-
       <div className={styles.header}>
         <h1 className={styles.title}>My Liked Trends</h1>
         <p className={styles.subtitle}>

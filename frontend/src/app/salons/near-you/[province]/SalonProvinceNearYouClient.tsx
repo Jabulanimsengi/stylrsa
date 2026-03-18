@@ -16,7 +16,6 @@ import { toast } from 'react-toastify';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { getImageWithFallback } from '@/lib/placeholders';
-import PageNav from '@/components/PageNav';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import MobileSearch from '@/components/MobileSearch/MobileSearch';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
@@ -162,7 +161,6 @@ export default function SalonProvinceNearYouClient({ provinceSlug }: Props) {
 
   return (
     <div className={styles.container}>
-      <PageNav />
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
         <Breadcrumbs items={breadcrumbItems} />
         <h1 className={styles.title}>{h1}</h1>

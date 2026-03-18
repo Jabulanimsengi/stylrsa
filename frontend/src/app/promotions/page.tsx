@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import PageNav from '@/components/PageNav';
 import PromotionCard, { Promotion, PromotionCardSkeleton } from '@/components/PromotionCard';
 import ImageLightbox from '@/components/ImageLightbox';
 import BookingModal from '@/components/BookingModal';
@@ -109,8 +108,6 @@ export default function PromotionsPage() {
 
   return (
     <div className={styles.container}>
-      <PageNav />
-      
       <div className={styles.header}>
         <h1 className={styles.title}>Special Promotions</h1>
         <p className={styles.subtitle}>

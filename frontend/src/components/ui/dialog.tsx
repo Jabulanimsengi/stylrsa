@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { FaTimes } from 'react-icons/fa';
 import { cn } from '@/lib/utils';
+import MobileCloseButton from '@/components/MobileCloseButton';
 
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -50,17 +50,8 @@ const DialogContent = React.forwardRef<
             {...props}
         >
             {children}
-            <DialogPrimitive.Close
-                className={cn(
-                    'absolute right-5 top-5 rounded-full opacity-70 ring-offset-background',
-                    'transition-all hover:opacity-100 hover:bg-accent/10 hover:scale-110',
-                    'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                    'disabled:pointer-events-none',
-                    'p-2'
-                )}
-            >
-                <FaTimes className="h-5 w-5" />
-                <span className="sr-only">Close</span>
+            <DialogPrimitive.Close asChild>
+                <MobileCloseButton className={cn('absolute right-4 top-4 z-10')} label="Close" />
             </DialogPrimitive.Close>
         </DialogPrimitive.Content>
     </DialogPortal>

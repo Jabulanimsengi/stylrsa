@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { FaMapMarkerAlt, FaTimes } from 'react-icons/fa';
 import styles from './SalonMapView.module.css';
 import SalonMapModal from './SalonMapModal';
@@ -12,8 +13,17 @@ interface SalonMapButtonProps {
 const MINIMIZED_STORAGE_KEY = 'salon-map-button-minimized';
 
 export default function SalonMapButton({ variant = 'floating' }: SalonMapButtonProps) {
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
+
+    useEffect(() => {
+        if (searchParams.get('map') === '1') {
+            setIsModalOpen(true);
+        }
+    }, [searchParams]);
 
     // Load minimized state from localStorage
     useEffect(() => {
@@ -36,6 +46,19 @@ export default function SalonMapButton({ variant = 'floating' }: SalonMapButtonP
         localStorage.removeItem(MINIMIZED_STORAGE_KEY);
     };
 
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+
+        if (searchParams.get('map') !== '1') {
+            return;
+        }
+
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('map');
+        const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+        router.replace(nextUrl, { scroll: false });
+    };
+
     // Desktop variant - simple button for navbar
     if (variant === 'desktop') {
         return (
@@ -43,12 +66,12 @@ export default function SalonMapButton({ variant = 'floating' }: SalonMapButtonP
                 <button
                     className={styles.desktopButton}
                     onClick={() => setIsModalOpen(true)}
-                    aria-label="Find Salons on Map"
+                    aria-label="Open salon map"
                 >
                     <FaMapMarkerAlt />
-                    <span>Find Salons</span>
+                    <span>Salon Map</span>
                 </button>
-                <SalonMapModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+                <SalonMapModal isOpen={isModalOpen} onClose={handleCloseModal} />
             </>
         );
     }
@@ -72,10 +95,10 @@ export default function SalonMapButton({ variant = 'floating' }: SalonMapButtonP
                 <button
                     className={styles.floatingButton}
                     onClick={() => setIsModalOpen(true)}
-                    aria-label="Find Salons on Map"
+                    aria-label="Open salon map"
                 >
                     <FaMapMarkerAlt />
-                    <span>Find Salons</span>
+                    <span>Salon Map</span>
                 </button>
                 <button
                     className={styles.closeFloating}
@@ -85,7 +108,7 @@ export default function SalonMapButton({ variant = 'floating' }: SalonMapButtonP
                     <FaTimes />
                 </button>
             </div>
-            <SalonMapModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <SalonMapModal isOpen={isModalOpen} onClose={handleCloseModal} />
         </>
     );
 }

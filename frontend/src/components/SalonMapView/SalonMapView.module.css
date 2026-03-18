@@ -178,22 +178,7 @@
 }
 
 .closeButton {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--color-surface-elevated, #f5f5f5);
-    border: none;
-    border-radius: 50%;
-    color: var(--color-text-soft, #666);
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.closeButton:hover {
-    background: var(--color-surface-hover, #eee);
-    color: var(--color-text-strong, #1a1a1a);
+    flex-shrink: 0;
 }
 
 /* =============================
@@ -377,17 +362,26 @@
     background: var(--color-primary);
     color: white;
     border: 2px solid var(--color-primary);
-    border-radius: 8px;
+    border-radius: var(--booking-button-radius, 14px);
     font-size: 0.85rem;
     font-weight: 700;
     cursor: pointer;
     text-decoration: none;
     transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .bookButton:hover {
     background: white;
     color: var(--color-primary);
+}
+
+.bookButton:focus,
+.bookButton:focus-visible {
+    outline: 2px solid var(--booking-button-focus, rgba(17, 19, 24, 0.16));
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--booking-button-focus-shadow, rgba(17, 19, 24, 0.08));
 }
 
 .bookIcon {

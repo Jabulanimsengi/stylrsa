@@ -1,0 +1,2 @@
+ALTER TABLE "TeamMember"
+ADD COLUMN IF NOT EXISTS "galleryImages" TEXT[] DEFAULT ARRAY[]::TEXT[];

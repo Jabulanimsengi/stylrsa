@@ -21,6 +21,39 @@ export class ServicesService {
     private mailService: MailService,
   ) { }
 
+  private async notifyAdminsServicePending(serviceTitle: string, salonName: string) {
+    const admins = await this.prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      select: { id: true },
+    });
+
+    for (const admin of admins) {
+      const notification = await this.notificationsService.create(
+        admin.id,
+        `Service "${serviceTitle}" for salon "${salonName}" is pending approval.`,
+        { link: '/admin?tab=services' },
+      );
+      this.eventsGateway.sendNotificationToUser(
+        admin.id,
+        'newNotification',
+        notification,
+      );
+    }
+  }
+
+  private async notifyOwnerServicePending(ownerId: string, serviceTitle: string) {
+    const notification = await this.notificationsService.create(
+      ownerId,
+      `Your service "${serviceTitle}" is awaiting admin approval.`,
+      { link: '/dashboard?tab=services' },
+    );
+    this.eventsGateway.sendNotificationToUser(
+      ownerId,
+      'newNotification',
+      notification,
+    );
+  }
+
   async create(user: any, dto: CreateServiceDto) {
     const salon = await this.prisma.salon.findUnique({
       where: { id: dto.salonId },
@@ -88,31 +121,20 @@ export class ServicesService {
       console.warn(`[ServicesService] Failed to auto-create SEO keyword for ${service.title}:`, error.message);
     }
 
-    const admins = await this.prisma.user.findMany({
-      where: { role: 'ADMIN' },
-      select: { id: true },
-    });
-
-    for (const admin of admins) {
-      const notification = await this.notificationsService.create(
-        admin.id,
-        `New service "${service.title}" for salon "${salon.name}" is pending approval.`,
-        { link: '/admin?tab=services' },
-      );
-      this.eventsGateway.sendNotificationToUser(
-        admin.id,
-        'newNotification',
-        notification,
-      );
+    if (user.role !== 'ADMIN') {
+      await this.notifyAdminsServicePending(service.title, salon.name);
+      await this.notifyOwnerServicePending(salon.ownerId, service.title);
     }
 
     // Send admin email notification
-    await this.mailService.notifyAdminNewService(
-      salon.name,
-      service.title,
-      `R${service.price}`,
-      `${user.firstName || ''} ${user.lastName || ''} (${user.email})`.trim(),
-    );
+    if (user.role !== 'ADMIN') {
+      await this.mailService.notifyAdminNewService(
+        salon.name,
+        service.title,
+        `R${service.price}`,
+        `${user.firstName || ''} ${user.lastName || ''} (${user.email})`.trim(),
+      );
+    }
 
     return service;
   }
@@ -143,12 +165,15 @@ export class ServicesService {
     }
 
     // Handle empty string categoryId by converting to undefined
+    const requiresApproval = user.role !== 'ADMIN';
+
     const updateData = {
       ...dto,
       categoryId:
         dto.categoryId !== undefined && dto.categoryId.trim() === ''
           ? undefined
           : dto.categoryId,
+      approvalStatus: requiresApproval ? 'PENDING' : undefined,
     };
 
     const updatedService = await this.prisma.service.update({
@@ -183,6 +208,17 @@ export class ServicesService {
       } catch (error) {
         console.warn(`[ServicesService] Failed to auto-create SEO keyword on update for ${dto.title}:`, error.message);
       }
+    }
+
+    if (requiresApproval) {
+      await this.notifyAdminsServicePending(
+        updatedService.title,
+        service.salon.name,
+      );
+      await this.notifyOwnerServicePending(
+        service.salon.ownerId,
+        updatedService.title,
+      );
     }
 
     return updatedService;

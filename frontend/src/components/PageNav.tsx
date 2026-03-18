@@ -13,6 +13,27 @@ type PageNavContext = {
   browseLabel: string;
 };
 
+const ROOT_PAGE_LABELS: Record<string, string> = {
+  "/about": "About Us",
+  "/contact": "Contact",
+  "/faq": "FAQ",
+  "/how-it-works": "How It Works",
+  "/prices": "Pricing",
+  "/privacy": "Privacy Policy",
+  "/terms": "Terms & Conditions",
+  "/cookie-policy": "Cookie Policy",
+  "/support": "Support",
+  "/accessibility": "Accessibility",
+  "/community": "Community",
+  "/press": "Press",
+  "/partner-guidelines": "Partner Guidelines",
+  "/safety-security": "Safety & Security",
+  "/testimonials": "Testimonials",
+  "/trends": "Trends",
+  "/promotions": "Promotions",
+  "/performance-lab": "Performance Lab",
+};
+
 const COMPANY_PREFIXES = [
   "/about",
   "/contact",
@@ -38,6 +59,16 @@ const ACCOUNT_PREFIXES = [
 ];
 
 const EXPLORE_PREFIXES = ["/trends", "/promotions", "/performance-lab"];
+
+const HIDE_PAGE_NAV_PREFIXES = [
+  "/salons",
+  "/trends",
+  "/promotions",
+  "/performance-lab",
+  "/dashboard",
+  "/my-",
+  "/create-salon",
+];
 
 function startsWithAny(pathname: string, prefixes: string[]) {
   return prefixes.some((prefix) => pathname.startsWith(prefix));
@@ -92,8 +123,12 @@ function resolveContext(pathname: string): PageNavContext {
 }
 
 function resolveCurrentLabel(pathname: string, context: PageNavContext) {
-  if (pathname === "/" || pathname === context.browseHref || (pathname === "/services" && context.browseHref === "/salons")) {
+  if (pathname === "/") {
     return context.section;
+  }
+
+  if (pathname === context.browseHref || (pathname === "/services" && context.browseHref === "/salons")) {
+    return ROOT_PAGE_LABELS[pathname] ?? context.section;
   }
 
   const segments = pathname.split("/").filter(Boolean);
@@ -110,6 +145,18 @@ function resolveCurrentLabel(pathname: string, context: PageNavContext) {
   return toTitleCase(lastSegment);
 }
 
+function shouldHidePageNav(pathname: string, context: PageNavContext) {
+  if (context.section === "Company") {
+    return true;
+  }
+
+  if (startsWithAny(pathname, HIDE_PAGE_NAV_PREFIXES)) {
+    return true;
+  }
+
+  return false;
+}
+
 export default function PageNav() {
   const router = useRouter();
   const pathname = usePathname() || "/";
@@ -118,6 +165,12 @@ export default function PageNav() {
   const context = useMemo(() => resolveContext(pathname), [pathname]);
   const currentLabel = useMemo(() => resolveCurrentLabel(pathname, context), [pathname, context]);
   const isAtBrowseRoot = pathname === context.browseHref || (pathname === "/services" && context.browseHref === "/salons");
+  const isCompanyPage = context.section === "Company";
+  const shouldShowActions = !isCompanyPage;
+
+  if (shouldHidePageNav(pathname, context)) {
+    return null;
+  }
 
   const handleBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -138,7 +191,7 @@ export default function PageNav() {
             Home
           </Link>
           <span className={styles.separator}>/</span>
-          {isAtBrowseRoot ? (
+          {isCompanyPage || isAtBrowseRoot ? (
             <span className={styles.current}>{currentLabel}</span>
           ) : (
             <>
@@ -152,21 +205,23 @@ export default function PageNav() {
         </div>
       </div>
 
-      <div className={styles.actions}>
-        <button type="button" onClick={handleBack} className={styles.backButton}>
-          <FaArrowLeft />
-          <span>Back</span>
-        </button>
+      {shouldShowActions && (
+        <div className={styles.actions}>
+          <button type="button" onClick={handleBack} className={styles.backButton}>
+            <FaArrowLeft />
+            <span>Back</span>
+          </button>
 
-        <Link
-          href={isAtBrowseRoot ? "/" : context.browseHref}
-          className={styles.jumpLink}
-          onClick={() => showPageLoader()}
-        >
-          <FaCompass />
-          <span>{isAtBrowseRoot ? "Home" : context.browseLabel}</span>
-        </Link>
-      </div>
+          <Link
+            href={isAtBrowseRoot ? "/" : context.browseHref}
+            className={styles.jumpLink}
+            onClick={() => showPageLoader()}
+          >
+            <FaCompass />
+            <span>{isAtBrowseRoot ? "Home" : context.browseLabel}</span>
+          </Link>
+        </div>
+      )}
     </nav>
   );
 }

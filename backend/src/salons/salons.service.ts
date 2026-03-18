@@ -40,6 +40,41 @@ export class SalonsService {
     private mailService: MailService,
   ) { }
 
+  private async notifyAdminsSalonPending(salonName: string, actorName?: string) {
+    const admins = await this.prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      select: { id: true },
+    });
+
+    for (const admin of admins) {
+      const notification = await this.notificationsService.create(
+        admin.id,
+        actorName
+          ? `Salon "${salonName}" updated by ${actorName} is pending approval.`
+          : `Salon "${salonName}" is pending approval.`,
+        { link: '/admin?tab=salons' },
+      );
+      this.eventsGateway.sendNotificationToUser(
+        admin.id,
+        'newNotification',
+        notification,
+      );
+    }
+  }
+
+  private async notifyOwnerSalonPending(ownerId: string, salonName: string) {
+    const notification = await this.notificationsService.create(
+      ownerId,
+      `Your salon "${salonName}" is awaiting admin approval.`,
+      { link: '/dashboard' },
+    );
+    this.eventsGateway.sendNotificationToUser(
+      ownerId,
+      'newNotification',
+      notification,
+    );
+  }
+
   /**
    * Generate a unique slug for a salon
    * If the base slug already exists, append a number suffix
@@ -231,34 +266,42 @@ export class SalonsService {
     }
 
     try {
-      const admins = await this.prisma.user.findMany({
-        where: { role: 'ADMIN' },
-        select: { id: true },
-      });
+      if (isAdmin) {
+        const admins = await this.prisma.user.findMany({
+          where: { role: 'ADMIN' },
+          select: { id: true },
+        });
 
-      for (const admin of admins) {
-        const notification = await this.notificationsService.create(
-          admin.id,
-          isAdmin
-            ? `Admin-created salon "${salon.name}" is now live.`
-            : `New salon "${salon.name}" created by ${user.firstName || 'a user'} is pending approval.`,
-          { link: '/admin?tab=salons' },
+        for (const admin of admins) {
+          const notification = await this.notificationsService.create(
+            admin.id,
+            `Admin-created salon "${salon.name}" is now live.`,
+            { link: '/admin?tab=salons' },
+          );
+          this.eventsGateway.sendNotificationToUser(
+            admin.id,
+            'newNotification',
+            notification,
+          );
+        }
+      } else {
+        await this.notifyAdminsSalonPending(
+          salon.name,
+          user.firstName || 'a user',
         );
-        this.eventsGateway.sendNotificationToUser(
-          admin.id,
-          'newNotification',
-          notification,
-        );
+        await this.notifyOwnerSalonPending(salon.ownerId, salon.name);
       }
 
       // Send admin email notification
-      const location = [(dto as any).city, (dto as any).province].filter(Boolean).join(', ');
-      await this.mailService.notifyAdminNewSalon(
-        salon.name,
-        `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown',
-        user.email,
-        location || 'Not specified',
-      );
+      if (!isAdmin) {
+        const location = [(dto as any).city, (dto as any).province].filter(Boolean).join(', ');
+        await this.mailService.notifyAdminNewSalon(
+          salon.name,
+          `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown',
+          user.email,
+          location || 'Not specified',
+        );
+      }
     } catch (notifyErr) {
       console.error('Failed to send notifications after salon creation:', notifyErr);
       // Do not fail the request if notifications fail
@@ -571,6 +614,7 @@ export class SalonsService {
         'operatingHours',
       ];
 
+    const requiresApproval = user.role !== 'ADMIN';
     const updateData: any = {};
     for (const key of allowedFields) {
       const value = (dto as any)[key];
@@ -590,10 +634,25 @@ export class SalonsService {
       updateData.operatingDays = normalizedHours.map((entry) => entry.day);
     }
 
-    return this.prisma.salon.update({
+    if (requiresApproval && Object.keys(updateData).length > 0) {
+      updateData.approvalStatus = 'PENDING';
+    }
+
+    const updatedSalon = await this.prisma.salon.update({
       where: { id },
       data: updateData,
     });
+
+    if (requiresApproval && Object.keys(updateData).length > 0) {
+      const actorName =
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+        user.email ||
+        'the salon owner';
+      await this.notifyAdminsSalonPending(updatedSalon.name, actorName);
+      await this.notifyOwnerSalonPending(updatedSalon.ownerId, updatedSalon.name);
+    }
+
+    return updatedSalon;
   }
 
   async remove(user: any, id: string) {

@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import Image from 'next/image';
 import styles from './ImageLightbox.module.css';
-import { FaTimes, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner/LoadingSpinner';
+import MobileCloseButton from './MobileCloseButton';
 
 interface ImageLightboxProps {
   images: string[];
@@ -14,7 +14,37 @@ interface ImageLightboxProps {
 }
 
 export default function ImageLightbox({ images, initialImageIndex = 0, onClose }: ImageLightboxProps) {
-  const [currentIndex, setCurrentIndex] = useState(initialImageIndex);
+  const sanitizedImages = useMemo(
+    () =>
+      images.filter((image): image is string => (
+        typeof image === 'string' &&
+        image.trim().length > 0 &&
+        image !== 'null' &&
+        image !== 'undefined'
+      )),
+    [images],
+  );
+
+  const getSafeIndex = useCallback(
+    (index: number) => {
+      if (sanitizedImages.length === 0) {
+        return 0;
+      }
+
+      if (index < 0) {
+        return 0;
+      }
+
+      if (index >= sanitizedImages.length) {
+        return sanitizedImages.length - 1;
+      }
+
+      return index;
+    },
+    [sanitizedImages.length],
+  );
+
+  const [currentIndex, setCurrentIndex] = useState(() => getSafeIndex(initialImageIndex));
   const [isLoading, setIsLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -26,15 +56,15 @@ export default function ImageLightbox({ images, initialImageIndex = 0, onClose }
 
   const goToPrevious = useCallback(() => {
     setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? images.length - 1 : prevIndex - 1,
+      prevIndex === 0 ? sanitizedImages.length - 1 : prevIndex - 1,
     );
-  }, [images.length]);
+  }, [sanitizedImages.length]);
 
   const goToNext = useCallback(() => {
     setCurrentIndex((prevIndex) =>
-      prevIndex === images.length - 1 ? 0 : prevIndex + 1,
+      prevIndex === sanitizedImages.length - 1 ? 0 : prevIndex + 1,
     );
-  }, [images.length]);
+  }, [sanitizedImages.length]);
 
   const handlePreviousClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -53,7 +83,7 @@ export default function ImageLightbox({ images, initialImageIndex = 0, onClose }
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
-      } else if (images.length > 1) {
+      } else if (sanitizedImages.length > 1) {
         // Only allow navigation if there are multiple images
         if (e.key === 'ArrowLeft') {
           goToPrevious();
@@ -68,21 +98,19 @@ export default function ImageLightbox({ images, initialImageIndex = 0, onClose }
       document.body.style.overflow = '';
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [goToNext, goToPrevious, onClose, images.length]);
+  }, [goToNext, goToPrevious, onClose, sanitizedImages.length]);
 
 
   // Update currentIndex when initialImageIndex changes
   useEffect(() => {
-    if (initialImageIndex !== undefined && initialImageIndex >= 0 && initialImageIndex < images.length) {
-      setCurrentIndex(initialImageIndex);
-    }
-  }, [initialImageIndex, images.length]);
+    setCurrentIndex(getSafeIndex(initialImageIndex));
+  }, [getSafeIndex, initialImageIndex]);
 
   // Reset loading state when image changes
   useEffect(() => {
     setIsLoading(true);
     setImageError(false);
-  }, [currentIndex]);
+  }, [currentIndex, sanitizedImages]);
 
   const handleImageLoad = () => {
     setIsLoading(false);
@@ -94,7 +122,9 @@ export default function ImageLightbox({ images, initialImageIndex = 0, onClose }
     setImageError(true);
   };
 
-  if (!images || images.length === 0 || !mounted) return null;
+  if (!sanitizedImages.length || !mounted) return null;
+
+  const currentImage = sanitizedImages[currentIndex];
 
   const lightboxContent = (
     <div className={styles.overlay} onClick={onClose}>
@@ -110,32 +140,34 @@ export default function ImageLightbox({ images, initialImageIndex = 0, onClose }
               Failed to load image
             </div>
           )}
-          <Image
-            src={images[currentIndex]}
-            alt={`Image ${currentIndex + 1} of ${images.length}`}
-            fill
-            unoptimized
+          <img
+            src={currentImage}
+            alt={`Image ${currentIndex + 1} of ${sanitizedImages.length}`}
             className={styles.image}
-            style={{ 
-              objectFit: 'contain',
-              display: isLoading ? 'none' : 'block'
+            style={{
+              opacity: isLoading ? 0 : 1,
             }}
             onLoad={handleImageLoad}
             onError={handleImageError}
           />
         </div>
         
-        {/* Image Counter */}
-        {images.length > 1 && (
-          <div className={styles.counter}>
-            {currentIndex + 1} / {images.length}
+        {/* Dot indicators */}
+        {sanitizedImages.length > 1 && (
+          <div className={styles.dotsContainer}>
+            {sanitizedImages.map((_, idx) => (
+              <span
+                key={idx}
+                className={`${styles.dot} ${idx === currentIndex ? styles.dotActive : ''}`}
+              />
+            ))}
           </div>
         )}
       </div>
       
-      <button className={styles.closeButton} onClick={(e) => { e.stopPropagation(); onClose(); }}><FaTimes /></button>
+      <MobileCloseButton className={styles.closeButton} onClick={(e) => { e.stopPropagation(); onClose(); }} label="Close lightbox" />
 
-      {images.length > 1 && (
+      {sanitizedImages.length > 1 && (
         <>
           <button className={`${styles.navButton} ${styles.prevButton}`} onClick={(e) => { e.stopPropagation(); handlePreviousClick(e); }} aria-label="Previous image"><FaChevronLeft /></button>
           <button className={`${styles.navButton} ${styles.nextButton}`} onClick={(e) => { e.stopPropagation(); handleNextClick(e); }} aria-label="Next image"><FaChevronRight /></button>

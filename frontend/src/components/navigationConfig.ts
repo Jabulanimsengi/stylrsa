@@ -38,6 +38,18 @@ export const PRIMARY_NAV_LINKS: AppNavLink[] = [
     match: (path) => path === '/',
   },
   {
+    href: '/about',
+    label: 'About Us',
+    icon: FaInfoCircle,
+    match: (path) => path.startsWith('/about'),
+  },
+  {
+    href: '/how-it-works',
+    label: 'How It Works',
+    icon: FaQuestionCircle,
+    match: (path) => path.startsWith('/how-it-works'),
+  },
+  {
     href: '/services',
     label: 'Services',
     icon: FaCut,
@@ -49,33 +61,9 @@ export const PRIMARY_NAV_LINKS: AppNavLink[] = [
     icon: FaDollarSign,
     match: (path) => path.startsWith('/prices'),
   },
-  {
-    href: '/blog',
-    label: 'Blog',
-    icon: FaInfoCircle,
-    match: (path) => path.startsWith('/blog'),
-  },
 ];
 
 export const COMPANY_NAV_LINKS: AppNavLink[] = [
-  {
-    href: '/about',
-    label: 'About Us',
-    icon: FaInfoCircle,
-    match: (path) => path.startsWith('/about'),
-  },
-  {
-    href: '/prices',
-    label: 'Pricing',
-    icon: FaDollarSign,
-    match: (path) => path.startsWith('/prices'),
-  },
-  {
-    href: '/how-it-works',
-    label: 'How It Works',
-    icon: FaQuestionCircle,
-    match: (path) => path.startsWith('/how-it-works'),
-  },
   {
     href: '/contact',
     label: 'Contact',

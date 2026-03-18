@@ -140,7 +140,7 @@ export default function Footer() {
               <span>Explore</span>
             </h3>
             <ul className={styles.linkList}>
-              <li><Link href="/salons">Find Salons</Link></li>
+              <li><Link href="/salons?map=1">Salon Map</Link></li>
               <li><Link href="/promotions">View Deals</Link></li>
               <li><Link href="/how-it-works">How It Works</Link></li>
               <li><Link href="/blog">Beauty Blog</Link></li>

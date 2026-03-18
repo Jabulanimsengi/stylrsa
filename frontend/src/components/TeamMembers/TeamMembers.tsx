@@ -3,22 +3,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
-import { FaPlus, FaTrash, FaEdit, FaUser, FaUsers, FaCamera, FaTimes } from 'react-icons/fa';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { FaPlus, FaTrash, FaEdit, FaUser, FaUsers, FaCamera, FaTimes, FaImages } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { apiJson, apiFetch } from '@/lib/api';
+import type { Service, TeamMember } from '@/types';
 import styles from './TeamMembers.module.css';
-
-export interface TeamMember {
-  id: string;
-  name: string;
-  role: string;
-  bio?: string;
-  image?: string;
-  specialties?: string[];
-  experience?: number;
-  sortOrder?: number;
-  isActive?: boolean;
-}
 
 interface TeamMembersProps {
   salonId: string;
@@ -30,8 +20,10 @@ interface FormData {
   role: string;
   bio: string;
   image: string;
+  galleryImages: string[];
   specialties: string;
   experience: string;
+  serviceIds: string[];
 }
 
 const INITIAL_FORM: FormData = {
@@ -39,8 +31,10 @@ const INITIAL_FORM: FormData = {
   role: '',
   bio: '',
   image: '',
+  galleryImages: [],
   specialties: '',
   experience: '',
+  serviceIds: [],
 };
 
 const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -51,19 +45,23 @@ function TeamMemberModal({
   onClose,
   editingMember,
   salonId,
+  availableServices,
   onSave,
 }: {
   isOpen: boolean;
   onClose: () => void;
   editingMember: TeamMember | null;
   salonId: string;
+  availableServices: Service[];
   onSave: (member: TeamMember, isNew: boolean) => void;
 }) {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingProfile, setIsUploadingProfile] = useState(false);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+  const profileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -80,8 +78,13 @@ function TeamMemberModal({
           role: editingMember.role,
           bio: editingMember.bio || '',
           image: editingMember.image || '',
+          galleryImages: editingMember.galleryImages || [],
           specialties: editingMember.specialties?.join(', ') || '',
           experience: editingMember.experience?.toString() || '',
+          serviceIds:
+            editingMember.serviceIds ||
+            editingMember.services?.map((service) => service.id) ||
+            [],
         });
         setImagePreview(editingMember.image || null);
       } else {
@@ -101,6 +104,25 @@ function TeamMemberModal({
     };
   }, [isOpen]);
 
+  const uploadImageToCloudinary = useCallback(async (file: File) => {
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+    uploadData.append('upload_preset', 'team_members');
+    uploadData.append('folder', `salons/${salonId}/team`);
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: uploadData }
+    );
+
+    if (!res.ok) {
+      throw new Error('Upload failed');
+    }
+
+    const data = await res.json();
+    return data.secure_url as string;
+  }, [salonId]);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -118,29 +140,57 @@ function TeamMemberModal({
     reader.onload = (ev) => setImagePreview(ev.target?.result as string);
     reader.readAsDataURL(file);
 
-    setIsUploading(true);
+    setIsUploadingProfile(true);
     try {
-      const uploadData = new FormData();
-      uploadData.append('file', file);
-      uploadData.append('upload_preset', 'team_members');
-      uploadData.append('folder', `salons/${salonId}/team`);
-
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-        { method: 'POST', body: uploadData }
-      );
-
-      if (!res.ok) throw new Error('Upload failed');
-      const data = await res.json();
-      setFormData(prev => ({ ...prev, image: data.secure_url }));
+      const secureUrl = await uploadImageToCloudinary(file);
+      setFormData(prev => ({ ...prev, image: secureUrl }));
       toast.success('Image uploaded');
     } catch {
       toast.error('Failed to upload image');
       setImagePreview(null);
     } finally {
-      setIsUploading(false);
+      setIsUploadingProfile(false);
+      e.target.value = '';
     }
   };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`"${file.name}" is not an image file`);
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`"${file.name}" is larger than 5MB`);
+        return;
+      }
+    }
+
+    setIsUploadingGallery(true);
+    try {
+      const uploadedUrls = await Promise.all(files.map((file) => uploadImageToCloudinary(file)));
+      setFormData((prev) => ({
+        ...prev,
+        galleryImages: [...prev.galleryImages, ...uploadedUrls],
+      }));
+      toast.success(`${uploadedUrls.length} gallery image${uploadedUrls.length === 1 ? '' : 's'} uploaded`);
+    } catch {
+      toast.error('Failed to upload gallery images');
+    } finally {
+      setIsUploadingGallery(false);
+      e.target.value = '';
+    }
+  };
+
+  const removeGalleryImage = useCallback((imageUrl: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      galleryImages: prev.galleryImages.filter((url) => url !== imageUrl),
+    }));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,8 +205,10 @@ function TeamMemberModal({
       role: formData.role.trim(),
       bio: formData.bio.trim() || null,
       image: formData.image || null,
+      galleryImages: formData.galleryImages,
       specialties: formData.specialties ? formData.specialties.split(',').map(s => s.trim()).filter(Boolean) : [],
       experience: formData.experience ? parseInt(formData.experience) : null,
+      serviceIds: formData.serviceIds,
     };
 
     try {
@@ -193,101 +245,185 @@ function TeamMemberModal({
         <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Close">
           <FaTimes />
         </button>
-        <h3 className={styles.modalTitle}>
-          {editingMember ? 'Edit Team Member' : 'Add Team Member'}
-        </h3>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.imageUploadSection}>
-            <div 
-              className={styles.imageUploadPreview}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {(imagePreview || formData.image) ? (
-                <Image 
-                  src={imagePreview || formData.image} 
-                  alt="Preview" 
-                  fill 
-                  className={styles.previewImage}
+        <div className={styles.modalScrollArea}>
+          <h3 className={styles.modalTitle}>
+            {editingMember ? 'Edit Team Member' : 'Add Team Member'}
+          </h3>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <div className={styles.imageUploadSection}>
+              <div
+                className={styles.imageUploadPreview}
+                onClick={() => profileInputRef.current?.click()}
+              >
+                {(imagePreview || formData.image) ? (
+                  <Image
+                    src={imagePreview || formData.image}
+                    alt="Preview"
+                    fill
+                    className={styles.previewImage}
+                  />
+                ) : (
+                  <div className={styles.uploadPlaceholder}>
+                    <FaCamera />
+                    <span>Add Photo</span>
+                  </div>
+                )}
+                {isUploadingProfile && (
+                  <div className={styles.uploadingOverlay}>
+                    <span>Uploading...</span>
+                  </div>
+                )}
+              </div>
+              <input
+                ref={profileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+              />
+              <p className={styles.imageHint}>Click to upload photo (max 5MB)</p>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Gallery Images</label>
+              <div className={styles.galleryUploadHeader}>
+                <button
+                  type="button"
+                  className={styles.galleryUploadButton}
+                  onClick={() => galleryInputRef.current?.click()}
+                >
+                  <FaImages /> {isUploadingGallery ? 'Uploading...' : 'Add Gallery Images'}
+                </button>
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleGalleryUpload}
+                  style={{ display: 'none' }}
                 />
-              ) : (
-                <div className={styles.uploadPlaceholder}>
-                  <FaCamera />
-                  <span>Add Photo</span>
-                </div>
-              )}
-              {isUploading && (
-                <div className={styles.uploadingOverlay}>
-                  <span>Uploading...</span>
+              </div>
+              <p className={styles.servicesHint}>Upload extra portfolio images for this team member.</p>
+              {formData.galleryImages.length > 0 && (
+                <div className={styles.galleryPreviewGrid}>
+                  {formData.galleryImages.map((imageUrl) => (
+                    <div key={imageUrl} className={styles.galleryPreviewItem}>
+                      <Image
+                        src={imageUrl}
+                        alt="Gallery preview"
+                        fill
+                        className={styles.galleryPreviewImage}
+                      />
+                      <button
+                        type="button"
+                        className={styles.removeGalleryImageButton}
+                        onClick={() => removeGalleryImage(imageUrl)}
+                        aria-label="Remove gallery image"
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              style={{ display: 'none' }}
-            />
-            <p className={styles.imageHint}>Click to upload photo (max 5MB)</p>
-          </div>
 
-          <div className={styles.formGroup}>
-            <label>Name *</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              required
-              placeholder="e.g., Sarah Johnson"
-            />
-          </div>
-          <div className={styles.formGroup}>
-            <label>Role *</label>
-            <input
-              type="text"
-              value={formData.role}
-              onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-              required
-              placeholder="e.g., Senior Stylist"
-            />
-          </div>
-          <div className={styles.formGroup}>
-            <label>Years of Experience</label>
-            <input
-              type="number"
-              value={formData.experience}
-              onChange={(e) => setFormData(prev => ({ ...prev, experience: e.target.value }))}
-              placeholder="e.g., 5"
-              min="0"
-            />
-          </div>
-          <div className={styles.formGroup}>
-            <label>Bio</label>
-            <textarea
-              value={formData.bio}
-              onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-              placeholder="Brief description about this team member..."
-              rows={2}
-            />
-          </div>
-          <div className={styles.formGroup}>
-            <label>Specialties (comma-separated)</label>
-            <input
-              type="text"
-              value={formData.specialties}
-              onChange={(e) => setFormData(prev => ({ ...prev, specialties: e.target.value }))}
-              placeholder="e.g., Braids, Color, Extensions"
-            />
-          </div>
-          <div className={styles.formActions}>
-            <button type="button" onClick={onClose} className={styles.cancelBtn}>
-              Cancel
-            </button>
-            <button type="submit" disabled={isSubmitting || isUploading} className={styles.submitBtn}>
-              {isSubmitting ? 'Saving...' : editingMember ? 'Save Changes' : 'Add Member'}
-            </button>
-          </div>
-        </form>
+            <div className={styles.formGroup}>
+              <label>Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                required
+                placeholder="e.g., Sarah Johnson"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Role *</label>
+              <input
+                type="text"
+                value={formData.role}
+                onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                required
+                placeholder="e.g., Senior Stylist"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Years of Experience</label>
+              <input
+                type="number"
+                value={formData.experience}
+                onChange={(e) => setFormData(prev => ({ ...prev, experience: e.target.value }))}
+                placeholder="e.g., 5"
+                min="0"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Bio</label>
+              <textarea
+                value={formData.bio}
+                onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                placeholder="Brief description about this team member..."
+                rows={2}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Specialties (comma-separated)</label>
+              <input
+                type="text"
+                value={formData.specialties}
+                onChange={(e) => setFormData(prev => ({ ...prev, specialties: e.target.value }))}
+                placeholder="e.g., Braids, Color, Extensions"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Services This Team Member Can Book</label>
+              {availableServices.length === 0 ? (
+                <p className={styles.servicesHint}>
+                  Add salon services first, then assign them to this team member.
+                </p>
+              ) : (
+                <div className={styles.serviceAssignmentGrid}>
+                  {availableServices.map((service) => {
+                    const serviceName = service.title || service.name || 'Service';
+                    const isSelected = formData.serviceIds.includes(service.id);
+
+                    return (
+                      <button
+                        key={service.id}
+                        type="button"
+                        className={`${styles.serviceAssignmentChip} ${isSelected ? styles.serviceAssignmentChipSelected : ''}`}
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            serviceIds: isSelected
+                              ? prev.serviceIds.filter((serviceId) => serviceId !== service.id)
+                              : [...prev.serviceIds, service.id],
+                          }))
+                        }
+                      >
+                        <span>{serviceName}</span>
+                        <strong>R{service.price}</strong>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <div className={styles.formActions}>
+              <button type="button" onClick={onClose} className={styles.cancelBtn}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || isUploadingProfile || isUploadingGallery}
+                className={styles.submitBtn}
+              >
+                {isSubmitting ? 'Saving...' : editingMember ? 'Save Changes' : 'Add Member'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -296,17 +432,45 @@ function TeamMemberModal({
 }
 
 export default function TeamMembers({ salonId, isEditable = false }: TeamMembersProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [availableServices, setAvailableServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const action = searchParams.get('action');
+
+  useEffect(() => {
+    let skeletonTimer: NodeJS.Timeout | null = null;
+    if (isLoading) {
+      skeletonTimer = setTimeout(() => setShowSkeleton(true), 120); // avoid flicker on very fast loads
+    } else {
+      setShowSkeleton(false);
+    }
+    return () => {
+      if (skeletonTimer) clearTimeout(skeletonTimer);
+    };
+  }, [isLoading]);
 
   useEffect(() => {
     let isMounted = true;
     const fetchMembers = async () => {
       try {
         const data = await apiJson<TeamMember[]>(`/api/team-members/salon/${salonId}${isEditable ? '?includeInactive=true' : ''}`);
-        if (isMounted) setMembers(data);
+        if (isMounted) {
+          setMembers(
+            data.map((member) => ({
+              ...member,
+              serviceIds:
+                member.serviceIds ||
+                member.services?.map((service) => service.id) ||
+                [],
+            })),
+          );
+        }
       } catch (error) {
         console.error('Failed to fetch team members:', error);
       } finally {
@@ -316,6 +480,31 @@ export default function TeamMembers({ salonId, isEditable = false }: TeamMembers
     fetchMembers();
     return () => { isMounted = false; };
   }, [salonId, isEditable]);
+
+  useEffect(() => {
+    if (!isEditable) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchServices = async () => {
+      try {
+        const data = await apiJson<Service[]>(`/api/salons/mine/services`);
+        if (isMounted) {
+          setAvailableServices(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch services for team member assignments:', error);
+      }
+    };
+
+    void fetchServices();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isEditable, salonId]);
 
   const handleDelete = async (memberId: string) => {
     if (!confirm('Are you sure you want to remove this team member?')) return;
@@ -343,7 +532,22 @@ export default function TeamMembers({ salonId, isEditable = false }: TeamMembers
     setIsModalOpen(false);
     // Delay clearing editing member to prevent flicker
     setTimeout(() => setEditingMember(null), 200);
-  }, []);
+    if (action === 'add-team-member') {
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.delete('action');
+      const query = nextParams.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    }
+  }, [action, pathname, router, searchParams]);
+
+  useEffect(() => {
+    if (!isEditable) return;
+    if (action !== 'add-team-member') return;
+    if (isModalOpen) return;
+
+    setEditingMember(null);
+    setIsModalOpen(true);
+  }, [action, isEditable, isModalOpen]);
 
   const handleSave = useCallback((member: TeamMember, isNew: boolean) => {
     if (isNew) {
@@ -358,12 +562,21 @@ export default function TeamMembers({ salonId, isEditable = false }: TeamMembers
       <div className={styles.container}>
         <div className={styles.header}>
           <h3 className={styles.title}><FaUsers /> Team Members</h3>
+          {isEditable && (
+            <button onClick={openAddModal} className={styles.addButton} type="button">
+              <FaPlus /> Add Member
+            </button>
+          )}
         </div>
-        <div className={styles.loadingGrid}>
-          {[1, 2, 3].map(i => (
-            <div key={i} className={styles.loadingCard} />
-          ))}
-        </div>
+        {showSkeleton ? (
+          <div className={styles.loadingGrid}>
+            {[1, 2, 3].map(i => (
+              <div key={i} className={styles.loadingCard} />
+            ))}
+          </div>
+        ) : (
+          <div style={{ minHeight: '180px' }} />
+        )}
       </div>
     );
   }
@@ -416,6 +629,29 @@ export default function TeamMembers({ salonId, isEditable = false }: TeamMembers
                     ))}
                   </div>
                 )}
+                {member.services && member.services.length > 0 && (
+                  <div className={styles.assignedServices}>
+                    {member.services.slice(0, 3).map((service) => (
+                      <span key={service.id} className={styles.assignedService}>
+                        {service.title || service.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {member.galleryImages && member.galleryImages.length > 0 && (
+                  <div className={styles.memberGallery}>
+                    {member.galleryImages.slice(0, 4).map((imageUrl) => (
+                      <div key={imageUrl} className={styles.memberGalleryThumb}>
+                        <Image
+                          src={imageUrl}
+                          alt={`${member.name} gallery image`}
+                          fill
+                          className={styles.memberGalleryImage}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               {isEditable && (
                 <div className={styles.actions}>
@@ -437,6 +673,7 @@ export default function TeamMembers({ salonId, isEditable = false }: TeamMembers
         onClose={closeModal}
         editingMember={editingMember}
         salonId={salonId}
+        availableServices={availableServices}
         onSave={handleSave}
       />
     </div>

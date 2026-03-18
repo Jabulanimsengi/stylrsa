@@ -141,6 +141,19 @@ function SalonCard({
             </div>
           )}
 
+          {/* Favourite button — overlaid top-right on the image */}
+          {showFavorite && onToggleFavorite && (
+              <button
+                type="button"
+                onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(e, salon.id); }}
+                className={`iconOnlyButton ${styles.favoriteButton} ${salon.isFavorited ? styles.favorited : ''}`}
+                aria-label={salon.isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+                aria-pressed={Boolean(salon.isFavorited)}
+              >
+              <FaHeart />
+            </button>
+          )}
+
           {/* Open / Closed badge */}
           <div
             className={`${styles.availabilityBadge} ${salon.isAvailableNow ? styles.openBadge : styles.closedBadge}`}
@@ -181,15 +194,7 @@ function SalonCard({
               </div>
             </Link>
             {showFavorite && onToggleFavorite && (
-              <button
-                type="button"
-                onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(e, salon.id); }}
-                className={`${styles.favoriteButton} ${salon.isFavorited ? styles.favorited : ''}`}
-                aria-label={salon.isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-                aria-pressed={Boolean(salon.isFavorited)}
-              >
-                <FaHeart />
-              </button>
+              <div style={{ width: 36, flexShrink: 0 }} />
             )}
           </div>
 
