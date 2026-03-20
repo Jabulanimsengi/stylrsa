@@ -83,6 +83,8 @@ services:
     restart: always
     environment:
       INTERNAL_BACKEND_URL: http://backend:3001
+      # Ensure Next listens on all interfaces inside the container.
+      HOSTNAME: 0.0.0.0
       # Internal routing for SSR
       NEXT_PUBLIC_API_ORIGIN: http://backend:3001
       # Public URL for client-side

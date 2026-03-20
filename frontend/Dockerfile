@@ -50,6 +50,7 @@ USER nextjs
 
 # Default port (can be overridden)
 ENV PORT=8080
+ENV HOSTNAME=0.0.0.0
 EXPOSE 8080
 
 # Health check for container orchestration
