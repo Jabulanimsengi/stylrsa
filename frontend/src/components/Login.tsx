@@ -11,20 +11,11 @@ import { apiJson } from '@/lib/api';
 import { toFriendlyMessage } from '@/lib/errors';
 import { Alert, LoadingButton } from '@/components/ui';
 import { notify } from '@/lib/notify';
+import { buildGoogleAuthCallbackUrl, hasProviderIntent } from '@/lib/authRedirect';
 
 // Define the props that this component will accept
 interface LoginProps {
   onLoginSuccess: (user: User) => void;
-}
-
-const DEFAULT_GOOGLE_CALLBACK_URL = '/salons';
-
-function resolveGoogleCallbackUrl(redirectTarget: string | null): string {
-  if (redirectTarget && redirectTarget.startsWith('/') && !redirectTarget.startsWith('//')) {
-    return redirectTarget;
-  }
-
-  return DEFAULT_GOOGLE_CALLBACK_URL;
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
@@ -35,9 +26,12 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { switchToResendVerification } = useAuthModal();
-  const googleCallbackUrl = resolveGoogleCallbackUrl(
-    searchParams.get('redirect') || searchParams.get('callbackUrl')
-  );
+  const redirectTarget = searchParams.get('redirect') || searchParams.get('callbackUrl');
+  const providerIntent = hasProviderIntent(redirectTarget, searchParams.get('role'));
+  const googleCallbackUrl = buildGoogleAuthCallbackUrl({
+    redirectTarget,
+    preselectedRole: providerIntent ? 'SALON_OWNER' : null,
+  });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

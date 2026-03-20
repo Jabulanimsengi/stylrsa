@@ -11,6 +11,7 @@ import { useAuthModal } from '@/context/AuthModalContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigationLoading } from '@/context/NavigationLoadingContext';
 import { User } from '@/types';
+import { getPostAuthDestination, hasProviderIntent } from '@/lib/authRedirect';
 import {
   Dialog,
   DialogContent,
@@ -43,23 +44,16 @@ export default function AuthModal({ view: initialView, onClose }: AuthModalProps
 
   const handleLoginSuccess = (user: User) => {
     const redirectTarget = searchParams.get('redirect');
-    const isSafeRedirect = redirectTarget?.startsWith('/') && !redirectTarget.startsWith('//');
+    const providerIntent = hasProviderIntent(redirectTarget, searchParams.get('role'));
+    const nextRoute = getPostAuthDestination(user, {
+      redirectTarget,
+      preselectedRole: providerIntent ? 'SALON_OWNER' : null,
+    });
 
     login(user);
     onClose();
     showPageLoader();
-
-    if (isSafeRedirect && redirectTarget) {
-      router.push(redirectTarget);
-    } else if (user.role === 'SALON_OWNER' && !user.salonId) {
-      router.push('/create-salon');
-    } else if (user.role === 'SALON_OWNER') {
-      router.push('/dashboard');
-    } else if (user.role === 'ADMIN') {
-      router.push('/admin');
-    } else {
-      router.push('/salons');
-    }
+    router.push(nextRoute);
   };
 
   const handleRegisterSuccess = (email: string) => {

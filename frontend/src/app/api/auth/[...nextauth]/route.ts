@@ -20,18 +20,7 @@ const handler = NextAuth({
     async jwt({ token, account, profile }) {
       if (account && account.provider === 'google') {
         try {
-          // Read role from cookie for Google OAuth
           const cookieStore = await cookies();
-          const roleCookie = cookieStore.get('oauth_signup_role');
-          const selectedRole = roleCookie?.value || 'CLIENT';
-          
-          console.log('[NextAuth] OAuth signup - role from cookie:', selectedRole);
-
-          // Clear cookie after reading
-          try {
-            cookieStore.delete('oauth_signup_role');
-          } catch {}
-
           const backendOrigin = getInternalBackendOrigin();
           console.log('[NextAuth] Calling backend SSO at:', `${backendOrigin}/api/auth/sso`);
           
@@ -43,7 +32,6 @@ const handler = NextAuth({
               providerAccountId: account.providerAccountId,
               email: (profile as any)?.email,
               name: (profile as any)?.name,
-              role: selectedRole,
             })
           });
           
@@ -57,6 +45,7 @@ const handler = NextAuth({
             (token as any).backendJwt = data.jwt;
             (token as any).userId = data.user?.id;
             (token as any).role = data.user?.role;
+            (token as any).onboardingStatus = data.user?.onboardingStatus;
             
             // Try to set cookie directly (may not work in all contexts)
             try {
@@ -87,6 +76,7 @@ const handler = NextAuth({
       if (session.user) {
         (session.user as any).id = (token as any).userId;
         (session.user as any).role = (token as any).role;
+        (session.user as any).onboardingStatus = (token as any).onboardingStatus;
       }
       return session;
     },

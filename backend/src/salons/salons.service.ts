@@ -249,10 +249,17 @@ export class SalonsService {
     try {
       console.log('Attempting to create salon in DB...');
       salon = await this.prisma.salon.create({ data });
+      const userUpdateData: Record<string, unknown> = {};
       if (isAdmin && adminConfirmEmailVerified && !user.emailVerified) {
+        userUpdateData.emailVerified = true;
+      }
+      if (!isAdmin && user.onboardingStatus !== 'COMPLETE') {
+        userUpdateData.onboardingStatus = 'COMPLETE';
+      }
+      if (Object.keys(userUpdateData).length > 0) {
         await this.prisma.user.update({
           where: { id: userId },
-          data: { emailVerified: true },
+          data: userUpdateData as any,
         });
       }
       console.log('Salon created successfully:', salon.id);

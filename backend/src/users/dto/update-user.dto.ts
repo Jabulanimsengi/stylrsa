@@ -15,6 +15,10 @@ export class UpdateUserDto {
   @IsOptional()
   profileImage?: string;
 
+  @IsString()
+  @IsOptional()
+  phoneNumber?: string;
+
   // Seller profile fields (for PRODUCT_SELLER users)
   @IsString()
   @IsOptional()

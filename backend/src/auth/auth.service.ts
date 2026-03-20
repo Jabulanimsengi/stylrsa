@@ -15,20 +15,30 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { randomBytes } from 'crypto';
 import { MailService } from '../mail/mail.service';
 
-const PUBLIC_SIGNUP_ROLES = ['CLIENT', 'SALON_OWNER'] as const;
-type PublicSignupRole = (typeof PUBLIC_SIGNUP_ROLES)[number];
-
-function normalizePublicSignupRole(role?: string | null): PublicSignupRole {
-  const normalizedRole = role?.toUpperCase();
-
-  if (
-    normalizedRole &&
-    PUBLIC_SIGNUP_ROLES.includes(normalizedRole as PublicSignupRole)
-  ) {
-    return normalizedRole as PublicSignupRole;
-  }
-
-  return 'CLIENT';
+function buildAuthUserResponse(
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    onboardingStatus: string;
+    phoneNumber?: string | null;
+    emailVerified?: boolean;
+  },
+  salonId?: string | null,
+) {
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    onboardingStatus: user.onboardingStatus,
+    phoneNumber: user.phoneNumber ?? null,
+    salonId: salonId ?? null,
+    emailVerified: user.emailVerified,
+  };
 }
 
 @Injectable()
@@ -51,8 +61,6 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    const userRole = normalizePublicSignupRole(dto.role);
-
     // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -124,7 +132,8 @@ export class AuthService {
           password: hash,
           firstName: dto.firstName,
           lastName: dto.lastName,
-          role: userRole,
+          role: 'PENDING',
+          onboardingStatus: 'ROLE_REQUIRED',
           verificationToken: verificationCode,
           verificationExpires,
           emailVerified: false,
@@ -243,13 +252,7 @@ export class AuthService {
 
     return {
       accessToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        salonId: user.salons?.id || null,
-        emailVerified: user.emailVerified,
-      },
+      user: buildAuthUserResponse(user as any, user.salons?.id || null),
     };
   }
 
@@ -395,7 +398,7 @@ export class AuthService {
     return argon2.verify(user.password, password);
   }
 
-  signToken(userId: string, email: string, role: string): Promise<string> {
+  signToken(userId: string, email: string, role: string | null): Promise<string> {
     const payload = {
       sub: userId,
       email,
@@ -416,8 +419,7 @@ export class AuthService {
     name?: string | null;
     role?: string | null;
   }) {
-    const { provider, providerAccountId, email, name, role } = body;
-    console.log('[SSO] Received role from frontend:', role);
+    const { provider, providerAccountId, email, name } = body;
     if (!provider || !providerAccountId) {
       throw new UnauthorizedException('Invalid SSO payload');
     }
@@ -459,8 +461,6 @@ export class AuthService {
       const lastName = rest.join(' ') || 'Account';
       const tempPassword = randomBytes(16).toString('hex');
       const passwordHash = await argon2.hash(tempPassword);
-      const userRole = normalizePublicSignupRole(role);
-      console.log('[SSO] Creating new user with role:', userRole);
 
       user = await this.prisma.user.create({
         data: {
@@ -468,7 +468,8 @@ export class AuthService {
           password: passwordHash,
           firstName,
           lastName,
-          role: userRole as any,
+          role: 'PENDING',
+          onboardingStatus: 'ROLE_REQUIRED',
           emailVerified: true, // OAuth accounts are pre-verified
           oauthAccounts: {
             create: { provider, providerAccountId },
@@ -491,12 +492,7 @@ export class AuthService {
     });
     return {
       jwt: accessToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        salonId: salon?.id,
-      },
+      user: buildAuthUserResponse(user as any, salon?.id),
     };
   }
 }

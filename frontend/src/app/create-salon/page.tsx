@@ -12,6 +12,7 @@ import { logger } from '@/lib/logger';
 import MapboxMap from '@/components/MapboxMap';
 import { forwardGeocode, GeocodingResult } from '@/lib/mapbox';
 import { notify } from '@/lib/notify';
+import { buildOnboardingClientUrl, buildOnboardingRoleUrl } from '@/lib/authRedirect';
 
 const DRAFT_STORAGE_KEY = 'salon-draft';
 
@@ -235,6 +236,24 @@ function CreateSalonPageContent() {
       const callbackUrl = `${pathname}${query ? `?${query}` : ''}`;
       router.push(buildAuthRoute.providerRegister(callbackUrl));
     } else if (authStatus === 'authenticated' && user?.email) {
+      const query = searchParams.toString();
+      const callbackUrl = `${pathname}${query ? `?${query}` : ''}`;
+
+      if (user.role === 'PENDING' || user.onboardingStatus === 'ROLE_REQUIRED') {
+        router.push(
+          buildOnboardingRoleUrl({
+            redirectTarget: callbackUrl,
+            preselectedRole: 'SALON_OWNER',
+          }),
+        );
+        return;
+      }
+
+      if (user.onboardingStatus === 'CLIENT_PROFILE_REQUIRED') {
+        router.push(buildOnboardingClientUrl({ redirectTarget: callbackUrl }));
+        return;
+      }
+
       if (!canCreateSalon) {
         notify.error('Only salon owners and admins can create salon profiles.');
         router.push('/');
@@ -264,7 +283,7 @@ function CreateSalonPageContent() {
 
       checkExistingSalon();
     }
-  }, [authStatus, canCreateSalon, router, user]);
+  }, [authStatus, canCreateSalon, pathname, router, searchParams, user]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

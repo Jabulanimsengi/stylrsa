@@ -73,6 +73,7 @@ export const COMPANY_NAV_LINKS: AppNavLink[] = [
 ];
 
 const ACCOUNT_PATH_PREFIXES = [
+  '/onboarding',
   '/my-profile',
   '/my-bookings',
   '/my-favorites',
@@ -102,6 +103,33 @@ const ACCOUNT_BASE_LINKS: AppNavLink[] = [
 ];
 
 function getRolePrimaryLink(user: User): AppNavLink | null {
+  if (user.role === 'PENDING' || user.onboardingStatus === 'ROLE_REQUIRED') {
+    return {
+      href: '/onboarding/role',
+      label: 'Complete Setup',
+      icon: FaUser,
+      match: (path) => path.startsWith('/onboarding'),
+    };
+  }
+
+  if (user.onboardingStatus === 'CLIENT_PROFILE_REQUIRED') {
+    return {
+      href: '/onboarding/client',
+      label: 'Complete Setup',
+      icon: FaUser,
+      match: (path) => path.startsWith('/onboarding'),
+    };
+  }
+
+  if (user.onboardingStatus === 'PROVIDER_SETUP_REQUIRED') {
+    return {
+      href: '/create-salon',
+      label: 'Finish Provider Setup',
+      icon: FaChartLine,
+      match: (path) => path.startsWith('/create-salon') || path.startsWith('/onboarding'),
+    };
+  }
+
   if (user.role === 'SALON_OWNER') {
     return {
       href: '/dashboard',
@@ -134,6 +162,10 @@ function getRoleLabel(user: User | null): string {
 
   if (user.role === 'ADMIN') {
     return 'Administrator';
+  }
+
+  if (user.role === 'PENDING' || (user.onboardingStatus && user.onboardingStatus !== 'COMPLETE')) {
+    return 'Setup required';
   }
 
   return 'Client';

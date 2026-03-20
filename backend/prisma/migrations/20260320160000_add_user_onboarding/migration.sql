@@ -1,0 +1,31 @@
+ALTER TYPE "UserRole" RENAME TO "UserRole_old";
+
+CREATE TYPE "UserRole" AS ENUM (
+  'PENDING',
+  'CLIENT',
+  'SALON_OWNER',
+  'ADMIN',
+  'PRODUCT_SELLER',
+  'CANDIDATE'
+);
+
+CREATE TYPE "OnboardingStatus" AS ENUM (
+  'ROLE_REQUIRED',
+  'CLIENT_PROFILE_REQUIRED',
+  'PROVIDER_SETUP_REQUIRED',
+  'COMPLETE'
+);
+
+ALTER TABLE "User"
+ALTER COLUMN "role" DROP DEFAULT,
+ALTER COLUMN "role" TYPE "UserRole"
+USING ("role"::text::"UserRole");
+
+ALTER TABLE "User"
+ADD COLUMN "onboardingStatus" "OnboardingStatus" NOT NULL DEFAULT 'COMPLETE',
+ADD COLUMN "phoneNumber" TEXT;
+
+ALTER TABLE "User"
+ALTER COLUMN "role" SET DEFAULT 'PENDING';
+
+DROP TYPE "UserRole_old";

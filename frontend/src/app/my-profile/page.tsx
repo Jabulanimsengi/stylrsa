@@ -12,12 +12,14 @@ interface UserProfile {
   firstName: string;
   lastName: string;
   email: string;
+  phoneNumber?: string | null;
 }
 
 export default function MyProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { authStatus } = useAuth();
@@ -52,6 +54,7 @@ export default function MyProfilePage() {
           // Handle null/undefined values from backend
           setFirstName(data.firstName || '');
           setLastName(data.lastName || '');
+          setPhoneNumber(data.phoneNumber || '');
         } catch (error) {
           console.error('[MyProfile] Error loading profile:', error);
           toast.error('Could not load your profile.');
@@ -71,7 +74,7 @@ export default function MyProfilePage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ firstName, lastName }),
+        body: JSON.stringify({ firstName, lastName, phoneNumber }),
       });
 
       if (!res.ok) {
@@ -86,6 +89,7 @@ export default function MyProfilePage() {
       // Also update the state values
       setFirstName(updatedData.firstName || '');
       setLastName(updatedData.lastName || '');
+      setPhoneNumber(updatedData.phoneNumber || '');
 
       // Enhanced success notification
       toast.success(
@@ -149,14 +153,24 @@ export default function MyProfilePage() {
               className={styles.input}
             />
           </div>
-          <div className={styles.inputGroup}>
-            <label htmlFor="lastName">Last Name</label>
-            <input
+            <div className={styles.inputGroup}>
+              <label htmlFor="lastName">Last Name</label>
+              <input
               id="lastName"
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required
+                className={styles.input}
+              />
+            </div>
+          <div className={styles.inputGroup}>
+            <label htmlFor="phoneNumber">Phone Number</label>
+            <input
+              id="phoneNumber"
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
               className={styles.input}
             />
           </div>

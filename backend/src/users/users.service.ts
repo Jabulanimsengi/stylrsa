@@ -8,6 +8,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateSellerPlanDto } from './dto/update-seller-plan.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EventsGateway } from '../events/events.gateway';
+import { SelectUserRoleDto } from './dto/select-user-role.dto';
+import { CompleteClientOnboardingDto } from './dto/complete-client-onboarding.dto';
 
 type PlanCode = 'FREE' | 'STARTER' | 'ESSENTIAL' | 'GROWTH' | 'PRO' | 'ELITE' | 'PREMIUM';
 type PlanPaymentStatus =
@@ -15,6 +17,11 @@ type PlanPaymentStatus =
   | 'AWAITING_PROOF'
   | 'PROOF_SUBMITTED'
   | 'VERIFIED';
+type OnboardingStatus =
+  | 'ROLE_REQUIRED'
+  | 'CLIENT_PROFILE_REQUIRED'
+  | 'PROVIDER_SETUP_REQUIRED'
+  | 'COMPLETE';
 
 // Aligned with main plan prices (promotional pricing)
 const PLAN_FALLBACKS: Record<
@@ -37,6 +44,17 @@ export class UsersService {
     private notificationsService: NotificationsService,
     private eventsGateway: EventsGateway,
   ) { }
+
+  private sanitizeUser<T extends { password?: string }>(user: T) {
+    const { password: _password, ...result } = user;
+    return result;
+  }
+
+  private getOnboardingStatusForRole(role: 'CLIENT' | 'SALON_OWNER'): OnboardingStatus {
+    return role === 'SALON_OWNER'
+      ? 'PROVIDER_SETUP_REQUIRED'
+      : 'CLIENT_PROFILE_REQUIRED';
+  }
 
   private async resolvePlanMeta(planCode: PlanCode) {
     try {
@@ -63,7 +81,10 @@ export class UsersService {
         email: true,
         firstName: true,
         lastName: true,
+        phoneNumber: true,
         role: true,
+        onboardingStatus: true,
+        emailVerified: true,
         createdAt: true,
         profileImage: true,
         // Seller plan fields
@@ -104,8 +125,69 @@ export class UsersService {
       where: { id: userId },
       data: { ...dto },
     });
-    const { password, ...result } = user;
-    return result;
+    return this.sanitizeUser(user as any);
+  }
+
+  async selectRole(userId: string, dto: SelectUserRoleDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.role === 'ADMIN' || user.role === 'PRODUCT_SELLER') {
+      throw new ForbiddenException('This account role cannot be changed.');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        role: dto.role,
+        onboardingStatus: this.getOnboardingStatusForRole(dto.role),
+      },
+    });
+
+    return this.sanitizeUser(updated as any);
+  }
+
+  async completeClientOnboarding(
+    userId: string,
+    dto: CompleteClientOnboardingDto,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.role !== 'CLIENT' && user.role !== 'PENDING') {
+      throw new ForbiddenException('Only client accounts can complete client onboarding.');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstName: dto.firstName.trim(),
+        lastName: dto.lastName.trim(),
+        phoneNumber: dto.phoneNumber.trim(),
+        role: 'CLIENT',
+        onboardingStatus: 'COMPLETE',
+      },
+    });
+
+    return this.sanitizeUser(updated as any);
   }
 
   async updateSellerPlan(userId: string, dto: UpdateSellerPlanDto) {
@@ -206,8 +288,7 @@ export class UsersService {
       where: { id: userId },
       data,
     });
-    const { password, ...result } = updated;
-    return result;
+    return this.sanitizeUser(updated as any);
   }
 
   async submitSellerProfile(userId: string) {
@@ -285,8 +366,7 @@ export class UsersService {
       console.error('Failed to notify admins about seller profile:', error);
     }
 
-    const { password, ...result } = updated;
-    return result;
+    return this.sanitizeUser(updated as any);
   }
 
   async saveDraftSellerProfile(userId: string, dto: UpdateUserDto) {
@@ -326,7 +406,6 @@ export class UsersService {
       data: updateData,
     });
 
-    const { password, ...result } = updated;
-    return result;
+    return this.sanitizeUser(updated as any);
   }
 }

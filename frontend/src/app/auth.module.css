@@ -450,6 +450,13 @@
   min-width: 96px;
 }
 
+.helperText {
+  margin: -0.15rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .authModalPane {

@@ -30,5 +30,6 @@ export class RegisterDto {
   @IsIn(['CLIENT', 'SALON_OWNER'], {
     message: 'Role must be CLIENT or SALON_OWNER',
   })
+  // Deprecated: role is now chosen after authentication during onboarding.
   role?: string;
 }

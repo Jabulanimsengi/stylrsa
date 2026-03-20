@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import styles from '../app/auth.module.css';
 import { apiFetch } from '@/lib/api';
-import { Alert, LoadingButton, Button, ModalShell } from '@/components/ui';
+import { Alert, LoadingButton, Button } from '@/components/ui';
 import { notify } from '@/lib/notify';
+import { buildGoogleAuthCallbackUrl, hasProviderIntent } from '@/lib/authRedirect';
 
 // Define the props that this component will accept
 interface RegisterProps {
@@ -14,44 +15,20 @@ interface RegisterProps {
 }
 
 type RegisterStep = 'account' | 'profile';
-type RegisterRole = 'CLIENT' | 'SALON_OWNER';
-
-const ROLE_LABELS: Record<RegisterRole, string> = {
-  CLIENT: 'Client (book services)',
-  SALON_OWNER: 'Service Provider (offer services)',
-};
-
-function resolveGoogleCallbackUrl(role: RegisterRole, redirectTarget: string): string {
-  if (redirectTarget.startsWith('/') && !redirectTarget.startsWith('//')) {
-    return redirectTarget;
-  }
-
-  return role === 'SALON_OWNER' ? '/create-salon' : '/salons';
-}
 
 export default function Register({ onRegisterSuccess }: RegisterProps) {
   const searchParams = useSearchParams();
   const roleParam = searchParams.get('role');
-  const redirectTarget = searchParams.get('redirect') || searchParams.get('callbackUrl') || '';
-  const hasProviderIntent = roleParam === 'SALON_OWNER' || redirectTarget.startsWith('/create-salon');
-  const lockedRole: RegisterRole | null = hasProviderIntent ? 'SALON_OWNER' : null;
+  const redirectTarget = searchParams.get('redirect') || searchParams.get('callbackUrl');
+  const providerIntent = hasProviderIntent(redirectTarget, roleParam);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<RegisterRole>(lockedRole ?? 'CLIENT');
   const [step, setStep] = useState<RegisterStep>('account');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showGoogleConfirm, setShowGoogleConfirm] = useState(false);
-  const selectedRoleLabel = ROLE_LABELS[role];
-
-  useEffect(() => {
-    if (lockedRole) {
-      setRole(lockedRole);
-    }
-  }, [lockedRole]);
 
   const handleContinue = () => {
     if (!email.trim()) {
@@ -78,7 +55,7 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
       const res = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, email, password, role }),
+        body: JSON.stringify({ firstName, lastName, email, password }),
       });
 
       const response = await res.json();
@@ -119,22 +96,11 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
   };
 
   const handleGoogleClick = () => {
-    // Show confirmation dialog before proceeding with Google OAuth
-    setShowGoogleConfirm(true);
-  };
-
-  const confirmGoogleSignIn = () => {
-    setShowGoogleConfirm(false);
-    // Store selected role in cookie before OAuth redirect
-    // This will be read by NextAuth callback after Google authentication
-    if (typeof document !== 'undefined') {
-      // Set the role cookie before OAuth redirect (expires in 10 minutes)
-      document.cookie = `oauth_signup_role=${role}; path=/; max-age=600; SameSite=Lax`;
-
-      const callbackUrl = resolveGoogleCallbackUrl(role, redirectTarget);
-      // Redirect to Google OAuth
-      void signIn('google', { callbackUrl });
-    }
+    const callbackUrl = buildGoogleAuthCallbackUrl({
+      redirectTarget,
+      preselectedRole: providerIntent ? 'SALON_OWNER' : null,
+    });
+    void signIn('google', { callbackUrl });
   };
 
   return (
@@ -143,7 +109,7 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
         {step === 'account' && (
           <>
             <div className={styles.stepHeader}>
-              <h3 className={styles.stepTitle}>Email and account type</h3>
+              <h3 className={styles.stepTitle}>Email address</h3>
             </div>
 
             <div className={styles.inputGroup}>
@@ -157,28 +123,11 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
                 className={styles.input}
               />
             </div>
-
-            <div className={styles.roleSelector}>
-              <div className={styles.roleLegend}>Account type</div>
-              {lockedRole ? (
-                <>
-                  <div className={styles.roleLockedCard}>
-                    <strong className={styles.roleLockedTitle}>Service Provider account</strong>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className={styles.roleOption}>
-                    <input type="radio" id="roleClient" name="role" value="CLIENT" checked={role === 'CLIENT'} onChange={(e) => setRole(e.target.value as RegisterRole)} />
-                    <label htmlFor="roleClient">I&apos;m a Client</label>
-                  </div>
-                  <div className={styles.roleOption}>
-                    <input type="radio" id="roleOwner" name="role" value="SALON_OWNER" checked={role === 'SALON_OWNER'} onChange={(e) => setRole(e.target.value as RegisterRole)} />
-                    <label htmlFor="roleOwner">I&apos;m a Service Provider</label>
-                  </div>
-                </>
-              )}
-            </div>
+            <p className={styles.helperText}>
+              {providerIntent
+                ? 'You’ll confirm your service provider role after sign-in.'
+                : 'You’ll choose whether you’re a client or service provider after sign-in.'}
+            </p>
           </>
         )}
 
@@ -275,30 +224,6 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
           </button>
         </div>
       )}
-
-      {/* Google OAuth Role Confirmation Dialog */}
-      <ModalShell
-        open={showGoogleConfirm}
-        onOpenChange={setShowGoogleConfirm}
-        title="Confirm Account Type"
-        description="Confirm before continuing with Google."
-        size="sm"
-      >
-        <p style={{ margin: '0 0 1.25rem', fontSize: '1rem', fontWeight: 600, color: 'var(--color-primary)' }}>
-          {ROLE_LABELS[role]}
-        </p>
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-          <Button
-            variant="outline"
-            onClick={() => setShowGoogleConfirm(false)}
-          >
-            Go back
-          </Button>
-          <Button onClick={confirmGoogleSignIn}>
-            Confirm and continue
-          </Button>
-        </div>
-      </ModalShell>
     </div>
   );
 }

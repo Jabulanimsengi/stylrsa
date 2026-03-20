@@ -8,6 +8,12 @@ export type PlanPaymentStatus =
   | 'VERIFIED';
 
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type UserRole = 'PENDING' | 'CLIENT' | 'SALON_OWNER' | 'ADMIN';
+export type UserOnboardingStatus =
+  | 'ROLE_REQUIRED'
+  | 'CLIENT_PROFILE_REQUIRED'
+  | 'PROVIDER_SETUP_REQUIRED'
+  | 'COMPLETE';
 
 export type OperatingHourEntry = {
   day: string;
@@ -20,11 +26,13 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'CLIENT' | 'SALON_OWNER' | 'ADMIN';
+  role: UserRole;
+  onboardingStatus?: UserOnboardingStatus;
   createdAt: string;
   updatedAt: string;
   profileImage?: string;
   emailVerified?: boolean;
+  phoneNumber?: string | null;
   salonId?: string | null;
   // Seller plan fields
   sellerPlanCode?: PlanCode | null;
