@@ -3,6 +3,54 @@
  * Prevents "Cannot read properties of null (reading 'removeChild')" errors
  */
 
+const PORTAL_ERROR_PATTERNS = ['insertBefore', 'removeChild', 'appendChild', 'NotFoundError'];
+const PORTAL_RECOVERY_STORAGE_KEY = 'stylrsa-portal-recovery-at';
+const PORTAL_RECOVERY_COOLDOWN_MS = 15000;
+
+function toErrorMessage(error: unknown): string {
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error instanceof Error) {
+    return `${error.name}: ${error.message}`;
+  }
+
+  return String(error ?? '');
+}
+
+export function isPortalDomError(error: unknown): boolean {
+  const message = toErrorMessage(error);
+  return PORTAL_ERROR_PATTERNS.some((pattern) => message.includes(pattern));
+}
+
+export function recoverFromPortalDomError(source = 'unknown'): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn(`[Portal recovery skipped in ${process.env.NODE_ENV}]`, source);
+    return false;
+  }
+
+  try {
+    const lastRecovery = Number(window.sessionStorage.getItem(PORTAL_RECOVERY_STORAGE_KEY) || '0');
+    const now = Date.now();
+
+    if (now - lastRecovery < PORTAL_RECOVERY_COOLDOWN_MS) {
+      return false;
+    }
+
+    window.sessionStorage.setItem(PORTAL_RECOVERY_STORAGE_KEY, String(now));
+    window.location.reload();
+    return true;
+  } catch (error) {
+    console.warn('Portal recovery failed:', error);
+    return false;
+  }
+}
+
 export function safeRemoveChild(parent: Node | null, child: Node | null): boolean {
   if (!parent || !child) {
     return false;
@@ -63,28 +111,40 @@ export function cleanupToastContainers(): void {
 /**
  * Prevent React 18 strict mode double-mount issues with portals
  */
-export function setupPortalErrorHandling(): void {
-  if (typeof window === 'undefined') return;
+export function setupPortalErrorHandling(): () => void {
+  if (typeof window === 'undefined') {
+    return () => undefined;
+  }
 
-  // Catch and suppress portal-related errors in development
-  const originalError = console.error;
-  console.error = (...args) => {
-    // Suppress known React 18 portal errors
-    const errorMessage = args[0]?.toString() || '';
-    
-    if (
-      errorMessage.includes('removeChild') ||
-      errorMessage.includes('appendChild') ||
-      errorMessage.includes('NotFoundError')
-    ) {
-      // Log to console for debugging but don't crash
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[Suppressed Portal Error]:', ...args);
-      }
+  const handleWindowError = (event: ErrorEvent) => {
+    const error = event.error ?? event.message;
+
+    if (!isPortalDomError(error)) {
       return;
     }
 
-    // Call original console.error for other errors
-    originalError.apply(console, args);
+    console.warn('Recovering from portal DOM error:', error);
+    if (recoverFromPortalDomError('window-error')) {
+      event.preventDefault();
+    }
+  };
+
+  const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+    if (!isPortalDomError(event.reason)) {
+      return;
+    }
+
+    console.warn('Recovering from portal promise rejection:', event.reason);
+    if (recoverFromPortalDomError('unhandled-rejection')) {
+      event.preventDefault();
+    }
+  };
+
+  window.addEventListener('error', handleWindowError);
+  window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+  return () => {
+    window.removeEventListener('error', handleWindowError);
+    window.removeEventListener('unhandledrejection', handleUnhandledRejection);
   };
 }

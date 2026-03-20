@@ -29,6 +29,7 @@ import { getAccountNavConfig, PRIMARY_NAV_LINKS } from './navigationConfig';
 import { useNotificationCenter } from '@/hooks/useNotificationCenter';
 import NotificationsPanel from './NotificationsPanel';
 import { useLogoutAction } from '@/hooks/useLogoutAction';
+import usePortalHost from '@/hooks/usePortalHost';
 
 export default function TopNav() {
     const { authStatus, user } = useAuth();
@@ -41,6 +42,7 @@ export default function TopNav() {
     const [desktopSearchQuery, setDesktopSearchQuery] = useState('');
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    const portalHost = usePortalHost();
 
     const notificationsPortalRef = useRef<HTMLDivElement>(null);
     const bellButtonRef = useRef<HTMLButtonElement>(null);
@@ -112,42 +114,44 @@ export default function TopNav() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const notificationsPanel = isNotificationsOpen && createPortal(
-        <div
-            ref={notificationsPortalRef}
-            id="topnav-notifications-panel"
-            style={{
-                position: 'fixed',
-                top: '80px',
-                right: '24px',
-                zIndex: 1000,
-            }}
-        >
-            <NotificationsPanel
-                notifications={notifications}
-                filteredNotifications={filteredNotifications}
-                unreadCount={unreadCount}
-                nextCursor={nextCursor}
-                isLoadingNotifications={isLoadingNotifications}
-                isLoadingMore={isLoadingMore}
-                viewFilter={viewFilter}
-                onViewFilterChange={setViewFilter}
-                onNotificationClick={async (notification) => {
-                    const link = await handleNotificationClick(notification);
-                    setIsNotificationsOpen(false);
-                    if (link) {
-                        showPageLoader();
-                        router.push(link);
-                    }
+    const notificationsPanel = isNotificationsOpen && portalHost
+        ? createPortal(
+            <div
+                ref={notificationsPortalRef}
+                id="topnav-notifications-panel"
+                style={{
+                    position: 'fixed',
+                    top: '80px',
+                    right: '24px',
+                    zIndex: 1000,
                 }}
-                onMarkAllRead={handleMarkAllRead}
-                onClearNotifications={handleClearNotifications}
-                onDeleteNotification={handleDeleteNotification}
-                onLoadMore={handleLoadMore}
-            />
-        </div>,
-        document.body
-    );
+            >
+                <NotificationsPanel
+                    notifications={notifications}
+                    filteredNotifications={filteredNotifications}
+                    unreadCount={unreadCount}
+                    nextCursor={nextCursor}
+                    isLoadingNotifications={isLoadingNotifications}
+                    isLoadingMore={isLoadingMore}
+                    viewFilter={viewFilter}
+                    onViewFilterChange={setViewFilter}
+                    onNotificationClick={async (notification) => {
+                        const link = await handleNotificationClick(notification);
+                        setIsNotificationsOpen(false);
+                        if (link) {
+                            showPageLoader();
+                            router.push(link);
+                        }
+                    }}
+                    onMarkAllRead={handleMarkAllRead}
+                    onClearNotifications={handleClearNotifications}
+                    onDeleteNotification={handleDeleteNotification}
+                    onLoadMore={handleLoadMore}
+                />
+            </div>,
+            portalHost
+        )
+        : null;
 
     const handleDesktopSearch = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();

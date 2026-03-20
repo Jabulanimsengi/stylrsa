@@ -1,71 +1,91 @@
-"use client";
-
+import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "./prices.module.css";
-import { APP_PLANS, PLAN_FEATURES } from "@/constants/plans";
+import {
+  APP_PLANS,
+  PLAN_FEATURES,
+  SALON_LISTING_MONTHLY_PRICE,
+  SALON_LISTING_PRICE,
+} from "@/constants/plans";
 import { buildAuthRoute } from "@/constants/routes";
 
-const proofPoints = [
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.stylrsa.co.za";
+
+const summaryItems = [
   {
-    value: "0%",
-    label: "Commission on bookings",
-    description: "You keep your booking revenue while Stylr SA sends clients to your WhatsApp.",
+    label: "Plan",
+    value: "One simple plan",
   },
   {
-    value: "Unlimited",
-    label: "Services and gallery uploads",
-    description: "Show your full menu, portfolio, before-and-after work, and short videos.",
+    label: "Price",
+    value: SALON_LISTING_MONTHLY_PRICE,
   },
   {
-    value: "5x",
-    label: "Search visibility boost",
-    description: "Stand out more prominently when clients search for services in your area.",
+    label: "Commission",
+    value: "0% on bookings",
   },
 ];
 
-const onboardingSteps = [
+const includeGroups = [
   {
-    title: "Create your salon profile",
-    description: "Add your salon details, contact number, location, and business information.",
+    title: "Profile and content",
+    items: [
+      "Professional salon profile",
+      "Unlimited service listings",
+      "Unlimited gallery images",
+      "Short video uploads",
+      "Before and after gallery",
+    ],
   },
   {
-    title: "Show your best work",
-    description: "Upload services, gallery images, short videos, and before-and-after transformations.",
+    title: "Visibility",
+    items: [
+      "5x boosted search visibility",
+      "Featured profile badge",
+      "Designed to help clients discover your services",
+    ],
   },
   {
-    title: "Receive WhatsApp bookings",
-    description: "Clients discover your page on Stylr SA and connect with you directly to confirm appointments.",
+    title: "Bookings and support",
+    items: [
+      "WhatsApp booking handoff",
+      "0% commission on bookings",
+      "Priority support",
+    ],
   },
 ];
 
-const faqs = [
+const nextSteps = [
   {
-    question: "What's included in the listing plan?",
-    answer:
-      "You get unlimited service listings, unlimited gallery images, short video uploads, before-and-after gallery support, a featured profile badge, boosted search visibility, WhatsApp booking handoff, and priority support.",
+    step: "01",
+    title: "Create your account",
+    description: "Sign up as a service provider and verify your details.",
   },
   {
-    question: "Do you charge commission on bookings?",
-    answer: "No. Stylr SA charges 0% commission on bookings made through the service listing plan.",
+    step: "02",
+    title: "Build your profile",
+    description: "Add your services, pricing, gallery, and business information.",
   },
   {
-    question: "Can I cancel my plan anytime?",
-    answer: "Yes. You can cancel anytime and keep access until the end of your current billing period.",
-  },
-  {
-    question: "How do bookings work?",
-    answer:
-      "Clients discover you on Stylr SA, then booking handoff happens through your salon WhatsApp number so you can manage deposits, confirmations, and client communication directly.",
-  },
-  {
-    question: "Are there any hidden fees?",
-    answer: "No hidden fees. The plan is a flat R399 per month with no setup fee and no booking commission.",
-  },
-  {
-    question: "How do I get started?",
-    answer: 'Click "Start your listing" to create your salon profile, submit proof of payment, and publish your services.',
+    step: "03",
+    title: "Go live",
+    description: "Activate your listing and start receiving booking handoff through WhatsApp.",
   },
 ];
+
+export const metadata: Metadata = {
+  title: "Pricing | Stylr SA",
+  description: `View the ${SALON_LISTING_MONTHLY_PRICE} service listing plan for salons and beauty professionals on Stylr SA.`,
+  alternates: {
+    canonical: `${siteUrl}/prices`,
+  },
+  openGraph: {
+    title: "Pricing | Stylr SA",
+    description: `One ${SALON_LISTING_MONTHLY_PRICE} plan for salons and beauty professionals.`,
+    type: "website",
+    url: `${siteUrl}/prices`,
+  },
+};
 
 export default function PricingPage() {
   const listingPlan = APP_PLANS.find((plan) => plan.code === "PREMIUM")!;
@@ -75,152 +95,123 @@ export default function PricingPage() {
     <div className={styles.pageShell}>
       <main className={styles.container}>
         <section className={styles.heroSection}>
-          <div className={styles.heroCopy}>
+          <div className={styles.heroPanel}>
             <span className={styles.eyebrow}>Pricing</span>
-            <h1 className={styles.title}>One straightforward listing plan. Built for South African beauty professionals.</h1>
+            <h1 className={styles.title}>Simple pricing for salons and beauty professionals.</h1>
             <p className={styles.subtitle}>
-              Get discovered online, showcase your best work, and receive WhatsApp booking requests directly from clients — all for a flat R399/month with zero commission taken on your earnings.
+              Stylr SA offers one clean monthly plan for service providers who want a professional
+              profile, stronger visibility, and direct booking handoff without per-booking fees.
             </p>
+
+            <div className={styles.summaryGrid}>
+              {summaryItems.map((item) => (
+                <article key={item.label} className={styles.summaryCard}>
+                  <span className={styles.summaryLabel}>{item.label}</span>
+                  <strong className={styles.summaryValue}>{item.value}</strong>
+                </article>
+              ))}
+            </div>
 
             <div className={styles.heroActions}>
               <Link href={providerListingHref} className={styles.primaryAction}>
                 Start your listing
               </Link>
               <Link href="/how-it-works" className={styles.secondaryAction}>
-                See how it works
+                How it works
               </Link>
-            </div>
-
-            <div className={styles.metricsGrid}>
-              {proofPoints.map((point) => (
-                <article key={point.label} className={styles.metricCard}>
-                  <p className={styles.metricValue}>{point.value}</p>
-                  <h2 className={styles.metricLabel}>{point.label}</h2>
-                  <p className={styles.metricDescription}>{point.description}</p>
-                </article>
-              ))}
             </div>
           </div>
 
-          <aside className={styles.planSpotlight}>
-            <div className={styles.planBadge}>Most popular for service providers</div>
-            <div className={styles.planHeader}>
-              <p className={styles.planKicker}>Salon listing plan</p>
+          <aside className={styles.pricingCard}>
+            <div className={styles.pricingCardHeader}>
+              <span className={styles.planBadge}>Service provider plan</span>
               <h2 className={styles.planName}>{listingPlan.name}</h2>
               <p className={styles.planDescription}>{listingPlan.description}</p>
             </div>
 
-            <div className={styles.priceRow}>
+            <div className={styles.priceBlock}>
               <span className={styles.mainPrice}>{listingPlan.price}</span>
-              <span className={styles.perMonth}>per month</span>
+              <span className={styles.priceSuffix}>per month</span>
             </div>
 
-            <div className={styles.planMeta}>
+            <div className={styles.metaRow}>
               <span className={styles.metaPill}>Monthly billing</span>
               <span className={styles.metaPill}>Cancel anytime</span>
-              <span className={styles.metaPill}>0% booking commission</span>
             </div>
 
             <ul className={styles.featureList}>
-              {listingPlan.features.map((feature) => (
-                <li key={feature} className={styles.featureItem}>
-                  <span>{feature}</span>
+              {PLAN_FEATURES.map((feature) => (
+                <li key={feature.name} className={styles.featureItem}>
+                  <span className={styles.featureName}>{feature.name}</span>
+                  <span className={styles.featureValue}>
+                    {typeof feature.value === "boolean" ? (feature.value ? "Included" : "No") : feature.value}
+                  </span>
                 </li>
               ))}
             </ul>
 
-            <Link href={providerListingHref} className={styles.planAction}>
-              Get started for R399
+            <Link href={providerListingHref} className={styles.cardAction}>
+              Get started for {SALON_LISTING_PRICE}
             </Link>
           </aside>
         </section>
 
-        <section className={styles.valueSection}>
+        <section className={styles.section}>
           <div className={styles.sectionHeading}>
-            <span className={styles.sectionEyebrow}>Why salons choose this plan</span>
-            <h2>Built for the way South African beauty businesses actually work.</h2>
+            <span className={styles.sectionEyebrow}>What&apos;s Included</span>
+            <h2>Everything relevant to run and present your listing properly.</h2>
             <p>
-              Most booking platforms take a cut of every appointment. Stylr SA doesn&apos;t. You pay one flat rate, keep 100% of your earnings, and stay in control of your client relationships from first enquiry to final payment.
+              The plan is built around the essentials: a strong profile, better visibility, and a
+              direct path for clients to contact you.
             </p>
           </div>
 
-          <div className={styles.valueGrid}>
-            <article className={styles.valueCard}>
-              <h3>Show more of your work</h3>
-              <p>
-                Publish your complete service menu and support each listing with gallery photos,
-                videos, and before-and-after examples.
-              </p>
-            </article>
-            <article className={styles.valueCard}>
-              <h3>Turn discovery into leads</h3>
-              <p>
-                Clients browse Stylr SA, find your profile faster with boosted visibility, and
-                message you directly when they are ready to book.
-              </p>
-            </article>
-            <article className={styles.valueCard}>
-              <h3>Keep the customer relationship</h3>
-              <p>
-                Booking handoff goes straight to WhatsApp, so you stay in control of scheduling,
-                deposits, and communication from the first enquiry.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section className={styles.detailsSection}>
-          <div className={styles.sectionHeading}>
-            <span className={styles.sectionEyebrow}>Plan details</span>
-            <h2>A cleaner look at what is included.</h2>
-            <p>One straightforward monthly subscription with premium placement and no hidden extras.</p>
-          </div>
-
-          <div className={styles.detailsGrid}>
-            {PLAN_FEATURES.map((feature) => {
-              const value =
-                typeof feature.value === "boolean" ? (feature.value ? "Included" : "Not included") : feature.value;
-
-              return (
-                <article key={feature.name} className={styles.detailCard}>
-                  <p className={styles.detailName}>{feature.name}</p>
-                  <p className={styles.detailValue}>{value}</p>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className={styles.stepsSection}>
-          <div className={styles.sectionHeading}>
-            <span className={styles.sectionEyebrow}>Getting started</span>
-            <h2>Launch your listing in three clear steps.</h2>
-            <p>The setup stays simple so you can focus on presenting your brand well from day one.</p>
-          </div>
-
-          <div className={styles.stepsGrid}>
-            {onboardingSteps.map((step, index) => (
-              <article key={step.title} className={styles.stepCard}>
-                <span className={styles.stepNumber}>0{index + 1}</span>
-                <h3>{step.title}</h3>
-                <p>{step.description}</p>
+          <div className={styles.includeGrid}>
+            {includeGroups.map((group) => (
+              <article key={group.title} className={styles.includeCard}>
+                <h3>{group.title}</h3>
+                <ul className={styles.includeList}>
+                  {group.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
               </article>
             ))}
           </div>
         </section>
 
-        <section className={styles.faqSection}>
+        <section className={styles.noteSection}>
+          <div className={styles.noteCard}>
+            <h2>Good to know</h2>
+            <div className={styles.noteGrid}>
+              <p>
+                <strong>There are no booking commissions.</strong> You keep control of your pricing,
+                deposits, and client communication.
+              </p>
+              <p>
+                <strong>Billing is monthly.</strong> The plan is designed to be straightforward and
+                easy to manage.
+              </p>
+              <p>
+                <strong>Your listing supports direct contact.</strong> Booking handoff goes to your
+                WhatsApp so you can confirm details directly with clients.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.section}>
           <div className={styles.sectionHeading}>
-            <span className={styles.sectionEyebrow}>FAQ</span>
-            <h2>Answers before you commit.</h2>
-            <p>Everything important is upfront, from booking flow to billing and cancellations.</p>
+            <span className={styles.sectionEyebrow}>Getting Started</span>
+            <h2>Set up your listing in three steps.</h2>
           </div>
 
-          <div className={styles.faqGrid}>
-            {faqs.map((faq) => (
-              <article key={faq.question} className={styles.faqCard}>
-                <h3>{faq.question}</h3>
-                <p>{faq.answer}</p>
+          <div className={styles.stepsGrid}>
+            {nextSteps.map((item) => (
+              <article key={item.step} className={styles.stepCard}>
+                <span className={styles.stepNumber}>{item.step}</span>
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
               </article>
             ))}
           </div>
@@ -228,17 +219,18 @@ export default function PricingPage() {
 
         <section className={styles.ctaSection}>
           <div className={styles.ctaPanel}>
-            <span className={styles.sectionEyebrow}>Ready to be discovered?</span>
-            <h2>Start listing your salon on Stylr SA.</h2>
+            <span className={styles.sectionEyebrow}>Ready to List?</span>
+            <h2>Start with one plan and keep your setup simple.</h2>
             <p>
-              Your profile goes live as soon as you&apos;re approved. Start attracting clients this week.
+              Create your profile, publish your services, and start receiving booking handoff
+              through Stylr SA.
             </p>
-            <div className={styles.ctaActions}>
+            <div className={styles.heroActions}>
               <Link href={providerListingHref} className={styles.primaryAction}>
-                List your salon for R399
+                List your salon for {SALON_LISTING_PRICE}
               </Link>
               <Link href="/how-it-works" className={styles.secondaryAction}>
-                Learn more first
+                Learn more
               </Link>
             </div>
           </div>

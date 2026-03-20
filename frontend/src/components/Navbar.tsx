@@ -29,6 +29,7 @@ import { useNotificationCenter } from '@/hooks/useNotificationCenter';
 import NotificationsPanel from './NotificationsPanel';
 import { useLogoutAction } from '@/hooks/useLogoutAction';
 import SalonMapModal from './SalonMapView/SalonMapModal';
+import usePortalHost from '@/hooks/usePortalHost';
 
 export default function Navbar() {
   const { authStatus, user } = useAuth();
@@ -43,6 +44,7 @@ export default function Navbar() {
   const [isDesktop, setIsDesktop] = useState(false);
   const [hasPrefetchedRoutes, setHasPrefetchedRoutes] = useState(false);
   const [isSalonMapOpen, setIsSalonMapOpen] = useState(false);
+  const portalHost = usePortalHost();
 
   const notificationsRef = useRef<HTMLDivElement>(null);
   const notificationsPortalRef = useRef<HTMLDivElement>(null);
@@ -201,12 +203,14 @@ export default function Navbar() {
 
   const notificationsPanel = isNotificationsOpen
     ? isDesktop
-      ? createPortal(
-          <div ref={notificationsPortalRef} className={`${styles.notificationsPanel} ${styles.notificationsPortalPanel}`}>
-            {notificationPanelBody}
-          </div>,
-          document.body,
-        )
+      ? portalHost
+        ? createPortal(
+            <div ref={notificationsPortalRef} className={`${styles.notificationsPanel} ${styles.notificationsPortalPanel}`}>
+              {notificationPanelBody}
+            </div>,
+            portalHost,
+          )
+        : null
       : (
           <div ref={notificationsRef} className={styles.notificationsPanel}>
             {notificationPanelBody}
@@ -236,6 +240,17 @@ export default function Navbar() {
   return (
     <>
       <header className={styles.mobileBar}>
+        <div className={styles.mobileLeading}>
+          <button
+            type="button"
+            className={`iconOnlyButton ${styles.iconOnlyButton} ${styles.hamburgerButton}`}
+            onClick={() => setIsMobileOpen((prev) => !prev)}
+            aria-label="Toggle navigation"
+          >
+            {isMobileOpen ? <FaTimes /> : <FaBars />}
+          </button>
+        </div>
+
         <Link
           href="/"
           className={styles.brand}
@@ -245,7 +260,7 @@ export default function Navbar() {
           <Image src="/logo-transparent.png" alt="Stylr SA" width={124} height={32} priority />
         </Link>
 
-        <div className={styles.mobileActions}>
+        <div className={styles.mobileTrailing}>
           {authStatus === 'authenticated' && (
             <button
               type="button"
@@ -258,15 +273,6 @@ export default function Navbar() {
               {unreadCount > 0 && <span className={styles.mobileBadge}>{unreadCount}</span>}
             </button>
           )}
-
-          <button
-            type="button"
-            className={`iconOnlyButton ${styles.iconOnlyButton} ${styles.hamburgerButton}`}
-            onClick={() => setIsMobileOpen((prev) => !prev)}
-            aria-label="Toggle navigation"
-          >
-            {isMobileOpen ? <FaTimes /> : <FaBars />}
-          </button>
         </div>
       </header>
 

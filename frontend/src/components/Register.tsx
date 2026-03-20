@@ -21,6 +21,14 @@ const ROLE_LABELS: Record<RegisterRole, string> = {
   SALON_OWNER: 'Service Provider (offer services)',
 };
 
+function resolveGoogleCallbackUrl(role: RegisterRole, redirectTarget: string): string {
+  if (redirectTarget.startsWith('/') && !redirectTarget.startsWith('//')) {
+    return redirectTarget;
+  }
+
+  return role === 'SALON_OWNER' ? '/create-salon' : '/salons';
+}
+
 export default function Register({ onRegisterSuccess }: RegisterProps) {
   const searchParams = useSearchParams();
   const roleParam = searchParams.get('role');
@@ -123,7 +131,7 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
       // Set the role cookie before OAuth redirect (expires in 10 minutes)
       document.cookie = `oauth_signup_role=${role}; path=/; max-age=600; SameSite=Lax`;
 
-      const callbackUrl = role === 'SALON_OWNER' ? '/create-salon' : '/salons';
+      const callbackUrl = resolveGoogleCallbackUrl(role, redirectTarget);
       // Redirect to Google OAuth
       void signIn('google', { callbackUrl });
     }

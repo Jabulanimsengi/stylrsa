@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { buildAuthRoute } from '@/constants/routes';
+import { SALON_LISTING_MONTHLY_PRICE } from '@/constants/plans';
 import styles from '../info-page.module.css';
 
 export const metadata: Metadata = {
@@ -51,7 +52,7 @@ export default function PartnerGuidelinesPage() {
 
         <h3 className={styles.blockTitle}>2.2 Your Listing Plan</h3>
         <ul className={styles.list}>
-          <li><strong>Price:</strong> R399/month for service providers</li>
+          <li><strong>Price:</strong> {SALON_LISTING_MONTHLY_PRICE} for service providers</li>
           <li><strong>Includes:</strong> Unlimited service listings and gallery uploads</li>
           <li><strong>Bookings:</strong> Client handoff goes through your WhatsApp number</li>
           <li><strong>Commission:</strong> 0% charged by Stylr SA on bookings handled through this flow</li>
@@ -110,7 +111,7 @@ export default function PartnerGuidelinesPage() {
         <div className={styles.infoBlock} style={{ marginTop: '2rem', background: '#f3e5f5', padding: '1.5rem', borderRadius: '8px' }}>
           <h3 className={styles.blockTitle}>Ready to Join?</h3>
           <p className={styles.paragraph} style={{ marginBottom: '0.5rem' }}>
-            Create your service-provider profile on the R399/month listing plan and start showcasing your services on Stylr SA.
+            Create your service-provider profile on the {SALON_LISTING_MONTHLY_PRICE} listing plan and start showcasing your services on Stylr SA.
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
             <Link href={providerSignupHref}><strong>Register as a Partner</strong></Link>

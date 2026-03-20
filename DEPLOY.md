@@ -22,7 +22,8 @@ This project is deployed directly using Docker Compose on a Linux VPS (e.g., Het
     cp .env.production.template .env
     nano .env
     ```
-    Ensure you set strong passwords for the database, correct API keys for Cloudinary/SendGrid/Google, and accurately set `DOMAIN_NAME` and `NEXT_PUBLIC_API_URL`.
+    Ensure you set strong passwords for the database, correct API keys for Cloudinary/SendGrid/Google, and accurately set `DOMAIN_NAME`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, and `NEXTAUTH_URL`.
+    `NEXT_PUBLIC_SITE_URL` and `NEXTAUTH_URL` must be your live HTTPS domain, never `localhost`.
 
 3.  **Start Services**:
     ```bash

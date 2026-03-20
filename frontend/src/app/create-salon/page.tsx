@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import styles from './CreateSalon.module.css';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
-import { type PlanCode } from '@/constants/plans';
+import { SALON_LISTING_MONTHLY_PRICE, SALON_LISTING_PRICE, type PlanCode } from '@/constants/plans';
 import { buildAuthRoute } from '@/constants/routes';
 import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
@@ -406,7 +406,7 @@ function CreateSalonPageContent() {
           <div className={styles.bannerContent}>
             <h3>Selected Package: Service Listing Plan</h3>
             <p>
-              <strong>R399/month</strong> • 5x visibility boost • 0% commission on bookings
+              <strong>{SALON_LISTING_MONTHLY_PRICE}</strong> • 5x visibility boost • 0% commission on bookings
             </p>
           </div>
         </div>
@@ -433,7 +433,7 @@ function CreateSalonPageContent() {
             <h3 className={styles.sectionTitle}>Payment Confirmation</h3>
             <div className={styles.paymentInstructions}>
               <p><strong>Bank Transfer Details:</strong></p>
-              <p>Please transfer <strong>R399</strong> to the account below before submitting your salon profile.</p>
+              <p>Please transfer <strong>{SALON_LISTING_PRICE}</strong> to the account below before submitting your salon profile.</p>
               <div className={styles.bankDetailsCard}>
                 <div className={styles.bankDetailRow}>
                   <span className={styles.bankDetailLabel}>Account name</span>
@@ -457,7 +457,7 @@ function CreateSalonPageContent() {
                 onChange={(e) => setHasConfirmedPayment(e.target.checked)}
                 className={styles.checkbox}
               />
-              <span>I confirm that I have paid R399 to the bank account above</span>
+              <span>I confirm that I have paid {SALON_LISTING_PRICE} to the bank account above</span>
             </label>
           </div>
         )}

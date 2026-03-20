@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { Salon, Service } from '@/types';
 
-export type BookingStep = 'service' | 'details' | 'confirm';
+export type BookingStep = 'service' | 'contact' | 'schedule' | 'preferences' | 'review';
 export type BookingTimePeriod = 'morning' | 'afternoon' | 'late_afternoon';
 
 export interface BookingPreferences {
@@ -59,8 +59,10 @@ export interface UseBookingFlowReturn {
 
 const STEP_LABELS: Record<BookingStep, string> = {
   service: 'Service',
-  details: 'Details',
-  confirm: 'Confirm',
+  contact: 'Your Info',
+  schedule: 'Date & Time',
+  preferences: 'Preferences',
+  review: 'Review',
 };
 
 const DEPOSIT_RATE = 0.5;
@@ -71,7 +73,7 @@ export function useBookingFlow({
   onClose,
 }: UseBookingFlowOptions): UseBookingFlowReturn {
   const [state, setState] = useState<BookingState>({
-    step: initialService ? 'details' : 'service',
+    step: initialService ? 'contact' : 'service',
     selectedService: initialService ?? null,
     selectedDate: null,
     selectedTimePeriod: null,
@@ -85,7 +87,9 @@ export function useBookingFlow({
   const [error, setError] = useState<string | null>(null);
 
   const visibleSteps = useMemo<BookingStep[]>(
-    () => (state.selectedService ? ['details', 'confirm'] : ['service', 'details', 'confirm']),
+    () => (state.selectedService
+      ? ['contact', 'schedule', 'preferences', 'review']
+      : ['service', 'contact', 'schedule', 'preferences', 'review']),
     [state.selectedService],
   );
 
@@ -108,16 +112,21 @@ export function useBookingFlow({
     switch (state.step) {
       case 'service':
         return Boolean(state.selectedService);
-      case 'details':
+      case 'contact':
         return (
           state.clientFirstName.trim().length >= 2 &&
           state.clientLastName.trim().length >= 2 &&
-          state.clientPhone.replace(/\s/g, '').length >= 10 &&
+          state.clientPhone.replace(/\D/g, '').length >= 10
+        );
+      case 'schedule':
+        return (
           Boolean(state.selectedDate) &&
           Boolean(state.selectedTimePeriod) &&
           Boolean(state.selectedService)
         );
-      case 'confirm':
+      case 'preferences':
+        return true;
+      case 'review':
         return true;
       default:
         return false;

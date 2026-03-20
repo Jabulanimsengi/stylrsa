@@ -2,6 +2,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import styles from './ErrorBoundary.module.css';
+import { isPortalDomError, recoverFromPortalDomError } from '@/lib/portalUtils';
 
 interface Props {
   children: ReactNode;
@@ -17,15 +18,8 @@ interface State {
 
 /**
  * Error Boundary Component
- * 
+ *
  * Catches JavaScript errors in child components and displays a fallback UI.
- * 
- * Usage:
- * ```tsx
- * <ErrorBoundary fallback={<ErrorFallback />}>
- *   <MyComponent />
- * </ErrorBoundary>
- * ```
  */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -39,15 +33,20 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+
+    if (isPortalDomError(error)) {
+      recoverFromPortalDomError('error-boundary');
+    }
+
     this.props.onError?.(error, errorInfo);
   }
 
   componentDidUpdate(prevProps: Props): void {
-    // Reset error state if resetKeys change
     if (this.state.hasError && this.props.resetKeys) {
       const hasChanged = this.props.resetKeys.some(
-        (key, index) => key !== prevProps.resetKeys?.[index]
+        (key, index) => key !== prevProps.resetKeys?.[index],
       );
+
       if (hasChanged) {
         this.setState({ hasError: false, error: null });
       }
@@ -58,19 +57,29 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({ hasError: false, error: null });
   };
 
+  handleReload = (): void => {
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  };
+
   render(): ReactNode {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
+      const isPortalError = this.state.error ? isPortalDomError(this.state.error) : false;
+
       return (
         <div className={styles.errorContainer}>
           <div className={styles.errorContent}>
-            <div className={styles.errorIcon}>⚠️</div>
+            <div className={styles.errorIcon}>Warning</div>
             <h2 className={styles.errorTitle}>Something went wrong</h2>
             <p className={styles.errorMessage}>
-              We're sorry, but something unexpected happened. Please try again.
+              {isPortalError
+                ? 'The page hit a temporary display problem. Reloading should restore things.'
+                : 'We are sorry, but something unexpected happened. Please try again.'}
             </p>
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className={styles.errorDetails}>
@@ -79,9 +88,14 @@ export class ErrorBoundary extends Component<Props, State> {
                 <pre>{this.state.error.stack}</pre>
               </details>
             )}
-            <button onClick={this.handleReset} className={styles.retryButton}>
-              Try Again
-            </button>
+            <div className={styles.errorActions}>
+              <button onClick={this.handleReset} className={styles.retryButton} type="button">
+                Try Again
+              </button>
+              <button onClick={this.handleReload} className={styles.reloadButton} type="button">
+                Reload Page
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -93,8 +107,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
 /**
  * Section Error Boundary
- * 
- * A lighter error boundary for individual sections that doesn't break the whole page.
+ *
+ * A lighter error boundary for individual sections that does not break the whole page.
  */
 export function SectionErrorBoundary({
   children,
@@ -107,10 +121,11 @@ export function SectionErrorBoundary({
     <ErrorBoundary
       fallback={
         <div className={styles.sectionError}>
-          <p>{sectionName} couldn't be loaded.</p>
+          <p>{sectionName} could not be loaded.</p>
           <button
             onClick={() => window.location.reload()}
             className={styles.reloadButton}
+            type="button"
           >
             Reload Page
           </button>

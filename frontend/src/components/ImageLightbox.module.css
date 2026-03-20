@@ -45,10 +45,19 @@
 
 .closeButton {
   position: fixed !important;
+  top: max(1rem, env(safe-area-inset-top, 0px)) !important;
+  right: max(1rem, env(safe-area-inset-right, 0px)) !important;
+  background: rgba(17, 24, 39, 0.88) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35) !important;
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
-  z-index: 1000002 !important;
+  isolation: isolate !important;
+  z-index: 1000005 !important;
 }
 
 .navButton {
@@ -73,11 +82,6 @@
 
 .closeButton:hover, .navButton:hover {
   background-color: rgba(0, 0, 0, 0.8) !important;
-}
-
-.closeButton {
-  top: 1rem !important;
-  right: 1rem !important;
 }
 
 .prevButton {
@@ -194,14 +198,10 @@
   }
 
   .closeButton {
-    top: 1rem !important;
-    right: 1rem !important;
     width: 48px !important;
     height: 48px !important;
     font-size: 1.5rem !important;
-    z-index: 1000004 !important;
-    background-color: rgba(0, 0, 0, 0.8) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    z-index: 1000006 !important;
   }
 
   .dotsContainer {

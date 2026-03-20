@@ -355,15 +355,24 @@
 }
 
 .heroTrustStrip {
-  padding: 0 1.25rem 1.2rem;
+  padding: 1.5rem;
+  background: var(--home-card);
+  border: 1px solid var(--home-border);
+  border-radius: 24px;
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.04);
+  margin: -2rem auto 2rem;
+  width: min(1120px, calc(100% - 2rem));
+  position: relative;
+  z-index: 2;
 }
 
 .heroTrustStripInner {
-  width: min(1120px, 100%);
+  width: 100%;
   margin: 0 auto;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  justify-content: center;
+  gap: 1rem;
 }
 
 .heroTrustPill {
@@ -423,23 +432,39 @@
 
 .editorialBand,
 .mutedBand {
-  padding: clamp(2.25rem, 5vw, 4rem) clamp(1.25rem, 3vw, 2rem);
+  padding: clamp(2.25rem, 5vw, 4rem) clamp(1.25rem, 3vw, 2.5rem);
+  background: var(--home-card);
+  border: 1px solid var(--home-border);
+  border-radius: 24px;
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.04);
+  margin: 2rem auto;
+  width: min(1200px, calc(100% - 2rem));
 }
 
 .mutedBand {
   background: var(--home-surface);
 }
 
+.categoryBand {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  width: min(1200px, calc(100% - 2rem));
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
 .sectionIntro {
-  width: min(1200px, 100%);
-  margin: 0 auto 1.5rem;
+  width: 100%;
+  margin: 0 auto 2rem;
+  text-align: center;
 }
 
 .sectionEyebrow {
   display: inline-block;
-  margin-bottom: 0.7rem;
-  color: var(--home-muted);
-  font-size: 0.74rem;
+  margin-bottom: 0.8rem;
+  color: var(--color-brand, #f51957);
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -447,20 +472,20 @@
 
 .sectionHeading {
   max-width: 760px;
-  margin: 0;
+  margin: 0 auto;
   font-family: var(--font-family-display);
   color: var(--home-text);
-  font-size: clamp(1.8rem, 3vw, 2.5rem);
-  line-height: 1.08;
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  line-height: 1.1;
   font-weight: 700;
   letter-spacing: -0.03em;
 }
 
 .sectionDescription {
   max-width: 720px;
-  margin: 0.8rem 0 0;
+  margin: 1.2rem auto 0;
   color: var(--home-muted);
-  font-size: 1rem;
+  font-size: 1.05rem;
   line-height: 1.8;
 }
 
@@ -570,6 +595,11 @@
   .editorialBand,
   .mutedBand {
     padding: 1.35rem 1rem 2rem;
+  }
+
+  .categoryBand {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
   }
 
   .sectionIntro {

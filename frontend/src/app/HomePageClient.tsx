@@ -15,6 +15,7 @@ import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import { usePagePerformance } from '@/hooks/usePagePerformance';
 import type { Salon } from '@/types';
 import { useNavigationLoading } from '@/context/NavigationLoadingContext';
+import { applyComputedAvailability } from '@/lib/salonAvailability';
 
 type SearchCategorySuggestion = { id: string; title: string; slug: string };
 type SearchVenueSuggestion = { id: string; title: string; slug?: string | null; city: string | null };
@@ -47,17 +48,17 @@ const SEARCHABLE_CATEGORIES = [
 const HERO_TRUST_POINTS = [
   'Verified salons & independent professionals',
   'Real galleries, real prices, real reviews',
-  'Book directly via WhatsApp — zero commission',
+  'Book directly via WhatsApp â€” zero commission',
 ];
 
 const WHY_BOOK_WITH_STYLR = [
   {
     title: 'Verified and approved salons',
-    copy: 'Every salon on Stylr SA goes through an approval process before going live. You browse profiles that show real services, real prices, and real gallery images — not stock photos.',
+    copy: 'Every salon on Stylr SA goes through an approval process before going live. You browse profiles that show real services, real prices, and real gallery images â€” not stock photos.',
   },
   {
     title: 'Designed for South African beauty',
-    copy: "Search for braiders, locticians, nail techs, skin-care specialists, barbers, and more — all in your city or suburb. No irrelevant results.",
+    copy: "Search for braiders, locticians, nail techs, skin-care specialists, barbers, and more â€” all in your city or suburb. No irrelevant results.",
   },
   {
     title: 'Book straight to WhatsApp',
@@ -70,6 +71,19 @@ interface HomePageClientProps {
   initialAvailableNowSalons: Salon[];
 }
 
+function normalizeSalonList(data: unknown): Salon[] {
+  if (Array.isArray(data)) {
+    return data as Salon[];
+  }
+
+  if (data && typeof data === 'object' && 'salons' in data) {
+    const salons = (data as { salons?: unknown }).salons;
+    return Array.isArray(salons) ? (salons as Salon[]) : [];
+  }
+
+  return [];
+}
+
 export default function HomePageClient({
   initialFeaturedSalons,
   initialAvailableNowSalons,
@@ -77,6 +91,9 @@ export default function HomePageClient({
   const router = useRouter();
   const { showPageLoader } = useNavigationLoading();
   usePagePerformance('home');
+  const [featuredSalons, setFeaturedSalons] = useState<Salon[]>(initialFeaturedSalons);
+  const [availableNowSalons, setAvailableNowSalons] = useState<Salon[]>(initialAvailableNowSalons);
+  const [homeSectionsLoading, setHomeSectionsLoading] = useState(false);
 
   // Hero search autocomplete state
   const [heroSearchQuery, setHeroSearchQuery] = useState('');
@@ -94,6 +111,79 @@ export default function HomePageClient({
     showPageLoader();
     router.push(href);
   };
+
+  useEffect(() => {
+    setFeaturedSalons(initialFeaturedSalons);
+    setAvailableNowSalons(initialAvailableNowSalons);
+    setHomeSectionsLoading(false);
+  }, [initialAvailableNowSalons, initialFeaturedSalons]);
+
+  useEffect(() => {
+    const needsFallbackHydration =
+      initialFeaturedSalons.length === 0 || initialAvailableNowSalons.length === 0;
+
+    if (!needsFallbackHydration) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const shouldShowCoordinatedLoading =
+      initialFeaturedSalons.length === 0 && initialAvailableNowSalons.length === 0;
+
+    const hydrateHomeSections = async () => {
+      if (shouldShowCoordinatedLoading) {
+        setHomeSectionsLoading(true);
+      }
+
+      try {
+        const [featuredResult, approvedResult] = await Promise.allSettled([
+          fetch('/api/salons/featured?limit=12', {
+            credentials: 'include',
+            cache: 'no-store',
+            signal: controller.signal,
+          }),
+          fetch('/api/salons/approved?limit=48', {
+            credentials: 'include',
+            cache: 'no-store',
+            signal: controller.signal,
+          }),
+        ]);
+
+        let nextFeaturedSalons = initialFeaturedSalons;
+        let nextAvailableNowSalons = initialAvailableNowSalons;
+
+        if (featuredResult.status === 'fulfilled' && featuredResult.value.ok) {
+          const data = await featuredResult.value.json();
+          nextFeaturedSalons = applyComputedAvailability(normalizeSalonList(data));
+        } else if (featuredResult.status === 'fulfilled') {
+          console.error('Featured salons fallback request failed:', featuredResult.value.status);
+        } else if (!(featuredResult.reason instanceof Error && featuredResult.reason.name === 'AbortError')) {
+          console.error('Failed to hydrate featured salons on homepage:', featuredResult.reason);
+        }
+
+        if (approvedResult.status === 'fulfilled' && approvedResult.value.ok) {
+          const data = await approvedResult.value.json();
+          const approvedSalons = applyComputedAvailability(normalizeSalonList(data));
+          nextAvailableNowSalons = approvedSalons
+            .filter((salon) => salon.isAvailableNow)
+            .slice(0, 12);
+        } else if (approvedResult.status === 'fulfilled') {
+          console.error('Approved salons fallback request failed:', approvedResult.value.status);
+        } else if (!(approvedResult.reason instanceof Error && approvedResult.reason.name === 'AbortError')) {
+          console.error('Failed to hydrate approved salons on homepage:', approvedResult.reason);
+        }
+
+        setFeaturedSalons(nextFeaturedSalons);
+        setAvailableNowSalons(nextAvailableNowSalons);
+      } finally {
+        setHomeSectionsLoading(false);
+      }
+    };
+
+    void hydrateHomeSections();
+
+    return () => controller.abort();
+  }, [initialAvailableNowSalons, initialFeaturedSalons]);
 
   // Hero search autocomplete effect
   useEffect(() => {
@@ -234,7 +324,7 @@ export default function HomePageClient({
             </span>
           </h1>
           <p className={styles.heroDescription}>
-            Search verified salons and beauty professionals near you. Compare prices, browse real work galleries, and connect directly — no apps, no middlemen.
+            Search verified salons and beauty professionals near you. Compare prices, browse real work galleries, and connect directly â€” no apps, no middlemen.
           </p>
 
           <div className={styles.heroSearchContainer}>
@@ -248,7 +338,7 @@ export default function HomePageClient({
               </div>
               <input
                 type="text"
-                placeholder="Search by treatment, salon name, or city…"
+                placeholder="Search by treatment, salon name, or cityâ€¦"
                 className={styles.heroSearchInput}
                 value={heroSearchQuery}
                 onChange={(e) => setHeroSearchQuery(e.target.value)}
@@ -308,10 +398,10 @@ export default function HomePageClient({
                               navigateWithPageLoader(getSalonUrl(venue));
                             }}
                           >
-                            <span className={styles.suggestionIcon}>🏠</span>
+                            <span className={styles.suggestionIcon}>ðŸ </span>
                             <div className={styles.suggestionTextWrapper}>
                               <span className={styles.heroSuggestionTitle}>{venue.title}</span>
-                              {venue.city && <span className={styles.suggestionSubtitle}> • {venue.city}</span>}
+                              {venue.city && <span className={styles.suggestionSubtitle}> â€¢ {venue.city}</span>}
                             </div>
                           </li>
                         ))}
@@ -335,7 +425,7 @@ export default function HomePageClient({
                               navigateWithPageLoader(`/salons?service=${encodeURIComponent(service.title)}`);
                             }}
                           >
-                            <span className={styles.suggestionIcon}>✨</span>
+                            <span className={styles.suggestionIcon}>âœ¨</span>
                             <span className={styles.heroSuggestionTitle}>{service.title}</span>
                           </li>
                         ))}
@@ -359,7 +449,7 @@ export default function HomePageClient({
                               navigateWithPageLoader(`/salons?category=${category.slug}`);
                             }}
                           >
-                            <span className={styles.suggestionIcon}>🔍</span>
+                            <span className={styles.suggestionIcon}>ðŸ”</span>
                             <span className={styles.heroSuggestionTitle}>{category.title}</span>
                           </li>
                         ))}
@@ -382,30 +472,25 @@ export default function HomePageClient({
         </div>
       </section>
 
-      <section className={styles.editorialBand}>
-        <div className={styles.sectionIntro}>
-          <span className={styles.sectionEyebrow}>Browse by treatment</span>
-          <h2 className={styles.sectionHeading}>Browse 16 beauty categories. Find exactly what you&apos;re looking for.</h2>
-          <p className={styles.sectionDescription}>
-            Whether it&apos;s a blowout, fresh nails, a shape-up, or a full bridal look — tap your treatment and go straight to salons that specialise in it.
-          </p>
-        </div>
+      <section className={`${styles.editorialBand} ${styles.categoryBand}`}>
         <ServiceCategoryCircles />
       </section>
 
       <SalonCarouselSection
         title="Featured Salons"
-        salons={initialFeaturedSalons}
+        salons={featuredSalons}
         viewAllLink="/salons"
         showViewAll
+        loading={homeSectionsLoading}
       />
 
       <SalonCarouselSection
         title="Available Now"
-        salons={initialAvailableNowSalons}
+        salons={availableNowSalons}
         viewAllLink="/salons?openNow=true"
         showViewAll
         surface="muted"
+        loading={homeSectionsLoading}
       />
 
       <section className={`${styles.editorialBand} ${styles.mutedBand}`}>
@@ -413,7 +498,7 @@ export default function HomePageClient({
           <span className={styles.sectionEyebrow}>Why thousands of South Africans use Stylr SA</span>
           <h2 className={styles.sectionHeading}>Stop guessing. Start booking with confidence.</h2>
           <p className={styles.sectionDescription}>
-            Stylr SA gives you verified salon profiles, transparent pricing, and a direct line to the professionals who do the work — all in one place.
+            Stylr SA gives you verified salon profiles, transparent pricing, and a direct line to the professionals who do the work â€” all in one place.
           </p>
         </div>
 

@@ -775,10 +775,19 @@
 }
 
 /* Mobile Actions */
-.mobileActions {
+.mobileLeading,
+.mobileTrailing {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  min-width: 58px;
+}
+
+.mobileLeading {
+  justify-content: flex-start;
+}
+
+.mobileTrailing {
+  justify-content: flex-end;
 }
 
 /* Icon Only Buttons - Enhanced */
@@ -1043,14 +1052,18 @@
     z-index: 45;
     height: 60px;
     padding: 0 1rem;
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(58px, auto) 1fr minmax(58px, auto);
     align-items: center;
-    justify-content: space-between;
     background: rgba(255, 255, 255, 0.95);
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+  }
+
+  .brand {
+    justify-self: center;
   }
 
   .sidebar {
@@ -1124,6 +1137,11 @@
     height: 56px;
   }
 
+  .mobileLeading,
+  .mobileTrailing {
+    min-width: 54px;
+  }
+
   .brand {
     font-size: 0.95rem;
   }
@@ -1193,6 +1211,11 @@
   .mobileBar {
     padding: 0 0.5rem;
     height: 52px;
+  }
+
+  .mobileLeading,
+  .mobileTrailing {
+    min-width: 50px;
   }
 
   .brand {

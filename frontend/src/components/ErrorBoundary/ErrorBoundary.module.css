@@ -86,6 +86,13 @@
   transform: translateY(0);
 }
 
+.errorActions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 /* Section Error - Lighter version */
 .sectionError {
   display: flex;
@@ -106,6 +113,9 @@
 }
 
 .reloadButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: var(--space-xs) var(--space-md);
   background: transparent;
   color: var(--color-primary);

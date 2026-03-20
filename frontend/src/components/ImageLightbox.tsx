@@ -6,6 +6,7 @@ import styles from './ImageLightbox.module.css';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner/LoadingSpinner';
 import MobileCloseButton from './MobileCloseButton';
+import usePortalHost from '@/hooks/usePortalHost';
 
 interface ImageLightboxProps {
   images: string[];
@@ -47,12 +48,7 @@ export default function ImageLightbox({ images, initialImageIndex = 0, onClose }
   const [currentIndex, setCurrentIndex] = useState(() => getSafeIndex(initialImageIndex));
   const [isLoading, setIsLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
+  const portalHost = usePortalHost();
 
   const goToPrevious = useCallback(() => {
     setCurrentIndex((prevIndex) =>
@@ -122,7 +118,7 @@ export default function ImageLightbox({ images, initialImageIndex = 0, onClose }
     setImageError(true);
   };
 
-  if (!sanitizedImages.length || !mounted) return null;
+  if (!sanitizedImages.length || !portalHost) return null;
 
   const currentImage = sanitizedImages[currentIndex];
 
@@ -176,5 +172,5 @@ export default function ImageLightbox({ images, initialImageIndex = 0, onClose }
     </div>
   );
 
-  return createPortal(lightboxContent, document.body);
+  return createPortal(lightboxContent, portalHost);
 }

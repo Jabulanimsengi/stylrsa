@@ -13,6 +13,7 @@ import styles from './SalonCard.module.css';
 import VerificationBadge from './VerificationBadge/VerificationBadge';
 import { useSalonImpression } from '@/hooks/useSalonImpression';
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
+import { getSalonAvailability } from '@/lib/salonAvailability';
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
 
@@ -59,9 +60,37 @@ function SalonCard({
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [isCardNavigating, setIsCardNavigating] = useState(false);
+  const [isAvailableNow, setIsAvailableNow] = useState(Boolean(salon.isAvailableNow));
   const { showPageLoader } = useNavigationLoading();
 
   useEffect(() => () => setIsCardNavigating(false), []);
+
+  useEffect(() => {
+    setIsAvailableNow(Boolean(salon.isAvailableNow));
+
+    const syncAvailability = () => {
+      const { hoursRecord, isOpen } = getSalonAvailability(salon.operatingHours);
+      setIsAvailableNow(hoursRecord ? isOpen : Boolean(salon.isAvailableNow));
+    };
+
+    syncAvailability();
+
+    const now = new Date();
+    const nextMinuteDelay = Math.max((60 - now.getSeconds()) * 1000 - now.getMilliseconds(), 0);
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    const timeoutId = setTimeout(() => {
+      syncAvailability();
+      intervalId = setInterval(syncAvailability, 60_000);
+    }, nextMinuteDelay);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [salon.isAvailableNow, salon.operatingHours]);
 
   const handleImpressionTracked = useCallback(() => {
     if (onViewCountUpdate && salon.id) {
@@ -156,11 +185,11 @@ function SalonCard({
 
           {/* Open / Closed badge */}
           <div
-            className={`${styles.availabilityBadge} ${salon.isAvailableNow ? styles.openBadge : styles.closedBadge}`}
-            aria-label={salon.isAvailableNow ? 'Open now' : 'Closed'}
+            className={`${styles.availabilityBadge} ${isAvailableNow ? styles.openBadge : styles.closedBadge}`}
+            aria-label={isAvailableNow ? 'Open now' : 'Closed'}
           >
             <span className={styles.availabilityDot} />
-            {salon.isAvailableNow ? 'Open now' : 'Closed'}
+            {isAvailableNow ? 'Open now' : 'Closed'}
           </div>
 
           <OptimizedImage
@@ -250,11 +279,4 @@ function SalonCard({
   );
 }
 
-export default memo(SalonCard, (prev, next) =>
-  prev.salon.id === next.salon.id &&
-  prev.salon.isFavorited === next.salon.isFavorited &&
-  prev.salon.viewCount === next.salon.viewCount &&
-  prev.compact === next.compact &&
-  prev.showFavorite === next.showFavorite &&
-  prev.showPromoted === next.showPromoted
-);
+export default memo(SalonCard);

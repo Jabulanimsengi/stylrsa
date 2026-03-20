@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import HomePageClient from './HomePageClient';
 import { getInternalBackendOrigin } from '@/lib/server/backend-origin';
+import { applyComputedAvailability } from '@/lib/salonAvailability';
 
 // Cache the homepage and revalidate in the background to keep TTFB stable.
 export const revalidate = 300;
@@ -52,13 +53,34 @@ function normalizeSalonList(data: unknown): any[] {
   return [];
 }
 
+function isLocalOrigin(origin: string): boolean {
+  return origin.includes('localhost') || origin.includes('127.0.0.1');
+}
+
+function allowLocalBackendFetchInDev(): boolean {
+  return (
+    process.env.ENABLE_LOCAL_BACKEND_FETCH === 'true' ||
+    process.env.NEXT_PUBLIC_ENABLE_LOCAL_BACKEND_FETCH === 'true'
+  );
+}
+
 // Fetch initial data server-side
 async function getInitialData() {
   const apiUrl = getInternalBackendOrigin();
   const isBuildPhase = process.env.IS_BUILD_PHASE === 'true' || process.env.NEXT_PHASE === 'phase-production-build';
+  const isDevPhase = process.env.NODE_ENV !== 'production';
+  const isLocalBackend = isLocalOrigin(apiUrl);
 
   // Only skip fetching during build time when API is localhost
-  if (isBuildPhase && (apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1'))) {
+  if (isBuildPhase && isLocalBackend) {
+    return {
+      featuredSalons: [] as any[],
+      availableNowSalons: [] as any[],
+    };
+  }
+
+  // In development, skip server-side homepage fetches against localhost unless explicitly opted in.
+  if (isDevPhase && isLocalBackend && !allowLocalBackendFetchInDev()) {
     return {
       featuredSalons: [] as any[],
       availableNowSalons: [] as any[],
@@ -68,16 +90,17 @@ async function getInitialData() {
   console.log('Fetching initial data from:', apiUrl);
   try {
     // Fetch salon data in parallel for faster loading
-    const [featuredSalonsRes, availableNowRes] = await Promise.all([
-      // Fetch featured salons - admin-weighted ordering, includes closed salons too
-      fetch(`${apiUrl}/api/salons/featured`, {
+    const [featuredSalonsRes, approvedSalonsRes] = await Promise.all([
+      // Fetch featured salons - admin-weighted ordering, includes closed salons too.
+      fetch(`${apiUrl}/api/salons/featured?limit=12`, {
         next: { revalidate: 300 },
+        signal: AbortSignal.timeout(4000),
       }),
-      // Fetch available now salons - 5 minute revalidation (highly dynamic)
-      fetch(`${apiUrl}/api/salons/approved?openNow=true&limit=12`, {
+      // Fetch a broader approved pool and derive "available now" locally so status stays in sync.
+      fetch(`${apiUrl}/api/salons/approved?limit=48`, {
         next: { revalidate: 300 },
+        signal: AbortSignal.timeout(4000),
       }),
-      // Fetch mobile salons - 1 hour revalidation
     ]);
 
     const featuredSalonsData = featuredSalonsRes.ok
@@ -86,12 +109,17 @@ async function getInitialData() {
 
     if (!featuredSalonsRes.ok) console.error('Featured salons fetch failed:', featuredSalonsRes.status);
 
-    const availableNowData = availableNowRes.ok
-      ? await availableNowRes.json()
+    const approvedSalonsData = approvedSalonsRes.ok
+      ? await approvedSalonsRes.json()
       : { salons: [] };
 
-    const featuredSalons = normalizeSalonList(featuredSalonsData);
-    const availableNowSalons = normalizeSalonList(availableNowData);
+    if (!approvedSalonsRes.ok) console.error('Approved salons fetch failed:', approvedSalonsRes.status);
+
+    const featuredSalons = applyComputedAvailability(normalizeSalonList(featuredSalonsData));
+    const approvedSalons = applyComputedAvailability(normalizeSalonList(approvedSalonsData));
+    const availableNowSalons = approvedSalons
+      .filter((salon) => salon.isAvailableNow)
+      .slice(0, 12);
 
     console.log('Fetched salons counts:', {
       featured: featuredSalons.length,

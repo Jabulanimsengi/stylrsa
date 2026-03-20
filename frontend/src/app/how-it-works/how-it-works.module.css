@@ -1,0 +1,452 @@
+.pageShell {
+  --how-bg: #fffafc;
+  --how-surface: rgba(255, 255, 255, 0.92);
+  --how-surface-soft: #fff4f8;
+  --how-border: rgba(29, 29, 31, 0.08);
+  --how-border-strong: rgba(29, 29, 31, 0.14);
+  --how-text: var(--color-text-strong);
+  --how-muted: #667085;
+  --how-shadow: 0 20px 48px rgba(17, 24, 39, 0.08);
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(245, 25, 87, 0.1), transparent 28%),
+    radial-gradient(circle at 88% 8%, rgba(245, 25, 87, 0.08), transparent 20%),
+    var(--how-bg);
+}
+
+[data-theme='dark'] .pageShell {
+  --how-bg: #0f1014;
+  --how-surface: rgba(25, 26, 34, 0.92);
+  --how-surface-soft: #17131b;
+  --how-border: rgba(245, 245, 247, 0.1);
+  --how-border-strong: rgba(245, 245, 247, 0.18);
+  --how-muted: rgba(245, 245, 247, 0.72);
+  --how-shadow: 0 26px 54px rgba(0, 0, 0, 0.34);
+}
+
+.container {
+  width: min(1160px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: clamp(1.5rem, 3vw, 2rem) 0 5rem;
+}
+
+.heroSection,
+.section,
+.ctaSection {
+  margin-top: 1.5rem;
+}
+
+.heroSection {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.heroPanel,
+.infoCard,
+.section,
+.ctaPanel,
+.includePanel {
+  border: 1px solid var(--how-border);
+  border-radius: 28px;
+  background: var(--how-surface);
+  box-shadow: var(--how-shadow);
+  backdrop-filter: blur(10px);
+}
+
+.heroPanel,
+.ctaPanel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent 40%),
+    linear-gradient(135deg, rgba(245, 25, 87, 0.08), transparent 58%),
+    var(--how-surface);
+}
+
+.heroPanel {
+  padding: clamp(1.75rem, 4vw, 3rem);
+}
+
+.eyebrow,
+.sectionEyebrow,
+.cardBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-brand, var(--color-primary));
+}
+
+.title {
+  margin: 0.9rem 0 0;
+  max-width: 12ch;
+  font-family: var(--font-family-base);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  color: var(--how-text);
+}
+
+.subtitle {
+  max-width: 60ch;
+  margin: 1.1rem 0 0;
+  font-size: 1.02rem;
+  line-height: 1.8;
+  color: var(--how-muted);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-top: 2rem;
+}
+
+.summaryCard {
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--how-border);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--how-surface-soft) 78%, white);
+}
+
+.summaryLabel {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--how-muted);
+}
+
+.summaryValue {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--how-text);
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 2rem;
+}
+
+.primaryAction,
+.secondaryAction,
+.cardAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.2rem;
+  padding: 0.9rem 1.35rem;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base),
+    background-color var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.primaryAction,
+.cardAction {
+  background: var(--btn-primary-bg, var(--color-primary));
+  color: var(--btn-primary-text, var(--color-text-inverse)) !important;
+  -webkit-text-fill-color: var(--btn-primary-text, var(--color-text-inverse));
+  box-shadow: 0 16px 30px rgba(245, 25, 87, 0.18);
+}
+
+.primaryAction:hover,
+.cardAction:hover {
+  transform: translateY(-2px);
+  background: var(--btn-primary-hover, var(--color-primary-dark));
+  box-shadow: 0 18px 34px rgba(245, 25, 87, 0.24);
+}
+
+.secondaryAction {
+  border: 1px solid var(--how-border-strong);
+  background: transparent;
+  color: var(--how-text);
+}
+
+.secondaryAction:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-brand) 28%, var(--how-border-strong));
+  background: color-mix(in srgb, var(--how-surface-soft) 84%, transparent);
+}
+
+.infoCard {
+  padding: 1.5rem;
+  position: sticky;
+  top: 88px;
+}
+
+.cardTitle {
+  margin: 0.9rem 0 0;
+  font-family: var(--font-family-base);
+  font-size: clamp(1.7rem, 2.8vw, 2.1rem);
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--how-text);
+}
+
+.cardText {
+  margin: 0.8rem 0 0;
+  font-size: 0.98rem;
+  line-height: 1.7;
+  color: var(--how-muted);
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  margin-top: 1.4rem;
+}
+
+.price {
+  font-size: clamp(3rem, 6vw, 4.3rem);
+  line-height: 0.94;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--how-text);
+}
+
+.priceSuffix {
+  font-size: 1rem;
+  color: var(--how-muted);
+}
+
+.metaList {
+  list-style: none;
+  padding: 0;
+  margin: 1.25rem 0 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.metaList li {
+  position: relative;
+  padding-left: 1.15rem;
+  color: var(--how-muted);
+  line-height: 1.6;
+}
+
+.metaList li::before {
+  content: "";
+  position: absolute;
+  top: 0.6rem;
+  left: 0;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--color-brand, var(--color-primary));
+}
+
+.cardAction {
+  width: 100%;
+  margin-top: 1.3rem;
+}
+
+.section {
+  padding: clamp(1.4rem, 3vw, 2.3rem);
+}
+
+.sectionHeading {
+  max-width: 760px;
+}
+
+.sectionHeading h2 {
+  margin: 0.8rem 0 0;
+  font-family: var(--font-family-base);
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--how-text);
+}
+
+.sectionHeading p {
+  margin: 0.95rem 0 0;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--how-muted);
+}
+
+.stepsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.8rem;
+}
+
+.stepCard {
+  position: relative;
+  padding: 4rem 1.35rem 1.35rem;
+  border: 1px solid var(--how-border);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--how-surface-soft) 72%, white);
+}
+
+.stepNumber {
+  position: absolute;
+  top: 1.2rem;
+  left: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  padding: 0 0.6rem;
+  border-radius: 999px;
+  background: rgba(245, 25, 87, 0.1);
+  color: var(--color-brand, var(--color-primary));
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.stepCard h3 {
+  margin: 0;
+  font-family: var(--font-family-base);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  color: var(--how-text);
+  letter-spacing: -0.02em;
+}
+
+.stepCard p {
+  margin: 0.85rem 0 0;
+  color: var(--how-muted);
+  line-height: 1.75;
+}
+
+.includePanel {
+  margin-top: 1.8rem;
+  padding: clamp(1.4rem, 3vw, 2rem);
+  background:
+    linear-gradient(135deg, rgba(245, 25, 87, 0.08), transparent 54%),
+    var(--how-surface);
+}
+
+.includeList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem 1.2rem;
+}
+
+.includeList li {
+  position: relative;
+  padding-left: 1.2rem;
+  color: var(--how-text);
+  line-height: 1.65;
+}
+
+.includeList li::before {
+  content: "";
+  position: absolute;
+  top: 0.58rem;
+  left: 0;
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 999px;
+  background: var(--color-brand, var(--color-primary));
+}
+
+.ctaPanel {
+  padding: clamp(2rem, 4vw, 3rem);
+  text-align: center;
+}
+
+.ctaPanel h2 {
+  margin: 0.8rem 0 0;
+  font-family: var(--font-family-base);
+  font-size: clamp(1.9rem, 3.8vw, 2.8rem);
+  line-height: 1.08;
+  font-weight: 700;
+  color: var(--how-text);
+}
+
+.ctaPanel p {
+  max-width: 42rem;
+  margin: 1rem auto 0;
+  color: var(--how-muted);
+  line-height: 1.8;
+}
+
+.ctaPanel .heroActions {
+  justify-content: center;
+}
+
+@media (max-width: 1024px) {
+  .heroSection,
+  .stepsGrid,
+  .includeList {
+    grid-template-columns: 1fr;
+  }
+
+  .infoCard {
+    position: static;
+  }
+
+  .summaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    width: min(100% - 1rem, 1160px);
+    padding-bottom: 4rem;
+  }
+
+  .heroPanel,
+  .infoCard,
+  .section,
+  .includePanel,
+  .ctaPanel {
+    padding: 1.3rem;
+    border-radius: 24px;
+  }
+
+  .title {
+    max-width: 100%;
+    font-size: clamp(2.15rem, 10vw, 3rem);
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroActions {
+    flex-direction: column;
+  }
+
+  .primaryAction,
+  .secondaryAction,
+  .cardAction {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    width: min(100% - 0.75rem, 1160px);
+  }
+
+  .pageShell {
+    background:
+      radial-gradient(circle at top left, rgba(245, 25, 87, 0.12), transparent 34%),
+      var(--how-bg);
+  }
+}

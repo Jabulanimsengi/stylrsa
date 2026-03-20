@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { SALON_LISTING_MONTHLY_PRICE } from '@/constants/plans';
 import styles from '../info-page.module.css';
 
 export const metadata: Metadata = {
@@ -97,7 +98,7 @@ export default function TermsPage() {
 
         <h3 className={styles.blockTitle}>5.2 Payments and Fees</h3>
         <p className={styles.paragraph}>
-          Service-provider listings are offered on a flat R399/month subscription for salons and independent professionals listing services on Stylr SA. Any applicable fees will be clearly disclosed before completion.
+          Service-provider listings are offered on a flat {SALON_LISTING_MONTHLY_PRICE} subscription for salons and independent professionals listing services on Stylr SA. Any applicable fees will be clearly disclosed before completion.
         </p>
 
         <h2 className={styles.sectionTitle}>6. Service Provider Obligations</h2>

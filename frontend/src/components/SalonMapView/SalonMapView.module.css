@@ -7,7 +7,7 @@
     bottom: 7rem;
     right: 0.75rem;
     z-index: 100;
-    display: flex;
+    display: none;
     align-items: center;
     gap: 0.25rem;
 }
@@ -70,7 +70,7 @@
     box-shadow: -2px 3px 12px rgba(29, 29, 31, 0.35);
     cursor: pointer;
     z-index: 100;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;

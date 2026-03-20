@@ -9,9 +9,11 @@ import { setupPortalErrorHandling } from '@/lib/portalUtils';
  */
 export default function ClientInit() {
   useEffect(() => {
+    let cleanupPortalHandling: () => void = () => {};
+
     try {
       // Set up portal error handling to prevent crashes
-      setupPortalErrorHandling();
+      cleanupPortalHandling = setupPortalErrorHandling();
       
       // Clean up old zoom settings that were causing CLS issues
       // This removes any stored zoom preferences from previous versions
@@ -23,6 +25,10 @@ export default function ClientInit() {
       // Silently fail if initialization fails (e.g., chunk loading error)
       console.warn('ClientInit failed to initialize:', error);
     }
+
+    return () => {
+      cleanupPortalHandling();
+    };
   }, []);
 
   return null;

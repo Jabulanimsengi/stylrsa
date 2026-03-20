@@ -51,6 +51,7 @@ const nextConfig: NextConfig = {
   images: {
     // Optimize images for better LCP - serve modern formats
     formats: ['image/avif', 'image/webp'],
+    qualities: [75, 85],
     // Optimized device sizes for responsive images
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256],

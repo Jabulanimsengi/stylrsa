@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { apiJson, apiFetch } from '@/lib/api';
 import type { Service, TeamMember } from '@/types';
 import styles from './TeamMembers.module.css';
+import usePortalHost from '@/hooks/usePortalHost';
 
 interface TeamMembersProps {
   salonId: string;
@@ -62,12 +63,7 @@ function TeamMemberModal({
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
   const profileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
+  const portalHost = usePortalHost();
 
   // Reset form when modal opens/closes or editing member changes
   useEffect(() => {
@@ -237,7 +233,7 @@ function TeamMemberModal({
     }
   };
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen || !portalHost) return null;
 
   const modalContent = (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -428,7 +424,7 @@ function TeamMemberModal({
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  return createPortal(modalContent, portalHost);
 }
 
 export default function TeamMembers({ salonId, isEditable = false }: TeamMembersProps) {

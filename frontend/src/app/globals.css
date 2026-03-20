@@ -1411,7 +1411,8 @@ h3 {
 
   /* Ensure readability */
   .main-content {
-    padding: var(--space-md);
+    padding-left: 0;
+    padding-right: 0;
     padding-top: calc(var(--app-shell-top-gap) + var(--space-md));
   }
 }
@@ -1419,6 +1420,8 @@ h3 {
 /* Mobile bottom navigation spacing */
 @media (max-width: 768px) {
   .main-content {
+    padding-left: 0;
+    padding-right: 0;
     padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   }
 }

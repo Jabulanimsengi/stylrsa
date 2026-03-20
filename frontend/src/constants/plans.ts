@@ -26,11 +26,13 @@ export interface AppPlan {
 }
 
 export const SALON_LISTING_PLAN_CODE: PlanCode = 'PREMIUM';
-export const SALON_LISTING_PRICE_CENTS = 39900;
+export const SALON_LISTING_PRICE_CENTS = 29900;
+export const SALON_LISTING_PRICE = 'R299';
+export const SALON_LISTING_MONTHLY_PRICE = `${SALON_LISTING_PRICE}/month`;
 
 // Single salon listing plan details for the public pricing page.
 export const PLAN_FEATURES: PlanFeature[] = [
-  { name: 'Monthly listing fee', value: 'R399/month' },
+  { name: 'Monthly listing fee', value: SALON_LISTING_MONTHLY_PRICE },
   { name: 'Service listings', value: 'Unlimited' },
   { name: 'Gallery images', value: 'Unlimited' },
   { name: 'Short video uploads', value: true },
@@ -47,7 +49,7 @@ export const APP_PLANS: AppPlan[] = [
   {
     code: 'PREMIUM',
     name: 'Service Listing Plan',
-    price: 'R399',
+    price: SALON_LISTING_PRICE,
     priceCents: SALON_LISTING_PRICE_CENTS,
     maxListings: 'Unlimited',
     visibilityWeight: 5,

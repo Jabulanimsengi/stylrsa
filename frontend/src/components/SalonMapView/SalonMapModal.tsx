@@ -10,6 +10,7 @@ import Link from 'next/link';
 import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 import { getSalonUrl } from '@/utils/salonUrl';
 import MobileCloseButton from '../MobileCloseButton';
+import usePortalHost from '@/hooks/usePortalHost';
 
 // Set Mapbox access token from runtime env only.
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
@@ -108,6 +109,7 @@ interface GeocodeSuggestion {
 }
 
 export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
+    const portalHost = usePortalHost();
     const [allSalons, setAllSalons] = useState<Salon[]>([]);
     const [loading, setLoading] = useState(true);
     const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
@@ -414,7 +416,7 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
         };
     }, [isOpen, onClose]);
 
-    if (!isOpen) return null;
+    if (!isOpen || !portalHost) return null;
 
     const modalContent = (
         <div className={styles.modalOverlay} onClick={onClose}>
@@ -590,5 +592,5 @@ export default function SalonMapModal({ isOpen, onClose }: SalonMapModalProps) {
         </div>
     );
 
-    return typeof window !== 'undefined' ? createPortal(modalContent, document.body) : null;
+    return createPortal(modalContent, portalHost);
 }
