@@ -239,14 +239,15 @@ type NotificationPayloadMap = {
 /**
  * Show notification based on type
  */
-export async function showNotificationByType(
-  type: NotificationType,
-  data: NotificationPayloadMap[NotificationType]
+export async function showNotificationByType<T extends NotificationType>(
+  type: T,
+  data: NotificationPayloadMap[T]
 ): Promise<void> {
-  const notificationConfigs: Record<
-    NotificationType,
-    (data: NotificationPayloadMap[NotificationType]) => { title: string; options: NotificationOptions }
-  > = {
+  const notificationConfigs: {
+    [K in NotificationType]: (
+      data: NotificationPayloadMap[K]
+    ) => { title: string; options: NotificationOptions };
+  } = {
     [NotificationTypes.NEW_BOOKING]: (data) => ({
       title: 'New Booking',
       options: {

@@ -343,6 +343,23 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
       const freshaReviewsValue = formData.freshaReviewsUrl?.trim();
       const booksyReviewsValue = formData.booksyReviewsUrl?.trim();
 
+      // Compose operatingHours as array entries compatible with backend DTO
+      const hoursArray = DAYS
+        .filter((d) => hours[d].isOpen)
+        .map((d) => ({
+          day: d,
+          open: hours[d].open,
+          close: hours[d].close,
+        }));
+
+      const normalizedMobileFee =
+        formData.bookingType !== 'ONSITE'
+          ? (() => {
+            const feeNum = Number(formData.mobileFee);
+            return Number.isFinite(feeNum) && feeNum >= 0 ? feeNum : 0;
+          })()
+          : 0;
+
       const payload = {
         ...formData,
         whatsapp: cleanedWhatsapp || null,
@@ -356,26 +373,12 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
         logo: finalLogoUrl,
         latitude: formData.latitude !== '' ? Number(formData.latitude) : undefined,
         longitude: formData.longitude !== '' ? Number(formData.longitude) : undefined,
+        operatingHours: hoursArray,
+        operatingDays: hoursArray.map((entry) => entry.day),
+        mobileFee: normalizedMobileFee,
+        offersMobile: formData.bookingType !== 'ONSITE',
       };
-      // Compose operatingHours as array entries compatible with backend DTO
-      const hoursArray = DAYS
-        .filter((d) => hours[d].isOpen)
-        .map((d) => ({
-          day: d,
-          open: hours[d].open,
-          close: hours[d].close,
-        }));
-      payload.operatingHours = hoursArray;
-      payload.operatingDays = hoursArray.map((entry) => entry.day);
 
-      // Normalize mobileFee number
-      if (payload.bookingType !== 'ONSITE') {
-        const feeNum = Number(payload.mobileFee);
-        payload.mobileFee = Number.isFinite(feeNum) && feeNum >= 0 ? feeNum : 0;
-        payload.offersMobile = true;
-      } else {
-        payload.offersMobile = false;
-      }
       const parsed = SalonUpdateSchema.partial().safeParse(payload);
       if (!parsed.success) {
         console.error('❌ Validation failed:', parsed.error.issues);
