@@ -1,8 +1,10 @@
 'use client';
 
 import type { Dispatch, SetStateAction } from 'react';
-import { FaHeart, FaGlobe, FaMapMarkerAlt, FaWhatsapp } from 'react-icons/fa';
-import { Salon, Service, GalleryImage, Review } from '@/types';
+import type { IconType } from 'react-icons';
+import { FaGoogle, FaHeart, FaGlobe, FaMapMarkerAlt, FaStar, FaWhatsapp, FaFacebookF, FaInstagram } from 'react-icons/fa';
+import { FaTiktok } from 'react-icons/fa6';
+import { Salon, Service, GalleryImage } from '@/types';
 import styles from './SalonProfile.module.css';
 import booksyStyles from './BooksyLayout.module.css';
 import mobileStyles from './MobileSalonProfile.module.css';
@@ -12,7 +14,7 @@ import TeamMembers from '@/components/TeamMembers/TeamMembers';
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import {
   HeroGallery,
-  BooksyReviewsSection,
+  ExternalReviewsSection,
   StickyTabNavigation,
   AboutSection,
 } from './BooksyComponents';
@@ -23,7 +25,6 @@ interface DesktopSalonProfileProps {
   salon: Salon;
   services: Service[];
   galleryImages: GalleryImage[];
-  reviews: Review[];
   hoursRecord: Record<string, string> | null;
   todayLabel: string;
   orderedOperatingDays: string[];
@@ -36,13 +37,13 @@ interface DesktopSalonProfileProps {
   openLightbox: (images: string[], index: number) => void;
   onToggleFavorite: () => void;
   onBookServices: (selectedServices: Service[]) => void;
+  isBookingJourneyActive: boolean;
 }
 
 export default function DesktopSalonProfile({
   salon,
   services,
   galleryImages,
-  reviews,
   hoursRecord,
   todayLabel,
   orderedOperatingDays,
@@ -55,6 +56,7 @@ export default function DesktopSalonProfile({
   openLightbox,
   onToggleFavorite,
   onBookServices,
+  isBookingJourneyActive,
 }: DesktopSalonProfileProps) {
   const galleryImageUrls = galleryImages.map((img) => img.imageUrl);
   const bookingTypeLabel = salon.bookingType === 'BOTH'
@@ -62,6 +64,16 @@ export default function DesktopSalonProfile({
     : salon.bookingType === 'MOBILE'
       ? 'Mobile bookings available'
       : 'In-salon bookings';
+  const socialLinks = [
+    salon.facebookUrl ? { href: salon.facebookUrl, label: 'Facebook', icon: FaFacebookF } : null,
+    salon.instagramUrl ? { href: salon.instagramUrl, label: 'Instagram', icon: FaInstagram } : null,
+    salon.tiktokUrl ? { href: salon.tiktokUrl, label: 'TikTok', icon: FaTiktok } : null,
+  ].filter(Boolean) as Array<{ href: string; label: string; icon: IconType }>;
+  const externalReviewLinks = [
+    salon.googleReviewsUrl ? { href: salon.googleReviewsUrl, label: 'Google reviews', icon: FaGoogle } : null,
+    salon.freshaReviewsUrl ? { href: salon.freshaReviewsUrl, label: 'Fresha reviews', icon: FaStar } : null,
+    salon.booksyReviewsUrl ? { href: salon.booksyReviewsUrl, label: 'Booksy reviews', icon: FaStar } : null,
+  ].filter(Boolean) as Array<{ href: string; label: string; icon: IconType }>;
 
   return (
     <div className={mobileStyles.desktopProfile}>
@@ -142,6 +154,20 @@ export default function DesktopSalonProfile({
                         <FaWhatsapp /> WhatsApp
                       </a>
                     )}
+                    {socialLinks.map((social) => {
+                      const Icon = social.icon;
+                      return (
+                        <a
+                          key={social.label}
+                          href={social.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.profileMetaPill}
+                        >
+                          <Icon /> {social.label}
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -164,12 +190,14 @@ export default function DesktopSalonProfile({
 
             <div className={styles.profileTrustGrid}>
               <div className={styles.profileTrustCard}>
-                <span className={styles.profileTrustLabel}>Rating</span>
+                <span className={styles.profileTrustLabel}>Review Links</span>
                 <strong className={styles.profileTrustValue}>
-                  {salon.avgRating && salon.avgRating > 0 ? salon.avgRating.toFixed(1) : 'New'}
+                  {externalReviewLinks.length > 0 ? externalReviewLinks.length : '--'}
                 </strong>
                 <span className={styles.profileTrustHint}>
-                  {reviews.length} review{reviews.length === 1 ? '' : 's'}
+                  {externalReviewLinks.length > 0
+                    ? `Connected platform${externalReviewLinks.length === 1 ? '' : 's'}`
+                    : 'No external review links yet'}
                 </span>
               </div>
               <div className={styles.profileTrustCard}>
@@ -201,7 +229,7 @@ export default function DesktopSalonProfile({
           }}
           hasPhotos={galleryImages.length > 0}
           hasTeam={true}
-          reviewsCount={reviews.length}
+          reviewLinksCount={externalReviewLinks.length}
         />
 
         <div className={booksyStyles.booksyLayout}>
@@ -224,6 +252,7 @@ export default function DesktopSalonProfile({
                   salon={salon}
                   onBook={onBookServices}
                   onImageClick={openLightbox}
+                  isBookingJourneyActive={isBookingJourneyActive}
                 />
               </section>
             )}
@@ -236,12 +265,7 @@ export default function DesktopSalonProfile({
 
             {activeSection === 'reviews-section' && (
               <section className={booksyStyles.sectionContainer}>
-                <BooksyReviewsSection
-                  reviews={reviews}
-                  avgRating={salon.avgRating || 0}
-                  galleryImages={galleryImages}
-                  onOpenLightbox={openLightbox}
-                />
+                <ExternalReviewsSection salon={salon} />
               </section>
             )}
 

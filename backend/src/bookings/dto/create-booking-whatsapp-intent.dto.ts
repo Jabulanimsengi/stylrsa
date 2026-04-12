@@ -5,8 +5,10 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   Matches,
   Min,
+  IsEmail,
 } from 'class-validator';
 
 export class CreateBookingWhatsAppIntentDto {
@@ -34,6 +36,10 @@ export class CreateBookingWhatsAppIntentDto {
   @Matches(/^0[0-9]{9}$/, { message: 'Phone number must be a valid South African number (10 digits starting with 0)' })
   clientPhone: string;
 
+  @IsOptional()
+  @IsEmail()
+  clientEmail?: string;
+
   @IsBoolean()
   @IsOptional()
   isMobile?: boolean;
@@ -53,6 +59,17 @@ export class CreateBookingWhatsAppIntentDto {
   @IsString()
   @IsOptional()
   materialSelection?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[A-Z0-9-]{8,32}$/, {
+    message: 'Reference code must contain only uppercase letters, numbers, and hyphens.',
+  })
+  referenceCode: string;
+
+  @IsOptional()
+  @IsUrl()
+  depositProofFileUrl?: string;
 
   @IsNumber()
   @Min(0)

@@ -50,7 +50,7 @@ export default function DashboardKPIRow({ data, onCardClick }: DashboardKPIRowPr
             icon: FiStar,
             iconBg: '#FFFBEB',
             iconColor: '#D97706',
-            tab: 'reviews',
+            tab: null,
             highlight: false,
         },
         {

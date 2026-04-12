@@ -1,4 +1,15 @@
-import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
+import { permanentRedirect } from 'next/navigation';
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: true,
+  },
+  alternates: {
+    canonical: '/salons',
+  },
+};
 
 type ServicesPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -20,5 +31,5 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   });
 
   const queryString = nextSearchParams.toString();
-  redirect(queryString ? `/salons?${queryString}` : '/salons');
+  permanentRedirect(queryString ? `/salons?${queryString}` : '/salons');
 }

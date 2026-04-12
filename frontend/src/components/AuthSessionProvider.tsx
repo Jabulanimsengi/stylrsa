@@ -2,12 +2,16 @@
 import { SessionProvider, useSession } from "next-auth/react";
 import { ReactNode, useEffect, useRef } from "react";
 
+type SessionWithBackendJwt = {
+  backendJwt?: string;
+};
+
 function AttachBackendCookie() {
   const { data: session, status } = useSession();
   const attachedRef = useRef<string | null>(null);
   useEffect(() => {
     if (status !== 'authenticated') return;
-    const backendJwt = (session as any)?.backendJwt as string | undefined;
+    const backendJwt = (session as SessionWithBackendJwt | null)?.backendJwt;
     if (!backendJwt) return;
     if (attachedRef.current === backendJwt) return;
     attachedRef.current = backendJwt;

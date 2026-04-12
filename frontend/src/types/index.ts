@@ -8,6 +8,12 @@ export type PlanPaymentStatus =
   | 'VERIFIED';
 
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type SalonApplicationStatus =
+  | 'SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'CHANGES_REQUESTED'
+  | 'REJECTED'
+  | 'PUBLISHED';
 export type UserRole = 'PENDING' | 'CLIENT' | 'SALON_OWNER' | 'ADMIN';
 export type UserOnboardingStatus =
   | 'ROLE_REQUIRED'
@@ -34,34 +40,6 @@ export interface User {
   emailVerified?: boolean;
   phoneNumber?: string | null;
   salonId?: string | null;
-  // Seller plan fields
-  sellerPlanCode?: PlanCode | null;
-  sellerPlanPriceCents?: number | null;
-  sellerPlanPaymentStatus?: PlanPaymentStatus | null;
-  sellerPlanPaymentReference?: string | null;
-  sellerPlanProofSubmittedAt?: string | null;
-  sellerPlanVerifiedAt?: string | null;
-  sellerVisibilityWeight?: number | null;
-  sellerMaxListings?: number | null;
-  // Seller profile fields (for product sellers)
-  sellerWhatsapp?: string | null;
-  sellerWebsite?: string | null;
-  sellerBankName?: string | null;
-  sellerBankAccountHolder?: string | null;
-  sellerBankAccountNumber?: string | null;
-  sellerBankBranchCode?: string | null;
-  sellerBankAccountType?: string | null;
-  sellerPaymentNote?: string | null;
-  // Seller business profile fields
-  sellerBusinessName?: string | null;
-  sellerContactPerson?: string | null;
-  sellerContactPhone?: string | null;
-  sellerContactEmail?: string | null;
-  sellerPhysicalAddress?: string | null;
-  sellerProvincesServed?: string[];
-  sellerApprovalStatus?: ApprovalStatus | null;
-  sellerProfileSubmittedAt?: string | null;
-  sellerApprovedAt?: string | null;
 }
 
 export interface Salon {
@@ -83,6 +61,12 @@ export interface Salon {
   phoneNumber?: string | null;
   whatsapp?: string | null;
   website?: string | null;
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
+  tiktokUrl?: string | null;
+  googleReviewsUrl?: string | null;
+  freshaReviewsUrl?: string | null;
+  booksyReviewsUrl?: string | null;
   bookingType?: 'ONSITE' | 'MOBILE' | 'BOTH';
   offersMobile?: boolean;
   mobileFee?: number | null;
@@ -95,7 +79,6 @@ export interface Salon {
   reviewCount?: number;
   viewCount?: number;
   services?: Service[];
-  reviews?: Review[];
   ownerId: string;
   createdAt: string;
   updatedAt: string;
@@ -114,13 +97,60 @@ export interface Salon {
   planVerifiedAt?: string | null;
   distance?: number | null; // Distance in km from user (when sorted by proximity)
   bookingMessage?: string | null; // Optional booking message from salon owner
+  depositRequired?: boolean | null;
+  depositPercentage?: number | null;
+  paymentInstructions?: string | null;
   cancellationPolicy?: string | null; // Salon's cancellation policy text
+  specialConditions?: string | null;
   isFeatured?: boolean; // Whether salon is currently featured
   // Banking details for deposits
   bankName?: string | null;
   accountHolder?: string | null;
   accountNumber?: string | null;
   branchCode?: string | null;
+}
+
+export interface SalonApplication {
+  id: string;
+  applicationReference: string;
+  salonName: string;
+  contactPersonName: string;
+  email: string;
+  phoneNumber: string;
+  whatsappNumber?: string | null;
+  description?: string | null;
+  address: string;
+  postalCode?: string | null;
+  town: string;
+  city: string;
+  province: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  website?: string | null;
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
+  tiktokUrl?: string | null;
+  googleReviewsUrl?: string | null;
+  freshaReviewsUrl?: string | null;
+  booksyReviewsUrl?: string | null;
+  bookingType?: 'ONSITE' | 'MOBILE' | 'BOTH';
+  offersMobile?: boolean;
+  mobileFee?: number | null;
+  operatingHours?: OperatingHourEntry[] | null;
+  operatingDays?: string[];
+  bankName: string;
+  accountHolder: string;
+  accountNumber: string;
+  branchCode?: string | null;
+  priceListFileUrl: string;
+  bankingProofFileUrl: string;
+  portfolioImageUrls: string[];
+  status: SalonApplicationStatus;
+  adminNotes?: string | null;
+  reviewedAt?: string | null;
+  publishedSalonId?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Service {
@@ -130,6 +160,7 @@ export interface Service {
   name?: string;
   description: string;
   price: number;
+  discountPercentage?: number | null;
   duration: number;
   durationMin?: number | null;  // Minimum duration for variable services
   durationMax?: number | null;  // Maximum duration for variable services
@@ -159,28 +190,6 @@ export interface Service {
   };
 }
 
-export interface Review {
-  id: string;
-  rating: number;
-  comment: string;
-  images?: string[]; // Review photos uploaded by user
-  salonOwnerResponse?: string | null;
-  salonOwnerRespondedAt?: string | null;
-  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
-  userId: string;
-  salonId: string;
-  bookingId?: string;
-  createdAt: string;
-  updatedAt: string;
-  author: { id: string; firstName: string; lastName: string };
-  booking?: {
-    id: string;
-    service: {
-      title: string;
-    };
-  };
-}
-
 export interface Booking {
   id: string;
   userId: string;
@@ -191,6 +200,7 @@ export interface Booking {
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'DECLINED';
   notes?: string;
   clientNotes?: string;
+  clientPhone?: string | null;
   createdAt: string;
   updatedAt: string;
   user: User;
@@ -239,30 +249,6 @@ export interface GalleryImage {
   createdAt: string;
 }
 
-export interface Product {
-  id: string;
-  name: string;
-  slug?: string | null; // SEO-friendly URL slug
-  description: string;
-  price: number;
-  images: string[];
-  stock: number;
-  sellerId: string;
-  createdAt: string;
-  updatedAt: string;
-  isOnSale?: boolean;
-  salePrice?: number;
-  seller?: Partial<User>;
-  category?: string;
-  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
-  // External purchase links (no internal payment system)
-  whatsappNumber?: string | null;
-  websiteUrl?: string | null;
-  takealotUrl?: string | null;
-  amazonUrl?: string | null;
-  purchaseNote?: string | null; // Optional note about how to purchase
-}
-
 export interface Promotion {
   id: string;
   title: string;
@@ -272,34 +258,8 @@ export interface Promotion {
   endDate: string;
   salonId?: string;
   serviceId?: string;
-  productId?: string;
   promoCode?: string;
   isActive: boolean;
-}
-
-export type ProductOrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
-
-export interface ProductOrder {
-  id: string;
-  productId: string;
-  buyerId: string;
-  sellerId: string;
-  quantity: number;
-  totalPrice: number;
-  status: ProductOrderStatus;
-  deliveryMethod?: string | null;
-  contactPhone?: string | null;
-  notes?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  product: {
-    id: string;
-    name: string;
-    images: string[];
-    price: number;
-  };
-  seller?: Partial<User>;
-  buyer?: Partial<User>;
 }
 
 // Trendz Feature Types
@@ -345,30 +305,3 @@ export interface Trend {
   isLiked?: boolean;
 }
 
-export interface SellerSummary {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  sellerPlanCode?: PlanCode | null;
-  sellerPlanPriceCents?: number | null;
-  sellerPlanPaymentStatus?: PlanPaymentStatus | null;
-  sellerPlanPaymentReference?: string | null;
-  sellerPlanProofSubmittedAt?: string | null;
-  sellerPlanVerifiedAt?: string | null;
-  sellerVisibilityWeight?: number | null;
-  sellerMaxListings?: number | null;
-  sellerFeaturedUntil?: string | null;
-  // Business profile fields
-  sellerBusinessName?: string | null;
-  sellerContactPerson?: string | null;
-  sellerContactPhone?: string | null;
-  sellerContactEmail?: string | null;
-  sellerPhysicalAddress?: string | null;
-  sellerProvincesServed?: string[];
-  sellerApprovalStatus?: ApprovalStatus | null;
-  sellerProfileSubmittedAt?: string | null;
-  sellerApprovedAt?: string | null;
-  productsCount: number;
-  pendingProductsCount: number;
-}

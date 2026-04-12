@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Post,
   Body,
@@ -7,7 +8,12 @@ import {
   Param,
   Patch,
   Query,
+  ParseFilePipeBuilder,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { CreateBookingWhatsAppIntentDto } from './dto/create-booking-whatsapp-intent.dto';
@@ -31,6 +37,30 @@ export class BookingsController {
     return this.bookingsService.createWhatsAppIntent(createBookingWhatsAppIntentDto);
   }
 
+  @Post('deposit-proof')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
+  uploadDepositProof(
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addMaxSizeValidator({ maxSize: 10 * 1024 * 1024 })
+        .build({ fileIsRequired: true }),
+    )
+    file: Express.Multer.File,
+  ) {
+    if (!file.mimetype.startsWith('image/') && file.mimetype !== 'application/pdf') {
+      throw new BadRequestException('Upload an image or PDF for the deposit proof.');
+    }
+
+    return this.bookingsService.uploadDepositProof(file);
+  }
+
   @Post()
   @UseGuards(JwtGuard)
   create(@GetUser() user: any, @Body() createBookingDto: CreateBookingDto) {
@@ -50,7 +80,7 @@ export class BookingsController {
   updateBookingStatus(
     @GetUser() user: any,
     @Param('id') bookingId: string,
-    @Body('status') status: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED',
+    @Body('status') status: 'CONFIRMED' | 'DECLINED' | 'CANCELLED' | 'COMPLETED',
   ) {
     // FIX: Corrected method name from 'updateBookingStatus' to 'updateStatus'
     return this.bookingsService.updateStatus(user, bookingId, status);

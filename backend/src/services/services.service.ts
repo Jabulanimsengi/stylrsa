@@ -1,6 +1,7 @@
 // backend/src/services/services.service.ts
 import {
   Injectable,
+  BadRequestException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
@@ -222,6 +223,58 @@ export class ServicesService {
     }
 
     return updatedService;
+  }
+
+  async setDiscount(user: any, id: string, discountPercentage: number) {
+    const service = await this.prisma.service.findUnique({
+      where: { id },
+      include: { salon: true },
+    });
+
+    if (!service) {
+      throw new NotFoundException('Service not found.');
+    }
+
+    if (service.salon.ownerId !== user.id && user.role !== 'ADMIN') {
+      throw new ForbiddenException(
+        'You are not authorized to update this service discount',
+      );
+    }
+
+    if (discountPercentage <= 0 || discountPercentage >= 100) {
+      throw new BadRequestException('Discount percentage must be between 1 and 95.');
+    }
+
+    return this.prisma.service.update({
+      where: { id },
+      data: {
+        discountPercentage,
+      },
+    });
+  }
+
+  async clearDiscount(user: any, id: string) {
+    const service = await this.prisma.service.findUnique({
+      where: { id },
+      include: { salon: true },
+    });
+
+    if (!service) {
+      throw new NotFoundException('Service not found.');
+    }
+
+    if (service.salon.ownerId !== user.id && user.role !== 'ADMIN') {
+      throw new ForbiddenException(
+        'You are not authorized to clear this service discount',
+      );
+    }
+
+    return this.prisma.service.update({
+      where: { id },
+      data: {
+        discountPercentage: null,
+      },
+    });
   }
 
   async remove(user: any, id: string) {

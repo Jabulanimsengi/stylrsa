@@ -1,10 +1,12 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
-import * as cookieParser from 'cookie-parser';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const cookieParser = require('cookie-parser');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const request = require('supertest');
 
 jest.setTimeout(30000);
 
@@ -127,7 +129,6 @@ describe('Onboarding flows (e2e)', () => {
       offersMobile: false,
       operatingHours,
       operatingDays: operatingHours.map((entry) => entry.day),
-      planCode: 'STARTER',
       hasSentProof: true,
       paymentReference: 'E2E-SALON-REF',
     };

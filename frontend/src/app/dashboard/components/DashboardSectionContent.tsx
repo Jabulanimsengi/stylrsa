@@ -1,7 +1,6 @@
 'use client';
 
 import type { ApprovalStatus, GalleryImage, Salon, Service } from '@/types';
-import ReviewsTab from '@/components/ReviewsTab/ReviewsTab';
 import ServicesTab from '@/components/ServicesTab/ServicesTab';
 import GalleryTab from '@/components/GalleryTab/GalleryTab';
 import TeamMembers from '@/components/TeamMembers/TeamMembers';
@@ -25,6 +24,14 @@ interface DashboardBankingDetails {
   branchCode: string;
 }
 
+interface DashboardBookingRequirements {
+  depositRequired: boolean;
+  depositPercentage: string;
+  paymentInstructions: string;
+  cancellationPolicy: string;
+  specialConditions: string;
+}
+
 interface DashboardSectionContentProps {
   activeMainTab: TabId;
   salon: Salon;
@@ -42,6 +49,9 @@ interface DashboardSectionContentProps {
   bankingDetails: DashboardBankingDetails;
   isEditingBankingDetails: boolean;
   isSavingBankingDetails: boolean;
+  bookingRequirements: DashboardBookingRequirements;
+  isEditingBookingRequirements: boolean;
+  isSavingBookingRequirements: boolean;
   operatingHours: OperatingHours;
   isEditingHours: boolean;
   isSavingHours: boolean;
@@ -59,6 +69,7 @@ interface DashboardSectionContentProps {
   onCompleteBooking: (bookingId: string) => void;
   onAddService: () => void;
   onEditService: (service: Service) => void;
+  onManageDiscount: (service: Service) => void;
   onDeleteService: (id: string) => void;
   onDeletePromotion: (id: string) => void;
   onAddPromotion: () => void;
@@ -73,6 +84,9 @@ interface DashboardSectionContentProps {
   onEditBankingDetails: () => void;
   onClearBankingDetails: () => void;
   onSaveBankingDetails: () => void;
+  onBookingRequirementsChange: (value: DashboardBookingRequirements) => void;
+  onEditBookingRequirements: () => void;
+  onSaveBookingRequirements: () => void;
   onHoursChange: (hours: OperatingHours) => void;
   onEditHours: () => void;
   onSaveHours: () => void;
@@ -99,6 +113,9 @@ export default function DashboardSectionContent({
   bankingDetails,
   isEditingBankingDetails,
   isSavingBankingDetails,
+  bookingRequirements,
+  isEditingBookingRequirements,
+  isSavingBookingRequirements,
   operatingHours,
   isEditingHours,
   isSavingHours,
@@ -108,6 +125,7 @@ export default function DashboardSectionContent({
   onCompleteBooking,
   onAddService,
   onEditService,
+  onManageDiscount,
   onDeleteService,
   onAddImage,
   onDeleteImage,
@@ -119,6 +137,9 @@ export default function DashboardSectionContent({
   onEditBankingDetails,
   onClearBankingDetails,
   onSaveBankingDetails,
+  onBookingRequirementsChange,
+  onEditBookingRequirements,
+  onSaveBookingRequirements,
   onHoursChange,
   onEditHours,
   onSaveHours,
@@ -144,13 +165,12 @@ export default function DashboardSectionContent({
           services={services}
           onAddService={onAddService}
           onEditService={onEditService}
+          onManageDiscount={onManageDiscount}
           onDeleteService={onDeleteService}
         />
       );
     case 'team-members':
       return <TeamMembers salonId={salon.id} isEditable />;
-    case 'reviews':
-      return <ReviewsTab />;
     case 'gallery':
       return (
         <GalleryTab
@@ -168,6 +188,9 @@ export default function DashboardSectionContent({
           bankingDetails={bankingDetails}
           isEditingBankingDetails={isEditingBankingDetails}
           isSavingBankingDetails={isSavingBankingDetails}
+          bookingRequirements={bookingRequirements}
+          isEditingBookingRequirements={isEditingBookingRequirements}
+          isSavingBookingRequirements={isSavingBookingRequirements}
           operatingHours={operatingHours}
           isEditingHours={isEditingHours}
           isSavingHours={isSavingHours}
@@ -179,6 +202,9 @@ export default function DashboardSectionContent({
           onEditBankingDetails={onEditBankingDetails}
           onClearBankingDetails={onClearBankingDetails}
           onSaveBankingDetails={onSaveBankingDetails}
+          onBookingRequirementsChange={onBookingRequirementsChange}
+          onEditBookingRequirements={onEditBookingRequirements}
+          onSaveBookingRequirements={onSaveBookingRequirements}
           onHoursChange={onHoursChange}
           onEditHours={onEditHours}
           onSaveHours={onSaveHours}

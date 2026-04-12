@@ -1,12 +1,16 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
+import type { IconType } from 'react-icons';
 import {
     FaStar,
     FaMapMarkerAlt,
     FaPhone,
     FaWhatsapp,
     FaGlobe,
+    FaGoogle,
+    FaFacebookF,
+    FaInstagram,
     FaDirections,
     FaBolt,
     FaCheck,
@@ -23,13 +27,21 @@ import {
     FaTimes,
     FaChevronRight,
 } from 'react-icons/fa';
+import { FaTiktok } from 'react-icons/fa6';
 import {
     Carousel,
     CarouselContent,
     CarouselItem,
     type CarouselApi,
 } from "@/components/ui/carousel"
-import { Salon, Service, GalleryImage, Review } from '@/types';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui';
+import { Salon, Service, GalleryImage } from '@/types';
 import { transformCloudinary } from '@/utils/cloudinary';
 import VerificationBadge from '@/components/VerificationBadge/VerificationBadge';
 import { SERVICE_CATEGORIES } from '@/constants/categories';
@@ -39,14 +51,27 @@ import MaterialsShowcase from '@/components/MaterialsShowcase/MaterialsShowcase'
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import { notify } from '@/lib/notify';
 import { getSalonOpenStatus } from './salonOpenStatus';
+import {
+    formatServiceDiscountLabel,
+    getServiceDiscountedPrice,
+    hasServiceDiscount,
+} from '@/lib/servicePricing';
 
 type TabType = 'photos' | 'services' | 'details' | 'reviews';
+
+type ExternalReviewLink = {
+    key: string;
+    href: string;
+    label: string;
+    value: string;
+    icon: IconType;
+    toneClass: string;
+};
 
 interface MobileSalonProfileProps {
     salon: Salon;
     services: Service[];
     galleryImages: GalleryImage[];
-    reviews: Review[];
     hoursRecord: Record<string, string> | null;
     todayLabel: string;
     orderedOperatingDays: string[];
@@ -125,7 +150,6 @@ export default function MobileSalonProfile({
     salon,
     services,
     galleryImages,
-    reviews,
     hoursRecord,
     todayLabel,
     orderedOperatingDays,
@@ -142,7 +166,6 @@ export default function MobileSalonProfile({
     const [showCopied, setShowCopied] = useState(false);
     const [activeCategory, setActiveCategory] = useState<string>('all');
     const tabsRef = useRef<HTMLDivElement>(null);
-    const categoryScrollRef = useRef<HTMLDivElement>(null);
 
     // Carousel API state for tracking current slide
     const [api, setApi] = useState<CarouselApi>();
@@ -266,7 +289,7 @@ export default function MobileSalonProfile({
     };
 
     // Calculate totals
-    const totalPrice = selectedService?.price ?? 0;
+    const totalPrice = selectedService ? getServiceDiscountedPrice(selectedService) : 0;
     const totalDuration = selectedService?.duration ?? 0;
 
     // Format duration
@@ -338,6 +361,65 @@ export default function MobileSalonProfile({
         : salon.bookingType === 'MOBILE'
             ? 'Mobile bookings available'
             : 'In-salon bookings';
+    const externalReviewLinks = [
+        salon.googleReviewsUrl ? {
+            key: 'google-reviews',
+            href: salon.googleReviewsUrl,
+            label: 'Google reviews',
+            value: 'Read Google reviews',
+            icon: FaGoogle,
+            toneClass: styles.google,
+        } : null,
+        salon.freshaReviewsUrl ? {
+            key: 'fresha-reviews',
+            href: salon.freshaReviewsUrl,
+            label: 'Fresha reviews',
+            value: 'Read Fresha reviews',
+            icon: FaStar,
+            toneClass: styles.fresha,
+        } : null,
+        salon.booksyReviewsUrl ? {
+            key: 'booksy-reviews',
+            href: salon.booksyReviewsUrl,
+            label: 'Booksy reviews',
+            value: 'Read Booksy reviews',
+            icon: FaStar,
+            toneClass: styles.booksy,
+        } : null,
+    ].filter(Boolean) as ExternalReviewLink[];
+    const socialLinks = [
+        salon.facebookUrl ? {
+            key: 'facebook',
+            href: salon.facebookUrl,
+            label: 'Facebook',
+            value: 'View Facebook page',
+            icon: FaFacebookF,
+            toneClass: styles.facebook,
+        } : null,
+        salon.instagramUrl ? {
+            key: 'instagram',
+            href: salon.instagramUrl,
+            label: 'Instagram',
+            value: 'View Instagram profile',
+            icon: FaInstagram,
+            toneClass: styles.instagram,
+        } : null,
+        salon.tiktokUrl ? {
+            key: 'tiktok',
+            href: salon.tiktokUrl,
+            label: 'TikTok',
+            value: 'View TikTok profile',
+            icon: FaTiktok,
+            toneClass: styles.tiktok,
+        } : null,
+    ].filter(Boolean) as Array<{
+        key: string;
+        href: string;
+        label: string;
+        value: string;
+        icon: IconType;
+        toneClass: string;
+    }>;
 
     return (
         <>
@@ -440,14 +522,14 @@ export default function MobileSalonProfile({
 
                     {/* Rating Row */}
                     <div className={styles.ratingRow}>
-                        {salon.avgRating != null && salon.avgRating > 0 && (
+                        {externalReviewLinks.length > 0 && (
                             <button
                                 className={styles.ratingPill}
                                 onClick={() => setActiveTab('reviews')}
                             >
                                 <FaStar />
-                                <span className={styles.ratingValue}>{salon.avgRating.toFixed(1)}</span>
-                                <span className={styles.reviewCount}>({reviews.length})</span>
+                                <span className={styles.ratingValue}>Reviews</span>
+                                <span className={styles.reviewCount}>({externalReviewLinks.length})</span>
                             </button>
                         )}
                         {salon.isFeatured && (
@@ -481,6 +563,24 @@ export default function MobileSalonProfile({
                             <FaCheckCircle /> Instant confirmation
                         </span>
                     </div>
+                    {socialLinks.length > 0 && (
+                        <div className={styles.socialBadgeRow}>
+                            {socialLinks.map((social) => {
+                                const Icon = social.icon;
+                                return (
+                                    <a
+                                        key={social.key}
+                                        href={social.href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={styles.socialBadge}
+                                    >
+                                        <Icon /> {social.label}
+                                    </a>
+                                );
+                            })}
+                        </div>
+                    )}
 
                     <div className={styles.quickActionRow}>
                         <button className={styles.primaryBookAction} onClick={handleBookNowAction}>
@@ -516,12 +616,14 @@ export default function MobileSalonProfile({
                         Photos
                         {allImages.length > 0 && <span className={styles.tabBadge}>{allImages.length}</span>}
                     </button>
-                    <button
-                        className={`${styles.tabButton} ${activeTab === 'reviews' ? styles.active : ''}`}
-                        onClick={() => setActiveTab('reviews')}
-                    >
-                        Reviews {reviews.length > 0 && <span className={styles.tabBadge}>{reviews.length}</span>}
-                    </button>
+                    {externalReviewLinks.length > 0 && (
+                        <button
+                            className={`${styles.tabButton} ${activeTab === 'reviews' ? styles.active : ''}`}
+                            onClick={() => setActiveTab('reviews')}
+                        >
+                            Reviews <span className={styles.tabBadge}>{externalReviewLinks.length}</span>
+                        </button>
+                    )}
                     <button
                         className={`${styles.tabButton} ${activeTab === 'details' ? styles.active : ''}`}
                         onClick={() => setActiveTab('details')}
@@ -563,17 +665,20 @@ export default function MobileSalonProfile({
                     {/* Services Tab - Fresha Style */}
                     {activeTab === 'services' && (
                         <div className={styles.servicesTab}>
-                            {/* Category Filter Pills */}
-                            <div className={styles.categoryFilter} ref={categoryScrollRef}>
-                                {categories.map(cat => (
-                                    <button
-                                        key={cat.id}
-                                        className={`${styles.categoryPill} ${activeCategory === cat.id ? styles.active : ''}`}
-                                        onClick={() => setActiveCategory(cat.id)}
-                                    >
-                                        {cat.name}
-                                    </button>
-                                ))}
+                            <div className={styles.categorySelector}>
+                                <span className={styles.categorySelectorLabel}>Categories</span>
+                                <Select value={activeCategory} onValueChange={setActiveCategory}>
+                                    <SelectTrigger className={styles.categorySelectTrigger}>
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {categories.map((cat) => (
+                                            <SelectItem key={cat.id} value={cat.id}>
+                                                {cat.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             {filteredGroups.map(group => (
@@ -585,6 +690,9 @@ export default function MobileSalonProfile({
                                             const serviceName = service.title || service.name || 'Service';
                                             const hasImages = service.images && service.images.length > 0;
                                             const isPopular = idx === 0 && group.services.length > 3;
+                                            const hasDiscount = hasServiceDiscount(service);
+                                            const discountedPrice = getServiceDiscountedPrice(service);
+                                            const discountLabel = formatServiceDiscountLabel(service);
 
                                             return (
                                                 <div
@@ -615,6 +723,9 @@ export default function MobileSalonProfile({
                                                             {isPopular && (
                                                                 <span className={styles.popularBadge}>Popular</span>
                                                             )}
+                                                            {discountLabel && (
+                                                                <span className={styles.serviceDiscountBadge}>{discountLabel}</span>
+                                                            )}
                                                         </div>
                                                         {service.description && (
                                                             <p className={styles.serviceDesc}>{service.description}</p>
@@ -626,9 +737,16 @@ export default function MobileSalonProfile({
                                                         </div>
                                                     </div>
                                                     <div className={styles.serviceRight}>
-                                                        <span className={styles.servicePrice}>
-                                                            from R{service.price.toFixed(0)}
-                                                        </span>
+                                                        <div className={styles.servicePriceStack}>
+                                                            <span className={styles.servicePrice}>
+                                                                from R{discountedPrice.toFixed(0)}
+                                                            </span>
+                                                            {hasDiscount && (
+                                                                <span className={styles.servicePriceOriginal}>
+                                                                    R{service.price.toFixed(0)}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <button
                                                             className={`${styles.addBtn} ${isSelected ? styles.added : ''}`}
                                                             onClick={(e) => {
@@ -813,6 +931,27 @@ export default function MobileSalonProfile({
                                             <FaChevronRight className={styles.contactArrow} />
                                         </a>
                                     )}
+                                    {socialLinks.map((social) => {
+                                        const Icon = social.icon;
+                                        return (
+                                            <a
+                                                key={social.key}
+                                                href={social.href}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className={styles.contactRow}
+                                            >
+                                                <div className={`${styles.contactIcon} ${social.toneClass}`}>
+                                                    <Icon />
+                                                </div>
+                                                <div className={styles.contactInfo}>
+                                                    <span className={styles.contactLabel}>{social.label}</span>
+                                                    <span className={styles.contactValue}>{social.value}</span>
+                                                </div>
+                                                <FaChevronRight className={styles.contactArrow} />
+                                            </a>
+                                        );
+                                    })}
                                 </div>
                             </section>
                         </div>
@@ -821,10 +960,7 @@ export default function MobileSalonProfile({
                     {/* Reviews Tab */}
                     {activeTab === 'reviews' && (
                         <div className={styles.reviewsTab}>
-                            <MobileReviewsContent
-                                reviews={reviews}
-                                avgRating={salon.avgRating || 0}
-                            />
+                            <MobileReviewLinksContent reviewLinks={externalReviewLinks} />
                         </div>
                     )}
                 </div>
@@ -843,7 +979,14 @@ export default function MobileSalonProfile({
                                 <FaClock /> {formatDuration(totalDuration)}
                             </span>
                         </div>
-                        <span className={styles.bookBarPrice}>R{totalPrice.toFixed(0)}</span>
+                        <div className={styles.bookBarPriceStack}>
+                            <span className={styles.bookBarPrice}>R{totalPrice.toFixed(0)}</span>
+                            {hasServiceDiscount(selectedService) && (
+                                <span className={styles.bookBarPriceOriginal}>
+                                    R{selectedService.price.toFixed(0)}
+                                </span>
+                            )}
+                        </div>
                     </div>
                     <button className={styles.bookBarButton} onClick={handleContinue}>
                         Continue
@@ -862,150 +1005,59 @@ export default function MobileSalonProfile({
 
 
 // Mobile Reviews Content Component
-function MobileReviewsContent({
-    reviews,
-    avgRating,
+function MobileReviewLinksContent({
+    reviewLinks,
 }: {
-    reviews: Review[];
-    avgRating: number;
+    reviewLinks: ExternalReviewLink[];
 }) {
-    const [visibleCount, setVisibleCount] = useState(5);
-    const [sortBy, setSortBy] = useState<'recent' | 'helpful'>('recent');
-
-    // Calculate rating distribution
-    const ratingCounts = [0, 0, 0, 0, 0];
-    reviews.forEach(review => {
-        if (review.rating >= 1 && review.rating <= 5) {
-            ratingCounts[review.rating - 1]++;
-        }
-    });
-
-    const maxCount = Math.max(...ratingCounts, 1);
-
-    // Sort reviews
-    const sortedReviews = useMemo(() => {
-        const sorted = [...reviews];
-        if (sortBy === 'recent') {
-            sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        }
-        // 'helpful' would sort by a helpfulCount field if available
-        return sorted;
-    }, [reviews, sortBy]);
-
-    const displayedReviews = sortedReviews.slice(0, visibleCount);
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-ZA', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-    };
-
-    if (reviews.length === 0) {
+    if (reviewLinks.length === 0) {
         return (
             <div className={styles.emptyState}>
                 <FaStar className={styles.emptyIcon} />
-                <p>No reviews yet. Be the first to leave a review!</p>
+                <p>This salon has not linked external review platforms yet.</p>
             </div>
         );
     }
 
     return (
         <div className={styles.reviewsContent}>
-            {/* Rating Summary */}
             <div className={styles.ratingSummary}>
                 <div className={styles.ratingOverview}>
-                    <div className={styles.ratingBig}>{avgRating.toFixed(1)}</div>
-                    <div className={styles.ratingStars}>
-                        {[1, 2, 3, 4, 5].map(star => (
-                            <FaStar
-                                key={star}
-                                className={star <= Math.round(avgRating) ? styles.starFilled : styles.starEmpty}
-                            />
-                        ))}
+                    <div className={styles.ratingBig}>{reviewLinks.length}</div>
+                    <div className={styles.reviewTotal}>
+                        linked review platform{reviewLinks.length === 1 ? '' : 's'}
                     </div>
-                    <div className={styles.reviewTotal}>{reviews.length} reviews</div>
                 </div>
-                <div className={styles.ratingBars}>
-                    {[5, 4, 3, 2, 1].map(star => (
-                        <div key={star} className={styles.ratingBarRow}>
-                            <span className={styles.barLabel}>{star}</span>
-                            <div className={styles.barTrack}>
-                                <div
-                                    className={styles.barFill}
-                                    style={{ width: `${(ratingCounts[star - 1] / maxCount) * 100}%` }}
-                                />
-                            </div>
-                            <span className={styles.barCount}>{ratingCounts[star - 1]}</span>
-                        </div>
-                    ))}
+                <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, fontSize: '0.9375rem', lineHeight: 1.6, color: 'var(--color-text-secondary, #666)' }}>
+                        Stylr SA now keeps reviews on Google, Fresha, and Booksy instead of storing them directly on the platform.
+                    </p>
                 </div>
             </div>
 
-            {/* Sort Options */}
-            <div className={styles.sortOptions}>
-                <button
-                    className={`${styles.sortBtn} ${sortBy === 'recent' ? styles.active : ''}`}
-                    onClick={() => setSortBy('recent')}
-                >
-                    Most recent
-                </button>
-                <button
-                    className={`${styles.sortBtn} ${sortBy === 'helpful' ? styles.active : ''}`}
-                    onClick={() => setSortBy('helpful')}
-                >
-                    Most helpful
-                </button>
-            </div>
-
-            {/* Reviews List */}
-            <div className={styles.reviewsList}>
-                {displayedReviews.map(review => (
-                    <div key={review.id} className={styles.reviewCard}>
-                        <div className={styles.reviewHeader}>
-                            <div className={styles.reviewerInfo}>
-                                <div className={styles.reviewerAvatar}>
-                                    {(review.author?.firstName?.charAt(0) || 'A').toUpperCase()}
-                                </div>
-                                <div>
-                                    <div className={styles.reviewerName}>
-                                        {review.author?.firstName || 'Anonymous'} {review.author?.lastName?.charAt(0) || ''}.
-                                    </div>
-                                    {review.booking?.service && (
-                                        <div className={styles.reviewService}>{review.booking.service.title}</div>
-                                    )}
-                                </div>
+            <div>
+                {reviewLinks.map((link) => {
+                    const Icon = link.icon;
+                    return (
+                        <a
+                            key={link.key}
+                            href={link.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.contactRow}
+                        >
+                            <div className={`${styles.contactIcon} ${link.toneClass}`}>
+                                <Icon />
                             </div>
-                            <div className={styles.reviewMeta}>
-                                <div className={styles.reviewStars}>
-                                    {[1, 2, 3, 4, 5].map(star => (
-                                        <FaStar
-                                            key={star}
-                                            className={star <= review.rating ? styles.starFilled : styles.starEmpty}
-                                        />
-                                    ))}
-                                </div>
-                                <span className={styles.reviewDate}>{formatDate(review.createdAt)}</span>
+                            <div className={styles.contactInfo}>
+                                <span className={styles.contactLabel}>{link.label}</span>
+                                <span className={styles.contactValue}>{link.value}</span>
                             </div>
-                        </div>
-                        {review.comment && (
-                            <p className={styles.reviewText}>{review.comment}</p>
-                        )}
-                    </div>
-                ))}
+                            <FaChevronRight className={styles.contactArrow} />
+                        </a>
+                    );
+                })}
             </div>
-
-            {/* Load More */}
-            {visibleCount < reviews.length && (
-                <button
-                    className={styles.loadMoreBtn}
-                    onClick={() => setVisibleCount(prev => prev + 5)}
-                >
-                    Show more reviews ({reviews.length - visibleCount} remaining)
-                </button>
-            )}
         </div>
     );
 }

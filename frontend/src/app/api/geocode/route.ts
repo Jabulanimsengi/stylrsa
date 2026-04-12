@@ -1,5 +1,17 @@
 import { NextResponse } from 'next/server';
 
+interface MapboxFeature {
+    id: string;
+    place_name: string;
+    center: [number, number];
+    text: string;
+    context?: unknown;
+}
+
+interface MapboxGeocodeResponse {
+    features: MapboxFeature[];
+}
+
 // Server-side geocoding proxy to hide Mapbox token from client
 export async function GET(request: Request) {
     try {
@@ -28,11 +40,11 @@ export async function GET(request: Request) {
             return NextResponse.json({ features: [] });
         }
 
-        const data = await response.json();
+        const data = await response.json() as MapboxGeocodeResponse;
 
         // Return simplified result structure
         return NextResponse.json({
-            features: data.features.map((feature: any) => ({
+            features: data.features.map((feature) => ({
                 id: feature.id,
                 place_name: feature.place_name,
                 center: feature.center, // [longitude, latitude]

@@ -4,9 +4,10 @@ import { BookingsService } from './bookings.service';
 import { EventsModule } from 'src/events/events.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { MailModule } from 'src/mail/mail.module';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 
 @Module({
-  imports: [EventsModule, NotificationsModule, MailModule],
+  imports: [EventsModule, NotificationsModule, MailModule, CloudinaryModule],
   controllers: [BookingsController],
   providers: [BookingsService],
 })

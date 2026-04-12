@@ -12,6 +12,8 @@ import {
   IsLongitude,
   IsBoolean,
   IsIn,
+  IsEmail,
+  Max,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ValidateNested } from 'class-validator';
@@ -67,14 +69,42 @@ export class CreateSalonDto {
   // +27 XX XXX XXXX, 0XX XXX XXXX, etc.
   phone: string;
 
-  @IsString()
+  @IsEmail()
   @IsNotEmpty()
   @MaxLength(100)
   email: string;
 
   @IsOptional()
+  @IsString()
+  whatsapp?: string;
+
+  @IsOptional()
   @IsUrl()
   website?: string;
+
+  @IsOptional()
+  @IsUrl()
+  facebookUrl?: string;
+
+  @IsOptional()
+  @IsUrl()
+  instagramUrl?: string;
+
+  @IsOptional()
+  @IsUrl()
+  tiktokUrl?: string;
+
+  @IsOptional()
+  @IsUrl()
+  googleReviewsUrl?: string;
+
+  @IsOptional()
+  @IsUrl()
+  freshaReviewsUrl?: string;
+
+  @IsOptional()
+  @IsUrl()
+  booksyReviewsUrl?: string;
 
   @IsOptional()
   @IsUrl()
@@ -120,10 +150,10 @@ export class CreateSalonDto {
   @IsIn(['ONSITE', 'MOBILE', 'BOTH'])
   bookingType?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @IsIn(['PREMIUM'])
-  planCode!: 'PREMIUM';
+  planCode?: 'PREMIUM';
 
   @IsOptional()
   @IsBoolean()
@@ -137,4 +167,50 @@ export class CreateSalonDto {
   @IsOptional()
   @IsBoolean()
   adminConfirmEmailVerified?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  bankName?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  accountHolder?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  accountNumber?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  branchCode?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  depositRequired?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  depositPercentage?: number | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  paymentInstructions?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  cancellationPolicy?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  specialConditions?: string | null;
 }

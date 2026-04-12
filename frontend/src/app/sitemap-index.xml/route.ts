@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSitemapStats } from '@/lib/sitemap-generator';
+import { getSeoSitemapSegmentCount } from '@/lib/sitemap-generator';
 import {
   buildMinimalSitemapIndexXml,
   hasUnsafeXmlPayload,
@@ -47,8 +47,7 @@ export async function GET() {
   // Fallback to local generation (~25K URLs from locationData.ts)
   try {
     const today = new Date().toISOString().split('T')[0];
-    const stats = getSitemapStats();
-    const seoSitemapCount = Math.ceil(stats.seoPages / 45000);
+    const seoSitemapCount = getSeoSitemapSegmentCount();
 
     const sitemaps: string[] = [];
 

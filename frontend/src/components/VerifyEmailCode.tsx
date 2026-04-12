@@ -86,9 +86,9 @@ export default function VerifyEmailCode({ email, onVerified, onCancel }: VerifyE
       const response = await res.json();
       toast.success(response.message || 'Email verified successfully!');
       onVerified();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Verification error:', err);
-      const msg = err?.message || 'Invalid or expired verification code. Please try again.';
+      const msg = err instanceof Error ? err.message : 'Invalid or expired verification code. Please try again.';
       setError(msg);
       toast.error(msg);
       // Clear code on error
@@ -114,9 +114,9 @@ export default function VerifyEmailCode({ email, onVerified, onCancel }: VerifyE
       toast.success(response.message || 'New verification code sent!');
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Resend error:', err);
-      const msg = err?.message || 'Failed to resend code. Please try again.';
+      const msg = err instanceof Error ? err.message : 'Failed to resend code. Please try again.';
       toast.error(msg);
     } finally {
       setIsResending(false);

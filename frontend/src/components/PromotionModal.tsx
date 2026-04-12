@@ -23,7 +23,6 @@ interface PromotionModalProps {
   onPromotionAdded: (promotion: Promotion) => void;
   salonId: string;
   serviceId?: string;
-  productId?: string;
 }
 
 export default function PromotionModal({
@@ -32,7 +31,6 @@ export default function PromotionModal({
   onPromotionAdded,
   salonId,
   serviceId,
-  productId
 }: PromotionModalProps) {
   const [description, setDescription] = useState('');
   const [discountPercentage, setDiscountPercentage] = useState('');
@@ -55,7 +53,6 @@ export default function PromotionModal({
           endDate,
           salonId,
           serviceId,
-          productId,
         }),
       });
       toast.success('Promotion created!');
@@ -80,7 +77,7 @@ export default function PromotionModal({
         <DialogHeader>
           <DialogTitle>Create Promotion</DialogTitle>
           <DialogDescription>
-            Set up a discount for your services or products
+            Set up a discount for one of your salon services
           </DialogDescription>
         </DialogHeader>
 

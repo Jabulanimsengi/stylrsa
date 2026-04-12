@@ -10,12 +10,21 @@ import { CreateBookingWhatsAppIntentDto } from './dto/create-booking-whatsapp-in
 import { EventsGateway } from '../events/events.gateway';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { MailService } from 'src/mail/mail.service';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 type ServiceWithSalon = any;
 type BookingWithServiceAndSalon = any;
 
-const DEPOSIT_RATE = 0.6;
+const DEPOSIT_RATE = 0.5;
 const BOOKING_COMMISSION_RATE = 0.32;
+
+const getDiscountedServicePrice = (price: number, discountPercentage?: number | null) => {
+  if (!discountPercentage || discountPercentage <= 0) {
+    return price;
+  }
+
+  return Number((price * (1 - discountPercentage / 100)).toFixed(2));
+};
 
 export interface TimeSlot {
   time: string;
@@ -41,6 +50,7 @@ export class BookingsService {
     private eventsGateway: EventsGateway,
     private notificationsService: NotificationsService,
     private mailService: MailService,
+    private cloudinaryService: CloudinaryService,
   ) { }
 
   private async validateTeamMemberSelection(
@@ -84,6 +94,23 @@ export class BookingsService {
     return normalized || 'STYLRSA';
   }
 
+  private normalizeReferenceCode(referenceCode: string): string {
+    return referenceCode
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9-]/g, '')
+      .slice(0, 32);
+  }
+
+  async uploadDepositProof(file: Express.Multer.File) {
+    const upload = await this.cloudinaryService.uploadFile(file, 'booking-deposit-proofs');
+    return {
+      url: upload.secure_url,
+      publicId: upload.public_id,
+      originalFilename: file.originalname,
+    };
+  }
+
   async createWhatsAppIntent(
     dto: CreateBookingWhatsAppIntentDto,
   ): Promise<BookingWhatsAppIntentResult> {
@@ -111,11 +138,33 @@ export class BookingsService {
       throw new BadRequestException('This salon does not have a WhatsApp booking number configured yet');
     }
 
+    const servicePrice = getDiscountedServicePrice(service.price, service.discountPercentage);
+    const mobileFee = dto.isMobile && salon.mobileFee ? salon.mobileFee : 0;
+    const totalCost = Number((servicePrice + mobileFee).toFixed(2));
+    const depositPercentage = salon.depositRequired
+      ? salon.depositPercentage ?? DEPOSIT_RATE * 100
+      : 0;
+    const depositAmount = Number((totalCost * (depositPercentage / 100)).toFixed(2));
+
     const sequenceNumber = (await this.prisma.bookingWhatsAppIntent.count({
       where: { salonId: dto.salonId },
     })) + 1;
 
-    const referenceCode = `${this.buildReferenceBase(dto.clientFirstName, dto.clientLastName)}-${String(sequenceNumber).padStart(4, '0')}`;
+    const normalizedReferenceCode = this.normalizeReferenceCode(dto.referenceCode);
+    let referenceCode = normalizedReferenceCode;
+
+    if (!referenceCode) {
+      referenceCode = `${this.buildReferenceBase(dto.clientFirstName, dto.clientLastName)}-${String(sequenceNumber).padStart(4, '0')}`;
+    }
+
+    const existingReference = await this.prisma.bookingWhatsAppIntent.findUnique({
+      where: { referenceCode },
+      select: { id: true },
+    });
+
+    if (existingReference) {
+      referenceCode = `${referenceCode.slice(0, 27)}-${String(sequenceNumber).padStart(4, '0')}`;
+    }
 
     const intent = await this.prisma.bookingWhatsAppIntent.create({
       data: {
@@ -127,11 +176,16 @@ export class BookingsService {
         clientFirstName: dto.clientFirstName.trim(),
         clientLastName: dto.clientLastName.trim(),
         clientPhone: dto.clientPhone.replace(/\s/g, ''),
+        clientEmail: dto.clientEmail?.trim().toLowerCase() || null,
         clientNotes: dto.clientNotes?.trim() || null,
         colorSelection: dto.colorSelection?.trim() || null,
         materialSelection: dto.materialSelection || null,
-        totalCost: dto.totalCost,
-        depositAmount: dto.depositAmount,
+        totalCost,
+        depositAmount,
+        depositProofFileUrl: dto.depositProofFileUrl || null,
+        depositStatus: depositAmount > 0 ? 'PENDING_PROOF' : 'VERIFIED',
+        depositProofSubmittedAt: dto.depositProofFileUrl ? new Date() : null,
+        whatsappSentAt: new Date(),
         referenceCode,
         sequenceNumber,
         whatsappClicks: 1,
@@ -331,8 +385,8 @@ export class BookingsService {
     }
 
     // Calculate financial breakdown
-    const totalCost = service.price;
-    const depositAmount = totalCost * DEPOSIT_RATE;
+    const totalCost = getDiscountedServicePrice(service.price, service.discountPercentage);
+    const depositAmount = Number((totalCost * DEPOSIT_RATE).toFixed(2));
     const commissionAmount = totalCost * BOOKING_COMMISSION_RATE;
     const salonPayout = totalCost - commissionAmount;
 
@@ -463,7 +517,6 @@ export class BookingsService {
       include: {
         service: true,
         salon: true,
-        review: true,
       },
       orderBy: {
         bookingTime: 'desc',
@@ -503,7 +556,7 @@ export class BookingsService {
   async updateStatus(
     user: any,
     id: string,
-    status: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED',
+    status: 'CONFIRMED' | 'DECLINED' | 'CANCELLED' | 'COMPLETED',
   ) {
     const booking = await this.prisma.booking.findUnique({
       where: { id },
@@ -536,10 +589,10 @@ export class BookingsService {
     let notificationMessage = `Your booking for ${booking.service.title} has been ${status.toLowerCase()}.`;
     let notificationLink = '/my-bookings';
 
-    // Special message for COMPLETED bookings to encourage reviews
+    // Completed bookings do not trigger on-platform review prompts anymore.
     if (status === 'COMPLETED') {
-      notificationMessage = `Your booking for ${booking.service.title} at ${booking.service.salon.name} is complete! We'd love to hear about your experience. Please leave a review.`;
-      notificationLink = '/my-bookings?action=review';
+      notificationMessage = `Your booking for ${booking.service.title} at ${booking.service.salon.name} is complete.`;
+      notificationLink = '/my-bookings';
     }
 
     const notification = await this.notificationsService.create(

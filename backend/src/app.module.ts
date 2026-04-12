@@ -11,7 +11,6 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ServicesModule } from './services/services.module';
 import { BookingsModule } from './bookings/bookings.module';
-import { ReviewsModule } from './reviews/reviews.module';
 import { AdminModule } from './admin/admin.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { LikesModule } from './likes/likes.module';
@@ -19,12 +18,9 @@ import { GalleryModule } from './gallery/gallery.module';
 import { EventsModule } from './events/events.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
-import { ProductsModule } from './products/products.module';
 import { PromotionsModule } from './promotions/promotions.module';
 import { LocationsModule } from './locations/locations.module';
 import { CategoriesModule } from './categories/categories.module'; // Import the new module
-import { ProductOrdersModule } from './product-orders/product-orders.module';
-import { SellersModule } from './sellers/sellers.module';
 import { MailModule } from './mail/mail.module';
 import { CsrfModule } from './common/csrf/csrf.module';
 import { TrendsModule } from './trends/trends.module';
@@ -36,6 +32,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TasksModule } from './tasks/tasks.module';
 import { UserAddressesModule } from './user-addresses/user-addresses.module';
 import { SalonMaterialsModule } from './salon-materials/salon-materials.module';
+import { SalonApplicationsModule } from './salon-applications/salon-applications.module';
 
 @Module({
   imports: [
@@ -65,7 +62,6 @@ import { SalonMaterialsModule } from './salon-materials/salon-materials.module';
     UsersModule,
     ServicesModule,
     BookingsModule,
-    ReviewsModule,
     AdminModule,
     FavoritesModule,
     LikesModule,
@@ -73,12 +69,9 @@ import { SalonMaterialsModule } from './salon-materials/salon-materials.module';
     EventsModule,
     NotificationsModule,
     CloudinaryModule,
-    ProductsModule,
     PromotionsModule,
     LocationsModule,
     CategoriesModule, // Add the new module here
-    ProductOrdersModule,
-    SellersModule,
     MailModule,
     CsrfModule,
     TrendsModule,
@@ -90,6 +83,7 @@ import { SalonMaterialsModule } from './salon-materials/salon-materials.module';
     TasksModule,
     UserAddressesModule,
     SalonMaterialsModule,
+    SalonApplicationsModule,
   ],
   controllers: [AppController],
   providers: [

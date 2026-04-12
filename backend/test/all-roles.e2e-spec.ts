@@ -1,12 +1,14 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as request from 'supertest';
-import * as cookieParser from 'cookie-parser';
 import { Socket } from 'socket.io';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { EventsGateway } from '../src/events/events.gateway';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const cookieParser = require('cookie-parser');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const request = require('supertest');
 
 jest.setTimeout(60000);
 
@@ -254,7 +256,7 @@ describe('Comprehensive multi-role flows (e2e)', () => {
         { day: 'Tuesday', open: '09:00', close: '17:00' },
       ],
       operatingDays: ['Monday', 'Tuesday'],
-      planCode: 'ESSENTIAL',
+      planCode: 'PREMIUM',
       hasSentProof: true,
       paymentReference: 'FLOW-SALON-REF',
     };

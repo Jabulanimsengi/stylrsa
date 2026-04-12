@@ -7,10 +7,10 @@ import {
     FaHome,
     FaStore,
     FaConciergeBell,
-    FaStar,
     FaCreditCard,
     FaTrash,
     FaHistory,
+    FaCalendarAlt,
     FaChevronDown,
     FaChevronRight,
     FaTimes
@@ -33,10 +33,9 @@ interface AdminSidebarProps {
     currentView: AdminView;
     onViewChange: (view: AdminView) => void;
     pendingCounts: {
+        applications: number;
         salons: number;
         services: number;
-        reviews: number;
-        promotions: number;
         payments: number;
     };
     isOpen: boolean;
@@ -67,9 +66,9 @@ export default function AdminSidebar({
     };
 
     const totalPending =
+        pendingCounts.applications +
         pendingCounts.salons +
-        pendingCounts.services +
-        pendingCounts.reviews;
+        pendingCounts.services;
 
     const sections: NavSection[] = [
         {
@@ -83,9 +82,9 @@ export default function AdminSidebar({
             title: `Pending Approvals${totalPending > 0 ? ` (${totalPending})` : ''}`,
             defaultExpanded: true,
             items: [
+                { id: 'salon-applications', label: 'Applications', icon: <FaStore />, badge: pendingCounts.applications },
                 { id: 'salons', label: 'Salons', icon: <FaStore />, badge: pendingCounts.salons },
                 { id: 'services', label: 'Services', icon: <FaConciergeBell />, badge: pendingCounts.services },
-                { id: 'reviews', label: 'Reviews', icon: <FaStar />, badge: pendingCounts.reviews },
             ],
         },
         {
@@ -93,6 +92,7 @@ export default function AdminSidebar({
             defaultExpanded: true,
             items: [
                 { id: 'all-salons', label: 'All Salons', icon: <FaStore /> },
+                { id: 'bookings', label: 'Bookings', icon: <FaCalendarAlt /> },
                 { id: 'pending-payments', label: 'Pending Payments', icon: <FaCreditCard />, badge: pendingCounts.payments },
             ],
         },

@@ -1,7 +1,10 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React from 'react';
+import type { IconType } from 'react-icons';
 import {
+    FaChevronRight,
+    FaGoogle,
     FaMapMarkerAlt,
     FaStar,
     FaTruck,
@@ -11,7 +14,7 @@ import {
     FaRegClock,
     FaImages,
 } from 'react-icons/fa';
-import { Salon, GalleryImage, Review } from '@/types';
+import { Salon, GalleryImage } from '@/types';
 import { transformCloudinary } from '@/utils/cloudinary';
 import styles from './BooksyLayout.module.css';
 import VerificationBadge from '@/components/VerificationBadge/VerificationBadge';
@@ -25,18 +28,18 @@ export function StickyTabNavigation({
     onTabClick,
     hasPhotos,
     hasTeam,
-    reviewsCount,
+    reviewLinksCount,
 }: {
     activeSection: string;
     onTabClick: (sectionId: string) => void;
     hasPhotos: boolean;
     hasTeam: boolean;
-    reviewsCount: number;
+    reviewLinksCount: number;
 }) {
     const tabs = [
         { id: 'services-section', label: 'Services', show: true },
         { id: 'photos-section', label: 'Photos', show: hasPhotos },
-        { id: 'reviews-section', label: 'Reviews', count: reviewsCount, show: true },
+        { id: 'reviews-section', label: 'Reviews', count: reviewLinksCount, show: reviewLinksCount > 0 },
         { id: 'about-section', label: 'About', show: true },
         { id: 'team-section', label: 'Team', show: hasTeam },
     ].filter(tab => tab.show);
@@ -58,6 +61,84 @@ export function StickyTabNavigation({
                 ))}
             </div>
         </nav>
+    );
+}
+
+export function ExternalReviewsSection({
+    salon,
+}: {
+    salon: Salon;
+}) {
+    const reviewLinks = [
+        salon.googleReviewsUrl ? {
+            href: salon.googleReviewsUrl,
+            label: 'Google reviews',
+            description: 'Read customer feedback on Google',
+            icon: FaGoogle,
+        } : null,
+        salon.freshaReviewsUrl ? {
+            href: salon.freshaReviewsUrl,
+            label: 'Fresha reviews',
+            description: 'Open the salon profile on Fresha',
+            icon: FaStar,
+        } : null,
+        salon.booksyReviewsUrl ? {
+            href: salon.booksyReviewsUrl,
+            label: 'Booksy reviews',
+            description: 'See ratings and reviews on Booksy',
+            icon: FaStar,
+        } : null,
+    ].filter(Boolean) as Array<{
+        href: string;
+        label: string;
+        description: string;
+        icon: IconType;
+    }>;
+
+    if (reviewLinks.length === 0) {
+        return (
+            <div className={styles.emptyReviews}>
+                <FaStar className={styles.emptyIcon} />
+                <p>This salon has not linked external reviews yet.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className={styles.aboutContent}>
+            <section className={styles.aboutSection}>
+                <h3 className={styles.subsectionTitle}>External review platforms</h3>
+                <p className={styles.aboutDescription}>
+                    Stylr SA no longer stores reviews directly on the platform. Use the links below to read this salon&apos;s reviews on Google, Fresha, or Booksy.
+                </p>
+            </section>
+
+            <section className={styles.aboutSection}>
+                <div className={styles.externalReviewLinks}>
+                    {reviewLinks.map((link) => {
+                        const Icon = link.icon;
+                        return (
+                            <a
+                                key={link.label}
+                                href={link.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.externalReviewLink}
+                            >
+                                <div className={styles.externalReviewIcon}>
+                                    <Icon />
+                                </div>
+                                <div className={styles.externalReviewCopy}>
+                                    <span className={styles.externalReviewLabel}>{link.label}</span>
+                                    <span className={styles.externalReviewDescription}>{link.description}</span>
+                                </div>
+                                <FaChevronRight className={styles.externalReviewArrow} />
+                            </a>
+                        );
+                    })}
+                </div>
+            </section>
+        </div>
     );
 }
 
@@ -387,187 +468,4 @@ export function AboutSection({
         </div>
     );
 }
-
-// Booksy-style Reviews Section
-export function BooksyReviewsSection({
-    reviews,
-    avgRating,
-    galleryImages,
-    onOpenLightbox,
-}: {
-    reviews: Review[];
-    avgRating: number;
-    galleryImages: GalleryImage[];
-    onOpenLightbox: (images: string[], index: number) => void;
-}) {
-    const [visibleCount, setVisibleCount] = useState(5);
-    const [sortBy, setSortBy] = useState<'recent' | 'helpful'>('recent');
-    const totalReviews = reviews.length;
-
-    // Calculate rating distribution
-    const ratingCounts = [0, 0, 0, 0, 0];
-    reviews.forEach(review => {
-        if (review.rating >= 1 && review.rating <= 5) {
-            ratingCounts[review.rating - 1]++;
-        }
-    });
-
-    const maxCount = Math.max(...ratingCounts, 1);
-
-    // Sort reviews
-    const sortedReviews = useMemo(() => {
-        const sorted = [...reviews];
-        if (sortBy === 'recent') {
-            sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        }
-        return sorted;
-    }, [reviews, sortBy]);
-
-    const displayedReviews = sortedReviews.slice(0, visibleCount);
-
-    // Get client photos from gallery
-    const clientPhotoUrls = galleryImages.map(g => g.imageUrl).slice(0, 6);
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    };
-
-    if (reviews.length === 0) {
-        return (
-            <div className={styles.emptyReviews}>
-                <FaStar className={styles.emptyIcon} />
-                <p>No reviews yet. Be the first to leave a review!</p>
-            </div>
-        );
-    }
-
-    return (
-        <>
-            {/* Rating Summary Card */}
-            <div className={styles.ratingSummaryCard}>
-                <div className={styles.ratingSummary}>
-                    <div className={styles.ratingOverview}>
-                        <div className={styles.ratingBig}>{avgRating.toFixed(1)}</div>
-                        <div className={styles.overviewStars}>
-                            {[1, 2, 3, 4, 5].map(star => (
-                                <FaStar
-                                    key={star}
-                                    className={star <= Math.round(avgRating) ? styles.starFilled : styles.starEmpty}
-                                />
-                            ))}
-                        </div>
-                        <div className={styles.reviewCount}>{totalReviews} reviews</div>
-                    </div>
-                    <div className={styles.ratingBars}>
-                        {[5, 4, 3, 2, 1].map(star => (
-                            <div key={star} className={styles.ratingBarRow}>
-                                <span className={styles.ratingBarLabel}>{star}</span>
-                                <div className={styles.ratingBarTrack}>
-                                    <div
-                                        className={styles.ratingBarFill}
-                                        style={{ width: `${(ratingCounts[star - 1] / maxCount) * 100}%` }}
-                                    />
-                                </div>
-                                <span className={styles.ratingBarCount}>{ratingCounts[star - 1]}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Client Photos */}
-            {clientPhotoUrls.length > 0 && (
-                <div className={styles.clientPhotos}>
-                    <h3 className={styles.clientPhotosTitle}>Client photos</h3>
-                    <div className={styles.clientPhotosGrid}>
-                        {clientPhotoUrls.map((url, idx) => (
-                            <div
-                                key={idx}
-                                className={styles.clientPhotoItem}
-                                onClick={() => onOpenLightbox(clientPhotoUrls, idx)}
-                            >
-                                <OptimizedImage
-                                    src={transformCloudinary(url, { width: 180, quality: 'auto', format: 'auto', crop: 'fill' })}
-                                    alt={`Client photo ${idx + 1}`}
-                                    fill
-                                    sizes="72px"
-                                />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Sort Options */}
-            <div className={styles.sortOptions}>
-                <button
-                    className={`${styles.sortBtn} ${sortBy === 'recent' ? styles.active : ''}`}
-                    onClick={() => setSortBy('recent')}
-                >
-                    Most recent
-                </button>
-                <button
-                    className={`${styles.sortBtn} ${sortBy === 'helpful' ? styles.active : ''}`}
-                    onClick={() => setSortBy('helpful')}
-                >
-                    Most helpful
-                </button>
-            </div>
-
-            {/* Individual Reviews */}
-            <div className={styles.reviewsList}>
-                {displayedReviews.map(review => (
-                    <div key={review.id} className={styles.reviewCard}>
-                        <div className={styles.reviewCardHeader}>
-                            {/* Reviewer Avatar & Info */}
-                            <div className={styles.reviewerSection}>
-                                <div className={styles.reviewerAvatar}>
-                                    {(review.author?.firstName?.charAt(0) || 'A').toUpperCase()}
-                                </div>
-                                <div className={styles.reviewerDetails}>
-                                    <span className={styles.reviewerName}>
-                                        {review.author?.firstName || 'Anonymous'} {review.author?.lastName?.charAt(0) || ''}.
-                                    </span>
-                                    {review.booking?.service && (
-                                        <span className={styles.reviewServiceInfo}>{review.booking.service.title}</span>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Rating & Date */}
-                            <div className={styles.reviewMeta}>
-                                <div className={styles.reviewRatingStars}>
-                                    {[1, 2, 3, 4, 5].map(star => (
-                                        <FaStar
-                                            key={star}
-                                            className={star <= review.rating ? styles.starFilled : styles.starEmpty}
-                                        />
-                                    ))}
-                                </div>
-                                <span className={styles.reviewDate}>{formatDate(review.createdAt)}</span>
-                            </div>
-                        </div>
-
-                        {/* Review Comment */}
-                        {review.comment && (
-                            <p className={styles.reviewComment}>{review.comment}</p>
-                        )}
-                    </div>
-                ))}
-            </div>
-
-            {/* Load More Button */}
-            {visibleCount < totalReviews && (
-                <button
-                    className={styles.loadMoreReviews}
-                    onClick={() => setVisibleCount(prev => prev + 5)}
-                >
-                    Show more reviews ({totalReviews - visibleCount} remaining)
-                </button>
-            )}
-        </>
-    );
-}
-
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,6 +19,8 @@ import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import { getSalonUrl } from '@/utils/salonUrl';
 import { notify } from '@/lib/notify';
+import RelatedLocations from '@/components/RelatedLocations/RelatedLocations';
+import { getAffluentLocationLinks } from '@/lib/prioritySeoLocations';
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
 
@@ -38,6 +40,7 @@ interface CityPageClientProps {
 function SalonsCityContent({ initialSalons = [], cityInfo }: CityPageClientProps) {
   const params = useParams();
   const citySlug = params.city as string;
+  const provinceSlug = params.location as string;
   const [salons, setSalons] = useState<SalonWithFavorite[]>(initialSalons);
   const [isLoading, setIsLoading] = useState(initialSalons.length === 0);
   const [hasFiltered, setHasFiltered] = useState(false);
@@ -45,6 +48,10 @@ function SalonsCityContent({ initialSalons = [], cityInfo }: CityPageClientProps
   const { openModal } = useAuthModal();
 
   const cityName = cityInfo?.name || citySlug.charAt(0).toUpperCase() + citySlug.slice(1);
+  const affluentLinks = useMemo(
+    () => getAffluentLocationLinks({ province: provinceSlug, excludeCity: citySlug, limit: 4 }),
+    [provinceSlug, citySlug],
+  );
 
   const fetchSalons = useCallback(async (additionalFilters: FilterValues) => {
     setIsLoading(true);
@@ -136,7 +143,7 @@ function SalonsCityContent({ initialSalons = [], cityInfo }: CityPageClientProps
               </button>
               <Link href={getSalonUrl(salon)} className={styles.salonLink}>
                 <div className={styles.imageWrapper}>
-                  <ReviewBadge reviewCount={salon.reviews?.length || 0} avgRating={salon.avgRating || 0} />
+                  <ReviewBadge reviewCount={salon.reviewCount || 0} avgRating={salon.avgRating || 0} />
                   <Image
                     src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), { width: 600, quality: 'auto', format: 'auto', crop: 'fill' })}
                     alt={`${salon.name} - Salon in ${cityName}`}
@@ -156,6 +163,11 @@ function SalonsCityContent({ initialSalons = [], cityInfo }: CityPageClientProps
           ))}
         </div>
       )}
+
+      <RelatedLocations
+        title={`Top premium beauty hubs near ${cityName}`}
+        locations={affluentLinks}
+      />
     </div>
   );
 }

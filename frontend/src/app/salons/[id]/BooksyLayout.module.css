@@ -1021,6 +1021,67 @@
     color: var(--color-text, #333);
 }
 
+.externalReviewLinks {
+    display: grid;
+    gap: 12px;
+}
+
+.externalReviewLink {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--color-border, #e5e5e5);
+    border-radius: 18px;
+    text-decoration: none;
+    color: var(--color-text-strong, #1a1a1a);
+    background: var(--color-surface, #fff);
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.externalReviewLink:hover {
+    border-color: rgba(17, 19, 24, 0.28);
+    transform: translateY(-1px);
+    box-shadow: 0 18px 30px rgba(17, 19, 24, 0.08);
+}
+
+.externalReviewIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(17, 19, 24, 0.06);
+    color: var(--color-text-strong, #1a1a1a);
+    flex-shrink: 0;
+}
+
+.externalReviewCopy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+}
+
+.externalReviewLabel {
+    font-size: 0.975rem;
+    font-weight: 600;
+    color: var(--color-text-strong, #1a1a1a);
+}
+
+.externalReviewDescription {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary, #666);
+}
+
+.externalReviewArrow {
+    color: var(--color-text-muted, #999);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
 /* Reviews Section */
 .reviewsSection {
     margin-top: 2rem;

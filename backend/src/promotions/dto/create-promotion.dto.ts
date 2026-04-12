@@ -27,10 +27,6 @@ export class CreatePromotionDto {
   @IsString()
   @IsOptional()
   serviceId?: string;
-
-  @IsString()
-  @IsOptional()
-  productId?: string;
 }
 
 export class ApprovePromotionDto {

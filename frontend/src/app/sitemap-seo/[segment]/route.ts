@@ -1,30 +1,14 @@
 import { NextResponse } from 'next/server';
 import {
-    generateSeoKeywordUrls,
     generateSitemapXml,
-    splitIntoSitemaps,
+    getSeoSitemapSegmentCount,
+    getSeoSitemapSegmentUrls,
 } from '@/lib/sitemap-generator';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN ||
     process.env.BACKEND_URL ||
     'http://localhost:5000';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
-
-let localSitemapsCache: { sitemaps: string[]; timestamp: number } | null = null;
-const LOCAL_CACHE_TTL = 1000 * 60 * 60;
-
-function getLocalSitemaps(): string[] {
-    if (localSitemapsCache && Date.now() - localSitemapsCache.timestamp < LOCAL_CACHE_TTL) {
-        return localSitemapsCache.sitemaps;
-    }
-
-    const urls = generateSeoKeywordUrls();
-    const sitemapChunks = splitIntoSitemaps(urls);
-    const sitemaps = sitemapChunks.map((chunk) => generateSitemapXml(chunk));
-
-    localSitemapsCache = { sitemaps, timestamp: Date.now() };
-    return sitemaps;
-}
 
 function hasUnsafePayload(xml: string): boolean {
     return xml.includes(';// ') ||
@@ -111,14 +95,20 @@ export async function GET(
             console.warn('Backend SEO sitemap unavailable, using fallback:', error);
         }
 
-        const localSitemaps = getLocalSitemaps();
-        if (segmentNum < localSitemaps.length) {
-            return new NextResponse(localSitemaps[segmentNum], {
+        const totalSegments = getSeoSitemapSegmentCount();
+        if (segmentNum < totalSegments) {
+            const urls = getSeoSitemapSegmentUrls(segmentNum);
+            const xml = generateSitemapXml(urls);
+
+            return new NextResponse(xml, {
                 status: 200,
                 headers: {
                     'Content-Type': 'application/xml; charset=utf-8',
                     'Cache-Control': 'public, max-age=86400, s-maxage=86400',
                     'X-Source': 'local-fallback',
+                    'X-Total-URLs': urls.length.toString(),
+                    'X-Segment': segmentNum.toString(),
+                    'X-Total-Segments': totalSegments.toString(),
                 },
             });
         }

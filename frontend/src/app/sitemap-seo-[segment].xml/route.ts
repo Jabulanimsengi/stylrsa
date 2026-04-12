@@ -1,28 +1,14 @@
 import { NextResponse } from 'next/server';
-import { generateSeoKeywordUrls, generateSitemapXml, splitIntoSitemaps } from '@/lib/sitemap-generator';
+import {
+  generateSitemapXml,
+  getSeoSitemapSegmentCount,
+  getSeoSitemapSegmentUrls,
+} from '@/lib/sitemap-generator';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN ||
   process.env.BACKEND_URL ||
   'http://localhost:5000';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
-
-// Cache for local fallback sitemaps
-let localSitemapsCache: { sitemaps: string[]; timestamp: number } | null = null;
-const LOCAL_CACHE_TTL = 1000 * 60 * 60; // 1 hour
-
-function getLocalSitemaps(): string[] {
-  if (localSitemapsCache && Date.now() - localSitemapsCache.timestamp < LOCAL_CACHE_TTL) {
-    return localSitemapsCache.sitemaps;
-  }
-
-  // Generate from local data
-  const urls = generateSeoKeywordUrls();
-  const sitemapChunks = splitIntoSitemaps(urls);
-  const sitemaps = sitemapChunks.map(chunk => generateSitemapXml(chunk));
-
-  localSitemapsCache = { sitemaps, timestamp: Date.now() };
-  return sitemaps;
-}
 
 function isValidSitemapXml(xml: string): boolean {
   return xml.includes('<?xml') &&
@@ -110,16 +96,21 @@ export async function GET(
 
   // Fallback to local generation
   try {
-    const localSitemaps = getLocalSitemaps();
+    const totalSegments = getSeoSitemapSegmentCount();
 
-    if (segmentNum < localSitemaps.length) {
-      const xml = localSitemaps[segmentNum];
+    if (segmentNum < totalSegments) {
+      const urls = getSeoSitemapSegmentUrls(segmentNum);
+      const xml = generateSitemapXml(urls);
+
       return new NextResponse(xml, {
         status: 200,
         headers: {
           'Content-Type': 'application/xml; charset=utf-8',
           'Cache-Control': 'public, max-age=86400, s-maxage=86400',
           'X-Source': 'local-fallback',
+          'X-Total-URLs': urls.length.toString(),
+          'X-Segment': segmentNum.toString(),
+          'X-Total-Segments': totalSegments.toString(),
         },
       });
     }

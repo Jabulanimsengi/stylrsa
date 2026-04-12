@@ -82,9 +82,15 @@ async function cleanupServiceWorkersForDev() {
     }
 
     const cacheNames = await caches.keys();
-    const nextOrWorkboxCaches = cacheNames.filter(
-      (cacheName) => cacheName.includes('workbox') || cacheName.includes('_next') || cacheName.includes('precache')
-    );
+    const nextOrWorkboxCaches = cacheNames.filter((cacheName) => {
+      return (
+        cacheName.includes('workbox') ||
+        cacheName.includes('_next') ||
+        cacheName.includes('precache') ||
+        cacheName === 'start-url' ||
+        cacheName === 'api-cache'
+      );
+    });
 
     await Promise.all(nextOrWorkboxCaches.map((cacheName) => caches.delete(cacheName)));
   } catch (error) {

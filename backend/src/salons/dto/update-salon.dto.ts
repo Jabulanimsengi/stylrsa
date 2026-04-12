@@ -13,6 +13,8 @@ import {
   IsEnum,
   IsBoolean,
   ValidateIf,
+  Min,
+  Max,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
@@ -81,6 +83,30 @@ export class UpdateSalonDto {
   @IsOptional()
   website?: string;
 
+  @IsUrl()
+  @IsOptional()
+  facebookUrl?: string;
+
+  @IsUrl()
+  @IsOptional()
+  instagramUrl?: string;
+
+  @IsUrl()
+  @IsOptional()
+  tiktokUrl?: string;
+
+  @IsUrl()
+  @IsOptional()
+  googleReviewsUrl?: string;
+
+  @IsUrl()
+  @IsOptional()
+  freshaReviewsUrl?: string;
+
+  @IsUrl()
+  @IsOptional()
+  booksyReviewsUrl?: string;
+
   @IsString()
   @IsOptional()
   whatsapp?: string;
@@ -104,6 +130,31 @@ export class UpdateSalonDto {
   @MaxLength(20)
   @IsOptional()
   branchCode?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  depositRequired?: boolean;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  depositPercentage?: number | null;
+
+  @IsString()
+  @MaxLength(500)
+  @IsOptional()
+  paymentInstructions?: string | null;
+
+  @IsString()
+  @MaxLength(500)
+  @IsOptional()
+  cancellationPolicy?: string | null;
+
+  @IsString()
+  @MaxLength(500)
+  @IsOptional()
+  specialConditions?: string | null;
 
   @IsString()
   @MaxLength(500)

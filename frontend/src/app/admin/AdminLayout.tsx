@@ -11,10 +11,9 @@ interface AdminLayoutProps {
     currentView: AdminView;
     onViewChange: (view: AdminView) => void;
     pendingCounts: {
+        applications: number;
         salons: number;
         services: number;
-        reviews: number;
-        promotions: number;
         payments: number;
     };
 }

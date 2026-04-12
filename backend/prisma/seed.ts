@@ -8,12 +8,6 @@ async function main() {
   // Seed plans
   const plans = [
     { code: 'PREMIUM', name: 'Service Listing Plan', priceCents: 39900, visibilityWeight: 5, maxListings: 9999 },
-    { code: 'FREE', name: 'Free', priceCents: 0, visibilityWeight: 0, maxListings: 1 },
-    { code: 'STARTER', name: 'Starter', priceCents: 4900, visibilityWeight: 1, maxListings: 3 },
-    { code: 'ESSENTIAL', name: 'Essential', priceCents: 9900, visibilityWeight: 2, maxListings: 7 },
-    { code: 'GROWTH', name: 'Growth', priceCents: 19900, visibilityWeight: 3, maxListings: 15 },
-    { code: 'PRO', name: 'Pro', priceCents: 29900, visibilityWeight: 4, maxListings: 27 },
-    { code: 'ELITE', name: 'Elite', priceCents: 49900, visibilityWeight: 5, maxListings: 9999 },
   ];
   for (const p of plans) {
     await prisma.plan.upsert({

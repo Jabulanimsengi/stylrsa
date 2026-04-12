@@ -20,6 +20,12 @@ export interface ContractSalon {
   phoneNumber?: string | null;
   whatsapp?: string | null;
   website?: string | null;
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
+  tiktokUrl?: string | null;
+  googleReviewsUrl?: string | null;
+  freshaReviewsUrl?: string | null;
+  booksyReviewsUrl?: string | null;
   bookingType: BookingType;
   offersMobile?: boolean;
   mobileFee?: number | null;

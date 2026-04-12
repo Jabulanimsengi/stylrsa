@@ -34,48 +34,14 @@ model User {
   profileImage               String?
   stripeCustomerId           String?
   addresses                  UserAddress[]
-  // Seller plan fields
-  sellerPlanCode             PlanCode?
-  sellerVisibilityWeight     Int?              @default(1)
-  sellerMaxListings          Int?              @default(2)
-  sellerFeaturedUntil        DateTime?
-  sellerPlanPriceCents       Int?
-  sellerPlanPaymentStatus    PlanPaymentStatus @default(PENDING_SELECTION)
-  sellerPlanPaymentReference String?
-  sellerPlanProofSubmittedAt DateTime?
-  sellerPlanVerifiedAt       DateTime?
-  // Seller profile fields (for product sellers)
-  sellerWhatsapp             String?           // Default WhatsApp number for orders
-  sellerWebsite              String?           // Seller's main website
-  sellerBankName             String?           // Bank name for payments
-  sellerBankAccountHolder    String?           // Account holder name
-  sellerBankAccountNumber    String?           // Account number
-  sellerBankBranchCode       String?           // Branch code
-  sellerBankAccountType      String?           // e.g., "Savings", "Cheque"
-  sellerPaymentNote          String?           // Note about payment/delivery
-  // Seller business profile fields (required for seller approval)
-  sellerBusinessName         String?           // Business/store name
-  sellerContactPerson        String?           // Contact person full name
-  sellerContactPhone         String?           // Contact phone number
-  sellerContactEmail         String?           // Contact email (can differ from login email)
-  sellerPhysicalAddress      String?           // Physical business address
-  sellerProvincesServed      String[]          @default([]) // SA provinces the seller serves
-  sellerApprovalStatus       ApprovalStatus    @default(PENDING) // Seller profile approval status
-  sellerProfileSubmittedAt   DateTime?         // When the profile was submitted for review
-  sellerApprovedAt           DateTime?         // When the profile was approved by admin
   // Relations
   blogs                      Blog[]
   bookings                   Booking[]
   favorites                  Favorite[]
   notifications              Notification[]
   oauthAccounts              OAuthAccount[]
-  products                   Product[]
-  productOrders              ProductOrder[]    @relation("BuyerOrders")
-  salesOrders                ProductOrder[]    @relation("SellerOrders")
-  reviews                    Review[]
   salons                     Salon?
   serviceLikes               ServiceLike[]
-  candidate                  Candidate?
 
   @@index([email])
   @@index([verificationToken])
@@ -99,17 +65,26 @@ model Salon {
   phoneNumber          String?
   whatsapp             String?
   website              String?
+  facebookUrl          String?
+  instagramUrl         String?
+  tiktokUrl            String?
+  googleReviewsUrl     String?
+  freshaReviewsUrl     String?
+  booksyReviewsUrl     String?
   bookingType          BookingType                   @default(ONSITE)
   offersMobile         Boolean                       @default(false)
   mobileFee            Float?
   isAvailableNow       Boolean                       @default(false)
   commissionRate       Float                         @default(0.0)
   materials            SalonMaterial[]
-  videoShorts          VideoShort[]
   operatingHours       Json?
   operatingDays        String[]
   bookingMessage       String?
+  depositRequired      Boolean                       @default(false)
+  depositPercentage    Int?
+  paymentInstructions  String?
   cancellationPolicy   String?                       // Salon's cancellation policy text
+  specialConditions    String?
   bankName             String?
   accountHolder        String?
   accountNumber        String?
@@ -130,19 +105,15 @@ model Salon {
   planPaymentReference String?
   planProofSubmittedAt DateTime?
   planVerifiedAt       DateTime?
-  beforeAfterPhotos    BeforeAfterPhoto[]
   bookings             Booking[]
   favorites            Favorite[]
   gallery              GalleryImage[]
-  reviews              Review[]
   owner                User                          @relation(fields: [ownerId], references: [id])
   trendzProfile        SalonTrendzProfile?
   views                SalonView[]
   services             Service[]
   availability         ServiceProviderAvailability[]
-  serviceVideos        ServiceVideo[]
   teamMembers          TeamMember[]
-  jobPostings          JobPosting[]
 
   @@index([approvalStatus])
   @@index([city])
@@ -150,6 +121,54 @@ model Salon {
   @@index([approvalStatus, city])           // Composite for filtered city searches
   @@index([approvalStatus, visibilityWeight]) // For sorted approved salons listing
   @@index([offersMobile])                   // For mobile salon filtering
+}
+
+model SalonApplication {
+  id                   String                 @id @default(uuid())
+  applicationReference String                 @unique
+  salonName            String
+  contactPersonName    String
+  email                String
+  phoneNumber          String
+  whatsappNumber       String?
+  description          String?
+  address              String
+  postalCode           String?
+  town                 String
+  city                 String
+  province             String
+  latitude             Float?
+  longitude            Float?
+  website              String?
+  facebookUrl          String?
+  instagramUrl         String?
+  tiktokUrl            String?
+  googleReviewsUrl     String?
+  freshaReviewsUrl     String?
+  booksyReviewsUrl     String?
+  bookingType          BookingType            @default(ONSITE)
+  offersMobile         Boolean                @default(false)
+  mobileFee            Float?
+  operatingHours       Json?
+  operatingDays        String[]
+  bankName             String
+  accountHolder        String
+  accountNumber        String
+  branchCode           String?
+  priceListFileUrl     String
+  bankingProofFileUrl  String
+  portfolioImageUrls   String[]               @default([])
+  status               SalonApplicationStatus @default(SUBMITTED)
+  adminNotes           String?
+  reviewedAt           DateTime?
+  publishedSalonId     String?                @unique
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([email])
+  @@index([phoneNumber])
 }
 
 model ServiceCategory {
@@ -180,6 +199,7 @@ model Service {
   title             String
   description       String
   price             Float
+  discountPercentage Float?
   duration          Int
   durationMin       Int?               // Minimum duration for variable services
   durationMax       Int?               // Maximum duration for variable services
@@ -193,13 +213,11 @@ model Service {
   isFeatured        Boolean            @default(false)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
-  beforeAfterPhotos BeforeAfterPhoto[]
   bookings          Booking[]
   promotions        Promotion[]
   category          ServiceCategory?   @relation(fields: [categoryId], references: [id])
   salon             Salon              @relation(fields: [salonId], references: [id])
   likes             ServiceLike[]
-  serviceVideos     ServiceVideo[]
   teamMembers       TeamMemberService[]
 
   @@index([salonId])
@@ -208,26 +226,6 @@ model Service {
   @@index([isFeatured])
   @@index([salonId, approvalStatus])   // Composite for approved services per salon
   @@index([categoryId, approvalStatus]) // For category filtering with approval
-}
-
-model Review {
-  id                    String         @id @default(uuid())
-  rating                Int
-  comment               String
-  images                String[]       @default([]) // Review photos uploaded by user
-  salonOwnerResponse    String?
-  salonOwnerRespondedAt DateTime?
-  approvalStatus        ApprovalStatus @default(PENDING)
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  userId                String
-  salonId               String
-  bookingId             String         @unique
-  booking               Booking        @relation(fields: [bookingId], references: [id])
-  salon                 Salon          @relation(fields: [salonId], references: [id])
-  author                User           @relation(fields: [userId], references: [id])
-
-  @@index([salonId])
 }
 
 model Booking {
@@ -255,7 +253,6 @@ model Booking {
   service        Service       @relation(fields: [serviceId], references: [id])
   user           User          @relation(fields: [userId], references: [id])
   teamMember     TeamMember?   @relation(fields: [teamMemberId], references: [id])
-  review         Review?
 
   @@index([userId])
   @@index([salonId])
@@ -276,11 +273,16 @@ model BookingWhatsAppIntent {
   clientFirstName String
   clientLastName  String
   clientPhone     String
+  clientEmail     String?
   clientNotes     String?
   colorSelection  String?
   materialSelection String?
   totalCost       Float
   depositAmount   Float
+  depositProofFileUrl String?
+  depositStatus   BookingDepositStatus @default(PENDING_PROOF)
+  depositProofSubmittedAt DateTime?
+  whatsappSentAt  DateTime?
   referenceCode   String   @unique
   sequenceNumber  Int
   whatsappClicks  Int      @default(1)
@@ -290,40 +292,6 @@ model BookingWhatsAppIntent {
   @@index([serviceId])
   @@index([userId])
   @@index([bookingTime])
-}
-
-model Product {
-  id             String         @id @default(uuid())
-  name           String
-  slug           String?        @unique // SEO-friendly URL slug
-  description    String
-  price          Float
-  images         String[]
-  isOnSale       Boolean        @default(false)
-  salePrice      Float?
-  approvalStatus ApprovalStatus @default(PENDING)
-  stock          Int            @default(0)
-  category       String?        // Product category
-  transportFee   Float?
-  transportConditions Json?
-  conditions     Json?
-  // Purchase options - per-product overrides
-  whatsappNumber String?        // WhatsApp number for this product
-  websiteUrl     String?        // Direct website/store link
-  takealotUrl    String?        // Takealot product link
-  amazonUrl      String?        // Amazon product link
-  purchaseNote   String?        // Custom message when user clicks to buy
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  sellerId       String
-  seller         User           @relation(fields: [sellerId], references: [id])
-  orders         ProductOrder[]
-  promotions     Promotion[]
-
-  @@index([slug])
-  @@index([approvalStatus])              // For approved products listing
-  @@index([sellerId, approvalStatus])    // For seller's approved products
-  @@index([category])                    // For category filtering
 }
 
 model Promotion {
@@ -340,15 +308,12 @@ model Promotion {
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   serviceId          String?
-  productId          String?
   salonId            String?
-  product            Product?       @relation(fields: [productId], references: [id], onDelete: Cascade)
   service            Service?       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@index([approvalStatus])
   @@index([salonId])
   @@index([serviceId])
-  @@index([productId])
   @@index([endDate])
 }
 
@@ -363,28 +328,6 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
-}
-
-model ProductOrder {
-  id             String             @id @default(uuid())
-  productId      String
-  buyerId        String
-  sellerId       String
-  quantity       Int
-  totalPrice     Float
-  status         ProductOrderStatus @default(PENDING)
-  deliveryMethod String?
-  contactPhone   String?
-  notes          String?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  buyer          User               @relation("BuyerOrders", fields: [buyerId], references: [id])
-  product        Product            @relation(fields: [productId], references: [id])
-  seller         User               @relation("SellerOrders", fields: [sellerId], references: [id])
-
-  @@index([buyerId])
-  @@index([sellerId])
-  @@index([productId])
 }
 
 model Favorite {
@@ -420,54 +363,6 @@ model GalleryImage {
   @@index([salonId])
 }
 
-model BeforeAfterPhoto {
-  id              String         @id @default(uuid())
-  beforeImageUrl  String
-  afterImageUrl   String
-  caption         String?
-  approvalStatus  ApprovalStatus @default(PENDING)
-  approvedBy      String?
-  approvedAt      DateTime?
-  rejectionReason String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  salonId         String
-  serviceId       String?
-  salon           Salon          @relation(fields: [salonId], references: [id], onDelete: Cascade)
-  service         Service?       @relation(fields: [serviceId], references: [id])
-
-  @@index([salonId])
-  @@index([serviceId])
-  @@index([approvalStatus])
-  @@index([createdAt])
-}
-
-model ServiceVideo {
-  id              String         @id @default(uuid())
-  videoUrl        String
-  vimeoId         String         @unique
-  thumbnailUrl    String?
-  duration        Int
-  caption         String?
-  approvalStatus  ApprovalStatus @default(PENDING)
-  approvedBy      String?
-  approvedAt      DateTime?
-  rejectionReason String?
-  views           Int            @default(0)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  salonId         String
-  serviceId       String?
-  salon           Salon          @relation(fields: [salonId], references: [id], onDelete: Cascade)
-  service         Service?       @relation(fields: [serviceId], references: [id])
-
-  @@index([salonId])
-  @@index([serviceId])
-  @@index([approvalStatus])
-  @@index([createdAt])
-  @@index([views])
-}
-
 model OAuthAccount {
   id                String   @id @default(uuid())
   userId            String
@@ -497,19 +392,6 @@ model DeletedSalonArchive {
   ownerId    String
   salon      Json
   services   Json
-  reason     String?
-  deletedBy  String?
-  deletedAt  DateTime  @default(now())
-  restoredAt DateTime?
-
-  @@index([deletedAt])
-}
-
-model DeletedSellerArchive {
-  id         String    @id @default(uuid())
-  sellerId   String
-  seller     Json
-  products   Json
   reason     String?
   deletedBy  String?
   deletedAt  DateTime  @default(now())
@@ -735,6 +617,14 @@ enum ApprovalStatus {
   REJECTED
 }
 
+enum SalonApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  CHANGES_REQUESTED
+  REJECTED
+  PUBLISHED
+}
+
 enum BookingType {
   ONSITE
   MOBILE
@@ -749,17 +639,16 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum BookingDepositStatus {
+  PENDING_PROOF
+  PROOF_SUBMITTED
+  VERIFIED
+  REJECTED
+}
+
 enum PricingType {
   PER_PERSON
   PER_COUPLE
-}
-
-enum ProductOrderStatus {
-  PENDING
-  CONFIRMED
-  SHIPPED
-  DELIVERED
-  CANCELLED
 }
 
 enum PlanCode {
@@ -801,52 +690,6 @@ enum AgeGroup {
   ALL_AGES
 }
 
-model Candidate {
-  id                  String              @id @default(uuid())
-  userId              String              @unique
-  user                User                @relation(fields: [userId], references: [id])
-  profession          CandidateProfession
-  province            String
-  city                String
-  willingToTravel     Boolean             @default(false)
-  preferredLocations  String[]
-  yearsExperience     Int
-  qualifications      String[]
-  previousWorkplaces  String[]
-  portfolio           String[]
-  availableDays       String[]
-  availableTimes      String?
-  urgentBookings      Boolean             @default(false)
-  weekendsHolidays    Boolean             @default(false)
-  specializations     String[]
-  techniques          String[]
-  questionnaireAnswers Json?
-  
-  // Privacy
-  showFirstName       Boolean             @default(true)
-  showLastName        Boolean             @default(false)
-  showEmail           Boolean             @default(false)
-  showPhone           Boolean             @default(false)
-
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-}
-
-enum CandidateProfession {
-  HAIRDRESSER
-  NAIL_TECH
-  MASSAGE_THERAPIST
-  MAKEUP_ARTIST
-  BARBER
-  ESTHETICIAN
-  LASH_TECH
-  BROW_ARTIST
-  SPA_THERAPIST
-  SALON_MANAGER
-  RECEPTIONIST
-  BEAUTY_THERAPIST
-}
-
 model TeamMember {
   id          String              @id @default(uuid())
   salonId     String
@@ -881,78 +724,6 @@ model TeamMemberService {
   @@index([teamMemberId])
   @@index([serviceId])
 }
-
-model JobPosting {
-  id              String        @id @default(uuid())
-  salonId         String
-  title           String
-  description     String
-  jobType         JobType
-  salaryMin       Float?
-  salaryMax       Float?
-  salaryPeriod    SalaryPeriod?
-  requirements    String[]
-  benefits        String[]
-  experienceLevel String?
-  isRemote        Boolean       @default(false)
-  isActive        Boolean       @default(true)
-  expiresAt       DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  salon           Salon         @relation(fields: [salonId], references: [id], onDelete: Cascade)
-  applications    JobApplication[]
-
-  @@index([salonId])
-  @@index([isActive])
-  @@index([jobType])
-  @@index([createdAt])
-}
-
-model JobApplication {
-  id           String               @id @default(uuid())
-  jobId        String
-  candidateId  String?
-  name         String
-  email        String
-  phone        String?
-  coverLetter  String?
-  resumeUrl    String?
-  status       JobApplicationStatus @default(PENDING)
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  job          JobPosting           @relation(fields: [jobId], references: [id], onDelete: Cascade)
-
-  @@index([jobId])
-  @@index([status])
-  @@index([createdAt])
-}
-
-enum JobType {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  FREELANCE
-  INTERNSHIP
-}
-
-enum SalaryPeriod {
-  HOURLY
-  DAILY
-  WEEKLY
-  MONTHLY
-  ANNUALLY
-}
-
-enum JobApplicationStatus {
-  PENDING
-  REVIEWED
-  SHORTLISTED
-  INTERVIEWED
-  OFFERED
-  HIRED
-  REJECTED
-}
-
 
 model Top10Request {
   id            String   @id @default(uuid())
@@ -1012,20 +783,5 @@ model SalonMaterial {
   salon       Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
 
   @@index([salonId])
-}
-
-model VideoShort {
-  id           String   @id @default(uuid())
-  salonId      String
-  videoUrl     String
-  thumbnailUrl String?
-  caption      String?
-  views        Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  salon        Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
-
-  @@index([salonId])
-  @@index([createdAt])
 }
 

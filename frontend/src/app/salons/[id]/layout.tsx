@@ -1,13 +1,5 @@
 type Sanitizable = string | null | undefined;
 
-const normalizeText = (value: Sanitizable) => {
-  if (!value) return undefined;
-  return value
-    .replace(/\s+/g, ' ')
-    .replace(/[\u0000-\u001F\u007F<>]/g, '')
-    .trim();
-};
-
 const ensureAbsoluteUrl = (baseUrl: string, url: Sanitizable) => {
   if (!url) return undefined;
   if (/^https?:\/\//i.test(url)) return url;
@@ -79,81 +71,6 @@ export default async function SalonLayout({ children, params }: Props) {
     ],
   } : null;
 
-  const reviews: Array<{
-    id: string;
-    rating: number;
-    comment?: string | null;
-    createdAt?: string;
-    author?: { firstName?: string | null; lastName?: string | null } | null;
-  }> = Array.isArray(salon?.reviews) ? salon.reviews : [];
-
-  const reviewCount = typeof salon?.reviewCount === 'number'
-    ? salon.reviewCount
-    : reviews.length;
-
-  const computedAvgRating = (() => {
-    if (typeof salon?.avgRating === 'number' && salon.avgRating > 0) {
-      return salon.avgRating;
-    }
-    if (!reviews.length) return undefined;
-    const total = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-    return total > 0 ? total / reviews.length : undefined;
-  })();
-
-  const aggregateRating = reviewCount > 0 && computedAvgRating
-    ? {
-      '@type': 'AggregateRating',
-      '@id': `${businessId}#aggregateRating`,
-      ratingValue: Number(computedAvgRating.toFixed(1)),
-      reviewCount,
-      bestRating: 5,
-      worstRating: 1,
-      itemReviewed: {
-        '@id': businessId,
-        '@type': 'LocalBusiness',
-        name: salon?.name,
-      },
-    }
-    : undefined;
-
-  const reviewEntities = reviewCount > 0
-    ? reviews
-      .filter((review) => typeof review.rating === 'number' && review.rating > 0)
-      .slice(0, 10)
-      .map((review) => {
-        const authorFirst = normalizeText(review.author?.firstName);
-        const authorLastInitial = normalizeText(review.author?.lastName)?.charAt(0) || '';
-        const authorName = normalizeText(
-          [authorFirst, authorLastInitial ? `${authorLastInitial}.` : undefined]
-            .filter(Boolean)
-            .join(' ')
-        ) || 'Verified Customer';
-
-        const reviewBody = normalizeText(review.comment);
-
-        return {
-          '@type': 'Review',
-          '@id': `${businessId}-review-${review.id}`,
-          datePublished: review.createdAt,
-          ...(reviewBody ? { reviewBody } : {}),
-          itemReviewed: {
-            '@id': businessId,
-            '@type': 'LocalBusiness',
-          },
-          author: {
-            '@type': 'Person',
-            name: authorName,
-          },
-          reviewRating: {
-            '@type': 'Rating',
-            ratingValue: review.rating,
-            bestRating: 5,
-            worstRating: 1,
-          },
-        };
-      })
-    : [];
-
   const normalizedImages = salon?.heroImages && Array.isArray(salon.heroImages) && salon.heroImages.length > 0
     ? (salon.heroImages as string[])
       .map((img: string) => ensureAbsoluteUrl(siteUrl, img))
@@ -188,8 +105,6 @@ export default async function SalonLayout({ children, params }: Props) {
             longitude: salon.longitude,
           }
           : undefined,
-      aggregateRating,
-      review: reviewEntities.length > 0 ? reviewEntities : undefined,
       priceRange: '$$',
     }
     : null;

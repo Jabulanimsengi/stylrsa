@@ -10,7 +10,14 @@ import { PROVINCES } from './locationData';
 import { SEO_KEYWORDS, ORIGINAL_CATEGORIES } from './seo-generation';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
-const URLS_PER_SITEMAP = 45000; // Stay under Google's 50,000 limit
+export const URLS_PER_SITEMAP = 45000; // Stay under Google's 50,000 limit
+const PROVINCE_SLUGS = Object.keys(PROVINCES);
+const TOTAL_CITIES = PROVINCE_SLUGS.reduce(
+    (count, provinceSlug) => count + PROVINCES[provinceSlug].cities.length,
+    0,
+);
+const URLS_PER_KEYWORD = 1 + PROVINCE_SLUGS.length + TOTAL_CITIES;
+const URLS_PER_SERVICE_CATEGORY = 2 + PROVINCE_SLUGS.length + TOTAL_CITIES;
 
 export interface SitemapUrl {
     loc: string;
@@ -56,6 +63,109 @@ export function generateSeoKeywordUrls(): SitemapUrl[] {
                 });
             }
         }
+    }
+
+    return urls;
+}
+
+function appendSeoKeywordUrls(
+    urls: SitemapUrl[],
+    keyword: string,
+    today: string,
+    startOffset: number,
+    maxUrls: number,
+): number {
+    let remainingOffset = startOffset;
+    let remainingSlots = maxUrls;
+
+    const pushUrl = (loc: string, changefreq: SitemapUrl['changefreq'], priority: number) => {
+        if (remainingSlots <= 0) return;
+        if (remainingOffset > 0) {
+            remainingOffset -= 1;
+            return;
+        }
+
+        urls.push({
+            loc,
+            lastmod: today,
+            changefreq,
+            priority,
+        });
+        remainingSlots -= 1;
+    };
+
+    pushUrl(`${SITE_URL}/${keyword}`, 'weekly', 0.8);
+
+    for (const provinceSlug of PROVINCE_SLUGS) {
+        pushUrl(`${SITE_URL}/${keyword}/${provinceSlug}`, 'weekly', 0.7);
+
+        const province = PROVINCES[provinceSlug];
+        for (const city of province.cities) {
+            pushUrl(`${SITE_URL}/${keyword}/${provinceSlug}/${city.slug}`, 'weekly', 0.6);
+
+            if (remainingSlots <= 0) {
+                return maxUrls;
+            }
+        }
+
+        if (remainingSlots <= 0) {
+            return maxUrls;
+        }
+    }
+
+    return maxUrls - remainingSlots;
+}
+
+export function getSeoKeywordUrlCount(): number {
+    return SEO_KEYWORDS.length * URLS_PER_KEYWORD;
+}
+
+export function getServiceUrlCount(): number {
+    return ORIGINAL_CATEGORIES.length * URLS_PER_SERVICE_CATEGORY;
+}
+
+export function getSalonUrlCount(): number {
+    return 2 * (PROVINCE_SLUGS.length + TOTAL_CITIES);
+}
+
+export function getSeoSitemapSegmentCount(): number {
+    return Math.ceil(getSeoKeywordUrlCount() / URLS_PER_SITEMAP);
+}
+
+export function getSeoSitemapSegmentUrls(segmentNum: number): SitemapUrl[] {
+    if (!Number.isInteger(segmentNum) || segmentNum < 0) {
+        return [];
+    }
+
+    const totalUrls = getSeoKeywordUrlCount();
+    const startIndex = segmentNum * URLS_PER_SITEMAP;
+
+    if (startIndex >= totalUrls) {
+        return [];
+    }
+
+    const urlsNeeded = Math.min(URLS_PER_SITEMAP, totalUrls - startIndex);
+    const startKeywordIndex = Math.floor(startIndex / URLS_PER_KEYWORD);
+    let offsetWithinKeyword = startIndex % URLS_PER_KEYWORD;
+    let remaining = urlsNeeded;
+    const urls: SitemapUrl[] = [];
+    const today = new Date().toISOString().split('T')[0];
+
+    for (
+        let keywordIndex = startKeywordIndex;
+        keywordIndex < SEO_KEYWORDS.length && remaining > 0;
+        keywordIndex += 1
+    ) {
+        const added = appendSeoKeywordUrls(
+            urls,
+            SEO_KEYWORDS[keywordIndex],
+            today,
+            offsetWithinKeyword,
+            remaining,
+        );
+
+        remaining -= added;
+        offsetWithinKeyword = 0;
     }
 
     return urls;
@@ -188,15 +298,15 @@ export function splitIntoSitemaps(urls: SitemapUrl[]): SitemapUrl[][] {
  * Get total counts for sitemap stats
  */
 export function getSitemapStats() {
-    const seoUrls = generateSeoKeywordUrls();
-    const serviceUrls = generateServiceUrls();
-    const salonUrls = generateSalonUrls();
+    const seoPages = getSeoKeywordUrlCount();
+    const servicePages = getServiceUrlCount();
+    const salonPages = getSalonUrlCount();
 
     return {
-        seoPages: seoUrls.length,
-        servicePages: serviceUrls.length,
-        salonPages: salonUrls.length,
-        totalPages: seoUrls.length + serviceUrls.length + salonUrls.length,
-        sitemapsNeeded: Math.ceil(seoUrls.length / URLS_PER_SITEMAP),
+        seoPages,
+        servicePages,
+        salonPages,
+        totalPages: seoPages + servicePages + salonPages,
+        sitemapsNeeded: Math.ceil(seoPages / URLS_PER_SITEMAP),
     };
 }

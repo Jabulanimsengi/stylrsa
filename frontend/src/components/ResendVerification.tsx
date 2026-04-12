@@ -34,12 +34,12 @@ export default function ResendVerification({ onClose }: ResendVerificationProps)
       const response = await res.json();
       toast.success(response.message || 'Verification code sent! Please check your inbox.');
       setShowVerification(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Resend verification error:', err);
 
       let msg = 'Failed to resend verification code.';
 
-      if (err?.message) {
+      if (err instanceof Error && err.message) {
         msg = err.message;
       } else if (typeof err === 'string') {
         msg = err;

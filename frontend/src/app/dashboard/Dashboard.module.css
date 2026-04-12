@@ -4249,6 +4249,10 @@
   gap: 0.5rem;
 }
 
+.serviceMainInfo > div {
+  min-width: 0;
+}
+
 .serviceTitle {
   font-size: 0.9375rem;
   font-weight: 600;
@@ -4256,6 +4260,40 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.serviceDiscountRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+.serviceDiscountBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(244, 63, 94, 0.1);
+  color: #e11d48;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.serviceOriginalPrice {
+  font-size: 0.84rem;
+  color: #98a2b3;
+  text-decoration: line-through;
+}
+
+.serviceDiscountedPrice {
+  font-size: 0.92rem;
+  color: #1f2430;
+  font-weight: 700;
 }
 
 .servicePriceInline {
@@ -4331,14 +4369,14 @@
 }
 
 .promoButton {
-  background: #8b5cf6;
+  background: #f21b5b;
   color: white;
 }
 
 .promoButton:hover {
-  background: #7c3aed;
+  background: #d91851;
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 2px 6px rgba(242, 27, 91, 0.3);
 }
 
 /* Improved Status Badges */

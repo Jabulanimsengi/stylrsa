@@ -15,10 +15,32 @@ type Props = {
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const params = await searchParams;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 
-  // If no filter params, use default metadata from layout
   if (!params.category && !params.service && !params.city && !params.province) {
-    return {};
+    const title = 'Salons in South Africa | Stylr SA';
+    const description = 'Browse verified salons, spas, and beauty professionals across South Africa. Compare services, reviews, pricing, and booking availability on Stylr SA.';
+
+    return {
+      title,
+      description,
+      alternates: {
+        canonical: `${siteUrl}/salons`,
+      },
+      openGraph: {
+        title,
+        description,
+        url: `${siteUrl}/salons`,
+        siteName: 'Stylr SA',
+        type: 'website',
+        locale: 'en_ZA',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+      },
+    };
   }
 
   return generateCategoryMetadata({

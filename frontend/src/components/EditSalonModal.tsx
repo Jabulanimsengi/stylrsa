@@ -7,8 +7,7 @@ import Image from 'next/image';
 import { Salon } from '@/types';
 import styles from './EditSalonModal.module.css';
 import { toast } from 'react-toastify';
-import { showError, toFriendlyMessage } from '@/lib/errors';
-import { FaTimes } from 'react-icons/fa';
+import { toFriendlyMessage } from '@/lib/errors';
 import { uploadToCloudinary, transformCloudinary } from '@/utils/cloudinary';
 import { SalonUpdateSchema } from '@/lib/validation/schemas';
 import {
@@ -24,6 +23,35 @@ import {
 import MapboxMap from '@/components/MapboxMap';
 import { forwardGeocode, GeocodingResult } from '@/lib/mapbox';
 
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
+
+type DayName = (typeof DAYS)[number];
+type DayHours = { open: string; close: string; isOpen: boolean };
+type HoursState = Record<DayName, DayHours>;
+type EditSalonFormState = {
+  name: string;
+  description: string;
+  province: string;
+  city: string;
+  town: string;
+  address: string;
+  bookingType: string;
+  mobileFee: number;
+  operatingHours: unknown;
+  contactEmail: string;
+  phoneNumber: string;
+  whatsapp: string;
+  website: string;
+  facebookUrl: string;
+  instagramUrl: string;
+  tiktokUrl: string;
+  googleReviewsUrl: string;
+  freshaReviewsUrl: string;
+  booksyReviewsUrl: string;
+  latitude: number | '';
+  longitude: number | '';
+};
+
 interface EditSalonModalProps {
   salon: Salon;
   onClose: () => void;
@@ -31,7 +59,7 @@ interface EditSalonModalProps {
 }
 
 export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSalonModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<EditSalonFormState>({
     name: '',
     description: '',
     province: '',
@@ -45,18 +73,20 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
     phoneNumber: '',
     whatsapp: '',
     website: '',
-    latitude: '' as any,
-    longitude: '' as any,
+    facebookUrl: '',
+    instagramUrl: '',
+    tiktokUrl: '',
+    googleReviewsUrl: '',
+    freshaReviewsUrl: '',
+    booksyReviewsUrl: '',
+    latitude: '' as number | '',
+    longitude: '' as number | '',
   });
 
-  const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
-  const [heroImageFiles, setHeroImageFiles] = useState<File[]>([]);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [backgroundImagePreview, setBackgroundImagePreview] = useState<string | null>(null);
   const [heroImagesPreview, setHeroImagesPreview] = useState<string[]>([]);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-
-  // Track original URLs (non-transformed) for submission
   const [originalHeroImages, setOriginalHeroImages] = useState<string[]>([]);
 
   const [isUploading, setIsUploading] = useState(false);
@@ -64,14 +94,13 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [error, setError] = useState('');
   const [addrQuery, setAddrQuery] = useState('');
-  const [addrSuggestions, setAddrSuggestions] = useState<any[]>([]);
+  const [addrSuggestions, setAddrSuggestions] = useState<GeocodingResult[]>([]);
   const [showAddrSuggestions, setShowAddrSuggestions] = useState(false);
   const [fieldsLocked, setFieldsLocked] = useState(false);
   const suggestionsRef = useRef<HTMLUListElement>(null);
 
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const [hours, setHours] = useState<Record<string, { open: string; close: string; isOpen: boolean }>>(
-    Object.fromEntries(days.map(d => [d, { open: '09:00', close: '17:00', isOpen: true }])) as Record<string, { open: string; close: string; isOpen: boolean }>
+  const [hours, setHours] = useState<HoursState>(
+    Object.fromEntries(DAYS.map((day) => [day, { open: '09:00', close: '17:00', isOpen: true }])) as HoursState,
   );
 
   useEffect(() => {
@@ -90,10 +119,15 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
         phoneNumber: salon.phoneNumber || '',
         whatsapp: salon.whatsapp || '',
         website: salon.website || '',
-        latitude: (salon.latitude as any) ?? '' as any,
-        longitude: (salon.longitude as any) ?? '' as any,
+        facebookUrl: salon.facebookUrl || '',
+        instagramUrl: salon.instagramUrl || '',
+        tiktokUrl: salon.tiktokUrl || '',
+        googleReviewsUrl: salon.googleReviewsUrl || '',
+        freshaReviewsUrl: salon.freshaReviewsUrl || '',
+        booksyReviewsUrl: salon.booksyReviewsUrl || '',
+        latitude: salon.latitude ?? '',
+        longitude: salon.longitude ?? '',
       });
-      // Optimize existing image previews with Cloudinary transformations
       setBackgroundImagePreview(
         salon.backgroundImage
           ? transformCloudinary(salon.backgroundImage, { width: 400, quality: 'auto', format: 'auto' })
@@ -104,9 +138,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
           ? transformCloudinary(salon.logo, { width: 200, quality: 'auto', format: 'auto' })
           : null
       );
-      // Store original hero images for submission
       setOriginalHeroImages(salon.heroImages || []);
-      // Use transformed versions for preview only
       setHeroImagesPreview(
         salon.heroImages?.map(img =>
           transformCloudinary(img, { width: 400, quality: 'auto', format: 'auto' })
@@ -115,19 +147,19 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
 
       // Parse operating hours from salon data
       const rawHours = salon.operatingHours as unknown;
-      const nextHours: Record<string, { open: string; close: string; isOpen: boolean }> = {} as any;
+      const nextHours = {} as HoursState;
 
       // Initialize all days as closed first
-      days.forEach((d) => {
-        nextHours[d] = { open: '09:00', close: '17:00', isOpen: false };
+      DAYS.forEach((day) => {
+        nextHours[day] = { open: '09:00', close: '17:00', isOpen: false };
       });
 
       if (Array.isArray(rawHours)) {
         // Handle array format: [{ day: 'Monday', open: '09:00', close: '17:00' }, ...]
         rawHours.forEach((entry: { day?: string; open?: string; close?: string }) => {
           if (!entry?.day) return;
-          const dayName = entry.day;
-          if (days.includes(dayName)) {
+          const dayName = entry.day as DayName;
+          if (DAYS.includes(dayName)) {
             nextHours[dayName] = {
               open: entry.open || '09:00',
               close: entry.close || '17:00',
@@ -138,12 +170,12 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
       } else if (rawHours && typeof rawHours === 'object') {
         // Handle object format: { Monday: '09:00 - 17:00', ... }
         const hoursRecord = rawHours as Record<string, string>;
-        days.forEach((d) => {
-          const val = hoursRecord[d];
+        DAYS.forEach((day) => {
+          const val = hoursRecord[day];
           if (val && typeof val === 'string') {
             const match = val.match(/(\d{1,2}:\d{2}).*(\d{1,2}:\d{2})/);
             if (match) {
-              nextHours[d] = { open: match[1], close: match[2], isOpen: true };
+              nextHours[day] = { open: match[1], close: match[2], isOpen: true };
             }
           }
         });
@@ -171,6 +203,12 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showAddrSuggestions]);
+
+  useEffect(() => () => {
+    if (logoPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(logoPreview);
+    }
+  }, [logoPreview]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -221,75 +259,30 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
     setError('');
 
     try {
-      if (name === 'backgroundImage' && files[0]) {
-        const file = files[0];
-
-        // Validate file size early (10MB limit)
-        const MAX_SIZE = 10 * 1024 * 1024;
-        if (file.size > MAX_SIZE) {
-          throw new Error(`File too large. Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
-        }
-
-        // Validate it's an image
-        if (!file.type.startsWith('image/')) {
-          throw new Error('Please select a valid image file.');
-        }
-
-        // Validate dimensions (recommended 1200x600 for background, minimum 600x300)
-        await validateImageDimensions(file, 600, 300, { width: 1200, height: 600 });
-
-        setBackgroundImageFile(file);
-        if (backgroundImagePreview && backgroundImagePreview.startsWith('blob:')) {
-          URL.revokeObjectURL(backgroundImagePreview);
-        }
-        setBackgroundImagePreview(URL.createObjectURL(file));
-        toast.success('Background image selected');
-      } else if (name === 'logo' && files[0]) {
-        const file = files[0];
-
-        // Validate file size early (10MB limit)
-        const MAX_SIZE = 10 * 1024 * 1024;
-        if (file.size > MAX_SIZE) {
-          throw new Error(`File too large. Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
-        }
-
-        // Validate it's an image
-        if (!file.type.startsWith('image/')) {
-          throw new Error('Please select a valid image file.');
-        }
-
-        // Validate dimensions (recommended 512x512 for logo, minimum 150x150)
-        await validateImageDimensions(file, 150, 150, { width: 512, height: 512 });
-
-        setLogoFile(file);
-        if (logoPreview && logoPreview.startsWith('blob:')) {
-          URL.revokeObjectURL(logoPreview);
-        }
-        setLogoPreview(URL.createObjectURL(file));
-        toast.success('Logo image selected (Recommended: 512x512px or larger for best quality)');
-      } else if (name === 'heroImages') {
-        const newFiles = Array.from(files);
-
-        // Validate each file size and dimensions
-        const MAX_SIZE = 10 * 1024 * 1024;
-        for (const file of newFiles) {
-          if (file.size > MAX_SIZE) {
-            throw new Error(`File "${file.name}" is too large. Maximum size is 10MB.`);
-          }
-          if (!file.type.startsWith('image/')) {
-            throw new Error(`File "${file.name}" is not a valid image.`);
-          }
-          // Validate dimensions (recommended 1200x800 for hero images, minimum 450x300)
-          await validateImageDimensions(file, 450, 300, { width: 1200, height: 800 });
-        }
-
-        setHeroImageFiles(prevFiles => [...prevFiles, ...newFiles]);
-        const newPreviews = newFiles.map(file => URL.createObjectURL(file));
-        setHeroImagesPreview(prevPreviews => [...prevPreviews, ...newPreviews]);
-        toast.success(`${newFiles.length} hero image(s) selected`);
+      if (name !== 'logo' || !files[0]) {
+        return;
       }
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to process file';
+
+      const file = files[0];
+      const MAX_SIZE = 10 * 1024 * 1024;
+      if (file.size > MAX_SIZE) {
+        throw new Error(`File too large. Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
+      }
+
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Please select a valid image file.');
+      }
+
+      await validateImageDimensions(file, 150, 150, { width: 512, height: 512 });
+
+      setLogoFile(file);
+      if (logoPreview && logoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(logoPreview);
+      }
+      setLogoPreview(URL.createObjectURL(file));
+      toast.success('Logo image selected. Square logos preview best.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to process file';
       setError(errorMessage);
       toast.error(errorMessage);
       // Reset the file input
@@ -299,33 +292,17 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
     }
   };
 
-  const handleDeleteImage = (imageUrlToDelete: string, imageType: 'background' | 'logo' | 'hero') => {
-    if (imageType === 'background') {
-      setBackgroundImageFile(null);
-      setBackgroundImagePreview(null);
-    } else if (imageType === 'logo') {
-      setLogoFile(null);
-      setLogoPreview(null);
-    } else {
-      const updatedPreviews = heroImagesPreview.filter(img => img !== imageUrlToDelete);
-      setHeroImagesPreview(updatedPreviews);
+  const handleDeleteLogo = () => {
+    if (logoPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(logoPreview);
+    }
+    setLogoFile(null);
+    setLogoPreview(null);
+  };
 
-      if (imageUrlToDelete.startsWith('blob:')) {
-        // Remove from new files
-        const indexToRemove = heroImagesPreview.findIndex(p => p === imageUrlToDelete);
-        const existingImagesCount = heroImagesPreview.filter(p => !p.startsWith('blob:')).length;
-        const fileIndexToRemove = indexToRemove - existingImagesCount;
-
-        if (fileIndexToRemove >= 0 && fileIndexToRemove < heroImageFiles.length) {
-          setHeroImageFiles(prevFiles => prevFiles.filter((_, i) => i !== fileIndexToRemove));
-        }
-      } else {
-        // Remove from original hero images by finding the matching original URL
-        const indexInPreview = heroImagesPreview.findIndex(p => p === imageUrlToDelete);
-        if (indexInPreview >= 0 && indexInPreview < originalHeroImages.length) {
-          setOriginalHeroImages(prevOriginals => prevOriginals.filter((_, i) => i !== indexInPreview));
-        }
-      }
+  const handleDeleteImage = (_imageUrlToDelete: string, imageType: 'background' | 'logo' | 'hero') => {
+    if (imageType === 'logo') {
+      handleDeleteLogo();
     }
   };
 
@@ -335,29 +312,10 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
     setError('');
 
     try {
-      // Determine final background image URL
-      let finalBackgroundImageUrl: string | null = null;
-      if (backgroundImageFile && backgroundImagePreview?.startsWith('blob:')) {
-        // New background image uploaded
-        toast.info('Uploading background image...');
-        const uploaded = await uploadToCloudinary(backgroundImageFile, {
-          onProgress: (progress) => {
-            setUploadProgress(prev => ({ ...prev, background: progress }));
-          }
-        });
-        finalBackgroundImageUrl = uploaded.secure_url;
-        setUploadProgress(prev => ({ ...prev, background: 100 }));
-        toast.success('Background image uploaded!');
-      } else if (backgroundImagePreview && !backgroundImagePreview.startsWith('blob:')) {
-        // Existing background image kept (use original URL from salon, not transformed preview)
-        finalBackgroundImageUrl = salon.backgroundImage || null;
-      }
-      // else: background image was deleted (backgroundImagePreview is null), send null
-
-      // Determine final logo URL
+      const finalBackgroundImageUrl: string | null = salon.backgroundImage || null;
+      const finalHeroImageUrls = originalHeroImages;
       let finalLogoUrl: string | null = null;
       if (logoFile && logoPreview?.startsWith('blob:')) {
-        // New logo file uploaded
         toast.info('Uploading logo...');
         const uploaded = await uploadToCloudinary(logoFile, {
           publicId: `${salon.name.replace(/[^a-zA-Z0-9]/g, '_')}_logo`,
@@ -369,33 +327,8 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
         setUploadProgress(prev => ({ ...prev, logo: 100 }));
         toast.success('Logo uploaded!');
       } else if (logoPreview && !logoPreview.startsWith('blob:')) {
-        // Existing logo kept (use original URL from salon, not transformed preview)
         finalLogoUrl = salon.logo || null;
       }
-      // else: logo was deleted (logoPreview is null), send null
-
-      // Use original hero image URLs (not transformed previews)
-      const existingHeroImageUrls = originalHeroImages;
-
-      // Upload new hero images with progress tracking
-      if (heroImageFiles.length > 0) {
-        toast.info(`Uploading ${heroImageFiles.length} hero image(s)...`);
-      }
-      const newHeroImageUrls = (
-        await Promise.all(heroImageFiles.map((file, index) =>
-          uploadToCloudinary(file, {
-            onProgress: (progress) => {
-              setUploadProgress(prev => ({ ...prev, [`hero_${index}`]: progress }));
-            }
-          })
-        ))
-      ).map(r => r.secure_url);
-
-      if (heroImageFiles.length > 0) {
-        toast.success(`${heroImageFiles.length} hero image(s) uploaded!`);
-      }
-
-      const finalHeroImageUrls = [...existingHeroImageUrls, ...newHeroImageUrls];
 
       const isValidUrl = (value: string) => {
         try { new URL(value); return true; } catch { return false; }
@@ -403,21 +336,30 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
 
       const cleanedWhatsapp = (formData.whatsapp || '').replace(/\D+/g, '');
       const websiteValue = formData.website?.trim();
+      const facebookValue = formData.facebookUrl?.trim();
+      const instagramValue = formData.instagramUrl?.trim();
+      const tiktokValue = formData.tiktokUrl?.trim();
+      const googleReviewsValue = formData.googleReviewsUrl?.trim();
+      const freshaReviewsValue = formData.freshaReviewsUrl?.trim();
+      const booksyReviewsValue = formData.booksyReviewsUrl?.trim();
 
-      // Validate payload (partial allowed)
       const payload = {
         ...formData,
-        whatsapp: cleanedWhatsapp || undefined,
-        website: websiteValue && isValidUrl(websiteValue) ? websiteValue : undefined,
-        backgroundImage: finalBackgroundImageUrl,
+        whatsapp: cleanedWhatsapp || null,
+        website: websiteValue ? (isValidUrl(websiteValue) ? websiteValue : undefined) : null,
+        facebookUrl: facebookValue ? (isValidUrl(facebookValue) ? facebookValue : undefined) : null,
+        instagramUrl: instagramValue ? (isValidUrl(instagramValue) ? instagramValue : undefined) : null,
+        tiktokUrl: tiktokValue ? (isValidUrl(tiktokValue) ? tiktokValue : undefined) : null,
+        googleReviewsUrl: googleReviewsValue ? (isValidUrl(googleReviewsValue) ? googleReviewsValue : undefined) : null,
+        freshaReviewsUrl: freshaReviewsValue ? (isValidUrl(freshaReviewsValue) ? freshaReviewsValue : undefined) : null,
+        booksyReviewsUrl: booksyReviewsValue ? (isValidUrl(booksyReviewsValue) ? booksyReviewsValue : undefined) : null,
         logo: finalLogoUrl,
-        heroImages: finalHeroImageUrls,
-        latitude: (formData as any).latitude !== '' ? Number((formData as any).latitude) : undefined,
-        longitude: (formData as any).longitude !== '' ? Number((formData as any).longitude) : undefined,
-      } as any;
+        latitude: formData.latitude !== '' ? Number(formData.latitude) : undefined,
+        longitude: formData.longitude !== '' ? Number(formData.longitude) : undefined,
+      };
       // Compose operatingHours as array entries compatible with backend DTO
-      const hoursArray = days
-        .filter(d => hours[d].isOpen)
+      const hoursArray = DAYS
+        .filter((d) => hours[d].isOpen)
         .map((d) => ({
           day: d,
           open: hours[d].open,
@@ -473,7 +415,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
       });
 
       if (!res.ok) {
-        let errData: any = null;
+        let errData: { message?: string; error?: string } | null = null;
         try {
           errData = await res.json();
           console.error('Backend error response:', errData);
@@ -510,9 +452,9 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
         }));
       }, 100);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Salon update error:', error);
-      const msg = error?.message || toFriendlyMessage(error, 'Could not update salon profile.');
+      const msg = error instanceof Error ? error.message : toFriendlyMessage(error, 'Could not update salon profile.');
       setError(msg);
       toast.error(msg, { autoClose: 8000 });
     } finally {
@@ -522,7 +464,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[700px] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0 gap-0">
+      <DialogContent className="w-[min(92vw,760px)] max-h-[90vh] overflow-hidden p-0 gap-0">
         <DialogTitle className="sr-only">Edit Salon Profile</DialogTitle>
         <div className={styles.modalContent} style={{ position: 'relative', backgroundColor: 'transparent', boxShadow: 'none' }}>
           <h2 className={styles.title}>Edit Salon Profile</h2>
@@ -632,14 +574,19 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                           boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                         }}
                       >
-                        {addrSuggestions.map((s: GeocodingResult) => (
+                        {addrSuggestions.map((s) => (
                           <li
                             key={s.place_id}
                             style={{ padding: '8px 10px', cursor: 'pointer', borderBottom: '1px solid var(--color-border)' }}
                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-light, rgba(245, 25, 87, 0.1))'}
                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                             onClick={() => {
-                              setFormData((prev: any) => ({ ...prev, address: s.display_name, latitude: s.lat, longitude: s.lon }));
+                              setFormData((prev) => ({
+                                ...prev,
+                                address: s.display_name,
+                                latitude: Number(s.lat),
+                                longitude: Number(s.lon),
+                              }));
                               setAddrQuery(s.display_name);
                               setShowAddrSuggestions(false);
 
@@ -650,7 +597,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                                 // Extract province/state directly
                                 const provinceValue = addr.state || '';
                                 if (provinceValue) {
-                                  setFormData((prev: any) => ({ ...prev, province: provinceValue }));
+                                  setFormData((prev) => ({ ...prev, province: provinceValue }));
                                 }
 
                                 // Extract city
@@ -658,7 +605,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                                 // Extract town/suburb - fallback to city if not available
                                 const townValue = addr.suburb || cityValue || '';
                                 if (cityValue || townValue) {
-                                  setFormData((prev: any) => ({
+                                  setFormData((prev) => ({
                                     ...prev,
                                     city: cityValue || townValue,
                                     town: townValue || cityValue
@@ -680,18 +627,18 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                 </div>
                 <div>
                   <label className={styles.label}>Latitude</label>
-                  <input type="number" step="any" value={(formData as any).latitude} onChange={(e) => setFormData((p: any) => ({ ...p, latitude: e.target.value }))} className={styles.input} />
+                  <input type="number" step="any" value={formData.latitude} onChange={(e) => setFormData((p) => ({ ...p, latitude: e.target.value === '' ? '' : Number(e.target.value) }))} className={styles.input} />
                 </div>
                 <div>
                   <label className={styles.label}>Longitude</label>
-                  <input type="number" step="any" value={(formData as any).longitude} onChange={(e) => setFormData((p: any) => ({ ...p, longitude: e.target.value }))} className={styles.input} />
+                  <input type="number" step="any" value={formData.longitude} onChange={(e) => setFormData((p) => ({ ...p, longitude: e.target.value === '' ? '' : Number(e.target.value) }))} className={styles.input} />
                 </div>
-                {(formData as any).latitude && (formData as any).longitude && (
+                {formData.latitude !== '' && formData.longitude !== '' && (
                   <div className={styles.fullWidth}>
                     <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
                       <MapboxMap
-                        latitude={Number((formData as any).latitude)}
-                        longitude={Number((formData as any).longitude)}
+                        latitude={Number(formData.latitude)}
+                        longitude={Number(formData.longitude)}
                         height={220}
                         zoom={15}
                         style="streets"
@@ -719,9 +666,33 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                   <label htmlFor="whatsapp" className={styles.label}>WhatsApp Number</label>
                   <input type="tel" id="whatsapp" name="whatsapp" value={formData.whatsapp} onChange={handleChange} className={styles.input} />
                 </div>
+                <div>
+                  <label htmlFor="facebookUrl" className={styles.label}>Facebook URL</label>
+                  <input type="url" id="facebookUrl" name="facebookUrl" value={formData.facebookUrl} onChange={handleChange} placeholder="https://www.facebook.com/your-salon" className={styles.input} />
+                </div>
+                <div>
+                  <label htmlFor="instagramUrl" className={styles.label}>Instagram URL</label>
+                  <input type="url" id="instagramUrl" name="instagramUrl" value={formData.instagramUrl} onChange={handleChange} placeholder="https://www.instagram.com/your-salon" className={styles.input} />
+                </div>
+                <div>
+                  <label htmlFor="tiktokUrl" className={styles.label}>TikTok URL</label>
+                  <input type="url" id="tiktokUrl" name="tiktokUrl" value={formData.tiktokUrl} onChange={handleChange} placeholder="https://www.tiktok.com/@your-salon" className={styles.input} />
+                </div>
+                <div>
+                  <label htmlFor="googleReviewsUrl" className={styles.label}>Google Reviews URL</label>
+                  <input type="url" id="googleReviewsUrl" name="googleReviewsUrl" value={formData.googleReviewsUrl} onChange={handleChange} placeholder="https://g.page/r/..." className={styles.input} />
+                </div>
+                <div>
+                  <label htmlFor="freshaReviewsUrl" className={styles.label}>Fresha Reviews URL</label>
+                  <input type="url" id="freshaReviewsUrl" name="freshaReviewsUrl" value={formData.freshaReviewsUrl} onChange={handleChange} placeholder="https://www.fresha.com/..." className={styles.input} />
+                </div>
+                <div>
+                  <label htmlFor="booksyReviewsUrl" className={styles.label}>Booksy Reviews URL</label>
+                  <input type="url" id="booksyReviewsUrl" name="booksyReviewsUrl" value={formData.booksyReviewsUrl} onChange={handleChange} placeholder="https://booksy.com/..." className={styles.input} />
+                </div>
               </div>
 
-              <h3 className={styles.subheading}>Images</h3>
+              <h3 className={styles.subheading}>Branding</h3>
               {isProcessingFile && (
                 <div style={{ padding: '12px', background: 'var(--color-surface-elevated)', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '16px', height: '16px', border: '2px solid var(--color-primary)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
@@ -775,7 +746,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                 </div>
               )}
               <div className={styles.grid}>
-                <div className={styles.imageUploadSection}>
+                <div className={styles.imageUploadSection} hidden>
                   <label className={styles.label}>
                     Background Image
                     <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)', marginTop: '4px' }}>
@@ -823,19 +794,14 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                   <div className={styles.imagePreviewContainer}>
                     {logoPreview && (
                       <div className={styles.imageWrapper}>
-                        <Image
-                          src={logoPreview}
-                          alt="Logo Preview"
-                          className={styles.imagePreview}
-                          width={200}
-                          height={160}
-                        />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={logoPreview} alt="Logo Preview" className={styles.imagePreview} />
                         <button type="button" className={styles.deleteButton} onClick={() => handleDeleteImage(logoPreview, 'logo')} disabled={isProcessingFile || isUploading}>×</button>
                       </div>
                     )}
                   </div>
                 </div>
-                <div className={styles.imageUploadSection}>
+                <div className={styles.imageUploadSection} hidden>
                   <label className={styles.label}>
                     Hero Images
                     <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)', marginTop: '4px' }}>
@@ -899,23 +865,23 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: 8 }}>
                     <span style={{ minWidth: 120, fontWeight: 600 }}>Apply to all</span>
                     <input type="time" value={hours['Monday'].open} onChange={(e) => {
-                      const v = e.target.value; setHours(prev => { const next = { ...prev }; days.forEach(d => next[d] = { ...next[d], open: v }); return next; });
+                      const v = e.target.value; setHours(prev => { const next = { ...prev }; DAYS.forEach((d) => { next[d] = { ...next[d], open: v }; }); return next; });
                     }} className={styles.input} style={{ maxWidth: 160 }} />
                     <span>to</span>
                     <input type="time" value={hours['Monday'].close} onChange={(e) => {
-                      const v = e.target.value; setHours(prev => { const next = { ...prev }; days.forEach(d => next[d] = { ...next[d], close: v }); return next; });
+                      const v = e.target.value; setHours(prev => { const next = { ...prev }; DAYS.forEach((d) => { next[d] = { ...next[d], close: v }; }); return next; });
                     }} className={styles.input} style={{ maxWidth: 160 }} />
                     <input type="checkbox" checked={Object.values(hours).every(h => h.isOpen)} onChange={(e) => {
                       const isOpen = e.target.checked;
                       setHours(prev => {
                         const next = { ...prev };
-                        days.forEach(d => next[d] = { ...next[d], isOpen });
+                        DAYS.forEach((d) => { next[d] = { ...next[d], isOpen }; });
                         return next;
                       });
                     }} />
                   </div>
                   <div style={{ display: 'grid', gap: 8 }}>
-                    {days.map((d) => (
+                    {DAYS.map((d) => (
                       <div key={d} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         <input type="checkbox" checked={hours[d].isOpen} onChange={(e) => setHours(prev => ({ ...prev, [d]: { ...prev[d], isOpen: e.target.checked } }))} />
                         <span style={{ minWidth: 120 }}>{d}</span>

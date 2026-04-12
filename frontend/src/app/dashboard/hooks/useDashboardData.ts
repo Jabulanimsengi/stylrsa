@@ -43,6 +43,14 @@ interface BankingDetailsState {
   branchCode: string;
 }
 
+interface BookingRequirementsState {
+  depositRequired: boolean;
+  depositPercentage: string;
+  paymentInstructions: string;
+  cancellationPolicy: string;
+  specialConditions: string;
+}
+
 export function useDashboardData({
   ownerId,
   authStatus,
@@ -67,6 +75,15 @@ export function useDashboardData({
   });
   const [isSavingBankingDetails, setIsSavingBankingDetails] = useState(false);
   const [isEditingBankingDetails, setIsEditingBankingDetails] = useState(false);
+  const [bookingRequirements, setBookingRequirements] = useState<BookingRequirementsState>({
+    depositRequired: false,
+    depositPercentage: '50',
+    paymentInstructions: '',
+    cancellationPolicy: '',
+    specialConditions: '',
+  });
+  const [isSavingBookingRequirements, setIsSavingBookingRequirements] = useState(false);
+  const [isEditingBookingRequirements, setIsEditingBookingRequirements] = useState(false);
 
   const [operatingHours, setOperatingHours] = useState<OperatingHours>(initializeOperatingHours());
   const [isEditingHours, setIsEditingHours] = useState(false);
@@ -131,6 +148,21 @@ export function useDashboardData({
         branchCode: salonData.branchCode || '',
       });
       setIsEditingBankingDetails(!(salonData.bankName && salonData.accountNumber));
+      setBookingRequirements({
+        depositRequired: Boolean(salonData.depositRequired),
+        depositPercentage: String(salonData.depositPercentage ?? 50),
+        paymentInstructions: salonData.paymentInstructions || '',
+        cancellationPolicy: salonData.cancellationPolicy || '',
+        specialConditions: salonData.specialConditions || '',
+      });
+      setIsEditingBookingRequirements(
+        !(
+          salonData.depositRequired ||
+          salonData.paymentInstructions ||
+          salonData.cancellationPolicy ||
+          salonData.specialConditions
+        ),
+      );
 
       const nextHoursState = buildOperatingHoursState(salonData.operatingHours);
       setOperatingHours(nextHoursState.operatingHours);
@@ -404,6 +436,51 @@ export function useDashboardData({
     }
   }, [ownerId]);
 
+  const saveBookingRequirements = useCallback(async () => {
+    if (!ownerId) return;
+
+    const normalized = {
+      depositRequired: bookingRequirements.depositRequired,
+      depositPercentage: bookingRequirements.depositRequired
+        ? Math.max(0, Math.min(100, Number.parseInt(bookingRequirements.depositPercentage || '50', 10) || 50))
+        : null,
+      paymentInstructions: bookingRequirements.depositRequired
+        ? bookingRequirements.paymentInstructions.trim()
+        : null,
+      cancellationPolicy: bookingRequirements.cancellationPolicy.trim() || null,
+      specialConditions: bookingRequirements.specialConditions.trim() || null,
+    };
+
+    if (normalized.depositRequired && !normalized.paymentInstructions) {
+      notify.error('Add payment instructions before enabling a deposit requirement.');
+      return;
+    }
+
+    setIsSavingBookingRequirements(true);
+    try {
+      const updated = await apiJson(`/api/salons/mine?ownerId=${ownerId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(normalized),
+      }) as Salon;
+
+      setSalon(updated);
+      setBookingRequirements({
+        depositRequired: Boolean(updated.depositRequired),
+        depositPercentage: String(updated.depositPercentage ?? 50),
+        paymentInstructions: updated.paymentInstructions || '',
+        cancellationPolicy: updated.cancellationPolicy || '',
+        specialConditions: updated.specialConditions || '',
+      });
+      setIsEditingBookingRequirements(false);
+      notify.success('Booking requirements saved');
+    } catch (e: unknown) {
+      notify.error(toFriendlyMessage(e, 'Failed to save booking requirements'));
+    } finally {
+      setIsSavingBookingRequirements(false);
+    }
+  }, [bookingRequirements, ownerId]);
+
   const handleBookingStatusUpdate = useCallback(async (
     bookingId: string,
     status: 'CONFIRMED' | 'DECLINED' | 'COMPLETED' | 'CANCELLED',
@@ -434,6 +511,9 @@ export function useDashboardData({
     bankingDetails,
     isSavingBankingDetails,
     isEditingBankingDetails,
+    bookingRequirements,
+    isSavingBookingRequirements,
+    isEditingBookingRequirements,
     operatingHours,
     isEditingHours,
     isSavingHours,
@@ -444,6 +524,8 @@ export function useDashboardData({
     setIsEditingMessage,
     setBankingDetails,
     setIsEditingBankingDetails,
+    setBookingRequirements,
+    setIsEditingBookingRequirements,
     setOperatingHours,
     setIsEditingHours,
     setSelectedPlanForUpgrade,
@@ -460,6 +542,7 @@ export function useDashboardData({
     saveBookingMessage,
     saveBankingDetails,
     clearBankingDetails,
+    saveBookingRequirements,
     saveOperatingHours,
     handleBookingStatusUpdate,
   };

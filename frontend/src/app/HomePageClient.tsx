@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -9,7 +9,6 @@ import { useEffect, useState, useRef } from 'react';
 import MobileSearch from '@/components/MobileSearch/MobileSearch';
 import ServiceCategoryCircles from '@/components/ServiceCategoryCircles/ServiceCategoryCircles';
 import SalonCarouselSection from '@/components/SalonCarouselSection';
-import dynamic from 'next/dynamic';
 import { getSalonUrl } from '@/utils/salonUrl';
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import { usePagePerformance } from '@/hooks/usePagePerformance';
@@ -20,12 +19,7 @@ import { applyComputedAvailability } from '@/lib/salonAvailability';
 type SearchCategorySuggestion = { id: string; title: string; slug: string };
 type SearchVenueSuggestion = { id: string; title: string; slug?: string | null; city: string | null };
 type SearchServiceSuggestion = { id: string; title: string; salon?: { id?: string; name?: string } };
-// Disable SSR for TypingAnimation to prevent hydration mismatches and ghost double-rendering
-const TypingAnimation = dynamic(() => import('@/components/TypingAnimation/TypingAnimation'), {
-  ssr: false,
-  // Add an empty placeholder of similar size back so layout doesn't jump
-  loading: () => <span style={{ display: 'inline-block', width: '14ch', minHeight: '1.1em' }} />
-});
+
 const SEARCHABLE_CATEGORIES = [
   { name: 'Hair', slug: 'haircuts-styling' },
   { name: 'Braids', slug: 'braiding-weaving' },
@@ -48,17 +42,17 @@ const SEARCHABLE_CATEGORIES = [
 const HERO_TRUST_POINTS = [
   'Verified salons & independent professionals',
   'Real galleries, real prices, real reviews',
-  'Book directly via WhatsApp â€” zero commission',
+  'Book directly via WhatsApp — zero commission',
 ];
 
 const WHY_BOOK_WITH_STYLR = [
   {
     title: 'Verified and approved salons',
-    copy: 'Every salon on Stylr SA goes through an approval process before going live. You browse profiles that show real services, real prices, and real gallery images â€” not stock photos.',
+    copy: 'Every salon on Stylr SA goes through an approval process before going live. You browse profiles that show real services, real prices, and real gallery images — not stock photos.',
   },
   {
     title: 'Designed for South African beauty',
-    copy: "Search for braiders, locticians, nail techs, skin-care specialists, barbers, and more â€” all in your city or suburb. No irrelevant results.",
+    copy: "Search for braiders, locticians, nail techs, skin-care specialists, barbers, and more — all in your city or suburb. No irrelevant results.",
   },
   {
     title: 'Book straight to WhatsApp',
@@ -226,8 +220,8 @@ export default function HomePageClient({
           }));
 
           // Map backend services to UI services
-          serviceSuggestions = (data.services || []).map((item: { id?: string; title?: string; salon?: { id?: string; name?: string } }) => ({
-            id: item.id || `suggestion-${Math.random()}`,
+          serviceSuggestions = (data.services || []).map((item: { id?: string; title?: string; salon?: { id?: string; name?: string } }, index: number) => ({
+            id: item.id || `suggestion-${index}-${(item.title || 'service').toLowerCase().replace(/\s+/g, '-')}`,
             title: item.title || '',
             salon: item.salon || undefined,
           })).filter((s: SearchServiceSuggestion) => Boolean(s.title));
@@ -311,24 +305,17 @@ export default function HomePageClient({
         </div>
 
         <div className={styles.heroContent}>
-          <span className={styles.heroEyebrow}>South Africa&apos;s home for beauty and wellness bookings</span>
+          <span className={styles.heroEyebrow}>Booking requests go straight to WhatsApp for fast, easy communication</span>
           <h1 className={styles.heroTitle} id="hero-title">
-            <span className={styles.heroTitleLead}>Find the best</span>
-            <span className={styles.heroTitleAnimated}>
-              <TypingAnimation
-                words={['Hairdressers', 'Nail Techs', 'Barbers', 'Braiders']}
-                typingSpeed={175}
-                deletingSpeed={80}
-                delayBetweenWords={2800}
-              />
-            </span>
+            <span className={styles.heroTitleLead}>SA Salons &amp; Spas</span>
+            <span className={styles.heroTitleAnimated}>directory</span>
           </h1>
           <p className={styles.heroDescription}>
-            Search verified salons and beauty professionals near you. Compare prices, browse real work galleries, and connect directly â€” no apps, no middlemen.
+            Browse profiles, compare prices, and message salons directly on WhatsApp.
           </p>
 
           <div className={styles.heroSearchContainer}>
-            <span className={styles.heroSearchLabel}>Search salons, treatments, and categories</span>
+            <span className={styles.heroSearchLabel}>Search salons, spas, and treatments</span>
             <div className={styles.heroSearchBox} ref={heroSearchRef}>
               <div className={styles.searchIconWrapper}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -338,7 +325,8 @@ export default function HomePageClient({
               </div>
               <input
                 type="text"
-                placeholder="Search by treatment, salon name, or cityâ€¦"
+                placeholder="Search by treatment, salon name, or city…"
+                aria-label="Search the salons and spas directory"
                 className={styles.heroSearchInput}
                 value={heroSearchQuery}
                 onChange={(e) => setHeroSearchQuery(e.target.value)}
@@ -398,10 +386,10 @@ export default function HomePageClient({
                               navigateWithPageLoader(getSalonUrl(venue));
                             }}
                           >
-                            <span className={styles.suggestionIcon}>ðŸ </span>
+                            <span className={styles.suggestionIcon}>🏠</span>
                             <div className={styles.suggestionTextWrapper}>
                               <span className={styles.heroSuggestionTitle}>{venue.title}</span>
-                              {venue.city && <span className={styles.suggestionSubtitle}> â€¢ {venue.city}</span>}
+                              {venue.city && <span className={styles.suggestionSubtitle}> • {venue.city}</span>}
                             </div>
                           </li>
                         ))}
@@ -425,7 +413,7 @@ export default function HomePageClient({
                               navigateWithPageLoader(`/salons?service=${encodeURIComponent(service.title)}`);
                             }}
                           >
-                            <span className={styles.suggestionIcon}>âœ¨</span>
+                            <span className={styles.suggestionIcon}>✨</span>
                             <span className={styles.heroSuggestionTitle}>{service.title}</span>
                           </li>
                         ))}
@@ -449,7 +437,7 @@ export default function HomePageClient({
                               navigateWithPageLoader(`/salons?category=${category.slug}`);
                             }}
                           >
-                            <span className={styles.suggestionIcon}>ðŸ”</span>
+                            <span className={styles.suggestionIcon}>🔍</span>
                             <span className={styles.heroSuggestionTitle}>{category.title}</span>
                           </li>
                         ))}
@@ -498,7 +486,7 @@ export default function HomePageClient({
           <span className={styles.sectionEyebrow}>Why thousands of South Africans use Stylr SA</span>
           <h2 className={styles.sectionHeading}>Stop guessing. Start booking with confidence.</h2>
           <p className={styles.sectionDescription}>
-            Stylr SA gives you verified salon profiles, transparent pricing, and a direct line to the professionals who do the work â€” all in one place.
+            Stylr SA gives you verified salon profiles, transparent pricing, and a direct line to the professionals who do the work — all in one place.
           </p>
         </div>
 
@@ -564,3 +552,4 @@ export default function HomePageClient({
     </div>
   );
 }
+

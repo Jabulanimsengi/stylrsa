@@ -38,6 +38,8 @@ export function useDashboardUiState({
   const [activeMainTab, setActiveMainTab] = useState<TabId>(initialTab);
   const [selectedServiceForPromo, setSelectedServiceForPromo] = useState<Service | null>(null);
   const [isCreatePromoModalOpen, setIsCreatePromoModalOpen] = useState(false);
+  const [discountService, setDiscountService] = useState<Service | null>(null);
+  const [isServiceDiscountModalOpen, setIsServiceDiscountModalOpen] = useState(false);
   const [bookingToComplete, setBookingToComplete] = useState<string | null>(null);
 
   useEffect(() => {
@@ -95,6 +97,11 @@ export function useDashboardUiState({
     }
   }, []);
 
+  const openDiscountModal = useCallback((service: Service) => {
+    setDiscountService(service);
+    setIsServiceDiscountModalOpen(true);
+  }, []);
+
   const handleDeleteClick = useCallback((id: string, type: DashboardDeleteTarget) => {
     setItemToDelete({ id, type });
   }, []);
@@ -114,6 +121,11 @@ export function useDashboardUiState({
     setSelectedServiceForPromo(null);
   }, []);
 
+  const handleCloseServiceDiscountModal = useCallback(() => {
+    setIsServiceDiscountModalOpen(false);
+    setDiscountService(null);
+  }, []);
+
   return {
     mobileNavOpen,
     isSectionNavigating,
@@ -128,6 +140,8 @@ export function useDashboardUiState({
     activeMainTab,
     selectedServiceForPromo,
     isCreatePromoModalOpen,
+    discountService,
+    isServiceDiscountModalOpen,
     bookingToComplete,
     setMobileNavOpen,
     setIsEditSalonModalOpen,
@@ -137,13 +151,17 @@ export function useDashboardUiState({
     setActiveBookingTab,
     setSelectedServiceForPromo,
     setIsCreatePromoModalOpen,
+    setDiscountService,
+    setIsServiceDiscountModalOpen,
     setBookingToComplete,
     navigateToTab,
     openServiceModalToAdd,
     openServiceModalToEdit,
+    openDiscountModal,
     handleDeleteClick,
     handleCloseServiceModal,
     handleCloseSimpleServiceModal,
     handleCreatePromotionModalClose,
+    handleCloseServiceDiscountModal,
   };
 }

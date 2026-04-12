@@ -2,11 +2,10 @@
 
 import type {
     Salon,
+    SalonApplication,
     Service,
-    Review,
     PlanCode,
     PlanPaymentStatus,
-    ApprovalStatus,
 } from '@/types';
 
 export type PendingSalon = Pick<Salon, 'id' | 'name' | 'approvalStatus' | 'createdAt' | 'city' | 'province' | 'isVerified'> & {
@@ -23,11 +22,7 @@ export type PendingSalon = Pick<Salon, 'id' | 'name' | 'approvalStatus' | 'creat
 };
 
 export type PendingService = Service & { salon: { name: string } };
-
-export type PendingReview = Review & {
-    author: { firstName: string };
-    salon: { name: string }
-};
+export type PendingSalonApplication = SalonApplication;
 
 export type Top10RequestStatus =
     | 'PENDING'
@@ -87,6 +82,24 @@ export type DeletedSalonArchiveRow = {
     } | null;
 };
 
+export type AdminBookingRow = {
+    id: string;
+    sourceType: 'ACCOUNT_BOOKING' | 'WHATSAPP_INTENT';
+    createdAt: string;
+    bookingTime: string;
+    salonName: string;
+    serviceName: string;
+    clientName: string;
+    clientPhone?: string | null;
+    clientEmail?: string | null;
+    status: string;
+    totalCost: number;
+    depositAmount: number;
+    whatsappClicks?: number | null;
+    whatsappSentAt?: string | null;
+    notes?: string | null;
+};
+
 export const PLAN_PAYMENT_LABELS: Record<PlanPaymentStatus, string> = {
     PENDING_SELECTION: 'Package not selected',
     AWAITING_PROOF: 'Awaiting proof of payment',
@@ -100,4 +113,4 @@ export const ensureArray = <T,>(value: unknown): T[] =>
     Array.isArray(value) ? (value as T[]) : [];
 
 // Re-export commonly used types
-export type { ApprovalStatus, PlanCode, PlanPaymentStatus };
+export type { PlanCode, PlanPaymentStatus };

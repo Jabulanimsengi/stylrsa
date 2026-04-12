@@ -268,7 +268,15 @@ export function generateSalonStructuredData(salon: Salon): object {
     knowsAbout: Array.from(new Set([...serviceNames, ...categoryNames])).slice(0, 12),
   };
 
-  const sameAs = [salon.website].filter(Boolean);
+  const sameAs = [
+    salon.website,
+    salon.facebookUrl,
+    salon.instagramUrl,
+    salon.tiktokUrl,
+    salon.googleReviewsUrl,
+    salon.freshaReviewsUrl,
+    salon.booksyReviewsUrl,
+  ].filter(Boolean);
   if (sameAs.length > 0) {
     structuredData.sameAs = sameAs;
   }

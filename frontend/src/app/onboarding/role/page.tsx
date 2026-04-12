@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, Button, LoadingButton } from '@/components/ui';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { notify } from '@/lib/notify';
 import {
   buildOnboardingClientUrl,
@@ -16,7 +17,7 @@ import styles from '../onboarding.module.css';
 
 type SelectableRole = 'CLIENT' | 'SALON_OWNER';
 
-export default function RoleOnboardingPage() {
+function RoleOnboardingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { authStatus, user, login } = useAuth();
@@ -158,5 +159,21 @@ export default function RoleOnboardingPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function RoleOnboardingPage() {
+  return (
+    <Suspense
+      fallback={(
+        <main className={styles.page}>
+          <div className={styles.shell}>
+            <LoadingSpinner />
+          </div>
+        </main>
+      )}
+    >
+      <RoleOnboardingPageContent />
+    </Suspense>
   );
 }

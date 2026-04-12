@@ -206,16 +206,46 @@ export const NotificationTypes = {
 
 export type NotificationType = typeof NotificationTypes[keyof typeof NotificationTypes];
 
+type NotificationPayloadMap = {
+  [NotificationTypes.NEW_BOOKING]: {
+    customerName: string;
+    serviceName: string;
+    bookingId?: string;
+  };
+  [NotificationTypes.BOOKING_CONFIRMED]: {
+    salonName: string;
+    bookingId?: string;
+  };
+  [NotificationTypes.BOOKING_CANCELLED]: {
+    salonName: string;
+  };
+  [NotificationTypes.NEW_REVIEW]: {
+    reviewerName: string;
+    rating: number | string;
+    salonId: string;
+  };
+  [NotificationTypes.PROMOTION]: {
+    title?: string;
+    body: string;
+    url?: string;
+  };
+  [NotificationTypes.REMINDER]: {
+    salonName: string;
+    time: string;
+    bookingId?: string;
+  };
+};
+
 /**
  * Show notification based on type
  */
 export async function showNotificationByType(
   type: NotificationType,
-  data: any
+  data: NotificationPayloadMap[NotificationType]
 ): Promise<void> {
   const notificationConfigs: Record<
     NotificationType,
-    (data: any) => { title: string; options: NotificationOptions }
+    (data: NotificationPayloadMap[NotificationType]) => { title: string; options: NotificationOptions }
   > = {
     [NotificationTypes.NEW_BOOKING]: (data) => ({
       title: 'New Booking',

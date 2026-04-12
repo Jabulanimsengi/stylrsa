@@ -22,9 +22,7 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import useBookingFlow, {
-  STEP_LABELS,
   type BookingPreferences,
-  type BookingStep,
   type BookingTimePeriod,
 } from '@/hooks/useBookingFlow';
 import { apiJson } from '@/lib/api';
@@ -33,10 +31,16 @@ import {
   DialogContent,
   DialogTitle,
 } from '@/components/ui';
+import {
+  formatServiceDiscountLabel,
+  getServiceDiscountedPrice,
+  hasServiceDiscount,
+} from '@/lib/servicePricing';
 
 interface BookingModalProps {
   salon: Salon;
   service?: Service;
+  selectedServices?: Service[];
   services: Service[];
   onClose: () => void;
   onBookingSuccess: () => void;
@@ -52,6 +56,7 @@ type StoredBookingContact = {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  email?: string;
 };
 
 const BOOKING_CONTACT_STORAGE_KEY = 'stylrsa-booking-contact';
@@ -99,7 +104,16 @@ const resolveServiceCategoryName = (service: Service | null): string => {
   return typeof categoryRecord.name === 'string' ? categoryRecord.name : '';
 };
 
-const getTodayDateValue = () => new Date().toISOString().split('T')[0];
+const formatDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getTodayDateValue = () => formatDateKey(new Date());
+const INITIAL_VISIBLE_BOOKING_DAYS = 7;
+const TOTAL_BOOKING_DAYS = 28;
 
 const buildBookingDateTime = (selectedDate: Date, period: BookingTimePeriod) => {
   const bookingDateTime = new Date(selectedDate);
@@ -107,9 +121,16 @@ const buildBookingDateTime = (selectedDate: Date, period: BookingTimePeriod) => 
   return bookingDateTime;
 };
 
+const generateBookingReference = () => {
+  const timestampPart = Date.now().toString().slice(-6);
+  const randomPart = Math.random().toString(36).slice(2, 4).toUpperCase();
+  return `STYL-${timestampPart}${randomPart}`;
+};
+
 export default function BookingModal({
   salon,
   service: initialService,
+  selectedServices = [],
   services,
   onClose,
   onBookingSuccess,
@@ -121,6 +142,8 @@ export default function BookingModal({
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | null>(null);
+  const [showAllBookingDays, setShowAllBookingDays] = useState(false);
+  const [bookingReference] = useState(() => generateBookingReference());
   const hasPrefilledContact = useRef(false);
 
   const booking = useBookingFlow({
@@ -134,20 +157,41 @@ export default function BookingModal({
     setClientFirstName,
     setClientLastName,
     setClientPhone,
+    setClientEmail,
     setPreferences,
   } = booking;
+  const dateRailRef = useRef<HTMLDivElement | null>(null);
 
   const clientFullName = useMemo(
     () => [booking.state.clientFirstName.trim(), booking.state.clientLastName.trim()].filter(Boolean).join(' '),
     [booking.state.clientFirstName, booking.state.clientLastName],
   );
 
-  const referenceCodePreview = useMemo(
-    () => `${clientFullName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || 'STYLRSA'}-PENDING`,
-    [clientFullName],
-  );
-
   const selectedService = booking.state.selectedService;
+  const bookedServices = useMemo(() => {
+    if (selectedServices.length > 0) {
+      return selectedServices;
+    }
+
+    return selectedService ? [selectedService] : [];
+  }, [selectedService, selectedServices]);
+  const servicesSubtotal = useMemo(
+    () => bookedServices.reduce((sum, service) => sum + getServiceDiscountedPrice(service), 0),
+    [bookedServices],
+  );
+  const totalCost = useMemo(() => {
+    const mobileFee = booking.state.isMobile && salon.mobileFee ? salon.mobileFee : 0;
+    return servicesSubtotal + mobileFee;
+  }, [booking.state.isMobile, salon.mobileFee, servicesSubtotal]);
+  const depositPercentage = useMemo(
+    () => (salon.depositRequired ? salon.depositPercentage ?? 50 : 0),
+    [salon.depositPercentage, salon.depositRequired],
+  );
+  const depositAmount = useMemo(
+    () => Number((totalCost * (depositPercentage / 100)).toFixed(2)),
+    [depositPercentage, totalCost],
+  );
+  const hasDepositRequirement = depositAmount > 0;
   const showColorInput = selectedService && requiresColorSelection(
     resolveServiceCategoryName(selectedService),
     selectedService.title || selectedService.name,
@@ -193,6 +237,23 @@ export default function BookingModal({
       booking.state.selectedTimePeriod,
       hasAcceptedTerms,
     ],
+  );
+  const availableBookingDays = useMemo(() => {
+    const days: Date[] = [];
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    for (let index = 0; index < TOTAL_BOOKING_DAYS; index += 1) {
+      const nextDay = new Date(start);
+      nextDay.setDate(start.getDate() + index);
+      days.push(nextDay);
+    }
+
+    return days;
+  }, []);
+  const visibleBookingDays = useMemo(
+    () => (showAllBookingDays ? availableBookingDays : availableBookingDays.slice(0, INITIAL_VISIBLE_BOOKING_DAYS)),
+    [availableBookingDays, showAllBookingDays],
   );
 
   useEffect(() => {
@@ -253,8 +314,18 @@ export default function BookingModal({
     setClientFirstName(user?.firstName || storedContact?.firstName || '');
     setClientLastName(user?.lastName || storedContact?.lastName || '');
     setClientPhone(storedContact?.phone || '');
+    setClientEmail(user?.email || storedContact?.email || '');
     hasPrefilledContact.current = true;
-  }, [authStatus, setClientFirstName, setClientLastName, setClientPhone, user?.firstName, user?.lastName]);
+  }, [
+    authStatus,
+    setClientEmail,
+    setClientFirstName,
+    setClientLastName,
+    setClientPhone,
+    user?.email,
+    user?.firstName,
+    user?.lastName,
+  ]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -265,15 +336,17 @@ export default function BookingModal({
       firstName: booking.state.clientFirstName.trim(),
       lastName: booking.state.clientLastName.trim(),
       phone: booking.state.clientPhone.trim(),
+      email: booking.state.clientEmail.trim(),
     };
 
-    if (!contact.firstName && !contact.lastName && !contact.phone) {
+    if (!contact.firstName && !contact.lastName && !contact.phone && !contact.email) {
       return;
     }
 
     window.localStorage.setItem(BOOKING_CONTACT_STORAGE_KEY, JSON.stringify(contact));
   }, [
     booking.state.clientFirstName,
+    booking.state.clientEmail,
     booking.state.clientLastName,
     booking.state.clientPhone,
   ]);
@@ -285,13 +358,18 @@ export default function BookingModal({
     });
   }, [colorSelection, materialSelection, setPreferences]);
 
-  const handleDateChange = (value: string) => {
-    if (!value) {
+  useEffect(() => {
+    if (booking.state.step !== 'schedule' || !booking.state.selectedDate || !dateRailRef.current) {
       return;
     }
 
-    const nextDate = new Date(`${value}T00:00:00`);
-    booking.selectDate(nextDate);
+    const selectedIso = formatDateKey(booking.state.selectedDate);
+    const activeButton = dateRailRef.current.querySelector<HTMLButtonElement>(`[data-date="${selectedIso}"]`);
+    activeButton?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [booking.state.selectedDate, booking.state.step]);
+
+  const handleDateChange = (date: Date) => {
+    booking.selectDate(new Date(date.getFullYear(), date.getMonth(), date.getDate()));
   };
 
   const handleSubmit = async () => {
@@ -331,12 +409,14 @@ export default function BookingModal({
           clientFirstName: booking.state.clientFirstName.trim(),
           clientLastName: booking.state.clientLastName.trim(),
           clientPhone: booking.state.clientPhone.replace(/\D/g, ''),
+          clientEmail: booking.state.clientEmail.trim() || null,
           clientNotes: booking.state.clientNotes.trim() || null,
           teamMemberId: selectedTeamMemberId || null,
           colorSelection: colorSelection.trim() || null,
           materialSelection: materialSelection || null,
-          totalCost: booking.totalCost,
-          depositAmount: booking.depositAmount,
+          referenceCode: bookingReference,
+          totalCost,
+          depositAmount,
         }),
       });
 
@@ -352,13 +432,23 @@ export default function BookingModal({
     let message = `*StylRSA Booking Request*\n`;
     message += `This booking is from StylRSA.\n\n`;
     message += `*Service:* ${service.title || service.name}\n`;
+    if (bookedServices.length > 1) {
+      message += `*Services Selected:*\n${bookedServices
+        .map((item) => `- ${item.title || item.name} (R${getServiceDiscountedPrice(item).toFixed(2)})`)
+        .join('\n')}\n`;
+    }
     message += `*Client Name:* ${clientFullName}\n`;
     message += `*Contact Number:* ${booking.state.clientPhone}\n`;
+    if (booking.state.clientEmail.trim()) {
+      message += `*Email:* ${booking.state.clientEmail.trim()}\n`;
+    }
     message += `*Professional:* ${selectedTeamMember?.name || 'Any available professional'}\n`;
     message += `*Preferred Date:* ${bookingDate}\n`;
     message += `*Preferred Time:* ${preferredTimeLabel}\n`;
-    message += `*Total Cost:* R${booking.totalCost.toFixed(2)}\n`;
-    message += `*Deposit Required:* R${booking.depositAmount.toFixed(2)} (50%)\n\n`;
+    message += `*Total Cost:* R${totalCost.toFixed(2)}\n`;
+    if (hasDepositRequirement) {
+      message += `*Deposit Required:* R${depositAmount.toFixed(2)} (${depositPercentage}%)\n\n`;
+    }
 
     if (booking.state.isMobile) {
       message += `*Service Type:* Mobile Service\n`;
@@ -377,8 +467,11 @@ export default function BookingModal({
     }
 
     message += `\n*Reference Number:* ${referenceCode}\n\n`;
+    if (hasDepositRequirement && salon.paymentInstructions) {
+      message += `*Deposit Instructions:*\n${salon.paymentInstructions}\n\n`;
+    }
 
-    if (salon.bankName && salon.accountNumber) {
+    if (hasDepositRequirement && salon.bankName && salon.accountNumber) {
       message += `*Banking Details for Deposit:*\n`;
       message += `Bank: ${salon.bankName}\n`;
       message += `Account Holder: ${salon.accountHolder || salon.name}\n`;
@@ -393,8 +486,15 @@ export default function BookingModal({
       message += `*Salon Note:*\n${salon.bookingMessage}\n\n`;
     }
 
-    message += `*Important:* Refunds follow the salon's own policy, not Stylr SA.\n`;
-    message += `A 20% booking cancellation fee applies.\n`;
+    if (salon.specialConditions) {
+      message += `*Special Conditions:*\n${salon.specialConditions}\n\n`;
+    }
+
+    if (salon.cancellationPolicy) {
+      message += `*Cancellation Policy:*\n${salon.cancellationPolicy}\n\n`;
+    }
+
+    message += `*Important:* This booking request was submitted on Stylr SA and will be completed directly with the salon on WhatsApp.\n`;
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappNumber = salon.whatsapp || salon.phoneNumber || '';
@@ -404,47 +504,6 @@ export default function BookingModal({
 
     onBookingSuccess();
   };
-
-  const getStepIcon = (step: BookingStep, isCompleted: boolean) => {
-    if (isCompleted) {
-      return <FaCheck />;
-    }
-
-    switch (step) {
-      case 'service':
-        return <FaCheck />;
-      case 'contact':
-        return <FaUser />;
-      case 'schedule':
-        return <FaCalendarAlt />;
-      case 'preferences':
-        return <FaPalette />;
-      case 'review':
-        return <FaWhatsapp />;
-      default:
-        return <FaCheck />;
-    }
-  };
-
-  const renderBreadcrumbs = () => (
-    <div className={styles.breadcrumbs}>
-      {booking.visibleSteps.map((step, index) => {
-        const isCompleted = index < booking.currentStepIndex;
-        const isActive = index === booking.currentStepIndex;
-
-        return (
-          <div
-            key={step}
-            className={`${styles.breadcrumbItem} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
-            onClick={() => booking.goToStep(step)}
-          >
-            {getStepIcon(step, isCompleted)}
-            <span>{STEP_LABELS[step]}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
 
   const renderStepContent = () => {
     switch (booking.state.step) {
@@ -466,7 +525,15 @@ export default function BookingModal({
                       <FaClock /> {booking.formatDuration(svc.duration, svc.durationMin, svc.durationMax)}
                     </span>
                   </div>
-                  <span className={styles.servicePrice}>R{svc.price}</span>
+                  <div className={styles.servicePriceGroup}>
+                    {hasServiceDiscount(svc) && (
+                      <>
+                        <span className={styles.serviceDiscountBadge}>{formatServiceDiscountLabel(svc)}</span>
+                        <span className={styles.servicePriceOriginal}>R{svc.price.toFixed(2)}</span>
+                      </>
+                    )}
+                    <span className={styles.servicePrice}>R{getServiceDiscountedPrice(svc).toFixed(2)}</span>
+                  </div>
                   {booking.state.selectedService?.id === svc.id && (
                     <span className={styles.checkmark}>
                       <FaCheck />
@@ -484,7 +551,7 @@ export default function BookingModal({
               <FaUser /> Your Details
             </h3>
             <p className={styles.stepSubtitle}>
-              Start the booking with your name, surname, and best contact number.
+              Start the booking with your name, surname, best contact number, and optional email.
             </p>
 
             <div className={styles.formRow}>
@@ -527,6 +594,19 @@ export default function BookingModal({
               />
               <span className={styles.hint}>The salon will use this number to confirm your booking on WhatsApp.</span>
             </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="email">Email Address</label>
+              <input
+                id="email"
+                type="email"
+                value={booking.state.clientEmail}
+                onChange={(event) => booking.setClientEmail(event.target.value)}
+                placeholder="Optional"
+                className={styles.input}
+              />
+              <span className={styles.hint}>Optional, but useful if the salon needs a backup contact.</span>
+            </div>
           </div>
         );
       case 'schedule':
@@ -536,20 +616,63 @@ export default function BookingModal({
               <FaCalendarAlt /> Select Date & Time
             </h3>
             <p className={styles.stepSubtitle}>
-              Choose the date and the time window that suits you best.
+              Start with the next 7 days, then open more dates if you need extra options.
             </p>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="preferredDate">Preferred Date *</label>
-              <input
-                id="preferredDate"
-                type="date"
-                min={getTodayDateValue()}
-                value={booking.state.selectedDate ? booking.state.selectedDate.toISOString().split('T')[0] : ''}
-                onChange={(event) => handleDateChange(event.target.value)}
-                className={styles.input}
-                required
-              />
+            <div className={styles.dateJourney}>
+              <div className={styles.dateJourneyHeader}>
+                <div>
+                  <span className={styles.dateJourneyLabel}>Available dates</span>
+                  <p className={styles.dateJourneyHint}>
+                    {showAllBookingDays ? 'Showing the next 4 weeks of availability.' : 'Showing the next 7 days first for a simpler booking flow.'}
+                  </p>
+                </div>
+                {booking.state.selectedDate && (
+                  <span className={styles.selectedDateLabel}>
+                    {booking.state.selectedDate.toLocaleDateString('en-ZA', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short',
+                    })}
+                  </span>
+                )}
+              </div>
+
+              <div className={styles.dateRail} ref={dateRailRef}>
+                {visibleBookingDays.map((day) => {
+                  const dateKey = formatDateKey(day);
+                  const isSelected = booking.state.selectedDate ? formatDateKey(booking.state.selectedDate) === dateKey : false;
+                  const isToday = dateKey === getTodayDateValue();
+
+                  return (
+                    <button
+                      key={dateKey}
+                      type="button"
+                      data-date={dateKey}
+                      className={`${styles.dateCard} ${isSelected ? styles.dateCardSelected : ''}`}
+                      onClick={() => handleDateChange(day)}
+                    >
+                      <span className={styles.dateCardDay}>
+                        {day.toLocaleDateString('en-ZA', { weekday: 'short' })}
+                      </span>
+                      <span className={styles.dateCardNumber}>{day.getDate()}</span>
+                      <span className={styles.dateCardMonth}>
+                        {day.toLocaleDateString('en-ZA', { month: 'short' })}
+                      </span>
+                      {isToday && <span className={styles.dateCardBadge}>Today</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              {availableBookingDays.length > INITIAL_VISIBLE_BOOKING_DAYS && (
+                <button
+                  type="button"
+                  className={styles.dateRailToggle}
+                  onClick={() => setShowAllBookingDays((current) => !current)}
+                >
+                  {showAllBookingDays ? 'Show fewer dates' : 'View more dates'}
+                </button>
+              )}
             </div>
 
             <div className={styles.preferencesSection}>
@@ -734,14 +857,23 @@ export default function BookingModal({
               <FaCheck /> Review & Proceed
             </h3>
             <p className={styles.stepSubtitle}>
-              Check your information, read the terms and conditions, and then continue to the salon&apos;s WhatsApp.
+              Check your information, review the salon&apos;s booking rules, and then continue to WhatsApp.
             </p>
 
             <div className={styles.summary}>
               <div className={styles.summaryItem}>
-                <span className={styles.summaryLabel}>Service</span>
-                <span className={styles.summaryValue}>{selectedService?.title || selectedService?.name}</span>
+                <span className={styles.summaryLabel}>Services</span>
+                <span className={styles.summaryValue}>{bookedServices.length} selected</span>
               </div>
+              {bookedServices.map((serviceItem) => (
+                <div key={serviceItem.id} className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>{serviceItem.title || serviceItem.name}</span>
+                  <span className={styles.summaryValue}>
+                    R{getServiceDiscountedPrice(serviceItem).toFixed(2)}
+                    {hasServiceDiscount(serviceItem) ? ` (${formatServiceDiscountLabel(serviceItem)})` : ''}
+                  </span>
+                </div>
+              ))}
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>Preferred Appointment</span>
                 <span className={styles.summaryValue}>
@@ -773,6 +905,12 @@ export default function BookingModal({
                 <span className={styles.summaryLabel}>Contact Number</span>
                 <span className={styles.summaryValue}>{booking.state.clientPhone}</span>
               </div>
+              {booking.state.clientEmail.trim() && (
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Email</span>
+                  <span className={styles.summaryValue}>{booking.state.clientEmail.trim()}</span>
+                </div>
+              )}
               {booking.state.clientNotes && (
                 <div className={styles.summaryItem}>
                   <span className={styles.summaryLabel}>Notes</span>
@@ -798,30 +936,40 @@ export default function BookingModal({
 
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>Service Price</span>
-                <span className={styles.summaryValue}>R{booking.totalCost.toFixed(2)}</span>
+                <span className={styles.summaryValue}>R{totalCost.toFixed(2)}</span>
               </div>
-              <div className={`${styles.summaryItem} ${styles.highlight}`}>
-                <span className={styles.summaryLabel}>Deposit Required (50%)</span>
-                <span className={styles.summaryValue}>R{booking.depositAmount.toFixed(2)}</span>
-              </div>
+              {hasDepositRequirement && (
+                <div className={`${styles.summaryItem} ${styles.highlight}`}>
+                  <span className={styles.summaryLabel}>Deposit Required ({depositPercentage}%)</span>
+                  <span className={styles.summaryValue}>R{depositAmount.toFixed(2)}</span>
+                </div>
+              )}
 
               <div className={styles.summaryDivider} />
 
               <div className={styles.summaryTotal}>
                 <span>Total</span>
-                <span className={styles.totalPrice}>R{booking.totalCost.toFixed(2)}</span>
+                <span className={styles.totalPrice}>R{totalCost.toFixed(2)}</span>
               </div>
 
-              <div className={styles.depositNote}>
-                <FaInfoCircle />
-                <span>
-                  A 50% deposit (R{booking.depositAmount.toFixed(2)}) is required to secure this booking. The remaining
-                  R{(booking.totalCost - booking.depositAmount).toFixed(2)} is due directly to the salon.
-                </span>
-              </div>
+              {hasDepositRequirement && (
+                <div className={styles.depositNote}>
+                  <FaInfoCircle />
+                  <span>
+                    A {depositPercentage}% deposit (R{depositAmount.toFixed(2)}) is required to secure this booking.
+                    The remaining R{(totalCost - depositAmount).toFixed(2)} is handled directly with the salon.
+                  </span>
+                </div>
+              )}
             </div>
 
-            {salon.bankName && salon.accountNumber && (
+            {hasDepositRequirement && salon.paymentInstructions && (
+              <div className={styles.bookingMessage}>
+                <p><strong>Deposit instructions:</strong> {salon.paymentInstructions}</p>
+              </div>
+            )}
+
+            {hasDepositRequirement && salon.bankName && salon.accountNumber && (
               <div className={styles.bankingDetails}>
                 <h4 className={styles.bankingDetailsTitle}>Banking Details for Deposit</h4>
                 <div className={styles.bankingInfo}>
@@ -843,9 +991,9 @@ export default function BookingModal({
                       <span className={styles.bankingValue}>{salon.branchCode}</span>
                     </div>
                   )}
-                  <div className={`${styles.bankingItem} ${styles.reference}`}>
+              <div className={`${styles.bankingItem} ${styles.reference}`}>
                     <span className={styles.bankingLabel}>Reference:</span>
-                    <span className={styles.bankingValue}><strong>{referenceCodePreview}</strong></span>
+                    <span className={styles.bankingValue}><strong>{bookingReference}</strong></span>
                   </div>
                 </div>
                 <div className={styles.bankingNote}>
@@ -861,6 +1009,12 @@ export default function BookingModal({
               </div>
             )}
 
+            {salon.specialConditions && (
+              <div className={styles.bookingMessage}>
+                <p><strong>Special conditions:</strong> {salon.specialConditions}</p>
+              </div>
+            )}
+
             {salon.cancellationPolicy && (
               <div className={styles.cancellationPolicy}>
                 <div className={styles.cancellationPolicyHeader}>
@@ -872,7 +1026,10 @@ export default function BookingModal({
 
             <div className={styles.platformPolicyNote}>
               <FaInfoCircle />
-              <p>Refunds are guided by the salon&apos;s own policy, not Stylr SA. A 20% booking cancellation fee applies.</p>
+              <p>
+                Stylr SA stores this request for booking purposes and hands the conversation to the salon on WhatsApp.
+                Payments, refunds, and final confirmation are handled directly with the salon.
+              </p>
             </div>
 
             <label className={styles.termsCard}>
@@ -882,7 +1039,7 @@ export default function BookingModal({
                 onChange={(event) => setHasAcceptedTerms(event.target.checked)}
               />
               <span className={styles.termsText}>
-                I have checked my booking information and agree to the{' '}
+                I have checked my booking information, understand my details will be used for booking purposes, and agree to the{' '}
                 <a href="/terms" target="_blank" rel="noreferrer" className={styles.termsLink}>
                   terms and conditions
                 </a>
@@ -898,7 +1055,10 @@ export default function BookingModal({
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-screen max-w-none h-[100dvh] overflow-hidden rounded-none p-0 gap-0 flex flex-col sm:w-full sm:max-w-[500px] sm:h-[90vh] sm:rounded-3xl md:max-w-[600px]">
+      <DialogContent
+        overlayClassName="bg-black/70 lg:bg-transparent lg:pointer-events-none"
+        className={`w-screen max-w-none h-[100dvh] overflow-hidden rounded-none p-0 gap-0 flex flex-col sm:w-full sm:max-w-[500px] sm:h-[90vh] sm:rounded-3xl lg:left-auto lg:right-0 lg:top-0 lg:h-[100dvh] lg:max-h-[100dvh] lg:w-[min(560px,40vw)] lg:max-w-none lg:translate-x-0 lg:translate-y-0 lg:rounded-none lg:rounded-l-[28px] lg:border-l lg:border-neutral-200 lg:shadow-[-24px_0_60px_rgba(15,23,42,0.18)] ${styles.desktopPanel}`}
+      >
         <DialogTitle className="sr-only">Book Appointment at {salon.name}</DialogTitle>
 
         <div className={styles.header}>
@@ -911,20 +1071,18 @@ export default function BookingModal({
           </div>
         </div>
 
-        {selectedService && (
+        {bookedServices.length > 0 && (
           <div className={styles.bookingSummary}>
             <div className={styles.summaryItem}>
               <span className={styles.summaryLabel}>Treatments:</span>
-              <span className={styles.summaryValue}>1 selected</span>
+              <span className={styles.summaryValue}>{bookedServices.length} selected</span>
             </div>
             <div className={styles.summaryItem}>
               <span className={styles.summaryLabel}>Total:</span>
-              <span className={styles.summaryValue}>R{booking.totalCost.toFixed(2)}</span>
+              <span className={styles.summaryValue}>R{totalCost.toFixed(2)}</span>
             </div>
           </div>
         )}
-
-        {renderBreadcrumbs()}
 
         {booking.error && (
           <div className={styles.errorBanner}>
@@ -954,23 +1112,28 @@ export default function BookingModal({
             </button>
           )}
 
-          {booking.state.step === 'review' ? (
+          <div className={styles.footerActions}>
+            {booking.state.step !== 'review' && (
+              <button
+                className={styles.primaryButton}
+                onClick={booking.goNext}
+                disabled={!booking.canProceed}
+              >
+                Continue <FaChevronRight />
+              </button>
+            )}
             <button
               className={`${styles.primaryButton} ${styles.whatsappButton}`}
               onClick={handleSubmit}
-              disabled={isCreatingIntent || !canSubmitBooking}
+              disabled={booking.state.step !== 'review' || isCreatingIntent || !canSubmitBooking}
+              title={booking.state.step === 'review' ? undefined : 'Complete the booking details to continue on WhatsApp.'}
             >
-              <FaWhatsapp /> {isCreatingIntent ? 'Preparing WhatsApp...' : 'Proceed to WhatsApp'}
+              <FaWhatsapp />
+              {booking.state.step === 'review'
+                ? (isCreatingIntent ? 'Preparing WhatsApp...' : 'Continue to WhatsApp')
+                : 'Complete steps for WhatsApp'}
             </button>
-          ) : (
-            <button
-              className={styles.primaryButton}
-              onClick={booking.goNext}
-              disabled={!booking.canProceed}
-            >
-              Continue <FaChevronRight />
-            </button>
-          )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

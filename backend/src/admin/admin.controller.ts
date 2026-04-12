@@ -18,14 +18,13 @@ import { UpdatePlanDto } from './dto/update-plan.dto';
 import { UpdatePlanPaymentStatusDto } from './dto/update-plan-payment-status.dto';
 import { DeleteEntityDto } from './dto/delete-entity.dto';
 import { Request } from 'express';
+import { UpdateSalonApplicationStatusDto } from '../salon-applications/dto/update-salon-application-status.dto';
 
 @Controller('api/admin')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Roles('ADMIN')
 export class AdminController {
-  constructor(
-    private readonly adminService: AdminService,
-  ) { }
+  constructor(private readonly adminService: AdminService) { }
 
   @Get('salons/all')
   getAllSalons() {
@@ -38,11 +37,31 @@ export class AdminController {
   }
 
   @Get('salons/pending')
-  getPendingSalons(@Req() req: Request) {
-    const adminId = (req as any)?.user?.id;
-    const adminRole = (req as any)?.user?.role;
-    console.log('[AdminController] getPendingSalons called by:', { adminId, adminRole });
+  getPendingSalons() {
     return this.adminService.getPendingSalons();
+  }
+
+  @Get('salon-applications')
+  getSalonApplications() {
+    return this.adminService.getSalonApplications();
+  }
+
+  @Get('bookings')
+  getBookings() {
+    return this.adminService.getBookingsOverview();
+  }
+
+  @Get('bookings/export')
+  async exportBookings(@Req() req: Request) {
+    const csv = await this.adminService.exportBookingsCsv();
+
+    (req as any).res?.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    (req as any).res?.setHeader(
+      'Content-Disposition',
+      'attachment; filename="stylrsa-bookings.csv"',
+    );
+
+    return csv;
   }
 
   @Patch('services/:serviceId/status')
@@ -73,6 +92,30 @@ export class AdminController {
     );
   }
 
+  @Patch('salon-applications/:applicationId/status')
+  updateSalonApplicationStatus(
+    @Param('applicationId') applicationId: string,
+    @Body() dto: UpdateSalonApplicationStatusDto,
+    @Req() req: Request,
+  ) {
+    const adminId = (req as any)?.user?.id as string | undefined;
+    return this.adminService.updateSalonApplicationStatus(
+      applicationId,
+      dto.status,
+      adminId,
+      dto.adminNotes,
+    );
+  }
+
+  @Post('salon-applications/:applicationId/publish')
+  publishSalonApplication(
+    @Param('applicationId') applicationId: string,
+    @Req() req: Request,
+  ) {
+    const adminId = (req as any)?.user?.id as string | undefined;
+    return this.adminService.publishSalonApplication(applicationId, adminId);
+  }
+
   @Patch('salons/:salonId/verification')
   toggleSalonVerification(
     @Param('salonId') salonId: string,
@@ -82,47 +125,9 @@ export class AdminController {
     return this.adminService.toggleSalonVerification(salonId, adminId);
   }
 
-  @Get('reviews/pending')
-  getPendingReviews() {
-    return this.adminService.getPendingReviews();
-  }
-
   @Get('salons/deleted')
   getDeletedSalons() {
     return this.adminService.getDeletedSalons();
-  }
-
-  @Patch('reviews/:reviewId/status')
-  updateReviewStatus(
-    @Param('reviewId') reviewId: string,
-    @Body() { approvalStatus }: UpdateServiceStatusDto,
-    @Req() req: Request,
-  ) {
-    const adminId = (req as any)?.user?.id as string | undefined;
-    return this.adminService.updateReviewStatus(
-      reviewId,
-      approvalStatus as any,
-      adminId,
-    );
-  }
-
-  @Get('products/pending')
-  getPendingProducts() {
-    return this.adminService.getPendingProducts();
-  }
-
-  @Patch('products/:productId/status')
-  updateProductStatus(
-    @Param('productId') productId: string,
-    @Body() { approvalStatus }: UpdateServiceStatusDto,
-    @Req() req: Request,
-  ) {
-    const adminId = (req as any)?.user?.id as string | undefined;
-    return this.adminService.updateProductStatus(
-      productId,
-      approvalStatus as any,
-      adminId,
-    );
   }
 
   @Patch('salons/:salonId/plan')
@@ -131,17 +136,6 @@ export class AdminController {
     @Body() dto: UpdatePlanDto,
   ) {
     return this.adminService.setSalonPlan(salonId, dto.planCode ?? '', {
-      visibilityWeight: dto.visibilityWeight,
-      maxListings: dto.maxListings,
-    });
-  }
-
-  @Patch('sellers/:sellerId/plan')
-  updateSellerPlan(
-    @Param('sellerId') sellerId: string,
-    @Body() dto: UpdatePlanDto,
-  ) {
-    return this.adminService.setSellerPlan(sellerId, dto.planCode ?? '', {
       visibilityWeight: dto.visibilityWeight,
       maxListings: dto.maxListings,
     });
@@ -176,21 +170,6 @@ export class AdminController {
     });
   }
 
-  @Patch('sellers/:sellerId/plan/payment')
-  updateSellerPlanPaymentStatus(
-    @Param('sellerId') sellerId: string,
-    @Body() dto: UpdatePlanPaymentStatusDto,
-    @Req() req: Request,
-  ) {
-    const adminId = (req as any)?.user?.id as string | undefined;
-    return this.adminService.updateSellerPlanPaymentStatus({
-      sellerId,
-      status: dto.status,
-      adminId,
-      paymentReference: dto.paymentReference ?? null,
-    });
-  }
-
   @Post('salons/deleted/:archiveId/restore')
   restoreSalon(@Param('archiveId') archiveId: string) {
     return this.adminService.restoreDeletedSalon(archiveId);
@@ -198,8 +177,6 @@ export class AdminController {
 
   @Get('audit')
   getAudit() {
-    // Simple list; can be extended with query filters later
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     return (this.adminService as any).prisma?.adminActionLog
       ? (this.adminService as any).prisma.adminActionLog.findMany({
         orderBy: { createdAt: 'desc' },
@@ -214,49 +191,4 @@ export class AdminController {
   getMetrics() {
     return this.adminService.getMetrics();
   }
-
-  @Get('sellers/all')
-  getAllSellers() {
-    return this.adminService.getAllSellers();
-  }
-
-  @Get('sellers/deleted')
-  getDeletedSellers() {
-    return this.adminService.getDeletedSellersArchive();
-  }
-
-  @Delete('sellers/:sellerId')
-  deleteSeller(
-    @Param('sellerId') sellerId: string,
-    @Body() dto: DeleteEntityDto,
-    @Req() req: Request,
-  ) {
-    const adminId = (req as any)?.user?.id as string | undefined;
-    return this.adminService.deleteSellerWithCascade(
-      sellerId,
-      adminId ?? 'unknown',
-      dto?.reason,
-    );
-  }
-
-  @Post('sellers/deleted/:archiveId/restore')
-  restoreSeller(@Param('archiveId') archiveId: string) {
-    return this.adminService.restoreDeletedSeller(archiveId);
-  }
-
-  @Patch('sellers/:sellerId/approval')
-  updateSellerApprovalStatus(
-    @Param('sellerId') sellerId: string,
-    @Body() body: { status: 'PENDING' | 'APPROVED' | 'REJECTED' },
-    @Req() req: Request,
-  ) {
-    const adminId = (req as any)?.user?.id as string ?? 'unknown';
-    return this.adminService.updateSellerApprovalStatus(sellerId, body.status, adminId);
-  }
-
-  @Get('diagnostic/deleted-sellers-table')
-  async checkDeletedSellersTable() {
-    return this.adminService.diagnosticDeletedSellersTable();
-  }
-
 }

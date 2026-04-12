@@ -12,7 +12,6 @@
 
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from './useLocalStorage';
-import { Product } from '@/types';
 
 export interface WishlistItem {
     id: string;
@@ -23,6 +22,13 @@ export interface WishlistItem {
 }
 
 const WISHLIST_KEY = 'stylrsa-product-wishlist';
+
+type WishlistProductInput = {
+    id: string;
+    name: string;
+    price: number;
+    images?: string[];
+};
 
 export function useWishlist() {
     const [wishlistItems, setWishlistItems] = useLocalStorage<WishlistItem[]>(WISHLIST_KEY, []);
@@ -37,7 +43,7 @@ export function useWishlist() {
 
     // Add a product to the wishlist
     const addToWishlist = useCallback(
-        (product: Product | WishlistItem) => {
+        (product: WishlistProductInput | WishlistItem) => {
             if (isInWishlist(product.id)) return;
 
             const newItem: WishlistItem = {
@@ -65,7 +71,7 @@ export function useWishlist() {
 
     // Toggle a product in the wishlist
     const toggleWishlist = useCallback(
-        (product: Product | WishlistItem): boolean => {
+        (product: WishlistProductInput | WishlistItem): boolean => {
             if (isInWishlist(product.id)) {
                 removeFromWishlist(product.id);
                 return false;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import styles from './ImageLightbox.module.css';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
@@ -136,9 +137,12 @@ export default function ImageLightbox({ images, initialImageIndex = 0, onClose }
               Failed to load image
             </div>
           )}
-          <img
+          <Image
             src={currentImage}
             alt={`Image ${currentIndex + 1} of ${sanitizedImages.length}`}
+            fill
+            sizes="100vw"
+            unoptimized
             className={styles.image}
             style={{
               opacity: isLoading ? 0 : 1,

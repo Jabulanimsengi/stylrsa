@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import CityPageClient from './CityPageClient';
 import { getCityInfo } from '@/lib/locationData';
 import { buildSalonLocationMetadata } from '@/lib/seoMetadataHelpers';
+import { PRIORITY_CITY_LOCATION_TARGETS } from '@/lib/prioritySeoLocations';
 
 interface PageProps {
     params: Promise<{
@@ -29,16 +30,8 @@ async function getInitialSalons(cityName: string) {
     }
 }
 
-// Pre-build only major cities (~15 pages)
-const MAJOR_CITIES = [
-    { location: 'gauteng', city: 'johannesburg' },
-    { location: 'gauteng', city: 'pretoria' },
-    { location: 'gauteng', city: 'sandton' },
-    { location: 'western-cape', city: 'cape-town' },
-];
-
 export async function generateStaticParams() {
-    return MAJOR_CITIES;
+    return PRIORITY_CITY_LOCATION_TARGETS.map(({ location, city }) => ({ location, city }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

@@ -39,6 +39,7 @@ export default function Navbar() {
   const { showPageLoader } = useNavigationLoading();
   const accountNav = getAccountNavConfig(user);
 
+  const [hasMounted, setHasMounted] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
@@ -72,6 +73,10 @@ export default function Navbar() {
     handleDeleteNotification,
     handleLoadMore,
   } = useNotificationCenter();
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -237,6 +242,32 @@ export default function Navbar() {
   ];
   const quickAccessLinks = accountNav.menuLinks.filter((link) => link.href !== accountNav.primaryLink.href);
 
+  if (!hasMounted) {
+    return (
+      <header className={styles.mobileBar}>
+        <div className={styles.mobileLeading}>
+          <button
+            type="button"
+            className={`iconOnlyButton ${styles.iconOnlyButton} ${styles.hamburgerButton}`}
+            aria-label="Toggle navigation"
+          >
+            <FaBars />
+          </button>
+        </div>
+
+        <Link
+          href="/"
+          className={styles.brand}
+          aria-label="Stylr SA home"
+        >
+          <Image src="/logo-transparent.png" alt="Stylr SA" width={124} height={32} priority />
+        </Link>
+
+        <div className={styles.mobileTrailing} />
+      </header>
+    );
+  }
+
   return (
     <>
       <header className={styles.mobileBar}>
@@ -277,7 +308,7 @@ export default function Navbar() {
       </header>
 
       <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-        <SheetContent side="right" showCloseButton={true}>
+        <SheetContent side="left" showCloseButton={true}>
           <SheetHeader>
             <SheetTitle className="sr-only">Mobile navigation menu</SheetTitle>
             <Link

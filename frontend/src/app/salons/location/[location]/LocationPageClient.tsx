@@ -20,6 +20,8 @@ import { PROVINCES, Province, City } from '@/lib/locationData';
 import { getSalonUrl } from '@/utils/salonUrl';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import { notify } from '@/lib/notify';
+import RelatedLocations from '@/components/RelatedLocations/RelatedLocations';
+import { getAffluentLocationLinks } from '@/lib/prioritySeoLocations';
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
 
@@ -46,6 +48,7 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
     keywords: ['South Africa salons'],
     // cities property might be missing if fallback isn't typed strictly as Province
   } as Province; // Cast fallback to Province for simplicity, or handle generic object
+  const affluentLinks = getAffluentLocationLinks({ province: locationSlug, limit: 6 });
 
   const fetchSalons = useCallback(async (additionalFilters: FilterValues) => {
     setIsLoading(true);
@@ -146,7 +149,7 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
               </button>
               <Link href={getSalonUrl(salon)} className={styles.salonLink}>
                 <div className={styles.imageWrapper}>
-                  <ReviewBadge reviewCount={salon.reviews?.length || 0} avgRating={salon.avgRating || 0} />
+                  <ReviewBadge reviewCount={salon.reviewCount || 0} avgRating={salon.avgRating || 0} />
                   <Image
                     src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), { width: 600, quality: 'auto', format: 'auto', crop: 'fill' })}
                     alt={`${salon.name} - Salon in ${locationInfo.name}`}
@@ -167,6 +170,11 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
         </div>
       )}
 
+      <RelatedLocations
+        title={`High-value beauty areas in ${locationInfo.name}`}
+        locations={affluentLinks}
+      />
+
       {/* Internal Links for SEO */}
       <div style={{ marginTop: '4rem', padding: '2rem 0', borderTop: '1px solid #eee' }}>
         <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
@@ -174,7 +182,7 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
           {isProvince(locationInfo) && locationInfo.cities.slice(0, 12).map((city) => (
-            <Link key={city.slug} href={`/salons/location/${city.slug}`} className={styles.seoLink}>
+            <Link key={city.slug} href={`/salons/location/${locationSlug}/${city.slug}`} className={styles.seoLink}>
               Salons in {city.name}
             </Link>
           ))}

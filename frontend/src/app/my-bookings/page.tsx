@@ -3,13 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { Booking, Salon, Service, Review as ReviewType } from '@/types';
+import { Booking, Salon, Service } from '@/types';
 import styles from './MyBookingsPage.module.css';
-import ReviewModal from '@/components/ReviewModal';
 import { useSocket } from '@/context/SocketContext';
 import { toast } from 'react-toastify';
 import { Skeleton, SkeletonGroup } from '@/components/Skeleton/Skeleton';
-import { Button, EmptyState, StarRating } from '@/components/ui';
+import { Button, EmptyState } from '@/components/ui';
 import StatusBadge from '@/components/StatusBadge';
 import { getSalonUrl } from '@/utils/salonUrl';
 
@@ -18,7 +17,7 @@ import { getSalonUrl } from '@/utils/salonUrl';
 type PopulatedBooking = Booking & {
   salon: Salon;
   service: Service;
-  review?: ReviewType | null;
+  review?: unknown | null;
   totalCost: number;
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'DECLINED'; // Add 'DECLINED'
 };
@@ -27,7 +26,6 @@ export default function MyBookingsPage() {
   // Use the new, more accurate type for state
   const [bookings, setBookings] = useState<PopulatedBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [reviewingBookingId, setReviewingBookingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const router = useRouter();
   const socket = useSocket();
@@ -83,19 +81,6 @@ export default function MyBookingsPage() {
     }
   }, [socket]);
 
-  const handleReviewAdded = () => {
-    setReviewingBookingId(null);
-    setEditingReview(null);
-    fetchBookings();
-  };
-
-  const [editingReview, setEditingReview] = useState<ReviewType | null>(null);
-
-  const handleEditReview = (review: ReviewType, bookingId: string) => {
-    setEditingReview(review);
-    setReviewingBookingId(bookingId);
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-ZA', {
       year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -135,18 +120,6 @@ export default function MyBookingsPage() {
   if (authStatus === 'unauthenticated') return null;
 
   return (
-    <>
-      {reviewingBookingId && (
-        <ReviewModal
-          bookingId={reviewingBookingId}
-          onClose={() => {
-            setReviewingBookingId(null);
-            setEditingReview(null);
-          }}
-          onReviewAdded={handleReviewAdded}
-          existingReview={editingReview}
-        />
-      )}
       <div className={styles.container}>
         <h1 className={styles.title}>My Bookings</h1>
 
@@ -177,35 +150,31 @@ export default function MyBookingsPage() {
                 <p>Date: {formatDate(booking.bookingTime)}</p>
                 <p>Cost: <strong>R{booking.totalCost.toFixed(2)}</strong></p>
 
-                {booking.review ? (
-                  <div className={styles.reviewSection}>
-                    <div className={styles.reviewHeader}>
-                      <StarRating value={booking.review.rating} size="sm" />
-                      {booking.review.approvalStatus === 'PENDING' && (
-                        <span className={styles.reviewPendingBadge}>Pending Approval</span>
-                      )}
-                      {booking.review.approvalStatus === 'APPROVED' && (
-                        <span className={styles.reviewApprovedBadge}>Approved</span>
-                      )}
-                    </div>
-                    <p className={styles.reviewComment}>"{booking.review.comment}"</p>
-                    {booking.review.approvalStatus === 'PENDING' && (
-                      <div className={styles.reviewActions}>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleEditReview(booking.review!, booking.id)}
-                        >
-                          Edit Review
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ) : booking.status === 'COMPLETED' ? (
+                {booking.status === 'COMPLETED' ? (
                   <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <Button variant="secondary" onClick={() => setReviewingBookingId(booking.id)}>
-                      Leave a Review
-                    </Button>
+                    {booking.salon.googleReviewsUrl || booking.salon.freshaReviewsUrl || booking.salon.booksyReviewsUrl ? (
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          const reviewUrl = booking.salon.googleReviewsUrl
+                            || booking.salon.freshaReviewsUrl
+                            || booking.salon.booksyReviewsUrl;
+
+                          if (reviewUrl) {
+                            window.open(reviewUrl, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
+                      >
+                        View Reviews
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        onClick={() => router.push(getSalonUrl(booking.salon))}
+                      >
+                        View Salon
+                      </Button>
+                    )}
                     <Button onClick={() => router.push(`${getSalonUrl(booking.salon)}?serviceId=${booking.serviceId}`)}>
                       Book Again
                     </Button>
@@ -225,6 +194,5 @@ export default function MyBookingsPage() {
           </div>
         )}
       </div>
-    </>
   );
 }

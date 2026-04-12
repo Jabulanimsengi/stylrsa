@@ -41,8 +41,8 @@ function VerifyEmailContent() {
                 router.push('/login');
             }, 2000);
 
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Failed to verify email.');
         } finally {
             setIsLoading(false);
         }
@@ -73,8 +73,8 @@ function VerifyEmailContent() {
 
             setSuccess('A new verification code has been sent to your email.');
 
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Failed to resend verification code.');
         } finally {
             setIsResending(false);
         }

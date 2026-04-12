@@ -73,7 +73,7 @@ function getReviewTotal(salon: Salon): number {
     return salon.reviewCount;
   }
 
-  return salon.reviews?.length ?? 0;
+  return 0;
 }
 
 function toRadians(value: number) {

@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import type { Salon, Service } from '@/types';
+import { getServiceDiscountedPrice } from '@/lib/servicePricing';
 
 export type BookingStep = 'service' | 'contact' | 'schedule' | 'preferences' | 'review';
 export type BookingTimePeriod = 'morning' | 'afternoon' | 'late_afternoon';
@@ -19,6 +20,7 @@ export interface BookingState {
   clientFirstName: string;
   clientLastName: string;
   clientPhone: string;
+  clientEmail: string;
   clientNotes: string;
   isMobile: boolean;
   preferences: BookingPreferences | null;
@@ -47,6 +49,7 @@ export interface UseBookingFlowReturn {
   setClientFirstName: (name: string) => void;
   setClientLastName: (name: string) => void;
   setClientPhone: (phone: string) => void;
+  setClientEmail: (email: string) => void;
   setClientNotes: (notes: string) => void;
   setIsMobile: (value: boolean) => void;
   setPreferences: (preferences: BookingPreferences | null) => void;
@@ -65,8 +68,6 @@ const STEP_LABELS: Record<BookingStep, string> = {
   review: 'Review',
 };
 
-const DEPOSIT_RATE = 0.5;
-
 export function useBookingFlow({
   salon,
   initialService,
@@ -80,6 +81,7 @@ export function useBookingFlow({
     clientFirstName: '',
     clientLastName: '',
     clientPhone: '',
+    clientEmail: '',
     clientNotes: '',
     isMobile: false,
     preferences: null,
@@ -101,12 +103,23 @@ export function useBookingFlow({
       return 0;
     }
 
-    const baseCost = state.selectedService.price;
+    const baseCost = getServiceDiscountedPrice(state.selectedService);
     const mobileFee = state.isMobile && salon.mobileFee ? salon.mobileFee : 0;
     return baseCost + mobileFee;
   }, [salon.mobileFee, state.isMobile, state.selectedService]);
 
-  const depositAmount = useMemo(() => totalCost * DEPOSIT_RATE, [totalCost]);
+  const depositRate = useMemo(() => {
+    if (!salon.depositRequired) {
+      return 0;
+    }
+
+    return (salon.depositPercentage ?? 50) / 100;
+  }, [salon.depositPercentage, salon.depositRequired]);
+
+  const depositAmount = useMemo(
+    () => Number((totalCost * depositRate).toFixed(2)),
+    [depositRate, totalCost],
+  );
 
   const canProceed = useMemo(() => {
     switch (state.step) {
@@ -116,7 +129,11 @@ export function useBookingFlow({
         return (
           state.clientFirstName.trim().length >= 2 &&
           state.clientLastName.trim().length >= 2 &&
-          state.clientPhone.replace(/\D/g, '').length >= 10
+          state.clientPhone.replace(/\D/g, '').length >= 10 &&
+          (
+            state.clientEmail.trim().length === 0 ||
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.clientEmail.trim())
+          )
         );
       case 'schedule':
         return (
@@ -190,6 +207,10 @@ export function useBookingFlow({
     setState((prev) => ({ ...prev, clientPhone: phone }));
   }, []);
 
+  const setClientEmail = useCallback((email: string) => {
+    setState((prev) => ({ ...prev, clientEmail: email }));
+  }, []);
+
   const setClientNotes = useCallback((notes: string) => {
     setState((prev) => ({ ...prev, clientNotes: notes }));
   }, []);
@@ -258,6 +279,7 @@ export function useBookingFlow({
     setClientFirstName,
     setClientLastName,
     setClientPhone,
+    setClientEmail,
     setClientNotes,
     setIsMobile,
     setPreferences,

@@ -234,7 +234,7 @@ export default function SalonCityNearYouClient({ provinceSlug, citySlug }: Props
               <Link href={getSalonUrl(salon)} className={styles.salonLink}>
                 <div className={styles.imageWrapper}>
                   <ReviewBadge 
-                    reviewCount={salon.reviews?.length || 0}
+                    reviewCount={salon.reviewCount || 0}
                     avgRating={salon.avgRating || 0}
                   />
                   <Image

@@ -403,6 +403,66 @@ export class MailService {
     );
   }
 
+  async notifyAdminNewSalonApplication(
+    applicationReference: string,
+    salonName: string,
+    ownerName: string,
+    ownerEmail: string,
+    location: string,
+  ) {
+    await this.sendAdminNotification(
+      'New Salon Application Submitted',
+      `A new salon application has been submitted and is awaiting admin review.`,
+      [
+        { label: 'Reference', value: applicationReference },
+        { label: 'Salon Name', value: salonName },
+        { label: 'Contact Person', value: ownerName },
+        { label: 'Email', value: ownerEmail },
+        { label: 'Location', value: location },
+      ],
+      'Salon Application'
+    );
+  }
+
+  async sendSalonApplicationReceived(
+    email: string,
+    contactName: string,
+    salonName: string,
+    applicationReference: string,
+  ) {
+    if (!this.isConfigured) {
+      console.log(
+        `[DEV] Salon application received email for ${email}: ${applicationReference}`,
+      );
+      return;
+    }
+
+    try {
+      const msg = {
+        to: email,
+        from: this.fromEmail,
+        subject: `Salon application received - ${salonName}`,
+        html: this.getSimpleEmailTemplate(
+          `Hi ${contactName},`,
+          `Your salon profile has been created and is now awaiting admin approval.`,
+          [
+            { label: 'Salon', value: salonName },
+            { label: 'Reference', value: applicationReference },
+            { label: 'Status', value: 'Awaiting admin approval' },
+          ],
+          `Please use this reference together with your salon name whenever you contact admin about your application.`,
+        ),
+      };
+      await sgMail.send(msg);
+      console.log(`[EMAIL] Salon application received email sent to ${email}`);
+    } catch (error) {
+      console.error(
+        '[EMAIL] Failed to send salon application received email:',
+        error,
+      );
+    }
+  }
+
   async notifyAdminNewBeforeAfter(salonName: string, uploadedBy: string) {
     await this.sendAdminNotification(
       '📸 New Before/After Uploaded - Needs Review',

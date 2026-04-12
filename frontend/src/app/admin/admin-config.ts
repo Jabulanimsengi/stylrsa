@@ -1,8 +1,9 @@
 export type AdminView =
   | 'dashboard'
+  | 'salon-applications'
   | 'salons'
   | 'services'
-  | 'reviews'
+  | 'bookings'
   | 'all-salons'
   | 'pending-payments'
   | 'deleted-salons'
@@ -12,9 +13,10 @@ export const DEFAULT_ADMIN_VIEW: AdminView = 'dashboard';
 
 const ADMIN_VIEW_SET = new Set<AdminView>([
   'dashboard',
+  'salon-applications',
   'salons',
   'services',
-  'reviews',
+  'bookings',
   'all-salons',
   'pending-payments',
   'deleted-salons',

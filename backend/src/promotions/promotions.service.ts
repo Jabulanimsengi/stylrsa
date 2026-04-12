@@ -27,67 +27,32 @@ export class PromotionsService {
       throw new NotFoundException('You do not have a salon profile');
     }
 
-    // Ensure either serviceId or productId is provided
-    if (!dto.serviceId && !dto.productId) {
+    if (!dto.serviceId) {
+      throw new BadRequestException('A service must be selected');
+    }
+
+    const service = await this.prisma.service.findUnique({
+      where: { id: dto.serviceId },
+    });
+
+    if (!service || service.salonId !== salon.id) {
+      throw new ForbiddenException('Service does not belong to your salon');
+    }
+
+    const existingPromo = await this.prisma.promotion.findFirst({
+      where: {
+        serviceId: dto.serviceId,
+        approvalStatus: { in: ['PENDING', 'APPROVED'] },
+      },
+    });
+
+    if (existingPromo) {
       throw new BadRequestException(
-        'Either serviceId or productId must be provided',
+        'This service already has an active or pending promotion',
       );
     }
 
-    // Validate service belongs to this salon
-    let originalPrice = 0;
-    if (dto.serviceId) {
-      const service = await this.prisma.service.findUnique({
-        where: { id: dto.serviceId },
-      });
-
-      if (!service || service.salonId !== salon.id) {
-        throw new ForbiddenException('Service does not belong to your salon');
-      }
-
-      // Check if service already has an active or pending promotion
-      const existingPromo = await this.prisma.promotion.findFirst({
-        where: {
-          serviceId: dto.serviceId,
-          approvalStatus: { in: ['PENDING', 'APPROVED'] },
-        },
-      });
-
-      if (existingPromo) {
-        throw new BadRequestException(
-          'This service already has an active or pending promotion',
-        );
-      }
-
-      originalPrice = service.price;
-    }
-
-    // Validate product belongs to this seller
-    if (dto.productId) {
-      const product = await this.prisma.product.findUnique({
-        where: { id: dto.productId },
-      });
-
-      if (!product || product.sellerId !== user.id) {
-        throw new ForbiddenException('Product does not belong to you');
-      }
-
-      // Check if product already has an active or pending promotion
-      const existingPromo = await this.prisma.promotion.findFirst({
-        where: {
-          productId: dto.productId,
-          approvalStatus: { in: ['PENDING', 'APPROVED'] },
-        },
-      });
-
-      if (existingPromo) {
-        throw new BadRequestException(
-          'This product already has an active or pending promotion',
-        );
-      }
-
-      originalPrice = product.price;
-    }
+    const originalPrice = service.price;
 
     // Validate dates
     const startDate = new Date(dto.startDate);
@@ -116,13 +81,11 @@ export class PromotionsService {
         startDate,
         endDate,
         serviceId: dto.serviceId,
-        productId: dto.productId,
         salonId: salon.id,
         approvalStatus: 'PENDING',
       },
       include: {
         service: true,
-        product: true,
       },
     });
 
@@ -132,14 +95,10 @@ export class PromotionsService {
       select: { id: true },
     });
 
-    const itemName = promotion.service
-      ? promotion.service.title
-      : promotion.product?.name || 'Item';
-
     for (const admin of admins) {
       const notification = await this.notificationsService.create(
         admin.id,
-        `New promotion for "${itemName}" (${dto.discountPercentage}% off) is pending approval.`,
+        `New promotion for "${promotion.service?.title || 'service'}" (${dto.discountPercentage}% off) is pending approval.`,
         { link: '/admin?tab=promotions' },
       );
       this.eventsGateway.sendNotificationToUser(
@@ -181,17 +140,6 @@ export class PromotionsService {
             },
           },
         },
-        product: {
-          include: {
-            seller: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -219,7 +167,6 @@ export class PromotionsService {
       },
       include: {
         service: true,
-        product: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -234,7 +181,6 @@ export class PromotionsService {
       },
       include: {
         service: true,
-        product: true,
       },
       orderBy: {
         endDate: 'desc',
@@ -258,17 +204,6 @@ export class PromotionsService {
                 id: true,
                 name: true,
                 ownerId: true,
-              },
-            },
-          },
-        },
-        product: {
-          include: {
-            seller: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
               },
             },
           },
@@ -298,15 +233,6 @@ export class PromotionsService {
             },
           },
         },
-        product: {
-          include: {
-            seller: {
-              select: {
-                id: true,
-              },
-            },
-          },
-        },
       },
     });
 
@@ -328,18 +254,12 @@ export class PromotionsService {
     });
 
     // Notify the salon owner
-    const ownerId = promotion.service
-      ? promotion.service.salon.ownerId
-      : promotion.product?.seller.id;
+    const ownerId = promotion.service?.salon.ownerId;
 
     if (ownerId) {
-      const itemName = promotion.service
-        ? promotion.service.title
-        : promotion.product?.name || 'Item';
-
       const notification = await this.notificationsService.create(
         ownerId,
-        `Your promotion for "${itemName}" has been approved!`,
+        `Your promotion for "${promotion.service?.title || 'service'}" has been approved!`,
         { link: '/dashboard?tab=promotions' },
       );
 
@@ -370,15 +290,6 @@ export class PromotionsService {
             },
           },
         },
-        product: {
-          include: {
-            seller: {
-              select: {
-                id: true,
-              },
-            },
-          },
-        },
       },
     });
 
@@ -398,18 +309,12 @@ export class PromotionsService {
     });
 
     // Notify the salon owner
-    const ownerId = promotion.service
-      ? promotion.service.salon.ownerId
-      : promotion.product?.seller.id;
+    const ownerId = promotion.service?.salon.ownerId;
 
     if (ownerId) {
-      const itemName = promotion.service
-        ? promotion.service.title
-        : promotion.product?.name || 'Item';
-
       const message = reason
-        ? `Your promotion for "${itemName}" was rejected. Reason: ${reason}`
-        : `Your promotion for "${itemName}" was rejected.`;
+        ? `Your promotion for "${promotion.service?.title || 'service'}" was rejected. Reason: ${reason}`
+        : `Your promotion for "${promotion.service?.title || 'service'}" was rejected.`;
 
       const notification = await this.notificationsService.create(
         ownerId,
@@ -436,7 +341,6 @@ export class PromotionsService {
             salon: true,
           },
         },
-        product: true,
       },
     });
 
@@ -445,9 +349,7 @@ export class PromotionsService {
     }
 
     // Check ownership
-    const isOwner = promotion.service
-      ? promotion.service.salon.ownerId === user.id
-      : promotion.product?.sellerId === user.id;
+    const isOwner = promotion.service?.salon.ownerId === user.id;
 
     if (!isOwner && user.role !== 'ADMIN') {
       throw new ForbiddenException('You cannot delete this promotion');

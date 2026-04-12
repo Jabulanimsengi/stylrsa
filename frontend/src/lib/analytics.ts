@@ -9,11 +9,19 @@ declare global {
     gtag?: (
       command: 'config' | 'event' | 'set',
       targetId: string,
-      config?: Record<string, any>
+      config?: Record<string, unknown>
     ) => void;
-    dataLayer?: any[];
+    dataLayer?: unknown[];
   }
 }
+
+type AnalyticsValue = string | number | boolean | null | undefined;
+type UserProperties = {
+  userId?: string;
+  userRole?: string;
+} & Record<string, AnalyticsValue>;
+
+type EcommerceItem = Record<string, AnalyticsValue>;
 
 /**
  * Google Analytics Measurement ID
@@ -157,7 +165,7 @@ export const analytics = {
     });
   },
 
-  filterSalons: (filters: Record<string, any>) => {
+  filterSalons: (filters: Record<string, AnalyticsValue>) => {
     event({
       action: 'filter',
       category: 'salon',
@@ -225,11 +233,7 @@ export const analytics = {
 /**
  * User properties tracking
  */
-export const setUserProperties = (properties: {
-  userId?: string;
-  userRole?: string;
-  [key: string]: any;
-}): void => {
+export const setUserProperties = (properties: UserProperties): void => {
   if (!isAnalyticsEnabled()) return;
 
   window.gtag?.('set', 'user_properties', properties);
@@ -239,7 +243,7 @@ export const setUserProperties = (properties: {
  * E-commerce tracking
  */
 export const ecommerce = {
-  viewItemList: (items: any[], listName: string) => {
+  viewItemList: (items: EcommerceItem[], listName: string) => {
     if (!isAnalyticsEnabled()) return;
 
     window.gtag?.('event', 'view_item_list', {
@@ -248,7 +252,7 @@ export const ecommerce = {
     });
   },
 
-  selectItem: (item: any, listName: string) => {
+  selectItem: (item: EcommerceItem, listName: string) => {
     if (!isAnalyticsEnabled()) return;
 
     window.gtag?.('event', 'select_item', {
@@ -257,7 +261,7 @@ export const ecommerce = {
     });
   },
 
-  beginCheckout: (items: any[], value: number) => {
+  beginCheckout: (items: EcommerceItem[], value: number) => {
     if (!isAnalyticsEnabled()) return;
 
     window.gtag?.('event', 'begin_checkout', {
@@ -267,7 +271,7 @@ export const ecommerce = {
     });
   },
 
-  purchase: (transactionId: string, items: any[], value: number) => {
+  purchase: (transactionId: string, items: EcommerceItem[], value: number) => {
     if (!isAnalyticsEnabled()) return;
 
     window.gtag?.('event', 'purchase', {

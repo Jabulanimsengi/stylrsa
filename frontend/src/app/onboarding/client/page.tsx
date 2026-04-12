@@ -1,9 +1,10 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, LoadingButton } from '@/components/ui';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { notify } from '@/lib/notify';
 import {
   buildOnboardingRoleUrl,
@@ -13,7 +14,7 @@ import {
 import { User } from '@/types';
 import styles from '../onboarding.module.css';
 
-export default function ClientOnboardingPage() {
+function ClientOnboardingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { authStatus, user, login } = useAuth();
@@ -153,5 +154,21 @@ export default function ClientOnboardingPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function ClientOnboardingPage() {
+  return (
+    <Suspense
+      fallback={(
+        <main className={styles.page}>
+          <div className={styles.shell}>
+            <LoadingSpinner />
+          </div>
+        </main>
+      )}
+    >
+      <ClientOnboardingPageContent />
+    </Suspense>
   );
 }

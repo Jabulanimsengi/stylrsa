@@ -98,7 +98,7 @@ export default function MyFavoritesPage() {
             <Link href={getSalonUrl(salon)} key={salon.id} className={styles.salonCard}>
               <div className={styles.imageWrapper}>
                 <ReviewBadge 
-                  reviewCount={salon.reviewCount || salon.reviews?.length || 0}
+                  reviewCount={salon.reviewCount || 0}
                   avgRating={salon.avgRating || 0}
                 />
                 <Image

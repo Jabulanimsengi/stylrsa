@@ -1,20 +1,44 @@
-// backend/src/admin/admin.service.ts
-
 import {
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import * as argon2 from 'argon2';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
+import { EventsGateway } from 'src/events/events.gateway';
+import { WhatsAppService } from 'src/notifications/whatsapp.service';
+import { generateSalonSlug } from 'src/common/slug.util';
+
 type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
-type PlanCode = 'FREE' | 'STARTER' | 'ESSENTIAL' | 'GROWTH' | 'PRO' | 'ELITE';
 type PlanPaymentStatus =
   | 'PENDING_SELECTION'
   | 'AWAITING_PROOF'
   | 'PROOF_SUBMITTED'
   | 'VERIFIED';
-import { NotificationsService } from 'src/notifications/notifications.service';
-import { EventsGateway } from 'src/events/events.gateway';
+type SalonApplicationStatus =
+  | 'UNDER_REVIEW'
+  | 'CHANGES_REQUESTED'
+  | 'REJECTED';
+
+type AdminBookingRow = {
+  id: string;
+  sourceType: 'ACCOUNT_BOOKING' | 'WHATSAPP_INTENT';
+  createdAt: Date;
+  bookingTime: Date;
+  salonName: string;
+  serviceName: string;
+  clientName: string;
+  clientPhone: string | null;
+  clientEmail: string | null;
+  status: string;
+  totalCost: number;
+  depositAmount: number;
+  whatsappClicks: number | null;
+  whatsappSentAt: Date | null;
+  notes: string | null;
+};
 
 @Injectable()
 export class AdminService {
@@ -22,7 +46,36 @@ export class AdminService {
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
     private eventsGateway: EventsGateway,
+    private whatsAppService: WhatsAppService,
   ) { }
+
+  private async generateApplicationSalonSlug(
+    salonName: string,
+    city: string,
+  ): Promise<string> {
+    const baseSlug = generateSalonSlug(salonName, city);
+    const existing = await this.prisma.salon.findUnique({
+      where: { slug: baseSlug },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return baseSlug;
+    }
+
+    let suffix = 2;
+    while (true) {
+      const candidate = `${baseSlug}-${suffix}`;
+      const candidateExists = await this.prisma.salon.findUnique({
+        where: { slug: candidate },
+        select: { id: true },
+      });
+      if (!candidateExists) {
+        return candidate;
+      }
+      suffix += 1;
+    }
+  }
 
   private async logAction(params: {
     adminId: string;
@@ -34,7 +87,6 @@ export class AdminService {
   }) {
     const { adminId, action, targetType, targetId, reason, metadata } = params;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       await (this.prisma as any).adminActionLog?.create?.({
         data: {
           adminId,
@@ -47,14 +99,16 @@ export class AdminService {
       });
       return;
     } catch {
-      // Fallback to raw SQL
+      // Fall through to raw SQL.
     }
+
     try {
       const exists = (
         await (this.prisma as any).$queryRaw<{ exists: boolean }[]>`
           SELECT to_regclass('"AdminActionLog"') IS NOT NULL as exists
         `
       )[0]?.exists;
+
       if (exists) {
         const metaJson = metadata ? JSON.stringify(metadata) : null;
         await (this.prisma as any).$executeRawUnsafe(
@@ -69,7 +123,7 @@ export class AdminService {
         );
       }
     } catch {
-      // noop
+      // No-op if the fallback path is unavailable too.
     }
   }
 
@@ -81,6 +135,9 @@ export class AdminService {
         name: true,
         approvalStatus: true,
         createdAt: true,
+        city: true,
+        province: true,
+        isVerified: true,
         planCode: true,
         planPriceCents: true,
         planPaymentStatus: true,
@@ -102,6 +159,17 @@ export class AdminService {
     });
   }
 
+  async getSalonApplications() {
+    return this.prisma.salonApplication.findMany({
+      where: {
+        status: {
+          in: ['SUBMITTED', 'UNDER_REVIEW', 'CHANGES_REQUESTED'],
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async getAllSalons() {
     return this.prisma.salon.findMany({
       orderBy: { createdAt: 'desc' },
@@ -111,6 +179,8 @@ export class AdminService {
         approvalStatus: true,
         isVerified: true,
         createdAt: true,
+        city: true,
+        province: true,
         planCode: true,
         planPriceCents: true,
         planPaymentStatus: true,
@@ -134,18 +204,40 @@ export class AdminService {
   ) {
     const current = await this.prisma.salon.findUnique({
       where: { id: salonId },
-      select: { planPaymentStatus: true, planCode: true },
+      select: { id: true },
     });
+
     if (!current) {
       throw new NotFoundException('Salon not found');
     }
-    // Note: Admin can approve salons regardless of payment status
-    // Payment verification is handled separately in the payment verification flow
+
+    if (status === 'APPROVED') {
+      const approvedServiceCount = await this.prisma.service.count({
+        where: {
+          salonId,
+          approvalStatus: 'APPROVED',
+        },
+      });
+
+      if (approvedServiceCount < 2) {
+        throw new ForbiddenException(
+          'A salon needs at least 2 approved services before it can go live.',
+        );
+      }
+    }
+
     const updated = await this.prisma.salon.update({
       where: { id: salonId },
       data: { approvalStatus: status },
       include: {
-        owner: { select: { id: true, firstName: true, lastName: true } },
+        owner: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phoneNumber: true,
+          },
+        },
       },
     });
 
@@ -171,15 +263,164 @@ export class AdminService {
         'newNotification',
         notification,
       );
+
+      if (status === 'APPROVED') {
+        void this.whatsAppService.sendSalonApprovalMessage({
+          phoneNumber: updated.whatsapp ?? updated.owner.phoneNumber ?? null,
+          ownerName: updated.owner.firstName ?? null,
+          salonName: updated.name,
+        });
+      }
     }
 
     return updated;
+  }
+
+  async updateSalonApplicationStatus(
+    applicationId: string,
+    status: SalonApplicationStatus,
+    adminId?: string,
+    adminNotes?: string,
+  ) {
+    const updated = await this.prisma.salonApplication.update({
+      where: { id: applicationId },
+      data: {
+        status,
+        adminNotes: adminNotes?.trim() || null,
+        reviewedAt: new Date(),
+      },
+    });
+
+    if (adminId) {
+      void this.logAction({
+        adminId,
+        action: 'SALON_APPLICATION_STATUS_UPDATE',
+        targetType: 'SALON_APPLICATION',
+        targetId: applicationId,
+        metadata: {
+          status,
+          adminNotes: adminNotes?.trim() || null,
+        },
+      });
+    }
+
+    return updated;
+  }
+
+  async publishSalonApplication(applicationId: string, adminId?: string) {
+    const application = await this.prisma.salonApplication.findUnique({
+      where: { id: applicationId },
+    });
+
+    if (!application) {
+      throw new NotFoundException('Salon application not found');
+    }
+
+    if (application.status === 'PUBLISHED' && application.publishedSalonId) {
+      return this.prisma.salon.findUnique({
+        where: { id: application.publishedSalonId },
+      });
+    }
+
+    const slug = await this.generateApplicationSalonSlug(
+      application.salonName,
+      application.city,
+    );
+    const generatedPassword = randomBytes(24).toString('hex');
+    const passwordHash = await argon2.hash(generatedPassword);
+    const [firstName, ...rest] = application.contactPersonName.trim().split(' ');
+    const lastName = rest.join(' ') || 'Owner';
+
+    const salon = await this.prisma.$transaction(async (tx) => {
+      const placeholderOwner = await tx.user.create({
+        data: {
+          email: `salon-${application.id}@placeholder.stylrsa.local`,
+          password: passwordHash,
+          firstName: firstName || 'Salon',
+          lastName,
+          role: 'SALON_OWNER',
+          onboardingStatus: 'COMPLETE',
+          phoneNumber: application.whatsappNumber ?? application.phoneNumber,
+          emailVerified: true,
+        },
+      });
+
+      const createdSalon = await tx.salon.create({
+        data: {
+          ownerId: placeholderOwner.id,
+          name: application.salonName,
+          slug,
+          description: application.description ?? null,
+          province: application.province,
+          city: application.city,
+          town: application.town,
+          address: application.address,
+          latitude: application.latitude ?? null,
+          longitude: application.longitude ?? null,
+          contactEmail: application.email,
+          phoneNumber: application.phoneNumber,
+          whatsapp: application.whatsappNumber ?? application.phoneNumber,
+          website: application.website ?? null,
+          facebookUrl: application.facebookUrl ?? null,
+          instagramUrl: application.instagramUrl ?? null,
+          tiktokUrl: application.tiktokUrl ?? null,
+          googleReviewsUrl: application.googleReviewsUrl ?? null,
+          freshaReviewsUrl: application.freshaReviewsUrl ?? null,
+          booksyReviewsUrl: application.booksyReviewsUrl ?? null,
+          bookingType: application.bookingType,
+          offersMobile: application.offersMobile,
+          mobileFee: application.mobileFee ?? null,
+          operatingHours: application.operatingHours ?? [],
+          operatingDays: application.operatingDays,
+          bankName: application.bankName,
+          accountHolder: application.accountHolder,
+          accountNumber: application.accountNumber,
+          branchCode: application.branchCode ?? null,
+          heroImages: application.portfolioImageUrls ?? [],
+          approvalStatus: 'APPROVED',
+          isVerified: true,
+          planCode: 'PREMIUM',
+          visibilityWeight: 5,
+          maxListings: 9999,
+          planPriceCents: 39900,
+          planPaymentStatus: 'VERIFIED',
+          planVerifiedAt: new Date(),
+          commissionRate: 0,
+        },
+      });
+
+      await tx.salonApplication.update({
+        where: { id: applicationId },
+        data: {
+          status: 'PUBLISHED',
+          reviewedAt: new Date(),
+          publishedSalonId: createdSalon.id,
+        },
+      });
+
+      return createdSalon;
+    });
+
+    if (adminId) {
+      void this.logAction({
+        adminId,
+        action: 'SALON_APPLICATION_PUBLISHED',
+        targetType: 'SALON_APPLICATION',
+        targetId: applicationId,
+        metadata: {
+          publishedSalonId: salon.id,
+        },
+      });
+    }
+
+    return salon;
   }
 
   async toggleSalonVerification(salonId: string, adminId?: string) {
     const salon = await this.prisma.salon.findUnique({
       where: { id: salonId },
     });
+
     if (!salon) {
       throw new NotFoundException('Salon not found');
     }
@@ -188,7 +429,7 @@ export class AdminService {
       where: { id: salonId },
       data: { isVerified: !salon.isVerified },
       include: {
-        owner: { select: { id: true, firstName: true, lastName: true } },
+        owner: { select: { id: true } },
       },
     });
 
@@ -272,343 +513,57 @@ export class AdminService {
     return updated;
   }
 
-  async getPendingReviews() {
-    return this.prisma.review.findMany({
-      where: { approvalStatus: 'PENDING' },
-      include: {
-        author: {
-          select: {
-            firstName: true,
-            lastName: true,
-          },
-        },
-        salon: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
-  }
-
-  async updateReviewStatus(
-    reviewId: string,
-    status: ApprovalStatus,
-    adminId?: string,
-  ) {
-    const existing = await this.prisma.review.findUnique({
-      where: { id: reviewId },
-      select: {
-        salonId: true,
-        rating: true,
-      },
-    });
-    const updated = await this.prisma.review.update({
-      where: { id: reviewId },
-      data: { approvalStatus: status },
-      include: {
-        author: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          }
-        },
-        salon: {
-          select: {
-            name: true,
-            ownerId: true,
-          }
-        },
-      },
-    });
-
-    // Recalculate salon average rating
-    if (existing?.salonId) {
-      const agg = await this.prisma.review.aggregate({
-        where: { salonId: existing.salonId, approvalStatus: 'APPROVED' },
-        _avg: { rating: true },
-      });
-      await this.prisma.salon.update({
-        where: { id: existing.salonId },
-        data: { avgRating: agg._avg.rating ?? 0 },
-      });
-    }
-
-    // Notify review author
-    if (updated.author) {
-      const authorMessage = `Your review for ${updated.salon?.name ?? 'the salon'} has been ${status.toLowerCase()}.`;
-      const authorNotification = await this.notificationsService.create(
-        updated.author.id,
-        authorMessage,
-        { link: '/my-profile?tab=reviews' },
-      );
-      this.eventsGateway.sendNotificationToUser(
-        updated.author.id,
-        'newNotification',
-        authorNotification,
-      );
-    }
-
-    // NEW: Notify salon owner when review is approved
-    if (status === 'APPROVED' && updated.salon?.ownerId && updated.author) {
-      const authorName = `${updated.author.firstName} ${updated.author.lastName.charAt(0)}.`;
-      const rating = existing?.rating ?? 0;
-      const ownerMessage = `${authorName} left a ${rating}-star review for your salon. Tap to view and respond.`;
-
-      const ownerNotification = await this.notificationsService.create(
-        updated.salon.ownerId,
-        ownerMessage,
-        { link: '/dashboard?tab=reviews' },
-      );
-
-      this.eventsGateway.sendNotificationToUser(
-        updated.salon.ownerId,
-        'newNotification',
-        ownerNotification,
-      );
-    }
-
-    if (adminId) {
-      void this.logAction({
-        adminId,
-        action: 'REVIEW_STATUS_UPDATE',
-        targetType: 'REVIEW',
-        targetId: reviewId,
-        metadata: { status },
-      });
-    }
-
-    return updated;
-  }
-
-  async getPendingProducts() {
-    return this.prisma.product.findMany({
-      where: { approvalStatus: 'PENDING' },
-      include: {
-        seller: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            sellerPlanCode: true,
-            sellerPlanPriceCents: true,
-            sellerPlanPaymentStatus: true,
-            sellerPlanPaymentReference: true,
-            sellerPlanProofSubmittedAt: true,
-            sellerPlanVerifiedAt: true,
-          },
-        },
-      },
-    });
-  }
-
-  async updateProductStatus(
-    productId: string,
-    status: ApprovalStatus,
-    adminId?: string,
-  ) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-      select: {
-        seller: {
-          select: {
-            id: true,
-            sellerPlanPaymentStatus: true,
-          },
-        },
-      },
-    });
-    if (!product) {
-      throw new NotFoundException('Product not found');
-    }
-    if (
-      status === 'APPROVED' &&
-      product.seller?.sellerPlanPaymentStatus !== 'VERIFIED'
-    ) {
-      throw new ForbiddenException(
-        'Cannot approve product until seller payment has been verified.',
-      );
-    }
-    const updated = await this.prisma.product.update({
-      where: { id: productId },
-      data: { approvalStatus: status },
-      include: {
-        seller: { select: { id: true } },
-      },
-    });
-
-    if (adminId) {
-      void this.logAction({
-        adminId,
-        action: 'PRODUCT_STATUS_UPDATE',
-        targetType: 'PRODUCT',
-        targetId: productId,
-        metadata: { status },
-      });
-    }
-
-    if (updated.seller) {
-      const message = `Your product "${updated.name}" has been ${status.toLowerCase()}.`;
-      const notification = await this.notificationsService.create(
-        updated.seller.id,
-        message,
-        { link: '/product-dashboard' },
-      );
-      this.eventsGateway.sendNotificationToUser(
-        updated.seller.id,
-        'newNotification',
-        notification,
-      );
-    }
-
-    return updated;
-  }
-
   async setSalonPlan(
     salonId: string,
-    planCode: string,
+    _planCode: string,
     overrides?: {
       visibilityWeight?: number;
       maxListings?: number;
     },
   ) {
-    const FALLBACKS: Record<
-      string,
-      { visibilityWeight: number; maxListings: number; priceCents: number }
-    > = {
-      PREMIUM: { visibilityWeight: 5, maxListings: 9999, priceCents: 39900 },
+    const FALLBACK = {
+      visibilityWeight: 5,
+      maxListings: 9999,
+      priceCents: 39900,
     };
-    type PlanPartial = {
+
+    let plan: {
       visibilityWeight?: number | null;
       maxListings?: number | null;
       priceCents?: number | null;
-    };
-    // Normalize and validate incoming plan code (handle 'undefined'/'null' strings)
-    const normalizedPlan = 'PREMIUM';
-    const isValidPlan = true;
-    let plan: PlanPartial | null = null;
+    } | null = null;
+
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-      plan = isValidPlan
-        ? ((await (this.prisma as any).plan.findUnique({
-          where: { code: normalizedPlan },
-        })) as unknown as PlanPartial)
-        : null;
+      plan = await (this.prisma as any).plan.findUnique({
+        where: { code: 'PREMIUM' },
+      });
     } catch {
-      // noop: Plan table may be absent in some environments; fallbacks cover values
+      plan = null;
     }
-    const visibilityWeight =
-      overrides?.visibilityWeight ??
-      plan?.visibilityWeight ??
-      (isValidPlan ? FALLBACKS[normalizedPlan] : undefined)?.visibilityWeight ??
-      5;
-    const maxListings =
-      overrides?.maxListings ??
-      plan?.maxListings ??
-      (isValidPlan ? FALLBACKS[normalizedPlan] : undefined)?.maxListings ??
-      9999;
-    const planPriceCents =
-      plan?.priceCents ??
-      (isValidPlan ? FALLBACKS[normalizedPlan]?.priceCents : undefined);
-    const data: any = {
-      visibilityWeight,
-      maxListings,
-    };
-    if (isValidPlan) data.planCode = normalizedPlan as any;
-    if (planPriceCents !== undefined) data.planPriceCents = planPriceCents;
+
     const updated = await this.prisma.salon.update({
       where: { id: salonId },
-      data,
+      data: {
+        visibilityWeight:
+          overrides?.visibilityWeight ??
+          plan?.visibilityWeight ??
+          FALLBACK.visibilityWeight,
+        maxListings:
+          overrides?.maxListings ?? plan?.maxListings ?? FALLBACK.maxListings,
+        planCode: 'PREMIUM',
+        planPriceCents: plan?.priceCents ?? FALLBACK.priceCents,
+      },
     });
+
     try {
       this.eventsGateway.server.emit('visibility:updated', {
         entity: 'salon',
         id: salonId,
       });
     } catch {
-      // noop: websocket not critical for persistence
+      // Websocket refresh is best-effort.
     }
-    return updated;
-  }
 
-  async setSellerPlan(
-    sellerId: string,
-    planCode: string,
-    overrides?: {
-      visibilityWeight?: number;
-      maxListings?: number;
-    },
-  ) {
-    const FALLBACKS: Record<
-      string,
-      { visibilityWeight: number; maxListings: number; priceCents: number }
-    > = {
-      FREE: { visibilityWeight: 0, maxListings: 1, priceCents: 0 },
-      STARTER: { visibilityWeight: 1, maxListings: 3, priceCents: 4900 },
-      ESSENTIAL: { visibilityWeight: 2, maxListings: 7, priceCents: 9900 },
-      GROWTH: { visibilityWeight: 3, maxListings: 15, priceCents: 19900 },
-      PRO: { visibilityWeight: 4, maxListings: 27, priceCents: 29900 },
-      ELITE: { visibilityWeight: 5, maxListings: 9999, priceCents: 49900 },
-      PREMIUM: { visibilityWeight: 5, maxListings: 9999, priceCents: 39900 },
-    };
-    type SellerPlanPartial = {
-      visibilityWeight?: number | null;
-      maxListings?: number | null;
-      priceCents?: number | null;
-    };
-    const normalizedPlan =
-      !planCode || planCode === 'undefined' || planCode === 'null'
-        ? undefined
-        : planCode;
-    const isValidPlan =
-      !!normalizedPlan &&
-      ['FREE', 'STARTER', 'ESSENTIAL', 'GROWTH', 'PRO', 'ELITE', 'PREMIUM'].includes(
-        normalizedPlan,
-      );
-    let plan: SellerPlanPartial | null = null;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-      plan = isValidPlan
-        ? ((await (this.prisma as any).plan.findUnique({
-          where: { code: normalizedPlan },
-        })) as unknown as SellerPlanPartial)
-        : null;
-    } catch {
-      // noop: Plan table may be absent in some environments; fallbacks cover values
-    }
-    const sellerVisibilityWeight =
-      overrides?.visibilityWeight ??
-      plan?.visibilityWeight ??
-      (isValidPlan ? FALLBACKS[normalizedPlan] : undefined)?.visibilityWeight ??
-      1;
-    const sellerMaxListings =
-      overrides?.maxListings ??
-      plan?.maxListings ??
-      (isValidPlan ? FALLBACKS[normalizedPlan] : undefined)?.maxListings ??
-      2;
-    const sellerPlanPriceCents =
-      plan?.priceCents ??
-      (isValidPlan ? FALLBACKS[normalizedPlan]?.priceCents : undefined);
-    const data: any = {
-      sellerVisibilityWeight,
-      sellerMaxListings,
-    };
-    if (isValidPlan) data.sellerPlanCode = normalizedPlan as PlanCode;
-    if (sellerPlanPriceCents !== undefined)
-      data.sellerPlanPriceCents = sellerPlanPriceCents;
-    const updated = await this.prisma.user.update({
-      where: { id: sellerId },
-      data,
-    });
-    try {
-      this.eventsGateway.server.emit('visibility:updated', {
-        entity: 'seller',
-        id: sellerId,
-      });
-    } catch {
-      // noop: websocket not critical for persistence
-    }
     return updated;
   }
 
@@ -622,20 +577,21 @@ export class AdminService {
     const existing = await this.prisma.salon.findUnique({
       where: { id: salonId },
       select: {
-        planPaymentStatus: true,
         planProofSubmittedAt: true,
-        planCode: true,
       },
     });
+
     if (!existing) {
       throw new NotFoundException('Salon not found');
     }
+
     const data: any = { planPaymentStatus: status };
     if (typeof paymentReference !== 'undefined') {
       data.planPaymentReference = paymentReference?.trim().length
         ? paymentReference.trim()
         : null;
     }
+
     const now = new Date();
     if (status === 'VERIFIED') {
       data.planVerifiedAt = now;
@@ -643,9 +599,11 @@ export class AdminService {
     } else {
       data.planVerifiedAt = null;
     }
+
     if (status === 'PROOF_SUBMITTED') {
       data.planProofSubmittedAt = existing.planProofSubmittedAt ?? now;
     }
+
     if (status === 'AWAITING_PROOF' || status === 'PENDING_SELECTION') {
       data.planProofSubmittedAt = null;
     }
@@ -671,66 +629,6 @@ export class AdminService {
     return updated;
   }
 
-  async updateSellerPlanPaymentStatus(params: {
-    sellerId: string;
-    status: PlanPaymentStatus;
-    adminId?: string;
-    paymentReference?: string | null;
-  }) {
-    const { sellerId, status, adminId, paymentReference } = params;
-    const existing = await this.prisma.user.findUnique({
-      where: { id: sellerId },
-      select: {
-        role: true,
-        sellerPlanPaymentStatus: true,
-        sellerPlanProofSubmittedAt: true,
-      },
-    });
-    if (!existing || existing.role !== 'PRODUCT_SELLER') {
-      throw new NotFoundException('Seller not found');
-    }
-
-    const data: any = { sellerPlanPaymentStatus: status };
-    if (typeof paymentReference !== 'undefined') {
-      data.sellerPlanPaymentReference = paymentReference?.trim().length
-        ? paymentReference.trim()
-        : null;
-    }
-    const now = new Date();
-    if (status === 'VERIFIED') {
-      data.sellerPlanVerifiedAt = now;
-    } else {
-      data.sellerPlanVerifiedAt = null;
-    }
-    if (status === 'PROOF_SUBMITTED') {
-      data.sellerPlanProofSubmittedAt =
-        existing.sellerPlanProofSubmittedAt ?? now;
-    }
-    if (status === 'AWAITING_PROOF' || status === 'PENDING_SELECTION') {
-      data.sellerPlanProofSubmittedAt = null;
-    }
-
-    const updated = await this.prisma.user.update({
-      where: { id: sellerId },
-      data,
-    });
-
-    if (adminId) {
-      void this.logAction({
-        adminId,
-        action: 'SELLER_PLAN_PAYMENT_UPDATE',
-        targetType: 'SELLER',
-        targetId: sellerId,
-        metadata: {
-          status,
-          paymentReference: data.sellerPlanPaymentReference ?? null,
-        },
-      });
-    }
-
-    return updated;
-  }
-
   async deleteSalonWithCascade(
     salonId: string,
     adminId: string,
@@ -740,9 +638,11 @@ export class AdminService {
       where: { id: salonId },
       select: { id: true, name: true, ownerId: true },
     });
-    if (!salon) throw new NotFoundException('Salon not found');
 
-    // Snapshot salon and its services for archival
+    if (!salon) {
+      throw new NotFoundException('Salon not found');
+    }
+
     try {
       const snapshot = await this.prisma.salon.findUnique({
         where: { id: salonId },
@@ -763,6 +663,12 @@ export class AdminService {
           phoneNumber: true,
           whatsapp: true,
           website: true,
+          facebookUrl: true,
+          instagramUrl: true,
+          tiktokUrl: true,
+          googleReviewsUrl: true,
+          freshaReviewsUrl: true,
+          booksyReviewsUrl: true,
           bookingType: true,
           offersMobile: true,
           mobileFee: true,
@@ -791,11 +697,10 @@ export class AdminService {
           },
         },
       });
+
       if (snapshot) {
         let archived = false;
-        // Try via Prisma Client model (when generated)
         try {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
           await (this.prisma as any).deletedSalonArchive?.create?.({
             data: {
               salonId: snapshot.id,
@@ -808,18 +713,17 @@ export class AdminService {
           });
           archived = true;
         } catch {
-          // fall through to raw SQL
+          // Fall back to raw SQL below.
         }
 
         if (!archived) {
           try {
             const exists = (
               await (this.prisma as any).$queryRaw<{ exists: boolean }[]>`
-              SELECT to_regclass('"DeletedSalonArchive"') IS NOT NULL as exists
-            `
+                SELECT to_regclass('"DeletedSalonArchive"') IS NOT NULL as exists
+              `
             )[0]?.exists;
             if (exists) {
-              // Use parameterized raw SQL with explicit JSONB casts
               const svcJson = JSON.stringify(snapshot.services ?? []);
               const salonJson = JSON.stringify({
                 ...snapshot,
@@ -835,15 +739,14 @@ export class AdminService {
                 reason ?? null,
                 adminId,
               );
-              archived = true;
             }
           } catch {
-            // noop: archival fallback failed
+            // Archival is best-effort.
           }
         }
       }
     } catch {
-      // Archival is best-effort; proceed with deletion if archive table is unavailable
+      // Archival is best-effort.
     }
 
     await (this.prisma as any).$transaction(async (tx: any) => {
@@ -851,7 +754,7 @@ export class AdminService {
         where: { salonId },
         select: { id: true },
       });
-      const serviceIds = services.map((s) => s.id);
+      const serviceIds = services.map((service: { id: string }) => service.id);
 
       if (serviceIds.length > 0) {
         await tx.promotion.deleteMany({
@@ -862,7 +765,6 @@ export class AdminService {
         });
       }
 
-      await tx.review.deleteMany({ where: { salonId } });
       await tx.favorite.deleteMany({ where: { salonId } });
       await tx.galleryImage.deleteMany({ where: { salonId } });
       await tx.booking.deleteMany({ where: { salonId } });
@@ -873,7 +775,7 @@ export class AdminService {
     try {
       const message =
         `Your salon "${salon.name}" has been removed by an administrator.` +
-        (reason && reason.trim().length > 0 ? ` Reason: ${reason.trim()}` : '');
+        (reason?.trim() ? ` Reason: ${reason.trim()}` : '');
       const notification = await this.notificationsService.create(
         salon.ownerId,
         message,
@@ -885,7 +787,7 @@ export class AdminService {
         notification,
       );
     } catch {
-      // noop: notification is best-effort
+      // Notification is best-effort.
     }
 
     try {
@@ -894,10 +796,9 @@ export class AdminService {
         by: adminId,
       });
     } catch {
-      // noop
+      // No-op.
     }
 
-    // Log action
     void this.logAction({
       adminId,
       action: 'SALON_DELETE',
@@ -910,17 +811,17 @@ export class AdminService {
   }
 
   async getDeletedSalons() {
-    // Try typed client first
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       const rows = await (this.prisma as any).deletedSalonArchive?.findMany?.({
         orderBy: { deletedAt: 'desc' },
       });
-      if (Array.isArray(rows)) return rows;
+      if (Array.isArray(rows)) {
+        return rows;
+      }
     } catch {
-      // fall through
+      // Fall through to raw SQL.
     }
-    // Fallback to raw SQL if model or client is not generated
+
     try {
       const rows = await (this.prisma as any).$queryRawUnsafe(
         'SELECT id, "salonId", "ownerId", salon, services, reason, "deletedBy", "deletedAt", "restoredAt" FROM "DeletedSalonArchive" ORDER BY "deletedAt" DESC',
@@ -932,16 +833,16 @@ export class AdminService {
   }
 
   async restoreDeletedSalon(archiveId: string) {
-    // Load archive
     let archive: Record<string, any> | null = null;
+
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       archive = await (this.prisma as any).deletedSalonArchive?.findUnique?.({
         where: { id: archiveId },
       });
     } catch {
       archive = null;
     }
+
     if (!archive) {
       try {
         const rows = await (this.prisma as any).$queryRaw`
@@ -953,7 +854,10 @@ export class AdminService {
         archive = null;
       }
     }
-    if (!archive) throw new NotFoundException('Archived profile not found');
+
+    if (!archive) {
+      throw new NotFoundException('Archived profile not found');
+    }
 
     const salonId: string = archive.salonId as string;
     const ownerId: string = archive.ownerId as string;
@@ -962,17 +866,16 @@ export class AdminService {
       ? archive.services
       : [];
 
-    // Ensure no existing salon blocks restoration (ownerId is unique on Salon)
     const existing = await this.prisma.salon.findFirst({
       where: { OR: [{ id: salonId }, { ownerId }] },
     });
+
     if (existing) {
       throw new NotFoundException(
         'Cannot restore: owner already has a salon or id is taken',
       );
     }
 
-    // Re-create salon
     const createdSalon = await this.prisma.salon.create({
       data: {
         id: salonId,
@@ -993,6 +896,12 @@ export class AdminService {
         phoneNumber: salonData.phoneNumber ?? null,
         whatsapp: salonData.whatsapp ?? null,
         website: salonData.website ?? null,
+        facebookUrl: salonData.facebookUrl ?? null,
+        instagramUrl: salonData.instagramUrl ?? null,
+        tiktokUrl: salonData.tiktokUrl ?? null,
+        googleReviewsUrl: salonData.googleReviewsUrl ?? null,
+        freshaReviewsUrl: salonData.freshaReviewsUrl ?? null,
+        booksyReviewsUrl: salonData.booksyReviewsUrl ?? null,
         bookingType: salonData.bookingType ?? 'ONSITE',
         offersMobile: !!salonData.offersMobile,
         mobileFee: salonData.mobileFee ?? null,
@@ -1008,38 +917,40 @@ export class AdminService {
         visibilityWeight:
           typeof salonData.visibilityWeight === 'number'
             ? salonData.visibilityWeight
-            : 1,
+            : 5,
         maxListings:
-          typeof salonData.maxListings === 'number' ? salonData.maxListings : 2,
+          typeof salonData.maxListings === 'number'
+            ? salonData.maxListings
+            : 9999,
         featuredUntil: salonData.featuredUntil
           ? new Date(salonData.featuredUntil)
           : null,
       },
     });
 
-    // Re-create services
-    for (const svc of servicesData) {
+    for (const service of servicesData) {
       try {
         await this.prisma.service.create({
           data: {
-            id: String(svc.id),
-            title: String(svc.title),
-            description: String(svc.description ?? ''),
-            price: Number(svc.price ?? 0),
-            duration: Number(svc.duration ?? 0),
-            images: Array.isArray(svc.images) ? (svc.images as string[]) : [],
-            approvalStatus: svc.approvalStatus ?? 'PENDING',
+            id: String(service.id),
+            title: String(service.title),
+            description: String(service.description ?? ''),
+            price: Number(service.price ?? 0),
+            duration: Number(service.duration ?? 0),
+            images: Array.isArray(service.images)
+              ? (service.images as string[])
+              : [],
+            approvalStatus: service.approvalStatus ?? 'PENDING',
             salonId: createdSalon.id,
-            categoryId: (svc.categoryId as string | undefined) ?? null,
+            categoryId: (service.categoryId as string | undefined) ?? null,
           },
         });
       } catch {
-        // Skip individual service failures to ensure best-effort restoration
+        // Best-effort restore for individual services.
       }
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       await (this.prisma as any).deletedSalonArchive?.update?.({
         where: { id: archiveId },
         data: { restoredAt: new Date() },
@@ -1050,622 +961,201 @@ export class AdminService {
           UPDATE "DeletedSalonArchive" SET "restoredAt" = NOW() WHERE id = ${archiveId}
         `;
       } catch {
-        // noop
+        // No-op.
       }
     }
 
-    // Attempt to log restore action
     try {
-      const ownerId: string = createdSalon.ownerId;
       void this.logAction({
-        adminId: ownerId, // if we need real admin id, controller can pass it; using ownerId as placeholder otherwise
+        adminId: createdSalon.ownerId,
         action: 'SALON_RESTORE',
         targetType: 'SALON',
         targetId: createdSalon.id,
       });
     } catch {
-      // noop
+      // No-op.
     }
 
     return createdSalon;
   }
 
-  async getMetrics() {
-    const [salonsPending, servicesPending, reviewsPending, productsPending] =
-      await Promise.all([
-        this.prisma.salon.count({ where: { approvalStatus: 'PENDING' } }),
-        this.prisma.service.count({ where: { approvalStatus: 'PENDING' } }),
-        this.prisma.review.count({ where: { approvalStatus: 'PENDING' } }),
-        this.prisma.product.count({ where: { approvalStatus: 'PENDING' } }),
-      ]);
+  private escapeCsvValue(value: string | number | null | undefined) {
+    if (value === null || typeof value === 'undefined') {
+      return '';
+    }
 
-    const oldestSalon = await this.prisma.salon.findFirst({
-      where: { approvalStatus: 'PENDING' },
-      orderBy: { createdAt: 'asc' },
-      select: { createdAt: true },
-    });
-    const oldestService = await this.prisma.service.findFirst({
-      where: { approvalStatus: 'PENDING' },
-      orderBy: { createdAt: 'asc' },
-      select: { createdAt: true },
-    });
-    const oldestReview = await this.prisma.review.findFirst({
-      where: { approvalStatus: 'PENDING' },
-      orderBy: { createdAt: 'asc' },
-      select: { createdAt: true },
-    });
-    const oldestProduct = await this.prisma.product.findFirst({
-      where: { approvalStatus: 'PENDING' },
-      orderBy: { createdAt: 'asc' },
-      select: { createdAt: true },
-    });
+    const stringValue = String(value);
+    if (/[",\n]/.test(stringValue)) {
+      return `"${stringValue.replace(/"/g, '""')}"`;
+    }
+
+    return stringValue;
+  }
+
+  async getBookingsOverview(): Promise<AdminBookingRow[]> {
+    const [bookings, intents, salons, services] = await Promise.all([
+      this.prisma.booking.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 500,
+        include: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+          salon: {
+            select: {
+              name: true,
+            },
+          },
+          service: {
+            select: {
+              title: true,
+            },
+          },
+        },
+      }),
+      this.prisma.bookingWhatsAppIntent.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 500,
+      }),
+      this.prisma.salon.findMany({
+        select: {
+          id: true,
+          name: true,
+        },
+      }),
+      this.prisma.service.findMany({
+        select: {
+          id: true,
+          title: true,
+        },
+      }),
+    ]);
+
+    const salonNameById = new Map(salons.map((salon) => [salon.id, salon.name]));
+    const serviceNameById = new Map(
+      services.map((service) => [service.id, service.title]),
+    );
+
+    const bookingRows: AdminBookingRow[] = bookings.map((booking) => ({
+      id: booking.id,
+      sourceType: 'ACCOUNT_BOOKING',
+      createdAt: booking.createdAt,
+      bookingTime: booking.bookingTime,
+      salonName: booking.salon.name,
+      serviceName: booking.service.title,
+      clientName:
+        [booking.user.firstName, booking.user.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim() || 'Registered user',
+      clientPhone: booking.clientPhone ?? null,
+      clientEmail: booking.user.email ?? null,
+      status: booking.status,
+      totalCost: booking.totalCost ?? 0,
+      depositAmount: 0,
+      whatsappClicks: null,
+      whatsappSentAt: null,
+      notes: booking.clientNotes ?? null,
+    }));
+
+    const intentRows: AdminBookingRow[] = intents.map((intent) => ({
+      id: intent.id,
+      sourceType: 'WHATSAPP_INTENT',
+      createdAt: intent.createdAt,
+      bookingTime: intent.bookingTime,
+      salonName: salonNameById.get(intent.salonId) ?? 'Unknown salon',
+      serviceName: serviceNameById.get(intent.serviceId) ?? 'Unknown service',
+      clientName: `${intent.clientFirstName} ${intent.clientLastName}`.trim(),
+      clientPhone: intent.clientPhone ?? null,
+      clientEmail: intent.clientEmail ?? null,
+      status: intent.depositStatus,
+      totalCost: intent.totalCost ?? 0,
+      depositAmount: intent.depositAmount ?? 0,
+      whatsappClicks: intent.whatsappClicks ?? 0,
+      whatsappSentAt: intent.whatsappSentAt ?? null,
+      notes: intent.clientNotes ?? null,
+    }));
+
+    return [...bookingRows, ...intentRows].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    );
+  }
+
+  async exportBookingsCsv() {
+    const rows = await this.getBookingsOverview();
+    const header = [
+      'id',
+      'sourceType',
+      'createdAt',
+      'bookingTime',
+      'salonName',
+      'serviceName',
+      'clientName',
+      'clientPhone',
+      'clientEmail',
+      'status',
+      'totalCost',
+      'depositAmount',
+      'whatsappClicks',
+      'whatsappSentAt',
+      'notes',
+    ];
+
+    const csvRows = rows.map((row) =>
+      [
+        row.id,
+        row.sourceType,
+        row.createdAt.toISOString(),
+        row.bookingTime.toISOString(),
+        row.salonName,
+        row.serviceName,
+        row.clientName,
+        row.clientPhone,
+        row.clientEmail,
+        row.status,
+        row.totalCost.toFixed(2),
+        row.depositAmount.toFixed(2),
+        row.whatsappClicks,
+        row.whatsappSentAt ? row.whatsappSentAt.toISOString() : '',
+        row.notes,
+      ]
+        .map((value) => this.escapeCsvValue(value))
+        .join(','),
+    );
+
+    return `${header.join(',')}\n${csvRows.join('\n')}`;
+  }
+
+  async getMetrics() {
+    const [salonsPending, servicesPending] = await Promise.all([
+      this.prisma.salon.count({ where: { approvalStatus: 'PENDING' } }),
+      this.prisma.service.count({ where: { approvalStatus: 'PENDING' } }),
+    ]);
+
+    const [oldestSalon, oldestService] = await Promise.all([
+      this.prisma.salon.findFirst({
+        where: { approvalStatus: 'PENDING' },
+        orderBy: { createdAt: 'asc' },
+        select: { createdAt: true },
+      }),
+      this.prisma.service.findFirst({
+        where: { approvalStatus: 'PENDING' },
+        orderBy: { createdAt: 'asc' },
+        select: { createdAt: true },
+      }),
+    ]);
 
     return {
       salonsPending,
       servicesPending,
-      reviewsPending,
-      productsPending,
       oldest: {
         salon: oldestSalon?.createdAt ?? null,
         service: oldestService?.createdAt ?? null,
-        review: oldestReview?.createdAt ?? null,
-        product: oldestProduct?.createdAt ?? null,
       },
     };
   }
-
-  async getAllSellers() {
-    const sellers = await this.prisma.user.findMany({
-      where: { role: 'PRODUCT_SELLER' },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        sellerPlanCode: true,
-        sellerPlanPriceCents: true,
-        sellerPlanPaymentStatus: true,
-        sellerPlanPaymentReference: true,
-        sellerPlanProofSubmittedAt: true,
-        sellerPlanVerifiedAt: true,
-        sellerVisibilityWeight: true,
-        sellerMaxListings: true,
-        sellerFeaturedUntil: true,
-        // Business profile fields
-        sellerBusinessName: true,
-        sellerContactPerson: true,
-        sellerContactPhone: true,
-        sellerContactEmail: true,
-        sellerPhysicalAddress: true,
-        sellerProvincesServed: true,
-        sellerApprovalStatus: true,
-        sellerProfileSubmittedAt: true,
-        sellerApprovedAt: true,
-        _count: {
-          select: {
-            products: true,
-          },
-        },
-      },
-    });
-
-    return sellers.map((seller) => ({
-      id: seller.id,
-      email: seller.email,
-      firstName: seller.firstName,
-      lastName: seller.lastName,
-      sellerPlanCode: seller.sellerPlanCode,
-      sellerPlanPriceCents: seller.sellerPlanPriceCents,
-      sellerPlanPaymentStatus: seller.sellerPlanPaymentStatus,
-      sellerPlanPaymentReference: seller.sellerPlanPaymentReference,
-      sellerPlanProofSubmittedAt: seller.sellerPlanProofSubmittedAt,
-      sellerPlanVerifiedAt: seller.sellerPlanVerifiedAt,
-      sellerVisibilityWeight: seller.sellerVisibilityWeight,
-      sellerMaxListings: seller.sellerMaxListings,
-      sellerFeaturedUntil: seller.sellerFeaturedUntil,
-      // Business profile fields
-      sellerBusinessName: seller.sellerBusinessName,
-      sellerContactPerson: seller.sellerContactPerson,
-      sellerContactPhone: seller.sellerContactPhone,
-      sellerContactEmail: seller.sellerContactEmail,
-      sellerPhysicalAddress: seller.sellerPhysicalAddress,
-      sellerProvincesServed: seller.sellerProvincesServed,
-      sellerApprovalStatus: seller.sellerApprovalStatus,
-      sellerProfileSubmittedAt: seller.sellerProfileSubmittedAt,
-      sellerApprovedAt: seller.sellerApprovedAt,
-      productsCount: seller._count.products,
-      pendingProductsCount: 0, // Would need separate query for pending count
-    }));
-  }
-
-  async updateSellerApprovalStatus(
-    sellerId: string,
-    status: 'PENDING' | 'APPROVED' | 'REJECTED',
-    adminId: string,
-  ) {
-    const seller = await this.prisma.user.findUnique({
-      where: { id: sellerId },
-      select: { id: true, role: true, sellerApprovalStatus: true },
-    });
-    if (!seller || seller.role !== 'PRODUCT_SELLER') {
-      throw new NotFoundException('Seller not found');
-    }
-
-    const data: any = { sellerApprovalStatus: status };
-    if (status === 'APPROVED') {
-      data.sellerApprovedAt = new Date();
-    } else {
-      data.sellerApprovedAt = null;
-    }
-
-    const updated = await this.prisma.user.update({
-      where: { id: sellerId },
-      data,
-    });
-
-    // Log the action
-    void this.logAction({
-      adminId,
-      action: 'SELLER_APPROVAL_UPDATE',
-      targetType: 'SELLER',
-      targetId: sellerId,
-      metadata: { status },
-    });
-
-    // Notify the seller
-    try {
-      const message =
-        status === 'APPROVED'
-          ? '🎉 Congratulations! Your seller profile has been approved. You can now add products to your store.'
-          : status === 'REJECTED'
-            ? 'Your seller profile was not approved. Please update your information and resubmit.'
-            : 'Your seller profile status has been updated.';
-
-      const notification = await this.notificationsService.create(
-        sellerId,
-        message,
-        { link: '/product-dashboard' },
-      );
-      this.eventsGateway.sendNotificationToUser(
-        sellerId,
-        'newNotification',
-        notification,
-      );
-    } catch {
-      // noop: notification is best-effort
-    }
-
-    return updated;
-  }
-
-  async deleteSellerWithCascade(
-    sellerId: string,
-    adminId: string,
-    reason?: string,
-  ) {
-    const seller = await this.prisma.user.findUnique({
-      where: { id: sellerId, role: 'PRODUCT_SELLER' },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-      },
-    });
-    if (!seller) throw new NotFoundException('Seller not found');
-
-    // Snapshot seller and products for archival
-    try {
-      const snapshot = await this.prisma.user.findUnique({
-        where: { id: sellerId },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          sellerPlanCode: true,
-          sellerPlanPriceCents: true,
-          sellerPlanPaymentStatus: true,
-          sellerPlanPaymentReference: true,
-          sellerPlanProofSubmittedAt: true,
-          sellerPlanVerifiedAt: true,
-          sellerVisibilityWeight: true,
-          sellerMaxListings: true,
-          sellerFeaturedUntil: true,
-          products: {
-            select: {
-              id: true,
-              name: true,
-              description: true,
-              price: true,
-              images: true,
-              isOnSale: true,
-              salePrice: true,
-              stock: true,
-              approvalStatus: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          },
-        },
-      });
-
-      if (snapshot) {
-        let archived = false;
-        // Try via Prisma Client model
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-          await (this.prisma as any).deletedSellerArchive?.create?.({
-            data: {
-              sellerId: snapshot.id,
-              seller: snapshot as unknown as object,
-              products: (snapshot.products ?? []) as unknown as object,
-              reason: reason ?? null,
-              deletedBy: adminId,
-            },
-          });
-          archived = true;
-        } catch (err) {
-          // fall through to raw SQL
-        }
-
-        if (!archived) {
-          try {
-            const exists = (
-              await (this.prisma as any).$queryRaw<{ exists: boolean }[]>`
-                SELECT to_regclass('"DeletedSellerArchive"') IS NOT NULL as exists
-              `
-            )[0]?.exists;
-            if (exists) {
-              const productsJson = JSON.stringify(snapshot.products ?? []);
-              const sellerJson = JSON.stringify({
-                ...snapshot,
-                products: undefined,
-              });
-              await (this.prisma as any).$executeRawUnsafe(
-                `INSERT INTO "DeletedSellerArchive" ("sellerId","seller","products","reason","deletedBy")
-                 VALUES ($1,$2::jsonb,$3::jsonb,$4,$5)`,
-                snapshot.id,
-                sellerJson,
-                productsJson,
-                reason ?? null,
-                adminId,
-              );
-              archived = true;
-            }
-          } catch (err) {
-            // noop: archival fallback failed
-          }
-        }
-      }
-    } catch (err) {
-      // Archival is best-effort; proceed with deletion
-    }
-
-    // Delete seller's products and related data
-    await (this.prisma as any).$transaction(async (tx: any) => {
-      const products = await tx.product.findMany({
-        where: { sellerId },
-        select: { id: true },
-      });
-      const productIds = products.map((p) => p.id);
-
-      if (productIds.length > 0) {
-        // Delete product promotions
-        await tx.promotion.deleteMany({
-          where: { productId: { in: productIds } },
-        });
-        // Delete product orders
-        await tx.productOrder.deleteMany({
-          where: { productId: { in: productIds } },
-        });
-      }
-
-      // Delete products
-      await tx.product.deleteMany({ where: { sellerId } });
-
-      // Find all conversations involving the seller
-      const conversations = await tx.conversation.findMany({
-        where: {
-          OR: [{ user1Id: sellerId }, { user2Id: sellerId }],
-        },
-        select: { id: true },
-      });
-      const conversationIds = conversations.map((c) => c.id);
-
-      // Delete ALL messages in those conversations (including messages from other users)
-      if (conversationIds.length > 0) {
-        await tx.message.deleteMany({
-          where: { conversationId: { in: conversationIds } },
-        });
-      }
-
-      // Now safe to delete the conversations
-      await tx.conversation.deleteMany({
-        where: {
-          OR: [{ user1Id: sellerId }, { user2Id: sellerId }],
-        },
-      });
-
-      // Delete seller's notifications
-      await tx.notification.deleteMany({ where: { userId: sellerId } });
-
-      // Finally delete the user account
-      await tx.user.delete({ where: { id: sellerId } });
-    });
-
-    try {
-      this.eventsGateway.server.emit('seller:deleted', {
-        id: sellerId,
-        by: adminId,
-      });
-    } catch {
-      // noop
-    }
-
-    void this.logAction({
-      adminId,
-      action: 'SELLER_DELETE',
-      targetType: 'SELLER',
-      targetId: sellerId,
-      reason: reason ?? null,
-    });
-
-    return { ok: true };
-  }
-
-  async getDeletedSellersArchive() {
-    // Try typed client first
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-      const rows = await (this.prisma as any).deletedSellerArchive?.findMany?.({
-        orderBy: { deletedAt: 'desc' },
-        where: { restoredAt: null },
-      });
-      if (Array.isArray(rows)) {
-        return rows;
-      }
-    } catch (err) {
-      // fall through
-    }
-    // Fallback to raw SQL
-    try {
-      const rows: any = await (this.prisma as any).$queryRawUnsafe(
-        'SELECT id, "sellerId", seller, products, reason, "deletedBy", "deletedAt", "restoredAt" FROM "DeletedSellerArchive" WHERE "restoredAt" IS NULL ORDER BY "deletedAt" DESC',
-      );
-      return Array.isArray(rows) ? rows : [];
-    } catch (err) {
-      return [];
-    }
-  }
-
-  async restoreDeletedSeller(archiveId: string) {
-    // Load archive
-    let archive: Record<string, any> | null = null;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-      archive = await (this.prisma as any).deletedSellerArchive?.findUnique?.({
-        where: { id: archiveId },
-      });
-    } catch {
-      archive = null;
-    }
-    if (!archive) {
-      try {
-        const rows = await (this.prisma as any).$queryRaw`
-          SELECT id, "sellerId", seller, products, reason, "deletedBy", "deletedAt", "restoredAt"
-          FROM "DeletedSellerArchive" WHERE id = ${archiveId} LIMIT 1
-        `;
-        archive = rows?.[0] ?? null;
-      } catch {
-        archive = null;
-      }
-    }
-    if (!archive) throw new NotFoundException('Archived seller not found');
-
-    const sellerId: string = archive.sellerId as string;
-    const sellerData: any = archive.seller ?? {};
-    const productsData: any[] = Array.isArray(archive.products)
-      ? archive.products
-      : [];
-
-    // Check if seller already exists
-    const existing = await this.prisma.user.findUnique({
-      where: { id: sellerId },
-    });
-
-    let createdSeller;
-    if (existing) {
-      // Seller exists - update their data and role
-      createdSeller = await this.prisma.user.update({
-        where: { id: sellerId },
-        data: {
-          role: 'PRODUCT_SELLER',
-          sellerPlanCode: sellerData.sellerPlanCode ?? 'STARTER',
-          sellerPlanPriceCents: sellerData.sellerPlanPriceCents ?? null,
-          sellerPlanPaymentStatus:
-            sellerData.sellerPlanPaymentStatus ?? 'PENDING_SELECTION',
-          sellerPlanPaymentReference:
-            sellerData.sellerPlanPaymentReference ?? null,
-          sellerPlanProofSubmittedAt: sellerData.sellerPlanProofSubmittedAt
-            ? new Date(sellerData.sellerPlanProofSubmittedAt)
-            : null,
-          sellerPlanVerifiedAt: sellerData.sellerPlanVerifiedAt
-            ? new Date(sellerData.sellerPlanVerifiedAt)
-            : null,
-          sellerVisibilityWeight: sellerData.sellerVisibilityWeight ?? 1,
-          sellerMaxListings: sellerData.sellerMaxListings ?? 3,
-          sellerFeaturedUntil: sellerData.sellerFeaturedUntil
-            ? new Date(sellerData.sellerFeaturedUntil)
-            : null,
-        },
-      });
-    } else {
-      // Seller doesn't exist - create new account
-      createdSeller = await this.prisma.user.create({
-        data: {
-          id: sellerId,
-          email: String(sellerData.email),
-          firstName: String(sellerData.firstName ?? ''),
-          lastName: String(sellerData.lastName ?? ''),
-          role: 'PRODUCT_SELLER',
-          password: '', // Will need to reset password
-          sellerPlanCode: sellerData.sellerPlanCode ?? 'STARTER',
-          sellerPlanPriceCents: sellerData.sellerPlanPriceCents ?? null,
-          sellerPlanPaymentStatus:
-            sellerData.sellerPlanPaymentStatus ?? 'PENDING_SELECTION',
-          sellerPlanPaymentReference:
-            sellerData.sellerPlanPaymentReference ?? null,
-          sellerPlanProofSubmittedAt: sellerData.sellerPlanProofSubmittedAt
-            ? new Date(sellerData.sellerPlanProofSubmittedAt)
-            : null,
-          sellerPlanVerifiedAt: sellerData.sellerPlanVerifiedAt
-            ? new Date(sellerData.sellerPlanVerifiedAt)
-            : null,
-          sellerVisibilityWeight: sellerData.sellerVisibilityWeight ?? 1,
-          sellerMaxListings: sellerData.sellerMaxListings ?? 3,
-          sellerFeaturedUntil: sellerData.sellerFeaturedUntil
-            ? new Date(sellerData.sellerFeaturedUntil)
-            : null,
-        },
-      });
-    }
-
-    // Re-create products
-    for (const prod of productsData) {
-      try {
-        // Check if product already exists
-        const existingProduct = await this.prisma.product.findUnique({
-          where: { id: String(prod.id) },
-        });
-
-        if (existingProduct) {
-          // Update existing product
-          await this.prisma.product.update({
-            where: { id: String(prod.id) },
-            data: {
-              name: String(prod.name),
-              description: String(prod.description ?? ''),
-              price: Number(prod.price ?? 0),
-              images: Array.isArray(prod.images)
-                ? (prod.images as string[])
-                : [],
-              isOnSale: prod.isOnSale ?? false,
-              salePrice: prod.salePrice ?? null,
-              stock: Number(prod.stock ?? 0),
-              approvalStatus: prod.approvalStatus ?? 'PENDING',
-              sellerId: createdSeller.id,
-            },
-          });
-        } else {
-          // Create new product
-          await this.prisma.product.create({
-            data: {
-              id: String(prod.id),
-              name: String(prod.name),
-              description: String(prod.description ?? ''),
-              price: Number(prod.price ?? 0),
-              images: Array.isArray(prod.images)
-                ? (prod.images as string[])
-                : [],
-              isOnSale: prod.isOnSale ?? false,
-              salePrice: prod.salePrice ?? null,
-              stock: Number(prod.stock ?? 0),
-              approvalStatus: prod.approvalStatus ?? 'PENDING',
-              sellerId: createdSeller.id,
-            },
-          });
-        }
-      } catch (err) {
-        // Skip individual product failures
-      }
-    }
-
-    // Mark archive as restored
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-      await (this.prisma as any).deletedSellerArchive?.update?.({
-        where: { id: archiveId },
-        data: { restoredAt: new Date() },
-      });
-    } catch {
-      try {
-        await (this.prisma as any).$executeRaw`
-          UPDATE "DeletedSellerArchive" SET "restoredAt" = NOW() WHERE id = ${archiveId}
-        `;
-      } catch {
-        // noop
-      }
-    }
-
-    void this.logAction({
-      adminId: sellerId,
-      action: 'SELLER_RESTORE',
-      targetType: 'SELLER',
-      targetId: createdSeller.id,
-    });
-
-    return createdSeller;
-  }
-
-  async diagnosticDeletedSellersTable() {
-    const result = {
-      tableExists: false,
-      recordCount: 0,
-      canUsePrismaClient: false,
-      canUseRawSQL: false,
-      error: null as string | null,
-      sampleRecords: [] as any[],
-    };
-
-    try {
-      // Check if table exists
-      const tableCheck = await (this.prisma as any).$queryRaw<
-        { exists: boolean }[]
-      >`
-        SELECT to_regclass('"DeletedSellerArchive"') IS NOT NULL as exists
-      `;
-      result.tableExists = tableCheck[0]?.exists ?? false;
-
-      if (result.tableExists) {
-        // Try counting via raw SQL
-        try {
-          const countResult: any = await (this.prisma as any).$queryRawUnsafe(
-            'SELECT COUNT(*) as count FROM "DeletedSellerArchive"'
-          );
-          result.recordCount = parseInt(countResult[0]?.count ?? '0', 10);
-          result.canUseRawSQL = true;
-        } catch (err) {
-          result.error = `Count failed: ${err?.message || err}`;
-        }
-
-        // Try fetching sample records
-        try {
-          const rows: any = await (this.prisma as any).$queryRawUnsafe(
-            'SELECT id, "sellerId", "deletedAt", reason, "deletedBy" FROM "DeletedSellerArchive" ORDER BY "deletedAt" DESC LIMIT 5',
-          );
-          result.sampleRecords = Array.isArray(rows) ? rows : [];
-        } catch (err) {
-          result.error = `${result.error || ''} Fetch failed: ${err?.message || err}`;
-        }
-
-        // Try Prisma client
-        try {
-          const prismaRows: any = await (this.prisma as any).deletedSellerArchive?.findMany?.({
-            take: 1,
-          });
-          result.canUsePrismaClient = Array.isArray(prismaRows);
-        } catch (err) {
-          result.error = `${result.error || ''} Prisma client failed: ${err?.message || err}`;
-        }
-      }
-    } catch (err) {
-      result.error = `Table check failed: ${err?.message || err}`;
-    }
-
-    return result;
-  }
-
 }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
-import { Salon, Service, GalleryImage, Review } from '@/types';
+import { Salon, Service, GalleryImage } from '@/types';
 import BookingModal from '@/components/BookingModal/BookingModal';
 import ImageLightbox from '@/components/ImageLightbox';
 import { useSocket } from '@/context/SocketContext';
@@ -21,8 +21,6 @@ type Props = {
   salonId: string;
 };
 
-const EMPTY_REVIEWS: Review[] = [];
-
 export default function SalonProfileClient({ initialSalon, salonId }: Props) {
   const searchParams = useSearchParams();
   const { authStatus } = useAuth();
@@ -33,14 +31,12 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
   const [services, setServices] = useState<Service[]>(initialSalon?.services ?? []);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>(initialSalon?.gallery ?? []);
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxStartIndex, setLightboxStartIndex] = useState(0);
   const [logoError, setLogoError] = useState(false);
   const [activeSection, setActiveSection] = useState('services-section');
-
-  const reviews = salon?.reviews ?? EMPTY_REVIEWS;
 
   useEffect(() => {
     if (!salon || authStatus === 'authenticated') {
@@ -65,7 +61,7 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
     const service = services.find((item) => item.id === serviceId);
     if (!service) return;
 
-    setSelectedService(service);
+    setSelectedServices([service]);
     setShowBookingModal(true);
     window.history.replaceState({}, '', window.location.pathname);
   }, [searchParams, services, showBookingModal]);
@@ -262,7 +258,7 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
   };
 
   const handleBookClick = (service: Service) => {
-    setSelectedService(service);
+    setSelectedServices([service]);
     setShowBookingModal(true);
   };
 
@@ -272,12 +268,8 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
       return;
     }
 
-    if (selectedSvcs.length > 1) {
-      toast.info('Bookings currently start with one service at a time. We selected the first service for checkout.');
-    }
-
-    const primaryService = selectedSvcs[0];
-    handleBookClick(primaryService);
+    setSelectedServices(selectedSvcs);
+    setShowBookingModal(true);
   };
 
   const handleToggleFavorite = async () => {
@@ -314,16 +306,17 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
       {showBookingModal && (
         <BookingModal
           salon={salon}
-          service={selectedService || undefined}
+          service={selectedServices[0] || undefined}
+          selectedServices={selectedServices}
           services={services}
           onClose={() => {
             setShowBookingModal(false);
-            setSelectedService(null);
+            setSelectedServices([]);
           }}
           onBookingSuccess={() => {
             toast.success('Booking request sent! The salon will confirm shortly.');
             setShowBookingModal(false);
-            setSelectedService(null);
+            setSelectedServices([]);
           }}
         />
       )}
@@ -340,7 +333,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
         salon={salon}
         services={services}
         galleryImages={galleryImages}
-        reviews={reviews}
         hoursRecord={hoursRecord}
         todayLabel={todayLabel}
         orderedOperatingDays={orderedOperatingDays}
@@ -356,7 +348,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
         salon={salon}
         services={services}
         galleryImages={galleryImages}
-        reviews={reviews}
         hoursRecord={hoursRecord}
         todayLabel={todayLabel}
         orderedOperatingDays={orderedOperatingDays}
@@ -369,6 +360,7 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
         openLightbox={openLightbox}
         onToggleFavorite={handleToggleFavorite}
         onBookServices={handleMultiServiceBook}
+        isBookingJourneyActive={showBookingModal}
       />
 
       <SimilarSalons

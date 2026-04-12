@@ -1,16 +1,22 @@
 'use client';
 
 import React from 'react';
-import { FaTrash, FaEdit } from 'react-icons/fa';
+import { FaTrash, FaEdit, FaTag } from 'react-icons/fa';
 import { Button } from '@/components/ui';
 import StatusBadge from '@/components/StatusBadge';
 import { Service } from '@/types';
+import {
+    formatServiceDiscountLabel,
+    getServiceDiscountedPrice,
+    hasServiceDiscount,
+} from '@/lib/servicePricing';
 import styles from '../../app/dashboard/Dashboard.module.css';
 
 interface ServicesTabProps {
     services: Service[];
     onAddService: () => void;
     onEditService: (service: Service) => void;
+    onManageDiscount: (service: Service) => void;
     onDeleteService: (id: string) => void;
 }
 
@@ -18,6 +24,7 @@ export default function ServicesTab({
     services,
     onAddService,
     onEditService,
+    onManageDiscount,
     onDeleteService,
 }: ServicesTabProps) {
     return (
@@ -37,14 +44,37 @@ export default function ServicesTab({
                         <div className={styles.serviceMainInfo}>
                             <div>
                                 <span className={styles.serviceTitle}>{service.title}</span>
+                                {hasServiceDiscount(service) && (
+                                    <div className={styles.serviceDiscountRow}>
+                                        <span className={styles.serviceDiscountBadge}>
+                                            {formatServiceDiscountLabel(service)}
+                                        </span>
+                                        <span className={styles.serviceOriginalPrice}>
+                                            R{service.price.toFixed(2)}
+                                        </span>
+                                        <span className={styles.serviceDiscountedPrice}>
+                                            R{getServiceDiscountedPrice(service).toFixed(2)}
+                                        </span>
+                                    </div>
+                                )}
                                 {service.approvalStatus === 'PENDING' && (
                                     <div className={styles.servicePriceInline}>Awaiting admin approval</div>
                                 )}
                             </div>
-                            <span className={styles.servicePriceInline}>R{service.price.toFixed(2)}</span>
+                            {!hasServiceDiscount(service) && (
+                                <span className={styles.servicePriceInline}>R{service.price.toFixed(2)}</span>
+                            )}
                         </div>
                         <div className={styles.serviceActionsCompact}>
                             <StatusBadge status={service.approvalStatus || 'PENDING'} />
+                            <button
+                                onClick={() => onManageDiscount(service)}
+                                className={styles.promoButton}
+                                aria-label={hasServiceDiscount(service) ? 'Edit discount' : 'Add discount'}
+                                title={hasServiceDiscount(service) ? 'Edit discount' : 'Add discount'}
+                            >
+                                <FaTag />
+                            </button>
                             <button
                                 onClick={() => onEditService(service)}
                                 className={styles.editButton}

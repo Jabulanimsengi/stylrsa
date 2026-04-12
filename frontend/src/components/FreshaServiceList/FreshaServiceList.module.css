@@ -17,30 +17,49 @@
     display: flex;
     gap: 1.5rem;
     align-items: flex-start;
-    /* Enable sticky positioning for children */
 }
 
 .servicesColumn {
     flex: 1;
     min-width: 0;
-    margin-right: 360px;
-    /* Reserve space for cart (340px + 20px gap) */
-    padding-right: 1rem;
+    margin-right: min(500px, 42vw);
+    padding-right: 1.25rem;
+}
+
+.categorySelector {
+    display: grid;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 12px 30px rgba(17, 24, 39, 0.05);
+}
+
+.categorySelectorLabel {
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #667085;
+}
+
+.categorySelectTrigger {
+    min-height: 46px;
+    border-radius: 16px;
+    font-weight: 600;
+    background: #fff;
 }
 
 .cartColumn {
-    width: 340px;
-    flex-shrink: 0;
     position: fixed;
-    top: 130px;
-    /* Account for navbar (70px) + tab navigation (60px) height */
-    right: max(1.5rem, calc((100vw - 1024px) / 2 + 1.5rem));
-    /* Align with max-width container (1024px for single column layout) */
-    height: fit-content;
-    max-height: calc(100vh - 150px);
-    overflow-y: auto;
-    z-index: 45;
-    /* Below modals (50) but above content (30) */
+    inset: 0 0 0 auto;
+    width: min(460px, 40vw);
+    z-index: 55;
+    pointer-events: none;
+    display: flex;
+    justify-content: flex-end;
 }
 
 /* Category Sections */
@@ -178,6 +197,19 @@
     color: var(--color-text-strong);
 }
 
+.discountBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.5rem;
+    background: rgba(242, 27, 91, 0.1);
+    color: #e11d48;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
 .serviceDuration {
     font-size: 0.875rem;
     color: #667085;
@@ -188,12 +220,27 @@
     font-size: 1rem;
     font-weight: 700;
     color: #1f2430;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
 }
 
 .servicePriceFrom {
     font-size: 0.8125rem;
     color: #667085;
     margin-right: 0.25rem;
+}
+
+.servicePriceOriginal {
+    color: #98a2b3;
+    text-decoration: line-through;
+    font-weight: 600;
+}
+
+.servicePriceDiscounted {
+    color: #1f2430;
+    font-weight: 800;
 }
 
 /* Service Actions */
@@ -277,11 +324,78 @@
 
 /* Cart Sidebar */
 .cartSidebar {
-    background: rgba(255, 255, 255, 0.96);
-    border: 1px solid var(--color-border);
-    border-radius: 24px;
-    padding: 1.5rem;
-    box-shadow: 0 20px 48px rgba(17, 24, 39, 0.08);
+    width: 100%;
+    height: 100dvh;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.985) 0%, rgba(252, 248, 248, 0.965) 100%);
+    border-left: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 28px 0 0 28px;
+    padding: 1.4rem 1.35rem 1.25rem;
+    box-shadow: -24px 0 60px rgba(17, 24, 39, 0.18);
+    animation: cartDrawerIn 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    backdrop-filter: blur(18px);
+}
+
+.cartPanelTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.cartPanelCopy {
+    min-width: 0;
+}
+
+.cartEyebrow {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #f21b5b;
+    margin-bottom: 0.45rem;
+}
+
+.cartPanelTitle {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: #1f2430;
+    margin: 0;
+}
+
+.cartPanelHint {
+    margin: 0.5rem 0 0;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: #667085;
+}
+
+.cartCloseButton {
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #667085;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.cartCloseButton:hover {
+    transform: translateY(-1px);
+    border-color: rgba(17, 24, 39, 0.14);
+    color: #1f2430;
+    box-shadow: 0 10px 24px rgba(17, 24, 39, 0.08);
 }
 
 .cartHeader {
@@ -289,6 +403,11 @@
     align-items: center;
     gap: 0.75rem;
     margin-bottom: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 22px;
+    box-shadow: 0 14px 34px rgba(17, 24, 39, 0.05);
 }
 
 .cartSalonImage {
@@ -332,21 +451,28 @@
 
 .cartDivider {
     height: 1px;
-    background: var(--color-border, #eee);
-    margin: 1rem 0;
+    background: rgba(17, 24, 39, 0.08);
+    margin: 0 0 1rem;
 }
 
 .cartItems {
-    max-height: 300px;
+    flex: 1;
     overflow-y: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
 }
 
 .cartItem {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid var(--color-border, #eee);
+    padding: 1rem;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 16px 36px rgba(17, 24, 39, 0.05);
 }
 
 .cartItem:last-child {
@@ -359,58 +485,75 @@
 }
 
 .cartItemName {
-    font-size: 0.9375rem;
-    font-weight: 500;
-    color: var(--color-text, #1a1a1a);
-    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2430;
+    margin: 0 0 0.35rem 0;
 }
 
 .cartItemDetails {
-    font-size: 0.8125rem;
-    color: var(--color-text-secondary, #666);
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: #667085;
     margin: 0;
 }
 
 .cartItemPrice {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--color-text, #1a1a1a);
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #1f2430;
     flex-shrink: 0;
 }
 
 .cartItemRemove {
-    background: none;
-    border: none;
-    color: var(--color-text-secondary, #999);
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(17, 24, 39, 0.1);
+    border-radius: 999px;
+    color: #98a2b3;
     cursor: pointer;
-    padding: 0.25rem;
+    padding: 0;
     margin-left: 0.5rem;
-    transition: color 0.2s ease;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .cartItemRemove:hover {
-    color: var(--color-error, #ef4444);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.22);
+    background: rgba(254, 242, 242, 0.94);
+}
+
+.cartFooter {
+    margin-top: 1rem;
+    padding: 1.05rem 1rem 0;
+    border-top: 1px solid rgba(17, 24, 39, 0.08);
 }
 
 .cartTotal {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--color-border, #eee);
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
 }
 
 .cartTotalLabel {
     font-size: 1rem;
-    font-weight: 600;
-    color: var(--color-text, #1a1a1a);
+    font-weight: 700;
+    color: #1f2430;
 }
 
 .cartTotalPrice {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-text, #1a1a1a);
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: #1f2430;
 }
 
 .continueButton {
@@ -429,6 +572,18 @@
     box-shadow: var(--button-shadow, 0 10px 22px rgba(17, 19, 24, 0.08));
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+}
+
+@keyframes cartDrawerIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .continueButton:hover {
@@ -535,10 +690,8 @@
 
     .servicesColumn {
         margin-right: 0;
-        /* Remove cart space on mobile */
         padding-right: 0;
         padding-bottom: 100px;
-        /* Space for mobile footer */
     }
 }
 

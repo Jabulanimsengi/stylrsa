@@ -50,7 +50,7 @@ export default function DashboardOverviewHero({
           </span>
         </div>
         <p className={styles.overviewDescription}>
-          Manage service listings, gallery images, reviews, and your WhatsApp booking handoff from one calmer workspace.
+          Manage service listings, gallery images, external review links, and your WhatsApp booking handoff from one calmer workspace.
         </p>
         <div className={styles.overviewMetaRow}>
           <span className={styles.overviewMetaPill}>{todaysBookingsCount} booking{todaysBookingsCount === 1 ? '' : 's'} today</span>

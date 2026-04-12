@@ -13,7 +13,7 @@ const DEFAULT_MESSAGE = 'Something went wrong. Please try again.';
 function isNetworkError(err: unknown): boolean {
   if (!err) return false;
   if (typeof err === 'object') {
-    const error = err as any;
+    const error = err as { name?: string; message?: string };
     // Check for common network error patterns
     if (error.name === 'TypeError' && error.message?.includes('fetch')) return true;
     if (error.message?.toLowerCase().includes('network')) return true;

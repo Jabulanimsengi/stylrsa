@@ -175,25 +175,64 @@ export class SalonsService {
       );
     }
 
-    const requestedPlan = (dto as any).planCode as PlanCode | undefined;
+    const existingSalon = await this.prisma.salon.findFirst({
+      where: { ownerId: userId },
+      select: { id: true },
+    });
+
+    if (existingSalon) {
+      throw new ForbiddenException('You already have a salon profile.');
+    }
+
+    const requestedPlan =
+      typeof (dto as any).planCode === 'string'
+        ? ((dto as any).planCode as PlanCode)
+        : 'PREMIUM';
     if (requestedPlan !== 'PREMIUM') {
-      throw new ForbiddenException('Please select a valid package.');
+      throw new ForbiddenException(
+        'Only the R399 premium salon listing plan is available.',
+      );
     }
 
     const planMeta = await this.resolvePlanMeta(requestedPlan);
-    const hasSentProof = Boolean((dto as any).hasSentProof);
     const paymentReferenceRaw = (dto as any).paymentReference;
     const paymentReference =
       typeof paymentReferenceRaw === 'string' &&
         paymentReferenceRaw.trim().length > 0
         ? paymentReferenceRaw.trim()
         : dto.name.trim();
-    const planPaymentStatus: PlanPaymentStatus = isAdmin
-      ? 'VERIFIED'
-      : hasSentProof
-        ? 'PROOF_SUBMITTED'
-        : 'AWAITING_PROOF';
+    const planPaymentStatus: PlanPaymentStatus = 'VERIFIED';
     const adminConfirmEmailVerified = Boolean((dto as any).adminConfirmEmailVerified);
+    const depositRequired = Boolean((dto as any).depositRequired);
+    const depositPercentage =
+      depositRequired
+        ? Math.min(
+          100,
+          Math.max(
+            0,
+            Math.round(
+              typeof (dto as any).depositPercentage === 'number'
+                ? (dto as any).depositPercentage
+                : 50,
+            ),
+          ),
+        )
+        : null;
+    const paymentInstructions =
+      typeof (dto as any).paymentInstructions === 'string' &&
+        (dto as any).paymentInstructions.trim().length > 0
+        ? (dto as any).paymentInstructions.trim()
+        : null;
+    const cancellationPolicy =
+      typeof (dto as any).cancellationPolicy === 'string' &&
+        (dto as any).cancellationPolicy.trim().length > 0
+        ? (dto as any).cancellationPolicy.trim()
+        : null;
+    const specialConditions =
+      typeof (dto as any).specialConditions === 'string' &&
+        (dto as any).specialConditions.trim().length > 0
+        ? (dto as any).specialConditions.trim()
+        : null;
 
     const normalizedOperatingHours = normalizeOperatingHours(
       (dto as any).operatingHours,
@@ -218,17 +257,54 @@ export class SalonsService {
       city: (dto as any).city,
       town: (dto as any).town,
       website: (dto as any).website,
+      facebookUrl: (dto as any).facebookUrl,
+      instagramUrl: (dto as any).instagramUrl,
+      tiktokUrl: (dto as any).tiktokUrl,
+      googleReviewsUrl: (dto as any).googleReviewsUrl,
+      freshaReviewsUrl: (dto as any).freshaReviewsUrl,
+      booksyReviewsUrl: (dto as any).booksyReviewsUrl,
       latitude: (dto as any).latitude,
       longitude: (dto as any).longitude,
       heroImages: (dto as any).heroImages ?? [],
       backgroundImage: (dto as any).backgroundImage,
       contactEmail: (dto as any).email ?? (dto as any).contactEmail,
       phoneNumber: (dto as any).phone ?? (dto as any).phoneNumber,
+      whatsapp: (dto as any).whatsapp ?? null,
       offersMobile: (dto as any).offersMobile,
       mobileFee: (dto as any).mobileFee,
       bookingType: (dto as any).bookingType ?? 'ONSITE',
       operatingHours: normalizedOperatingHours,
       operatingDays: normalizedOperatingDays,
+      bookingMessage:
+        typeof (dto as any).bookingMessage === 'string' &&
+          (dto as any).bookingMessage.trim().length > 0
+          ? (dto as any).bookingMessage.trim()
+          : null,
+      depositRequired,
+      depositPercentage,
+      paymentInstructions,
+      cancellationPolicy,
+      specialConditions,
+      bankName:
+        typeof (dto as any).bankName === 'string' &&
+          (dto as any).bankName.trim().length > 0
+          ? (dto as any).bankName.trim()
+          : null,
+      accountHolder:
+        typeof (dto as any).accountHolder === 'string' &&
+          (dto as any).accountHolder.trim().length > 0
+          ? (dto as any).accountHolder.trim()
+          : null,
+      accountNumber:
+        typeof (dto as any).accountNumber === 'string' &&
+          (dto as any).accountNumber.trim().length > 0
+          ? (dto as any).accountNumber.trim()
+          : null,
+      branchCode:
+        typeof (dto as any).branchCode === 'string' &&
+          (dto as any).branchCode.trim().length > 0
+          ? (dto as any).branchCode.trim()
+          : null,
       planCode: requestedPlan,
       visibilityWeight: planMeta.visibilityWeight,
       maxListings: planMeta.maxListings,
@@ -238,8 +314,8 @@ export class SalonsService {
       isVerified: isAdmin,
       planPaymentStatus,
       planPaymentReference: paymentReference,
-      planProofSubmittedAt: isAdmin ? null : hasSentProof ? new Date() : null,
-      planVerifiedAt: isAdmin ? new Date() : null,
+      planProofSubmittedAt: null,
+      planVerifiedAt: new Date(),
     };
 
     console.log('SalonsService.create called for user:', userId);
@@ -320,7 +396,6 @@ export class SalonsService {
   findAll() {
     return this.prisma.salon.findMany({
       include: {
-        reviews: true,
         services: true,
       },
     });
@@ -479,21 +554,6 @@ export class SalonsService {
         ? { id: idOrSlug }
         : { slug: idOrSlug },
       include: {
-        reviews: {
-          where: { approvalStatus: 'APPROVED' },
-          include: {
-            author: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
         services: {
           where: {
             approvalStatus: 'APPROVED',
@@ -561,6 +621,10 @@ export class SalonsService {
       salonWithFavorite.isFavorited = false;
     }
 
+    salonWithFavorite.reviews = [];
+    salonWithFavorite.avgRating = 0;
+    salonWithFavorite.reviewCount = 0;
+
     return salonWithFavorite;
   }
 
@@ -611,10 +675,21 @@ export class SalonsService {
         'phoneNumber',
         'whatsapp',
         'website',
+        'facebookUrl',
+        'instagramUrl',
+        'tiktokUrl',
+        'googleReviewsUrl',
+        'freshaReviewsUrl',
+        'booksyReviewsUrl',
         'bankName',
         'accountHolder',
         'accountNumber',
         'branchCode',
+        'depositRequired',
+        'depositPercentage',
+        'paymentInstructions',
+        'cancellationPolicy',
+        'specialConditions',
         'bookingType',
         'offersMobile',
         'mobileFee',
@@ -639,6 +714,34 @@ export class SalonsService {
       );
       updateData.operatingHours = normalizedHours;
       updateData.operatingDays = normalizedHours.map((entry) => entry.day);
+    }
+
+    if (typeof updateData.depositRequired === 'boolean' && !updateData.depositRequired) {
+      updateData.depositPercentage = null;
+      updateData.paymentInstructions = null;
+    }
+
+    if (typeof updateData.depositPercentage === 'number') {
+      updateData.depositPercentage = Math.min(
+        100,
+        Math.max(0, Math.round(updateData.depositPercentage)),
+      );
+    }
+
+    for (const textField of [
+      'whatsapp',
+      'bankName',
+      'accountHolder',
+      'accountNumber',
+      'branchCode',
+      'paymentInstructions',
+      'cancellationPolicy',
+      'specialConditions',
+    ] as const) {
+      if (typeof updateData[textField] === 'string') {
+        const trimmed = updateData[textField].trim();
+        updateData[textField] = trimmed.length > 0 ? trimmed : null;
+      }
     }
 
     if (requiresApproval && Object.keys(updateData).length > 0) {
@@ -718,33 +821,11 @@ export class SalonsService {
     }
 
     const salonIds = salons.map((s) => s.id);
-
-    // Get approved reviews for these salons
-    const reviews = await this.prisma.review.findMany({
-      where: {
-        salonId: {
-          in: salonIds,
-        },
-        approvalStatus: 'APPROVED',
-      },
-      select: {
-        rating: true,
-      },
-    });
-
-    // Google recommends minimum 5 reviews for aggregate rating
-    if (reviews.length < 5) {
+    if (salonIds.length < 5) {
       return null;
     }
 
-    // Calculate aggregate
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-    const averageRating = totalRating / reviews.length;
-
-    return {
-      averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
-      totalReviews: reviews.length,
-    };
+    return null;
   }
 
   findMySalon(user: any, ownerId: string) {
@@ -822,7 +903,7 @@ export class SalonsService {
 
       let orderBy: any;
       if (sortBy === 'rating' || sortBy === 'top_rated')
-        orderBy = { avgRating: 'desc' };
+        orderBy = { visibilityWeight: 'desc' };
 
       // Fetch base list with optimized select (use pre-computed avgRating)
       let salons = await this.prisma.salon.findMany({
@@ -846,6 +927,12 @@ export class SalonsService {
           phoneNumber: true,
           whatsapp: true,
           website: true,
+          facebookUrl: true,
+          instagramUrl: true,
+          tiktokUrl: true,
+          googleReviewsUrl: true,
+          freshaReviewsUrl: true,
+          booksyReviewsUrl: true,
           bookingType: true,
           offersMobile: true,
           mobileFee: true,
@@ -856,13 +943,6 @@ export class SalonsService {
           viewCount: true,
           visibilityWeight: true,
           createdAt: true,
-          _count: {
-            select: {
-              reviews: {
-                where: { approvalStatus: 'APPROVED' }
-              }
-            }
-          },
           // Include top 5 services for map display
           services: {
             where: { approvalStatus: 'APPROVED' },
@@ -882,14 +962,12 @@ export class SalonsService {
         }
       });
 
-      // Map to consistent response format with reviewCount from _count
       salons = salons.map((s: any) => {
-        const { _count, ...salon } = s;
         return {
-          ...salon,
-          avgRating: Number((salon.avgRating || 0).toFixed(1)),
-          reviewCount: _count?.reviews || 0,
-          viewCount: salon.viewCount || 0
+          ...s,
+          avgRating: 0,
+          reviewCount: 0,
+          viewCount: s.viewCount || 0
         };
       });
 
@@ -1040,28 +1118,14 @@ export class SalonsService {
         where: {
           approvalStatus: 'APPROVED',
         },
-        include: {
-          reviews: {
-            where: { approvalStatus: 'APPROVED' },
-            select: { rating: true }
-          }
-        }
       });
 
       salons = salons.map((s: any) => {
-        const approvedReviews = s.reviews || [];
-        const reviewCount = approvedReviews.length;
-        const avgRating = reviewCount > 0
-          ? approvedReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount
-          : 0;
-
-        // Remove the reviews array to keep response lean, keep only aggregated data
-        const { reviews, ...salon } = s;
         return {
-          ...salon,
-          avgRating: Number(avgRating.toFixed(1)),
-          reviewCount,
-          viewCount: salon.viewCount || 0
+          ...s,
+          avgRating: 0,
+          reviewCount: 0,
+          viewCount: s.viewCount || 0
         };
       });
 
@@ -1113,10 +1177,6 @@ export class SalonsService {
             services: {
               where: { approvalStatus: 'APPROVED' },
               select: { categoryId: true, category: { select: { name: true } } }
-            },
-            reviews: {
-              where: { approvalStatus: 'APPROVED' },
-              select: { rating: true }
             }
           }
         }
@@ -1134,10 +1194,6 @@ export class SalonsService {
                 services: {
                   where: { approvalStatus: 'APPROVED' },
                   select: { categoryId: true, category: { select: { name: true } } }
-                },
-                reviews: {
-                  where: { approvalStatus: 'APPROVED' },
-                  select: { rating: true }
                 }
               }
             }
@@ -1167,7 +1223,6 @@ export class SalonsService {
 
     // Get favorite salon IDs to exclude them
     const favoriteSalonIds = new Set(favorites.map(f => f.salonId));
-    const bookedSalonIds = new Set(bookings.map(b => b.service.salon.id));
 
     // Find similar salons based on categories
     let recommendedSalons = await this.prisma.salon.findMany({
@@ -1191,16 +1246,12 @@ export class SalonsService {
         services: {
           where: { approvalStatus: 'APPROVED' },
           select: { categoryId: true, category: { select: { name: true } } }
-        },
-        reviews: {
-          where: { approvalStatus: 'APPROVED' },
-          select: { rating: true }
         }
       },
       orderBy: [
-        { avgRating: 'desc' },
         { viewCount: 'desc' },
-        { visibilityWeight: 'desc' }
+        { visibilityWeight: 'desc' },
+        { createdAt: 'desc' }
       ],
       take: 12
     });
@@ -1218,10 +1269,6 @@ export class SalonsService {
           services: {
             where: { approvalStatus: 'APPROVED' },
             select: { categoryId: true }
-          },
-          reviews: {
-            where: { approvalStatus: 'APPROVED' },
-            select: { rating: true }
           }
         },
         orderBy: [
@@ -1232,21 +1279,14 @@ export class SalonsService {
       });
     }
 
-    // Calculate average rating and review count
+    // Remove legacy review metrics from recommendation cards.
     recommendedSalons = recommendedSalons.map((s: any) => {
-      const approvedReviews = s.reviews || [];
-      const reviewCount = approvedReviews.length;
-      const avgRating = reviewCount > 0
-        ? approvedReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount
-        : 0;
-
-      const { reviews, ...salon } = s;
       return {
-        ...salon,
-        avgRating: Number(avgRating.toFixed(1)),
-        reviewCount,
-        viewCount: salon.viewCount || 0,
-        isFavorited: favoriteSalonIds.has(salon.id)
+        ...s,
+        avgRating: 0,
+        reviewCount: 0,
+        viewCount: s.viewCount || 0,
+        isFavorited: favoriteSalonIds.has(s.id)
       };
     });
 

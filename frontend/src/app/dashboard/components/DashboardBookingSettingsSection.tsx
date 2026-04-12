@@ -9,6 +9,14 @@ interface DashboardBankingDetails {
   branchCode: string;
 }
 
+interface DashboardBookingRequirements {
+  depositRequired: boolean;
+  depositPercentage: string;
+  paymentInstructions: string;
+  cancellationPolicy: string;
+  specialConditions: string;
+}
+
 interface DashboardBookingSettingsSectionProps {
   bookingMessage: string;
   isEditingMessage: boolean;
@@ -16,6 +24,9 @@ interface DashboardBookingSettingsSectionProps {
   bankingDetails: DashboardBankingDetails;
   isEditingBankingDetails: boolean;
   isSavingBankingDetails: boolean;
+  bookingRequirements: DashboardBookingRequirements;
+  isEditingBookingRequirements: boolean;
+  isSavingBookingRequirements: boolean;
   operatingHours: OperatingHours;
   isEditingHours: boolean;
   isSavingHours: boolean;
@@ -27,6 +38,9 @@ interface DashboardBookingSettingsSectionProps {
   onEditBankingDetails: () => void;
   onClearBankingDetails: () => void;
   onSaveBankingDetails: () => void;
+  onBookingRequirementsChange: (value: DashboardBookingRequirements) => void;
+  onEditBookingRequirements: () => void;
+  onSaveBookingRequirements: () => void;
   onHoursChange: (hours: OperatingHours) => void;
   onEditHours: () => void;
   onSaveHours: () => void;
@@ -39,6 +53,9 @@ export default function DashboardBookingSettingsSection({
   bankingDetails,
   isEditingBankingDetails,
   isSavingBankingDetails,
+  bookingRequirements,
+  isEditingBookingRequirements,
+  isSavingBookingRequirements,
   operatingHours,
   isEditingHours,
   isSavingHours,
@@ -50,11 +67,20 @@ export default function DashboardBookingSettingsSection({
   onEditBankingDetails,
   onClearBankingDetails,
   onSaveBankingDetails,
+  onBookingRequirementsChange,
+  onEditBookingRequirements,
+  onSaveBookingRequirements,
   onHoursChange,
   onEditHours,
   onSaveHours,
 }: DashboardBookingSettingsSectionProps) {
   const hasBankingDetails = Boolean(bankingDetails.bankName && bankingDetails.accountNumber);
+  const hasSavedBookingRequirements = Boolean(
+    bookingRequirements.depositRequired ||
+    bookingRequirements.paymentInstructions ||
+    bookingRequirements.cancellationPolicy ||
+    bookingRequirements.specialConditions,
+  );
 
   return (
     <div className={styles.contentCard}>
@@ -98,9 +124,139 @@ export default function DashboardBookingSettingsSection({
           </div>
         )}
 
+        <h4 className={`${styles.settingsSubheading} ${styles.sectionDivider}`}>Booking Requirements</h4>
+        <p className={styles.settingsDescription}>
+          These rules appear on the booking summary before guests continue to WhatsApp.
+        </p>
+        {!isEditingBookingRequirements && hasSavedBookingRequirements ? (
+          <div>
+            <div className={styles.bankingDisplay}>
+              <div className={styles.bankingDisplayRow}>
+                <span className={styles.bankingDisplayLabel}>Deposit required</span>
+                <span className={styles.bankingDisplayValue}>
+                  {bookingRequirements.depositRequired
+                    ? `Yes, ${bookingRequirements.depositPercentage || '50'}%`
+                    : 'No deposit required'}
+                </span>
+              </div>
+              {bookingRequirements.paymentInstructions && (
+                <div className={styles.bankingDisplayRow}>
+                  <span className={styles.bankingDisplayLabel}>Payment instructions</span>
+                  <span className={styles.bankingDisplayValue}>{bookingRequirements.paymentInstructions}</span>
+                </div>
+              )}
+              {bookingRequirements.cancellationPolicy && (
+                <div className={styles.bankingDisplayRow}>
+                  <span className={styles.bankingDisplayLabel}>Cancellation policy</span>
+                  <span className={styles.bankingDisplayValue}>{bookingRequirements.cancellationPolicy}</span>
+                </div>
+              )}
+              {bookingRequirements.specialConditions && (
+                <div className={styles.bankingDisplayRow}>
+                  <span className={styles.bankingDisplayLabel}>Special conditions</span>
+                  <span className={styles.bankingDisplayValue}>{bookingRequirements.specialConditions}</span>
+                </div>
+              )}
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={onEditBookingRequirements}>
+              Edit Booking Requirements
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <label className={styles.bankingField} htmlFor="dashboardDepositRequired">
+              <span className={styles.bankingFieldLabel}>Deposit requirement</span>
+              <div className={styles.actionButtonGroup} style={{ marginTop: 0 }}>
+                <input
+                  id="dashboardDepositRequired"
+                  type="checkbox"
+                  checked={bookingRequirements.depositRequired}
+                  onChange={(event) => onBookingRequirementsChange({
+                    ...bookingRequirements,
+                    depositRequired: event.target.checked,
+                  })}
+                />
+                <span className={styles.settingsDescription} style={{ marginBottom: 0 }}>
+                  Require a deposit before the booking is confirmed
+                </span>
+              </div>
+            </label>
+            <div className={styles.bankingGrid}>
+              <div className={styles.bankingField}>
+                <label htmlFor="dashboardDepositPercentage" className={styles.bankingFieldLabel}>Deposit percentage</label>
+                <input
+                  id="dashboardDepositPercentage"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={bookingRequirements.depositPercentage}
+                  onChange={(event) => onBookingRequirementsChange({
+                    ...bookingRequirements,
+                    depositPercentage: event.target.value,
+                  })}
+                  disabled={!bookingRequirements.depositRequired}
+                  className={styles.bankingInput}
+                />
+              </div>
+              <div className={styles.bankingField}>
+                <label htmlFor="dashboardPaymentInstructions" className={styles.bankingFieldLabel}>Payment instructions</label>
+                <textarea
+                  id="dashboardPaymentInstructions"
+                  value={bookingRequirements.paymentInstructions}
+                  onChange={(event) => onBookingRequirementsChange({
+                    ...bookingRequirements,
+                    paymentInstructions: event.target.value,
+                  })}
+                  placeholder="Explain how the guest should handle the deposit after the WhatsApp handoff."
+                  disabled={!bookingRequirements.depositRequired}
+                  rows={4}
+                  className={styles.messageTextarea}
+                />
+              </div>
+            </div>
+            <div className={styles.bankingField} style={{ marginTop: '1rem' }}>
+              <label htmlFor="dashboardCancellationPolicy" className={styles.bankingFieldLabel}>Cancellation policy</label>
+              <textarea
+                id="dashboardCancellationPolicy"
+                value={bookingRequirements.cancellationPolicy}
+                onChange={(event) => onBookingRequirementsChange({
+                  ...bookingRequirements,
+                  cancellationPolicy: event.target.value,
+                })}
+                placeholder="Shown before the WhatsApp redirect."
+                rows={3}
+                className={styles.messageTextarea}
+              />
+            </div>
+            <div className={styles.bankingField} style={{ marginTop: '1rem' }}>
+              <label htmlFor="dashboardSpecialConditions" className={styles.bankingFieldLabel}>Special conditions</label>
+              <textarea
+                id="dashboardSpecialConditions"
+                value={bookingRequirements.specialConditions}
+                onChange={(event) => onBookingRequirementsChange({
+                  ...bookingRequirements,
+                  specialConditions: event.target.value,
+                })}
+                placeholder="Optional prep notes, age limits, allergy warnings, or other booking conditions."
+                rows={3}
+                className={styles.messageTextarea}
+              />
+            </div>
+            <div className={styles.actionButtonGroup}>
+              <LoadingButton
+                type="button"
+                onClick={onSaveBookingRequirements}
+                loading={isSavingBookingRequirements}
+              >
+                Save Booking Requirements
+              </LoadingButton>
+            </div>
+          </div>
+        )}
+
         <h4 className={`${styles.settingsSubheading} ${styles.sectionDivider}`}>Deposit Banking Details</h4>
         <p className={styles.settingsDescription}>
-          Add the account details clients should use when paying the required 50% booking deposit.
+          Add optional banking details if your payment instructions ask guests to pay by EFT or bank transfer.
         </p>
         {!isEditingBankingDetails && hasBankingDetails ? (
           <div>

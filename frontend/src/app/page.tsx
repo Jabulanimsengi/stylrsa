@@ -3,6 +3,7 @@ import Script from 'next/script';
 import HomePageClient from './HomePageClient';
 import { getInternalBackendOrigin } from '@/lib/server/backend-origin';
 import { applyComputedAvailability } from '@/lib/salonAvailability';
+import type { Salon } from '@/types';
 
 // Cache the homepage and revalidate in the background to keep TTFB stable.
 export const revalidate = 300;
@@ -40,14 +41,14 @@ export const metadata: Metadata = {
   },
 };
 
-function normalizeSalonList(data: unknown): any[] {
+function normalizeSalonList(data: unknown): Salon[] {
   if (Array.isArray(data)) {
-    return data;
+    return data as Salon[];
   }
 
   if (data && typeof data === 'object' && 'salons' in data) {
     const salons = (data as { salons?: unknown }).salons;
-    return Array.isArray(salons) ? salons : [];
+    return Array.isArray(salons) ? salons as Salon[] : [];
   }
 
   return [];
@@ -74,16 +75,16 @@ async function getInitialData() {
   // Only skip fetching during build time when API is localhost
   if (isBuildPhase && isLocalBackend) {
     return {
-      featuredSalons: [] as any[],
-      availableNowSalons: [] as any[],
+      featuredSalons: [] as Salon[],
+      availableNowSalons: [] as Salon[],
     };
   }
 
   // In development, skip server-side homepage fetches against localhost unless explicitly opted in.
   if (isDevPhase && isLocalBackend && !allowLocalBackendFetchInDev()) {
     return {
-      featuredSalons: [] as any[],
-      availableNowSalons: [] as any[],
+      featuredSalons: [] as Salon[],
+      availableNowSalons: [] as Salon[],
     };
   }
 
@@ -133,8 +134,8 @@ async function getInitialData() {
   } catch (error) {
     console.error('Failed to fetch initial data:', error);
     return {
-      featuredSalons: [] as any[],
-      availableNowSalons: [] as any[],
+      featuredSalons: [] as Salon[],
+      availableNowSalons: [] as Salon[],
     };
   }
 }

@@ -7,6 +7,7 @@ import EditSalonModal from '@/components/EditSalonModal';
 import GalleryUploadModal from '@/components/GalleryUploadModal';
 import PromotionModal from '@/components/PromotionModal';
 import CreatePromotionModal from '@/components/CreatePromotionModal';
+import ServiceDiscountModal from '@/components/ServiceDiscountModal';
 import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
 
 interface PromotionServicePreview {
@@ -24,15 +25,18 @@ interface DashboardModalLayerProps {
   isGalleryModalOpen: boolean;
   isPromotionModalOpen: boolean;
   isCreatePromoModalOpen: boolean;
+  isServiceDiscountModalOpen: boolean;
   itemToDelete: { id: string; type: 'service' | 'promotion' | 'gallery' } | null;
   bookingToComplete: string | null;
   selectedPromotionService: PromotionServicePreview | null;
+  discountService: Service | null;
   onCloseServiceModal: () => void;
   onCloseSimpleServiceModal: () => void;
   onCloseEditSalonModal: () => void;
   onCloseGalleryModal: () => void;
   onClosePromotionModal: () => void;
   onCloseCreatePromoModal: () => void;
+  onCloseServiceDiscountModal: () => void;
   onServiceSaved: (service: Service) => void;
   onSalonUpdated: (salon: Salon) => void;
   onImageAdded: (image: GalleryImage) => void;
@@ -53,15 +57,18 @@ export default function DashboardModalLayer({
   isGalleryModalOpen,
   isPromotionModalOpen,
   isCreatePromoModalOpen,
+  isServiceDiscountModalOpen,
   itemToDelete,
   bookingToComplete,
   selectedPromotionService,
+  discountService,
   onCloseServiceModal,
   onCloseSimpleServiceModal,
   onCloseEditSalonModal,
   onCloseGalleryModal,
   onClosePromotionModal,
   onCloseCreatePromoModal,
+  onCloseServiceDiscountModal,
   onServiceSaved,
   onSalonUpdated,
   onImageAdded,
@@ -98,6 +105,13 @@ export default function DashboardModalLayer({
       )}
       {isPromotionModalOpen && (
         <PromotionModal salonId={salon.id} onClose={onClosePromotionModal} onPromotionAdded={onPromotionAdded} />
+      )}
+      {isServiceDiscountModalOpen && discountService && (
+        <ServiceDiscountModal
+          service={discountService}
+          onClose={onCloseServiceDiscountModal}
+          onSaved={onServiceSaved}
+        />
       )}
       {itemToDelete && (
         <ConfirmationModal

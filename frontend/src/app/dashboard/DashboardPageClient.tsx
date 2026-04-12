@@ -40,7 +40,7 @@ import { useDashboardUiState } from './hooks/useDashboardUiState';
 import { useNavigationLoading } from '@/context/NavigationLoadingContext';
 
 const PLAN_PAYMENT_LABELS: Record<PlanPaymentStatus, string> = {
-  PENDING_SELECTION: 'Awaiting activation',
+  PENDING_SELECTION: 'Pending payment',
   AWAITING_PROOF: 'Awaiting proof',
   PROOF_SUBMITTED: 'Proof submitted',
   VERIFIED: 'Verified',
@@ -75,6 +75,9 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
     bankingDetails,
     isSavingBankingDetails,
     isEditingBankingDetails,
+    bookingRequirements,
+    isSavingBookingRequirements,
+    isEditingBookingRequirements,
     operatingHours,
     isEditingHours,
     isSavingHours,
@@ -85,6 +88,8 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
     setIsEditingMessage,
     setBankingDetails,
     setIsEditingBankingDetails,
+    setBookingRequirements,
+    setIsEditingBookingRequirements,
     setOperatingHours,
     setIsEditingHours,
     setSelectedPlanForUpgrade,
@@ -101,6 +106,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
     saveBookingMessage,
     saveBankingDetails,
     clearBankingDetails,
+    saveBookingRequirements,
     saveOperatingHours,
     handleBookingStatusUpdate,
   } = useDashboardData({
@@ -122,6 +128,8 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
     activeMainTab,
     selectedServiceForPromo,
     isCreatePromoModalOpen,
+    discountService,
+    isServiceDiscountModalOpen,
     bookingToComplete,
     setMobileNavOpen,
     setIsEditSalonModalOpen,
@@ -133,10 +141,12 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
     navigateToTab,
     openServiceModalToAdd,
     openServiceModalToEdit,
+    openDiscountModal,
     handleDeleteClick,
     handleCloseServiceModal,
     handleCloseSimpleServiceModal,
     handleCreatePromotionModalClose,
+    handleCloseServiceDiscountModal,
   } = useDashboardUiState({
     initialTab,
     router,
@@ -168,7 +178,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
     const handler = (payload: { entity?: string; id?: string }) => {
       if (payload?.entity === 'salon' && payload.id === salon.id) {
         fetchDashboardData();
-        notify.success('Your package has been updated');
+        notify.success('Your listing payment status has been updated');
       }
     };
     socket.on('visibility:updated', handler);
@@ -282,15 +292,18 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
         isGalleryModalOpen={isGalleryModalOpen}
         isPromotionModalOpen={isPromotionModalOpen}
         isCreatePromoModalOpen={isCreatePromoModalOpen}
+        isServiceDiscountModalOpen={isServiceDiscountModalOpen}
         itemToDelete={itemToDelete}
         bookingToComplete={bookingToComplete}
         selectedPromotionService={selectedPromotionService}
+        discountService={discountService}
         onCloseServiceModal={handleCloseServiceModal}
         onCloseSimpleServiceModal={handleCloseSimpleServiceModal}
         onCloseEditSalonModal={() => setIsEditSalonModalOpen(false)}
         onCloseGalleryModal={() => setIsGalleryModalOpen(false)}
         onClosePromotionModal={() => setIsPromotionModalOpen(false)}
         onCloseCreatePromoModal={handleCreatePromotionModalClose}
+        onCloseServiceDiscountModal={handleCloseServiceDiscountModal}
         onServiceSaved={handleServiceSaved}
         onSalonUpdated={handleSalonUpdate}
         onImageAdded={(img) => setGalleryImages(prev => [img, ...prev])}
@@ -360,6 +373,9 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
                 bankingDetails={bankingDetails}
                 isEditingBankingDetails={isEditingBankingDetails}
                 isSavingBankingDetails={isSavingBankingDetails}
+                bookingRequirements={bookingRequirements}
+                isEditingBookingRequirements={isEditingBookingRequirements}
+                isSavingBookingRequirements={isSavingBookingRequirements}
                 operatingHours={operatingHours}
                 isEditingHours={isEditingHours}
                 isSavingHours={isSavingHours}
@@ -377,6 +393,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
                 onCompleteBooking={setBookingToComplete}
                 onAddService={openServiceModalToAdd}
                 onEditService={openServiceModalToEdit}
+                onManageDiscount={openDiscountModal}
                 onDeleteService={(id) => handleDeleteClick(id, 'service')}
                 onDeletePromotion={(id) => handleDeleteClick(id, 'promotion')}
                 onAddPromotion={() => setIsPromotionModalOpen(true)}
@@ -391,6 +408,9 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
                 onEditBankingDetails={() => setIsEditingBankingDetails(true)}
                 onClearBankingDetails={clearBankingDetails}
                 onSaveBankingDetails={saveBankingDetails}
+                onBookingRequirementsChange={setBookingRequirements}
+                onEditBookingRequirements={() => setIsEditingBookingRequirements(true)}
+                onSaveBookingRequirements={saveBookingRequirements}
                 onHoursChange={setOperatingHours}
                 onEditHours={() => setIsEditingHours(true)}
                 onSaveHours={saveOperatingHours}

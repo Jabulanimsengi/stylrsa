@@ -3,7 +3,6 @@
 'use client';
 
 import { useState, FormEvent, useEffect, useRef, useCallback } from 'react';
-import Image from 'next/image';
 import styles from './GalleryUploadModal.module.css'; // FIX: Use the new dedicated stylesheet
 import { toast } from 'react-toastify';
 import { GalleryImage } from '@/types';
@@ -191,14 +190,8 @@ export default function GalleryUploadModal({ salonId, onClose, onImageAdded }: G
             <div className={styles.imagePreviewContainer}>
               {files.map((entry, index) => (
                 <div key={index} className={styles.imageWrapper}>
-                  <Image
-                    src={entry.preview}
-                    alt={`preview ${index + 1}`}
-                    className={styles.imagePreview}
-                    width={160}
-                    height={120}
-                    unoptimized
-                  />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={entry.preview} alt={`preview ${index + 1}`} className={styles.imagePreview} />
                   <button type="button" onClick={() => handleRemoveImage(index)} className={styles.removeImageButton}>
                     ×
                   </button>

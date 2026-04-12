@@ -5,7 +5,6 @@ import styles from './ServiceFormModal.module.css';
 import { toast } from 'react-toastify';
 import { apiJson } from '@/lib/api';
 import { toFriendlyMessage } from '@/lib/errors';
-import Image from 'next/image';
 import { uploadToCloudinary } from '@/utils/cloudinary';
 import { Service } from '@/types';
 import { getCategoriesCached } from '@/lib/resourceCache';
@@ -410,7 +409,8 @@ const ServiceFormModal: React.FC<ServiceFormModalProps> = ({
               <div className={styles.imagePreviewContainer}>
                 {imagePreviews.map((preview, index) => (
                   <div key={index} className={styles.imageWrapper}>
-                    <Image src={preview} alt="Service preview" layout="fill" className={styles.imagePreview} />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={preview} alt="Service preview" className={styles.imagePreview} />
                     <button type="button" onClick={() => handleRemoveImage(index)} className={styles.deleteButton}>&times;</button>
                   </div>
                 ))}

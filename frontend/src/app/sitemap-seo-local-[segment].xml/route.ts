@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import {
-    generateSeoKeywordUrls,
     generateSitemapXml,
-    splitIntoSitemaps
+    getSeoSitemapSegmentCount,
+    getSeoSitemapSegmentUrls,
 } from '@/lib/sitemap-generator';
 import { buildMinimalUrlsetXml } from '@/lib/sitemap-response';
 
@@ -30,11 +30,9 @@ export async function GET(
             });
         }
 
-        // Generate all SEO URLs and split into segments
-        const allUrls = generateSeoKeywordUrls();
-        const segments = splitIntoSitemaps(allUrls);
+        const totalSegments = getSeoSitemapSegmentCount();
 
-        if (segmentNum >= segments.length) {
+        if (segmentNum >= totalSegments) {
             return new NextResponse(buildMinimalUrlsetXml(), {
                 status: 200,
                 headers: {
@@ -45,16 +43,17 @@ export async function GET(
             });
         }
 
-        const xml = generateSitemapXml(segments[segmentNum]);
+        const urls = getSeoSitemapSegmentUrls(segmentNum);
+        const xml = generateSitemapXml(urls);
 
         return new NextResponse(xml, {
             status: 200,
             headers: {
                 'Content-Type': 'application/xml; charset=utf-8',
                 'Cache-Control': 'public, max-age=86400, s-maxage=86400', // 24 hour cache
-                'X-Total-URLs': segments[segmentNum].length.toString(),
+                'X-Total-URLs': urls.length.toString(),
                 'X-Segment': segmentNum.toString(),
-                'X-Total-Segments': segments.length.toString(),
+                'X-Total-Segments': totalSegments.toString(),
             },
         });
     } catch (error) {
