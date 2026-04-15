@@ -29,6 +29,12 @@ ARG NEXT_PUBLIC_SENTRY_DSN
 ENV NODE_OPTIONS="--max-old-space-size=1024"
 RUN npm run build
 
+# Debug: show the standalone output structure so we can verify paths
+RUN echo "=== Standalone structure ===" && \
+    find /app/.next/standalone -maxdepth 3 -type d && \
+    echo "=== server.js location ===" && \
+    find /app/.next/standalone -name server.js ! -path '*/node_modules/*'
+
 # Production stage
 FROM node:20-alpine AS runner
 
@@ -40,10 +46,18 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built application
-COPY --from=builder /app/public ./public
+# Copy the standalone server output
 COPY --from=builder /app/.next/standalone ./
+
+# Copy static assets INTO the nested app directory where server.js lives
+# The standalone output nests server.js under /app/app/ — static and public
+# must be placed relative to server.js for Next.js to serve them.
+COPY --from=builder /app/.next/static ./app/.next/static
+COPY --from=builder /app/public ./app/public
+
+# Also copy to root level as fallback
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
 # Set correct permissions
 RUN chown -R nextjs:nodejs /app
