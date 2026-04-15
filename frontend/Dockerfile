@@ -9,7 +9,9 @@ COPY package*.json ./
 # Install dependencies with reduced memory usage
 RUN npm ci --maxsockets 1 --legacy-peer-deps
 
-# Copy source code
+# Install sharp for Alpine/musl (cross-platform image optimization fix)
+RUN npm install --os=linux --libc=musl --cpu=x64 sharp
+
 # Copy source code
 COPY . .
 
