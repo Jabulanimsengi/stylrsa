@@ -7,9 +7,8 @@ import styles from '../app/auth.module.css';
 import { apiFetch } from '@/lib/api';
 import { Alert, LoadingButton, Button } from '@/components/ui';
 import { notify } from '@/lib/notify';
-import { buildGoogleAuthCallbackUrl, hasProviderIntent } from '@/lib/authRedirect';
+import { buildGoogleAuthCallbackUrl } from '@/lib/authRedirect';
 
-// Define the props that this component will accept
 interface RegisterProps {
   onRegisterSuccess: (email: string) => void;
 }
@@ -18,9 +17,7 @@ type RegisterStep = 'account' | 'profile';
 
 export default function Register({ onRegisterSuccess }: RegisterProps) {
   const searchParams = useSearchParams();
-  const roleParam = searchParams.get('role');
   const redirectTarget = searchParams.get('redirect') || searchParams.get('callbackUrl');
-  const providerIntent = hasProviderIntent(redirectTarget, roleParam);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -60,26 +57,20 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
 
       const response = await res.json();
 
-      // Handle successful response
       if (response.message) {
         notify.success(response.message);
       } else {
         notify.success('Registration successful. Check your email for the verification code.');
       }
 
-      // Call success handler to switch to email verification view
-      // This gives the user time to see the success toast
       setTimeout(() => {
         onRegisterSuccess(email);
       }, 1500);
-
     } catch (err: unknown) {
       console.error('Registration error:', err);
 
-      // Extract the error message - backend sends structured error responses
       let msg = 'Registration failed. Please try again.';
 
-      // Check for message in error object (from parseErrorResponse)
       if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
         msg = err.message;
       } else if (err && typeof err === 'object' && 'userMessage' in err && typeof err.userMessage === 'string') {
@@ -98,7 +89,7 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
   const handleGoogleClick = () => {
     const callbackUrl = buildGoogleAuthCallbackUrl({
       redirectTarget,
-      preselectedRole: providerIntent ? 'SALON_OWNER' : null,
+      preselectedRole: 'SALON_OWNER',
     });
     void signIn('google', { callbackUrl });
   };
@@ -128,7 +119,7 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
         {step === 'account' && (
           <>
             <div className={styles.stepHeader}>
-              <h3 className={styles.stepTitle}>Create your account</h3>
+              <h3 className={styles.stepTitle}>Create your salon owner account</h3>
             </div>
 
             <div className={styles.inputGroup}>
@@ -143,9 +134,7 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
               />
             </div>
             <p className={styles.helperText}>
-              {providerIntent
-                ? 'You’ll confirm your service provider role after sign-in.'
-                : 'You’ll choose whether you’re a client or service provider after sign-in.'}
+              This signup is for salon owners only. After sign-in, we will take you straight into salon setup.
             </p>
           </>
         )}
@@ -222,10 +211,10 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
             <LoadingButton
               type="submit"
               loading={isLoading}
-              loadingText="Creating Account..."
+              loadingText="Creating Salon Owner Account..."
               className="w-full"
             >
-              Create Account
+              Create Salon Owner Account
             </LoadingButton>
           )}
         </div>

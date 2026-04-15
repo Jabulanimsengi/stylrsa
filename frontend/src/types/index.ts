@@ -17,7 +17,6 @@ export type SalonApplicationStatus =
 export type UserRole = 'PENDING' | 'CLIENT' | 'SALON_OWNER' | 'ADMIN';
 export type UserOnboardingStatus =
   | 'ROLE_REQUIRED'
-  | 'CLIENT_PROFILE_REQUIRED'
   | 'PROVIDER_SETUP_REQUIRED'
   | 'COMPLETE';
 

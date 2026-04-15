@@ -1,6 +1,6 @@
 // frontend/src/app/layout.tsx
 import type { Metadata } from 'next';
-import { Inter, Playfair_Display } from 'next/font/google';
+import { Outfit } from 'next/font/google';
 import './globals.css';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -25,19 +25,12 @@ import EmailVerificationBannerWrapper from '@/components/EmailVerificationBanner
 import ClientComponents from '@/components/ClientComponents';
 import ScrollToTop from '@/components/ScrollToTop';
 
-const inter = Inter({
+const outfit = Outfit({
   subsets: ['latin'],
   display: 'swap', // Prevents FOUT layout shift
   preload: true,
   variable: '--font-base',
   fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-});
-
-const playfairDisplay = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['700', '800'],
-  display: 'swap',
-  variable: '--font-display',
 });
 
 const DEV_SERVICE_WORKER_REDIRECT_SCRIPT = `
@@ -158,7 +151,7 @@ export default function RootLayout({
         <link
           rel="preload"
           as="image"
-          href="/art_one.webp"
+          href="/hero_section_image.jpeg"
           fetchPriority="high"
         />
         {/* Preconnect to external domains for faster resource loading */}
@@ -169,7 +162,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
       </head>
-      <body className={`${inter.className} ${inter.variable} ${playfairDisplay.variable}`} suppressHydrationWarning>
+      <body className={`${outfit.className} ${outfit.variable}`} suppressHydrationWarning>
         <Suspense fallback={null}>
           <ClientInit />
         </Suspense>

@@ -3,7 +3,7 @@
     display: grid;
     grid-template-columns: 558px 1fr;
     background: var(--color-surface-elevated, #fff);
-    border-radius: 16px;
+    border-radius: 0;
     overflow: hidden;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     border: 1px solid var(--color-border, #e5e5e5);
@@ -75,7 +75,7 @@
     -webkit-backdrop-filter: blur(10px);
     color: #fff;
     padding: 0.5rem 0.75rem;
-    border-radius: 8px;
+    border-radius: 0;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -116,7 +116,7 @@
     background: var(--color-primary);
     color: #fff;
     padding: 0.35rem 0.75rem;
-    border-radius: 20px;
+    border-radius: 0;
     font-size: 0.75rem;
     font-weight: 600;
     width: fit-content;
@@ -210,7 +210,7 @@
     background: var(--color-surface-elevated, #f5f5f5);
     color: var(--color-text-muted, #666);
     padding: 0.25rem 0.5rem;
-    border-radius: 12px;
+    border-radius: 0;
     font-size: 0.6875rem;
     font-weight: 600;
     width: fit-content;
@@ -241,7 +241,7 @@
     color: #fff;
     border: none;
     padding: 0.625rem 1.5rem;
-    border-radius: var(--booking-button-radius, 14px);
+    border-radius: 0;
     font-size: 0.9375rem;
     font-weight: 700;
     cursor: pointer;

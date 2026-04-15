@@ -14,7 +14,7 @@
   padding: 0.7rem 1rem;
   background: var(--color-surface, #fff);
   border: 1px solid var(--color-border, #d9dde6);
-  border-radius: 999px;
+  border-radius: 0;
   font-size: 0.92rem;
   font-weight: 700;
   color: var(--color-text-strong, #142033);
@@ -39,7 +39,7 @@
 .filterBar {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(249, 245, 239, 0.94) 100%);
   padding: 1.15rem;
-  border-radius: 26px;
+  border-radius: 0;
   margin-bottom: 0;
   box-shadow: 0 18px 40px rgba(20, 32, 51, 0.06);
   display: grid;
@@ -105,7 +105,7 @@
   min-height: 58px;
   padding: 0.85rem 0.95rem;
   border: 1px solid var(--color-border, #d1d5db);
-  border-radius: 18px;
+  border-radius: 0;
   background: #fff;
   color: var(--color-text-strong, #142033);
   font-size: 1rem;
@@ -134,7 +134,7 @@
   overflow-y: auto;
   background: var(--color-surface-elevated, #fff);
   border: 1px solid rgba(20, 32, 51, 0.12);
-  border-radius: 16px;
+  border-radius: 0;
   box-shadow: 0 16px 32px rgba(20, 32, 51, 0.14);
   padding: 0;
   margin: 0;
@@ -201,7 +201,7 @@
   justify-content: center;
   gap: 0.45rem;
   padding: 0.75rem 1.15rem;
-  border-radius: 18px;
+  border-radius: 0;
   font-weight: 700;
   font-size: 0.98rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;

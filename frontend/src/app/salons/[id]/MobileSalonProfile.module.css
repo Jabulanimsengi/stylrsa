@@ -153,7 +153,7 @@
     padding: 18px 16px 16px;
     background: rgba(255, 255, 255, 0.96);
     border: 1px solid var(--color-border);
-    border-radius: 24px;
+    border-radius: 0;
     box-shadow: 0 20px 44px rgba(17, 24, 39, 0.08);
     position: relative;
     z-index: 2;
@@ -165,7 +165,7 @@
     align-items: center;
     margin-bottom: 0.65rem;
     padding: 0.45rem 0.8rem;
-    border-radius: 999px;
+    border-radius: 0;
     border: 1px solid var(--color-border);
     background: var(--color-surface-subtle);
     color: var(--color-text-muted);
@@ -202,7 +202,7 @@
     padding: 6px 12px;
     background: var(--color-surface-subtle);
     border: 1px solid var(--color-border);
-    border-radius: 20px;
+    border-radius: 0;
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--color-text-strong, #1a1a1a);
@@ -235,7 +235,7 @@
     padding: 5px 10px;
     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     color: #fff;
-    border-radius: 16px;
+    border-radius: 0;
     font-size: 0.75rem;
     font-weight: 600;
 }
@@ -246,7 +246,7 @@
     padding: 5px 10px;
     background: var(--color-primary-soft);
     color: var(--color-primary, var(--color-primary));
-    border-radius: 999px;
+    border-radius: 0;
     font-size: 0.75rem;
     font-weight: 600;
 }
@@ -265,7 +265,7 @@
     gap: 0.5rem;
     min-height: 42px;
     padding: 0.72rem 0.9rem;
-    border-radius: 18px;
+    border-radius: 0;
     border: 1px solid var(--color-border);
     background: #ffffff;
     color: #475467;
@@ -322,7 +322,7 @@
     gap: 6px;
     min-height: 34px;
     padding: 0.45rem 0.8rem;
-    border-radius: 999px;
+    border-radius: 0;
     background: #fff;
     border: 1px solid var(--color-border, #e5e7eb);
     color: var(--color-text-strong, #1f2430);
@@ -338,10 +338,19 @@
     margin-top: 14px;
 }
 
+.bookingAssistNote {
+    margin: 0.8rem 0 0;
+    padding-left: 0.8rem;
+    border-left: 3px solid var(--color-primary, #f51957);
+    color: #5b6472;
+    font-size: 0.82rem;
+    line-height: 1.55;
+}
+
 .primaryBookAction,
 .secondaryAction {
     min-height: 48px;
-    border-radius: var(--booking-button-radius, 14px);
+    border-radius: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -385,7 +394,7 @@
     align-items: center;
     min-height: 32px;
     padding: 0.45rem 0.8rem;
-    border-radius: 999px;
+    border-radius: 0;
     background: var(--color-surface-subtle);
     border: 1px solid var(--color-border);
     color: var(--color-text-muted);
@@ -432,7 +441,7 @@
     justify-content: center;
     gap: 6px;
     white-space: nowrap;
-    border-radius: 999px;
+    border-radius: 0;
     margin-right: 0.55rem;
 }
 
@@ -451,7 +460,7 @@
     padding: 0 6px;
     background: var(--color-primary, var(--color-primary));
     color: #fff;
-    border-radius: 10px;
+    border-radius: 0;
     font-size: 0.6875rem;
     font-weight: 700;
 }
@@ -515,7 +524,7 @@
 
 .categorySelectTrigger {
     min-height: 46px;
-    border-radius: 16px;
+    border-radius: 0;
     background: #fff;
     border: 1px solid var(--color-border, #e5e7eb);
     font-weight: 600;
@@ -613,7 +622,7 @@
     padding: 2px 8px;
     background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
     color: #fff;
-    border-radius: 10px;
+    border-radius: 0;
     font-size: 0.625rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -624,7 +633,7 @@
     display: inline-flex;
     align-items: center;
     padding: 3px 8px;
-    border-radius: 999px;
+    border-radius: 0;
     background: rgba(242, 27, 91, 0.12);
     color: #e11d48;
     font-size: 0.66rem;
@@ -1115,7 +1124,7 @@
     padding: 8px 16px;
     background: transparent;
     border: 1px solid var(--color-border, #ddd);
-    border-radius: 20px;
+    border-radius: 0;
     font-size: 0.8125rem;
     font-weight: 500;
     color: var(--color-text-secondary, #666);
@@ -1214,7 +1223,7 @@
     padding: 14px;
     background: transparent;
     border: 1px solid var(--color-border, #ddd);
-    border-radius: 10px;
+    border-radius: 0;
     font-size: 0.9375rem;
     font-weight: 600;
     color: var(--color-text, #333);
@@ -1332,7 +1341,7 @@
     background: var(--btn-secondary-bg, #fff);
     color: var(--btn-secondary-text, #1f2430);
     border: 1px solid var(--btn-secondary-border, transparent);
-    border-radius: var(--booking-button-radius, 14px);
+    border-radius: 0;
     font-size: var(--button-font-size-lg, 1rem);
     font-weight: var(--button-font-weight, 700);
     cursor: pointer;
@@ -1364,7 +1373,7 @@
 .clearBtn {
     width: 48px;
     height: 48px;
-    border-radius: var(--booking-button-radius, 14px);
+    border-radius: 0;
     border: none;
     background: rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.8);
@@ -1389,7 +1398,7 @@
     background: #111318;
     color: #fff;
     border: none;
-    border-radius: var(--booking-button-radius, 14px);
+    border-radius: 0;
     font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
@@ -1418,7 +1427,7 @@
     justify-content: center;
     background: #25D366;
     color: #fff;
-    border-radius: var(--booking-button-radius, 14px);
+    border-radius: 0;
     font-size: 1.5rem;
     text-decoration: none;
     transition: all 0.2s;
@@ -1458,3 +1467,4 @@
         display: none;
     }
 }
+

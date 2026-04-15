@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
-import { setupPortalErrorHandling } from '@/lib/portalUtils';
+import { cleanupToastContainers, setupPortalErrorHandling } from '@/lib/portalUtils';
 
 /**
  * Client-side initialization component
@@ -12,6 +12,8 @@ export default function ClientInit() {
     let cleanupPortalHandling: () => void = () => {};
 
     try {
+      cleanupToastContainers();
+
       // Set up portal error handling to prevent crashes
       cleanupPortalHandling = setupPortalErrorHandling();
       

@@ -22,7 +22,7 @@
   justify-content: center;
   gap: 0.7rem;
   border: 1px solid rgba(20, 32, 51, 0.12);
-  border-radius: 18px;
+  border-radius: 0;
   background: #ffffff;
   color: #111318;
   font-size: 0.98rem;
@@ -42,7 +42,7 @@
   display: grid;
   gap: 1.25rem;
   padding: 1.4rem;
-  border-radius: 32px;
+  border-radius: 0;
   border: 1px solid rgba(20, 32, 51, 0.08);
   background:
     radial-gradient(circle at top right, rgba(17, 19, 24, 0.06), transparent 30%),
@@ -98,7 +98,7 @@
 .discoverySignalCard {
   min-height: 164px;
   padding: 1rem;
-  border-radius: 22px;
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(20, 32, 51, 0.08);
   box-shadow: 0 14px 30px rgba(17, 24, 39, 0.04);
@@ -176,7 +176,7 @@
   align-items: center;
   min-height: 34px;
   padding: 0.45rem 0.8rem;
-  border-radius: 999px;
+  border-radius: 0;
   background: rgba(17, 19, 24, 0.06);
   color: #28303c;
   font-size: 0.82rem;
@@ -187,7 +187,7 @@
   border: 1px solid rgba(20, 32, 51, 0.12);
   background: #fff;
   color: var(--color-text-strong);
-  border-radius: 999px;
+  border-radius: 0;
   min-height: 42px;
   padding: 0.65rem 0.95rem;
   font-weight: 700;

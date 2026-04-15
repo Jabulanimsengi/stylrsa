@@ -38,11 +38,11 @@ export default function PrivacyPage() {
           We collect information that you voluntarily provide when you:
         </p>
         <ul className={styles.list}>
-          <li><strong>Create an account:</strong> Name, email address, phone number, password, profile picture</li>
-          <li><strong>Complete your profile:</strong> Location, preferences, bio, links to social media</li>
-          <li><strong>Book services:</strong> Booking details, payment information, special requests</li>
+          <li><strong>Create a salon owner account:</strong> Name, email address, phone number, password, and profile picture</li>
+          <li><strong>Complete a salon listing:</strong> Business location, service details, portfolio media, availability, and related profile information</li>
+          <li><strong>Book services:</strong> Booking details, contact information, and special requests</li>
           <li><strong>Communicate with us:</strong> Messages, reviews, ratings, customer support inquiries</li>
-          <li><strong>Register as a service provider:</strong> Business details, verification information, portfolio images/videos, availability, and related profile information</li>
+          <li><strong>Submit business verification details:</strong> Verification information, portfolio images or videos, availability, and related profile information</li>
         </ul>
 
         <h3 className={styles.blockTitle}>2.2 Information Collected Automatically</h3>

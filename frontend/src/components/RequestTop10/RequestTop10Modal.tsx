@@ -315,7 +315,7 @@ export default function RequestTop10Modal({ isOpen, onClose }: RequestTop10Modal
             <div className={styles.contactInfo}>
               <p>Need faster assistance?</p>
               <p>📱 WhatsApp: <a href="https://wa.me/27738021196">073 802 1196</a></p>
-              <p>📧 Email: <a href="mailto:info@stylrsa.co.za">info@stylrsa.co.za</a></p>
+              <p>📧 Email: <a href="mailto:support@stylrsa.co.za">support@stylrsa.co.za</a></p>
             </div>
             <button className={styles.primaryButton} onClick={onClose}>
               Done
@@ -600,7 +600,7 @@ export default function RequestTop10Modal({ isOpen, onClose }: RequestTop10Modal
 
               <div className={styles.contactInfo}>
                 <p>📱 WhatsApp: <a href="https://wa.me/27738021196">073 802 1196</a></p>
-                <p>📧 Email: <a href="mailto:info@stylrsa.co.za">info@stylrsa.co.za</a></p>
+                <p>📧 Email: <a href="mailto:support@stylrsa.co.za">support@stylrsa.co.za</a></p>
               </div>
 
               <button

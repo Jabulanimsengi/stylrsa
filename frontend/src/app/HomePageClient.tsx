@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -15,6 +15,8 @@ import { usePagePerformance } from '@/hooks/usePagePerformance';
 import type { Salon } from '@/types';
 import { useNavigationLoading } from '@/context/NavigationLoadingContext';
 import { applyComputedAvailability } from '@/lib/salonAvailability';
+import Accordion from '@/components/Accordion';
+import { SALON_LISTING_PRICE } from '@/constants/plans';
 
 type SearchCategorySuggestion = { id: string; title: string; slug: string };
 type SearchVenueSuggestion = { id: string; title: string; slug?: string | null; city: string | null };
@@ -39,24 +41,26 @@ const SEARCHABLE_CATEGORIES = [
   { name: 'Color', slug: 'hair-color-treatments' },
 ] as const;
 
-const HERO_TRUST_POINTS = [
-  'Verified salons & independent professionals',
-  'Real galleries, real prices, real reviews',
-  'Book directly via WhatsApp — zero commission',
-];
-
-const WHY_BOOK_WITH_STYLR = [
+const CLIENT_JOURNEY_STEPS = [
   {
-    title: 'Verified and approved salons',
-    copy: 'Every salon on Stylr SA goes through an approval process before going live. You browse profiles that show real services, real prices, and real gallery images — not stock photos.',
+    step: '01',
+    title: 'Find the right salon',
+    copy: 'Browse categories, featured salons, and providers available now in your area.',
   },
   {
-    title: 'Designed for South African beauty',
-    copy: "Search for braiders, locticians, nail techs, skin-care specialists, barbers, and more — all in your city or suburb. No irrelevant results.",
+    step: '02',
+    title: 'Review the profile properly',
+    copy: 'Check services, pricing, gallery images, location, opening times, and linked reviews.',
   },
   {
-    title: 'Book straight to WhatsApp',
-    copy: "No accounts to create on the salon side. When you're ready, your booking request goes directly to the salon's WhatsApp so you can confirm dates, ask about deposits, and get an immediate reply.",
+    step: '03',
+    title: 'Send a structured booking request',
+    copy: 'Choose a service, pick a time, and send your details in a quick request the salon can understand immediately.',
+  },
+  {
+    step: '04',
+    title: 'Confirm on WhatsApp',
+    copy: 'The final conversation moves to WhatsApp, making it easy to confirm details and continue the booking fast.',
   },
 ];
 
@@ -77,6 +81,43 @@ function normalizeSalonList(data: unknown): Salon[] {
 
   return [];
 }
+
+const LISTING_FEATURES = [
+  'Unlimited service listings and gallery images',
+  'WhatsApp booking requests sent directly to you',
+  'Verified profile presence on Stylr SA',
+  'External review links for trust and SEO',
+  'Boosted visibility in search and category pages',
+  '0% commission on bookings you receive through the platform',
+];
+
+const FAQ_ITEMS = [
+  {
+    title: 'Do clients need an account to book on Stylr SA?',
+    content: 'No. Clients can browse salons, choose services, and send a booking request without creating an account. The request is then handed over to the salon on WhatsApp.',
+  },
+  {
+    title: 'How does booking work for salons?',
+    content: 'Stylr SA helps clients discover your profile, compare your services, and send a structured booking request. You confirm the booking directly with the client on WhatsApp.',
+  },
+  {
+    title: `How much does it cost to list on Stylr SA?`,
+    content: `The current salon listing plan is ${SALON_LISTING_PRICE} per month. It includes service listings, gallery uploads, review links, and direct WhatsApp booking requests.`,
+  },
+  {
+    title: 'Can salons set deposit rules and booking requirements?',
+    content: 'Yes. Salon owners can define deposit requirements, payment instructions, cancellation policies, and special booking conditions that are shown before the client continues to WhatsApp.',
+  },
+  {
+    title: 'Does Stylr SA process payments?',
+    content: 'Not in the current MVP flow. Stylr SA acts as a discovery and booking facilitation platform, while salons handle payment and final confirmation directly with the client.',
+  },
+  {
+    title: 'Can I add my Google, Fresha, or Booksy reviews?',
+    content: 'Yes. Salons can link their external review platforms so clients can verify trust using real third-party reviews instead of internal ratings.',
+  },
+];
+
 
 export default function HomePageClient({
   initialFeaturedSalons,
@@ -293,8 +334,8 @@ export default function HomePageClient({
         <div className={styles.heroImageWrapper}>
           <div className={styles.heroImageContainer}>
             <OptimizedImage
-              src="/art_one.webp"
-              alt="Hero background art"
+              src="/hero_section_image.jpeg"
+              alt="Stylr SA hero image"
               fill
               eager
               className={styles.heroBackgroundImage}
@@ -305,17 +346,14 @@ export default function HomePageClient({
         </div>
 
         <div className={styles.heroContent}>
-          <span className={styles.heroEyebrow}>Booking requests go straight to WhatsApp for fast, easy communication</span>
           <h1 className={styles.heroTitle} id="hero-title">
-            <span className={styles.heroTitleLead}>SA Salons &amp; Spas</span>
-            <span className={styles.heroTitleAnimated}>directory</span>
+            Find salons worth booking
           </h1>
           <p className={styles.heroDescription}>
-            Browse profiles, compare prices, and message salons directly on WhatsApp.
+            Search by treatment, salon, or area, then send a quick booking request on WhatsApp.
           </p>
 
           <div className={styles.heroSearchContainer}>
-            <span className={styles.heroSearchLabel}>Search salons, spas, and treatments</span>
             <div className={styles.heroSearchBox} ref={heroSearchRef}>
               <div className={styles.searchIconWrapper}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -325,7 +363,7 @@ export default function HomePageClient({
               </div>
               <input
                 type="text"
-                placeholder="Search by treatment, salon name, or city…"
+                placeholder="Search by treatment, salon name, or city..."
                 aria-label="Search the salons and spas directory"
                 className={styles.heroSearchInput}
                 value={heroSearchQuery}
@@ -448,61 +486,124 @@ export default function HomePageClient({
                 </div>
               )}
             </div>
+            <p className={styles.heroAssistNote}>
+              Quick booking flow: send your request here, then confirm the final details directly on WhatsApp.
+            </p>
           </div>
         </div>
       </section>
 
-      <section className={styles.heroTrustStrip} aria-label="Why users choose Stylr SA">
-        <div className={styles.heroTrustStripInner}>
-          {HERO_TRUST_POINTS.map((point) => (
-            <span key={point} className={styles.heroTrustPill}>{point}</span>
-          ))}
-        </div>
-      </section>
-
       <section className={`${styles.editorialBand} ${styles.categoryBand}`}>
+        <div className={styles.categoryIntro}>
+          <span className={styles.categoryEyebrow}>Browse by category</span>
+          <div className={styles.categoryIntroRow}>
+            <div>
+              <h2 className={styles.categoryHeading}>Start with the service you want</h2>
+              <p className={styles.categoryDescription}>
+                Pick a category, then compare salons without wading through extra copy first.
+              </p>
+            </div>
+            <Link href="/salons" className={styles.categoryBrowseLink} onClick={() => showPageLoader()}>
+              Browse all salons
+            </Link>
+          </div>
+        </div>
         <ServiceCategoryCircles />
       </section>
 
       <SalonCarouselSection
         title="Featured Salons"
+        eyebrow="Curated discovery"
+        description="A rotating selection of standout salons and beauty professionals worth exploring first."
         salons={featuredSalons}
         viewAllLink="/salons"
         showViewAll
+        surface="rose"
         loading={homeSectionsLoading}
       />
 
       <SalonCarouselSection
         title="Available Now"
+        eyebrow="Book sooner"
+        description="Profiles currently showing as open and ready for new booking conversations."
         salons={availableNowSalons}
         viewAllLink="/salons?openNow=true"
         showViewAll
-        surface="muted"
+        surface="cloud"
         loading={homeSectionsLoading}
       />
 
-      <section className={`${styles.editorialBand} ${styles.mutedBand}`}>
+      <section className={styles.journeySection}>
         <div className={styles.sectionIntro}>
-          <span className={styles.sectionEyebrow}>Why thousands of South Africans use Stylr SA</span>
-          <h2 className={styles.sectionHeading}>Stop guessing. Start booking with confidence.</h2>
+          <span className={styles.sectionEyebrow}>How booking works</span>
+          <h2 className={styles.sectionHeading}>A lighter booking flow for clients and salons</h2>
           <p className={styles.sectionDescription}>
-            Stylr SA gives you verified salon profiles, transparent pricing, and a direct line to the professionals who do the work — all in one place.
+            Stylr SA keeps the request fast and structured, then hands the conversation to WhatsApp where salons can confirm details quickly.
           </p>
         </div>
 
-        <div className={styles.valueGrid}>
-          {WHY_BOOK_WITH_STYLR.map((item) => (
-            <article key={item.title} className={styles.valueCard}>
-              <h3 className={styles.valueTitle}>{item.title}</h3>
-              <p className={styles.valueCopy}>{item.copy}</p>
+        <div className={styles.journeyGrid}>
+          {CLIENT_JOURNEY_STEPS.map((item) => (
+            <article key={item.step} className={styles.journeyCard}>
+              <span className={styles.journeyStep}>{item.step}</span>
+              <h3 className={styles.journeyTitle}>{item.title}</h3>
+              <p className={styles.journeyCopy}>{item.copy}</p>
             </article>
           ))}
         </div>
+      </section>
 
-        <div className={styles.whyBookCta}>
-          <Link href="/salons" className={styles.whyBookLink} onClick={() => showPageLoader()}>
-            Browse salons near me
-          </Link>
+      <section className={styles.pricingSection}>
+        <div className={styles.pricingSectionInner}>
+          <div className={styles.pricingHeader}>
+            <span className={styles.sectionEyebrow}>For salon owners</span>
+            <h2 className={styles.sectionHeading}>Why list your services on Stylr SA</h2>
+            <p className={styles.sectionDescription}>
+              Build visibility, show your real services and pricing, and receive booking requests directly on WhatsApp without paying commission on each booking.
+            </p>
+          </div>
+
+          <div className={styles.pricingCard}>
+            <span className={styles.pricingBadge}>Stylr SA service listing</span>
+
+            <div className={styles.pricingPriceBlock}>
+              <span className={styles.pricingAmount}>{SALON_LISTING_PRICE}</span>
+              <span className={styles.pricingPeriod}>/month</span>
+            </div>
+
+            <ul className={styles.pricingFeatures}>
+              {LISTING_FEATURES.map((feature) => (
+                <li key={feature}>
+                  <span className={styles.checkIcon}>+</span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            <Link href="/create-salon" className={styles.pricingButton} onClick={() => showPageLoader()}>
+              List my services on Stylr SA
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.faqSection}>
+        <div className={styles.faqSectionInner}>
+          <div className={styles.faqHeader}>
+            <span className={styles.sectionEyebrow}>FAQ</span>
+            <h2 className={styles.sectionHeading}>Questions clients and salon owners ask most</h2>
+            <p className={styles.sectionDescription}>
+              A quick guide to how discovery, bookings, pricing, and salon listings work on Stylr SA.
+            </p>
+          </div>
+
+          <div className={styles.faqGrid}>
+            {FAQ_ITEMS.map((item, index) => (
+              <Accordion key={item.title} title={item.title} initialOpen={index === 0}>
+                <p>{item.content}</p>
+              </Accordion>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -552,4 +653,5 @@ export default function HomePageClient({
     </div>
   );
 }
+
 

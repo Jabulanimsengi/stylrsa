@@ -31,17 +31,6 @@ export function buildOnboardingRoleUrl(options: RedirectOptions = {}) {
   return query ? `/onboarding/role?${query}` : '/onboarding/role';
 }
 
-export function buildOnboardingClientUrl(options: RedirectOptions = {}) {
-  const params = new URLSearchParams();
-
-  if (isSafeAppRedirect(options.redirectTarget)) {
-    params.set('redirect', options.redirectTarget);
-  }
-
-  const query = params.toString();
-  return query ? `/onboarding/client?${query}` : '/onboarding/client';
-}
-
 export function buildGoogleAuthCallbackUrl(options: RedirectOptions = {}) {
   const params = new URLSearchParams();
 
@@ -70,10 +59,6 @@ export function getPostAuthDestination(
       redirectTarget: safeRedirect,
       preselectedRole: options.preselectedRole,
     });
-  }
-
-  if (user.onboardingStatus === 'CLIENT_PROFILE_REQUIRED') {
-    return buildOnboardingClientUrl({ redirectTarget: safeRedirect });
   }
 
   if (

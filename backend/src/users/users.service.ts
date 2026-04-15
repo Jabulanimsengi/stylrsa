@@ -6,11 +6,9 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { SelectUserRoleDto } from './dto/select-user-role.dto';
-import { CompleteClientOnboardingDto } from './dto/complete-client-onboarding.dto';
 
 type OnboardingStatus =
   | 'ROLE_REQUIRED'
-  | 'CLIENT_PROFILE_REQUIRED'
   | 'PROVIDER_SETUP_REQUIRED'
   | 'COMPLETE';
 
@@ -24,11 +22,11 @@ export class UsersService {
   }
 
   private getOnboardingStatusForRole(
-    role: 'CLIENT' | 'SALON_OWNER',
+    role: 'SALON_OWNER',
   ): OnboardingStatus {
     return role === 'SALON_OWNER'
       ? 'PROVIDER_SETUP_REQUIRED'
-      : 'CLIENT_PROFILE_REQUIRED';
+      : 'COMPLETE';
   }
 
   async getProfile(userId: string) {
@@ -79,42 +77,6 @@ export class UsersService {
       data: {
         role: dto.role,
         onboardingStatus: this.getOnboardingStatusForRole(dto.role),
-      },
-    });
-
-    return this.sanitizeUser(updated as any);
-  }
-
-  async completeClientOnboarding(
-    userId: string,
-    dto: CompleteClientOnboardingDto,
-  ) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        role: true,
-      },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    if (user.role !== 'CLIENT' && user.role !== 'PENDING') {
-      throw new ForbiddenException(
-        'Only client accounts can complete client onboarding.',
-      );
-    }
-
-    const updated = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        firstName: dto.firstName.trim(),
-        lastName: dto.lastName.trim(),
-        phoneNumber: dto.phoneNumber.trim(),
-        role: 'CLIENT',
-        onboardingStatus: 'COMPLETE',
       },
     });
 

@@ -80,7 +80,7 @@ export default function AuthModal({ view: initialView, onClose }: AuthModalProps
       : view === 'resend-verification'
         ? 'Resend Verification'
         : view === 'register'
-          ? 'Register'
+          ? 'Salon owner signup'
           : 'Sign in';
   const dialogDescription =
     view === 'verify-email'
@@ -88,7 +88,7 @@ export default function AuthModal({ view: initialView, onClose }: AuthModalProps
       : view === 'resend-verification'
         ? 'Request a new verification email.'
         : view === 'register'
-          ? 'Create your account to continue.'
+          ? 'Create your salon owner account to continue.'
           : 'Sign in to continue.';
 
   return (
@@ -127,13 +127,13 @@ export default function AuthModal({ view: initialView, onClose }: AuthModalProps
           <Tabs value={view} onValueChange={handleTabChange} className="w-full">
             <div className={styles.authModalIntro}>
               <h2 className={styles.authModalTitle}>
-                {view === 'login' ? 'Sign in' : 'Register'}
+                {view === 'login' ? 'Sign in' : 'List your salon'}
               </h2>
             </div>
             <div className={styles.authTabsWrap}>
               <TabsList className={styles.authTabsList}>
                 <TabsTrigger value="login" className={styles.authTabsTrigger}>Login</TabsTrigger>
-                <TabsTrigger value="register" className={styles.authTabsTrigger}>Register</TabsTrigger>
+                <TabsTrigger value="register" className={styles.authTabsTrigger}>List your salon</TabsTrigger>
               </TabsList>
             </div>
 

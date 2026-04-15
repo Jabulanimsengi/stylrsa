@@ -27,7 +27,7 @@ function RegisterContent() {
     modalUrl.set('auth', 'register');
     modalUrl.set('redirect', isSafeRedirect ? callbackUrl : '/');
 
-    if (role === 'CLIENT' || role === 'SALON_OWNER') {
+    if (role === 'SALON_OWNER') {
       modalUrl.set('role', role);
     }
 

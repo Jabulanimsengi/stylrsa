@@ -44,7 +44,7 @@ export default function PartnerGuidelinesPage() {
         <h2 className={styles.sectionTitle}>2. Getting Started</h2>
         <h3 className={styles.blockTitle}>2.1 Registration Requirements</h3>
         <ul className={styles.list}>
-          <li>A valid email address for account verification</li>
+          <li>A valid email address for your salon owner account</li>
           <li>Contact information including phone and WhatsApp details</li>
           <li>Business or self-employment information where applicable</li>
           <li>High-quality portfolio images</li>
@@ -111,10 +111,10 @@ export default function PartnerGuidelinesPage() {
         <div className={styles.infoBlock} style={{ marginTop: '2rem', background: '#f3e5f5', padding: '1.5rem', borderRadius: '8px' }}>
           <h3 className={styles.blockTitle}>Ready to Join?</h3>
           <p className={styles.paragraph} style={{ marginBottom: '0.5rem' }}>
-            Create your service-provider profile on the {SALON_LISTING_MONTHLY_PRICE} listing plan and start showcasing your services on Stylr SA.
+            Create your salon owner account on the {SALON_LISTING_MONTHLY_PRICE} listing plan and start showcasing your services on Stylr SA.
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
-            <Link href={providerSignupHref}><strong>Register as a Partner</strong></Link>
+            <Link href={providerSignupHref}><strong>List your salon</strong></Link>
           </p>
         </div>
       </section>

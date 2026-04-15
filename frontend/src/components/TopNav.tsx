@@ -169,7 +169,7 @@ export default function TopNav() {
                     </Link>
 
                     <ul className={styles.navLinks}>
-                        {PRIMARY_NAV_LINKS.map(({ href, label, icon: Icon, match }) => {
+                        {PRIMARY_NAV_LINKS.map(({ href, label, match }) => {
                             const isActive = isPrimaryNavActive(href, match);
 
                             return (
@@ -180,7 +180,6 @@ export default function TopNav() {
                                         aria-current={isActive ? 'page' : undefined}
                                         onClick={() => showPageLoader()}
                                     >
-                                        <Icon aria-hidden="true" />
                                         <span>{label}</span>
                                     </Link>
                                 </li>
@@ -285,7 +284,7 @@ export default function TopNav() {
                                 className="btn btn-primary text-sm"
                                 onClick={() => openModal('register')}
                             >
-                                Register
+                                List your salon
                             </button>
                         </div>
                     )}

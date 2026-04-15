@@ -29,7 +29,7 @@ export default function ContactPage() {
             For questions about your account, help with a booking, or payment inquiries.
           </p>
           <p className={styles.paragraph}>
-            <strong>Email:</strong> <a href="mailto:info@stylrsa.co.za" className={styles.link}>info@stylrsa.co.za</a>
+            <strong>Email:</strong> <a href="mailto:support@stylrsa.co.za" className={styles.link}>support@stylrsa.co.za</a>
           </p>
           <p className={styles.paragraph}>
             <strong>Help Center:</strong> Check our <Link href="/faq" className={styles.link}>FAQ</Link> for instant answers.
@@ -42,7 +42,7 @@ export default function ContactPage() {
             For help with your salon profile, managing services, or using the booking dashboard.
           </p>
           <p className={styles.paragraph}>
-            <strong>Email:</strong> <a href="mailto:info@stylrsa.co.za" className={styles.link}>info@stylrsa.co.za</a>
+            <strong>Email:</strong> <a href="mailto:support@stylrsa.co.za" className={styles.link}>support@stylrsa.co.za</a>
           </p>
           <p className={styles.paragraph}>
             <strong>Resources:</strong> Visit our <Link href="/faq" className={styles.link}>FAQ</Link> for guides and tips.
@@ -55,7 +55,7 @@ export default function ContactPage() {
             For media requests or other business inquiries.
           </p>
           <p className={styles.paragraph}>
-            <strong>Email:</strong> <a href="mailto:info@stylrsa.co.za" className={styles.link}>info@stylrsa.co.za</a>
+            <strong>Email:</strong> <a href="mailto:support@stylrsa.co.za" className={styles.link}>support@stylrsa.co.za</a>
           </p>
         </div>
 

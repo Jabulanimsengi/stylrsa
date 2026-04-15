@@ -26,8 +26,8 @@ export interface AppPlan {
 }
 
 export const SALON_LISTING_PLAN_CODE: PlanCode = 'PREMIUM';
-export const SALON_LISTING_PRICE_CENTS = 39900;
-export const SALON_LISTING_PRICE = 'R399';
+export const SALON_LISTING_PRICE_CENTS = 29900;
+export const SALON_LISTING_PRICE = 'R299';
 export const SALON_LISTING_MONTHLY_PRICE = `${SALON_LISTING_PRICE}/month`;
 
 // Single salon listing plan details for the public pricing page.

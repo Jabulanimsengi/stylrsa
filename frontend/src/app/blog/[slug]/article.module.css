@@ -37,7 +37,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 0.25rem 0.75rem;
-  border-radius: 20px;
+  border-radius: 0;
   background: linear-gradient(90deg, var(--primary-pink-light), var(--primary-purple-light));
   color: white;
 }
@@ -152,7 +152,7 @@
 .relatedCard {
   background: var(--background-white);
   border: 1px solid var(--border-primary);
-  border-radius: 12px;
+  border-radius: 0;
   overflow: hidden;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);

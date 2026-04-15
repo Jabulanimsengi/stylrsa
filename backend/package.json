@@ -23,6 +23,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:seed": "ts-node prisma/seed.ts",
+    "auth:cleanup-owner-signups": "ts-node prisma/cleanup-owner-only-auth.ts",
+    "auth:cleanup-owner-signups:apply": "ts-node prisma/cleanup-owner-only-auth.ts --apply",
     "seo:setup": "ts-node scripts/setup-seo-database.ts",
     "seo:generate": "ts-node scripts/generate-seo-pages.ts",
     "seo:import-keywords": "ts-node scripts/import-seo-keywords.ts",

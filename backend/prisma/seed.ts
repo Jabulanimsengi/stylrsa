@@ -7,7 +7,7 @@ async function main() {
   console.log('Start seeding ...');
   // Seed plans
   const plans = [
-    { code: 'PREMIUM', name: 'Service Listing Plan', priceCents: 39900, visibilityWeight: 5, maxListings: 9999 },
+    { code: 'PREMIUM', name: 'Service Listing Plan', priceCents: 29900, visibilityWeight: 5, maxListings: 9999 },
   ];
   for (const p of plans) {
     await prisma.plan.upsert({

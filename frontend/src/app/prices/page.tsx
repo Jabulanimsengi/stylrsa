@@ -56,7 +56,7 @@ export default function PricingPage() {
             <h1 className={styles.title}>One simple plan for salon listings.</h1>
             <p className={styles.subtitle}>
               No confusing tiers. Just one monthly plan that gives your salon a
-              professional profile, stronger visibility, and direct WhatsApp booking handoff.
+              professional profile, stronger visibility, and direct WhatsApp booking requests.
             </p>
 
             <div className={styles.heroMeta}>
@@ -97,7 +97,7 @@ export default function PricingPage() {
               <li>Unlimited service listings</li>
               <li>Unlimited gallery images</li>
               <li>5x boosted visibility</li>
-              <li>WhatsApp booking handoff</li>
+              <li>Direct WhatsApp booking requests</li>
               <li>0% commission on bookings</li>
             </ul>
 

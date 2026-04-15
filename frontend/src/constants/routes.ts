@@ -48,7 +48,7 @@ export const ROUTES = {
   PRIVACY: '/privacy',
 } as const;
 
-export type RegisterRouteRole = 'CLIENT' | 'SALON_OWNER';
+export type RegisterRouteRole = 'SALON_OWNER';
 
 /**
  * Dynamic route builders

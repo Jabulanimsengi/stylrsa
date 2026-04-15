@@ -24,7 +24,7 @@
 
 .filters {
   background: var(--color-surface-elevated);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 32px;
   margin-bottom: 48px;
   box-shadow: var(--shadow-sm);
@@ -57,7 +57,7 @@
   background: var(--color-surface);
   color: var(--color-text-strong);
   border: 2px solid var(--color-border);
-  border-radius: 50px;
+  border-radius: 0;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;

@@ -4,6 +4,7 @@ import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import styles from './Sheet.module.css';
 import MobileCloseButton from '@/components/MobileCloseButton';
+import { usePortalHost } from '@/hooks/usePortalHost';
 
 const Sheet = DialogPrimitive.Root;
 const SheetTrigger = DialogPrimitive.Trigger;
@@ -32,23 +33,31 @@ interface SheetContentProps extends React.ComponentPropsWithoutRef<typeof Dialog
 const SheetContent = React.forwardRef<
     React.ElementRef<typeof DialogPrimitive.Content>,
     SheetContentProps
->(({ side = 'right', showCloseButton = true, className, children, ...props }, ref) => (
-    <SheetPortal>
-        <SheetOverlay />
-        <DialogPrimitive.Content
-            ref={ref}
-            className={`${styles.content} ${styles[side]} ${className || ''}`}
-            {...props}
-        >
-            {children}
-            {showCloseButton && (
-                <DialogPrimitive.Close asChild>
-                    <MobileCloseButton className={styles.closeButton} label="Close" />
-                </DialogPrimitive.Close>
-            )}
-        </DialogPrimitive.Content>
-    </SheetPortal>
-));
+>(({ side = 'right', showCloseButton = true, className, children, ...props }, ref) => {
+    const portalHost = usePortalHost();
+
+    if (!portalHost) {
+        return null;
+    }
+
+    return (
+        <SheetPortal container={portalHost}>
+            <SheetOverlay />
+            <DialogPrimitive.Content
+                ref={ref}
+                className={`${styles.content} ${styles[side]} ${className || ''}`}
+                {...props}
+            >
+                {children}
+                {showCloseButton && (
+                    <DialogPrimitive.Close asChild>
+                        <MobileCloseButton className={styles.closeButton} label="Close" />
+                    </DialogPrimitive.Close>
+                )}
+            </DialogPrimitive.Content>
+        </SheetPortal>
+    );
+});
 SheetContent.displayName = DialogPrimitive.Content.displayName;
 
 const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

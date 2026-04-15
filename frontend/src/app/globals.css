@@ -452,30 +452,67 @@
     --radius-lg: 1.25rem;
     /* 20px - modals, sheets */
     --radius-xl: 1.5rem;
+    --fresha-dark: #1A1A1A;
+    --fresha-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --fresha-card-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --fresha-card-radius: 16px;
+
+    /* Shadow System - Subtle Apple-style elevation */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16);
+    --shadow-2xl: 0 24px 64px rgba(0, 0, 0, 0.20);
+    --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+
+    /* Spacing Scale - Complete system */
+    --space-3xs: 0.125rem;
+    /* 2px */
+    --space-2xs: 0.25rem;
+    /* 4px */
+    --space-xs: 0.5rem;
+    /* 8px */
+    --space-sm: 0.75rem;
+    /* 12px */
+    --space-md: 1rem;
+    /* 16px */
+    --space-lg: 1.5rem;
+    /* 24px */
+    --space-xl: 2rem;
+    /* 32px */
+    --space-2xl: 3rem;
+    /* 48px */
+    --space-3xl: 4rem;
+    /* 64px */
+    --space-4xl: 6rem;
+    /* 96px */
+    /* Border Radius - Apple-style rounded corners */
+    --radius-xs: 0.5rem;
+    /* 8px - small elements */
+    --radius-sm: 0.75rem;
+    /* 12px - buttons, inputs */
+    --radius-md: 1rem;
+    /* 16px - cards */
+    --radius-lg: 1.25rem;
+    /* 20px - modals, sheets */
+    --radius-xl: 1.5rem;
     /* 24px - large containers */
-    --radius-full: 999px;
-    /* Pill buttons */
+    --radius-full: 0px;
+    /* Shared squared button look */
 
     /* Typography */
-    --font-family-base: var(--font-base), -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
-    --font-family-display: var(--font-display), 'Playfair Display', Georgia, serif;
-    /* Typography Scale - Compact system for dense information */
-    --font-size-xs: 0.7rem;
-    /* 11px */
-    --font-size-sm: 0.8rem;
-    /* 13px */
-    --font-size-base: clamp(0.875rem, 0.15vw + 0.85rem, 0.9375rem);
-    /* 14-15px */
-    --font-size-lg: clamp(1rem, 0.2vw + 0.95rem, 1.125rem);
-    /* 16-18px */
-    --font-size-xl: clamp(1.2rem, 0.3vw + 1.1rem, 1.4rem);
-    /* 19-22px */
-    --font-size-2xl: clamp(1.4rem, 0.4vw + 1.35rem, 1.75rem);
-    /* 22-28px */
-    --font-size-3xl: clamp(1.75rem, 0.5vw + 1.6rem, 2.25rem);
-    /* 28-36px */
-    --font-size-4xl: clamp(2.25rem, 0.7vw + 2rem, 2.75rem);
-    /* 36-44px */
+    --font-family-base: var(--font-base), -apple-system, system-ui, sans-serif;
+    --font-family-display: var(--font-base), -apple-system, system-ui, sans-serif;
+    /* Typography Scale - Modern, clean, airy system */
+    --font-size-xs: 0.75rem;    /* 12px */
+    --font-size-sm: 0.875rem;   /* 14px */
+    --font-size-base: clamp(1rem, 0.2vw + 0.95rem, 1.0625rem); /* 16-17px */
+    --font-size-lg: clamp(1.125rem, 0.3vw + 1rem, 1.25rem);    /* 18-20px */
+    --font-size-xl: clamp(1.35rem, 0.4vw + 1.2rem, 1.5rem);    /* 21-24px */
+    --font-size-2xl: clamp(1.75rem, 0.5vw + 1.5rem, 2rem);     /* 28-32px */
+    --font-size-3xl: clamp(2.25rem, 0.6vw + 2rem, 2.75rem);    /* 36-44px */
+    --font-size-4xl: clamp(2.75rem, 0.8vw + 2.5rem, 3.5rem);   /* 44-56px */
 
     /* Heading Sizes */
     --heading-1: var(--font-size-4xl);
@@ -488,9 +525,9 @@
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
-    --line-height-tight: 1.25;
+    --line-height-tight: 1.2;
     --line-height-normal: 1.5;
-    --line-height-base: 1.5;
+    --line-height-base: 1.6;
     --line-height-relaxed: 1.75;
     --letter-spacing-tight: -0.02em;
     --letter-spacing-normal: 0;
@@ -561,7 +598,7 @@
     --button-shadow: 0 10px 22px rgba(17, 19, 24, 0.08);
     --button-shadow-hover: 0 14px 28px rgba(17, 19, 24, 0.12);
     --button-shadow-soft: 0 8px 18px rgba(15, 23, 42, 0.06);
-    --booking-button-radius: 14px;
+    --booking-button-radius: 0px;
     --booking-button-focus: rgba(17, 19, 24, 0.16);
     --booking-button-focus-shadow: rgba(17, 19, 24, 0.08);
     --btn-primary-bg: var(--color-brand);
@@ -573,19 +610,19 @@
     --btn-secondary-bg: #ffffff;
     --btn-secondary-text: var(--color-text-strong);
     --btn-secondary-border: var(--color-border);
-    --btn-secondary-hover: var(--color-brand-soft);
-    --btn-secondary-hover-text: var(--color-brand);
-    --btn-secondary-hover-border: rgba(245, 25, 87, 0.22);
+    --btn-secondary-hover: var(--color-brand);
+    --btn-secondary-hover-text: #ffffff;
+    --btn-secondary-hover-border: var(--color-brand);
     --btn-outline-bg: transparent;
     --btn-outline-text: var(--color-text-strong);
     --btn-outline-border: var(--color-border);
-    --btn-outline-hover: var(--color-brand-soft);
-    --btn-outline-hover-text: var(--color-brand);
-    --btn-outline-hover-border: rgba(245, 25, 87, 0.22);
+    --btn-outline-hover: var(--color-brand);
+    --btn-outline-hover-text: #ffffff;
+    --btn-outline-hover-border: var(--color-brand);
     --btn-ghost-border: transparent;
     --btn-ghost-text: var(--color-text-strong);
-    --btn-ghost-hover-bg: var(--color-surface-subtle);
-    --btn-ghost-hover-text: var(--color-text-strong);
+    --btn-ghost-hover-bg: var(--color-brand);
+    --btn-ghost-hover-text: #ffffff;
     --btn-destructive-bg: #dc2626;
     --btn-destructive-hover: #b91c1c;
     --btn-destructive-text: #ffffff;
@@ -603,34 +640,6 @@
     --hero-overlay-gradient: linear-gradient(160deg, rgba(10, 12, 32, 0.88) 12%, rgba(11, 13, 33, 0.65) 48%, rgba(12, 12, 30, 0.9) 100%);
     --nav-surface: #FFFFFF;
     --nav-surface-subtle: var(--color-surface-subtle);
-    --nav-surface-active: #FAFAFA;
-    --nav-surface-hover: #F5F5F5;
-    --nav-border: var(--color-border);
-    --nav-text: var(--color-text-strong);
-    --nav-link: var(--color-text-strong);
-    --nav-link-hover: var(--color-text-strong);
-    --nav-link-active: var(--color-brand);
-    --nav-icon-bg: rgba(255, 255, 255, 0.86);
-    --nav-icon-hover-bg: rgba(255, 255, 255, 0.98);
-    --nav-badge-text: var(--color-text-inverse);
-    --app-shell-top-gap: 56px;
-
-    /* Global card layout tokens - Compact */
-    --cards-per-view: 5;
-    --card-gap: 0.875rem;
-    --card-height: 280px;
-
-    /* Section spacing - Tighter */
-    --space-section-sm: 2rem;
-    --space-section-md: 2.5rem;
-    --space-section-lg: 3.5rem;
-    --space-content: 1rem;
-    --space-card-gap: 0.875rem;
-
-    /* shadcn/ui semantic variables (HSL values without hsl() wrapper) */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
@@ -711,17 +720,17 @@
     --btn-secondary-bg: rgba(255, 255, 255, 0.04);
     --btn-secondary-text: var(--color-text-strong);
     --btn-secondary-border: var(--color-border);
-    --btn-secondary-hover: var(--color-brand-soft);
-    --btn-secondary-hover-text: var(--color-brand);
-    --btn-secondary-hover-border: rgba(255, 79, 132, 0.26);
+    --btn-secondary-hover: var(--color-brand);
+    --btn-secondary-hover-text: #ffffff;
+    --btn-secondary-hover-border: var(--color-brand);
     --btn-outline-text: var(--color-text-strong);
     --btn-outline-border: var(--color-border);
-    --btn-outline-hover: var(--color-brand-soft);
-    --btn-outline-hover-text: var(--color-brand);
-    --btn-outline-hover-border: rgba(255, 79, 132, 0.26);
+    --btn-outline-hover: var(--color-brand);
+    --btn-outline-hover-text: #ffffff;
+    --btn-outline-hover-border: var(--color-brand);
     --btn-ghost-border: transparent;
-    --btn-ghost-hover-bg: rgba(255, 255, 255, 0.08);
-    --btn-ghost-hover-text: var(--color-text-strong);
+    --btn-ghost-hover-bg: var(--color-brand);
+    --btn-ghost-hover-text: #ffffff;
     --accent-gold: var(--color-text-strong);
     --input-border: rgba(245, 245, 247, 0.18);
     --input-border-strong: rgba(245, 245, 247, 0.32);
@@ -1183,6 +1192,7 @@
   background: var(--btn-ghost-hover-bg);
   color: var(--btn-ghost-hover-text) !important;
   border-color: var(--btn-ghost-border);
+  box-shadow: var(--button-shadow-hover);
 }
 
 .ui-button--destructive,
@@ -1761,4 +1771,22 @@ button:active:not(:disabled) {
 [data-radix-dialog-content]:hover::-webkit-scrollbar-thumb,
 [role="dialog"]:hover::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.2);
+}
+
+/* Square-edge button system across the site */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.ui-button,
+.btn,
+a.ui-button,
+a.btn,
+a[role="button"],
+a[class*="btn"],
+button[class*="Button"],
+button[class*="button"],
+a[class*="Button"],
+a[class*="button"] {
+  border-radius: 0 !important;
 }

@@ -1794,7 +1794,7 @@
   position: relative;
   overflow: hidden;
   margin-bottom: 1.25rem;
-  border-radius: 32px;
+  border-radius: 0;
   background:
     radial-gradient(circle at top right, rgba(17, 24, 39, 0.08), transparent 32%),
     linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%);
@@ -1855,7 +1855,7 @@
 .salonLogo {
   width: 92px;
   height: 92px;
-  border-radius: 22px;
+  border-radius: 0;
   object-fit: contain;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--color-border);
@@ -1866,7 +1866,7 @@
 .logoPlaceholder {
   width: 92px;
   height: 92px;
-  border-radius: 22px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1888,7 +1888,7 @@
   display: inline-flex;
   width: fit-content;
   padding: 0.5rem 0.86rem;
-  border-radius: 999px;
+  border-radius: 0;
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.92);
   color: var(--color-text-muted);
@@ -1916,13 +1916,23 @@
   gap: 0.65rem;
 }
 
+.profileBookingNote {
+  max-width: 46rem;
+  margin: 0;
+  padding-left: 0.85rem;
+  border-left: 3px solid var(--color-brand, #f51957);
+  color: #5b6472;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
 .profileMetaPill {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   min-height: 42px;
   padding: 0 0.95rem;
-  border-radius: 999px;
+  border-radius: 0;
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.86);
   color: #475467;
@@ -1940,7 +1950,7 @@
 .favoriteButton {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 0;
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.92);
   color: #1f2430;
@@ -1967,7 +1977,7 @@
 .profileTrustCard {
   min-height: 124px;
   padding: 1rem 1.05rem;
-  border-radius: 22px;
+  border-radius: 0;
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 16px 34px rgba(17, 24, 39, 0.05);
@@ -2009,5 +2019,9 @@
 
   .profileTrustGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profileBookingNote {
+    max-width: 100%;
   }
 }

@@ -560,7 +560,7 @@ export default function MobileSalonProfile({
                     {/* Feature badges */}
                     <div className={styles.featureBadges}>
                         <span className={styles.featureBadge}>
-                            <FaCheckCircle /> Instant confirmation
+                            <FaCheckCircle /> Quick WhatsApp booking
                         </span>
                     </div>
                     {socialLinks.length > 0 && (
@@ -584,7 +584,7 @@ export default function MobileSalonProfile({
 
                     <div className={styles.quickActionRow}>
                         <button className={styles.primaryBookAction} onClick={handleBookNowAction}>
-                            <FaBolt /> Book now
+                            <FaBolt /> Book on WhatsApp
                         </button>
                         <a href={mapsHref} target="_blank" rel="noopener noreferrer" className={styles.secondaryAction}>
                             <FaDirections /> Directions
@@ -599,6 +599,9 @@ export default function MobileSalonProfile({
                             </a>
                         ) : null}
                     </div>
+                    <p className={styles.bookingAssistNote}>
+                        Quick handoff: send your request here, then confirm the final details directly with the salon on WhatsApp.
+                    </p>
                 </div>
 
                 {/* Tab Navigation - Fresha Style */}
@@ -1061,4 +1064,5 @@ function MobileReviewLinksContent({
         </div>
     );
 }
+
 

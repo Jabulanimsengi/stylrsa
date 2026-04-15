@@ -22,6 +22,7 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import useBookingFlow, {
+  STEP_LABELS,
   type BookingPreferences,
   type BookingTimePeriod,
 } from '@/hooks/useBookingFlow';
@@ -511,7 +512,7 @@ export default function BookingModal({
         return (
           <div className={styles.stepContent}>
             <h3 className={styles.stepTitle}>Select a Service</h3>
-            <p className={styles.stepSubtitle}>Choose the service you want to book through WhatsApp.</p>
+            <p className={styles.stepSubtitle}>Choose the service you want, then continue with a quick WhatsApp booking request.</p>
             <div className={styles.serviceList}>
               {services.map((svc) => (
                 <button
@@ -548,10 +549,10 @@ export default function BookingModal({
         return (
           <div className={styles.stepContent}>
             <h3 className={styles.stepTitle}>
-              <FaUser /> Your Details
+              <FaUser /> Continue Your Booking
             </h3>
             <p className={styles.stepSubtitle}>
-              Start the booking with your name, surname, best contact number, and optional email.
+              You&apos;ve selected your service. Add your details so the salon can continue your booking quickly on WhatsApp.
             </p>
 
             <div className={styles.formRow}>
@@ -592,7 +593,7 @@ export default function BookingModal({
                 className={styles.input}
                 required
               />
-              <span className={styles.hint}>The salon will use this number to confirm your booking on WhatsApp.</span>
+              <span className={styles.hint}>The salon will use this number to confirm your booking quickly on WhatsApp.</span>
             </div>
 
             <div className={styles.formGroup}>
@@ -616,7 +617,7 @@ export default function BookingModal({
               <FaCalendarAlt /> Select Date & Time
             </h3>
             <p className={styles.stepSubtitle}>
-              Start with the next 7 days, then open more dates if you need extra options.
+              Start with the next 7 days, then open more dates if you need extra options before the WhatsApp handoff.
             </p>
 
             <div className={styles.dateJourney}>
@@ -857,7 +858,7 @@ export default function BookingModal({
               <FaCheck /> Review & Proceed
             </h3>
             <p className={styles.stepSubtitle}>
-              Check your information, review the salon&apos;s booking rules, and then continue to WhatsApp.
+              Check your details, review the salon&apos;s booking rules, and continue to WhatsApp for the fast final handoff.
             </p>
 
             <div className={styles.summary}>
@@ -1073,16 +1074,28 @@ export default function BookingModal({
 
         {bookedServices.length > 0 && (
           <div className={styles.bookingSummary}>
-            <div className={styles.summaryItem}>
-              <span className={styles.summaryLabel}>Treatments:</span>
-              <span className={styles.summaryValue}>{bookedServices.length} selected</span>
+            <div className={styles.bookingSummaryItem}>
+              <span className={styles.bookingSummaryLabel}>Treatments</span>
+              <span className={styles.bookingSummaryValue}>{bookedServices.length} selected</span>
             </div>
-            <div className={styles.summaryItem}>
-              <span className={styles.summaryLabel}>Total:</span>
-              <span className={styles.summaryValue}>R{totalCost.toFixed(2)}</span>
+            <div className={styles.bookingSummaryItem}>
+              <span className={styles.bookingSummaryLabel}>Total</span>
+              <span className={styles.bookingSummaryValue}>R{totalCost.toFixed(2)}</span>
             </div>
           </div>
         )}
+
+        <div className={styles.progress}>
+          <div className={styles.progressBar}>
+            <div
+              className={styles.progressFill}
+              style={{ width: `${((booking.currentStepIndex + 1) / booking.totalSteps) * 100}%` }}
+            />
+          </div>
+          <span className={styles.progressText}>
+            Step {booking.currentStepIndex + 1} of {booking.totalSteps}: {STEP_LABELS[booking.state.step]}
+          </span>
+        </div>
 
         {booking.error && (
           <div className={styles.errorBanner}>
@@ -1122,17 +1135,16 @@ export default function BookingModal({
                 Continue <FaChevronRight />
               </button>
             )}
-            <button
-              className={`${styles.primaryButton} ${styles.whatsappButton}`}
-              onClick={handleSubmit}
-              disabled={booking.state.step !== 'review' || isCreatingIntent || !canSubmitBooking}
-              title={booking.state.step === 'review' ? undefined : 'Complete the booking details to continue on WhatsApp.'}
-            >
-              <FaWhatsapp />
-              {booking.state.step === 'review'
-                ? (isCreatingIntent ? 'Preparing WhatsApp...' : 'Continue to WhatsApp')
-                : 'Complete steps for WhatsApp'}
-            </button>
+            {booking.state.step === 'review' && (
+              <button
+                className={`${styles.primaryButton} ${styles.whatsappButton}`}
+                onClick={handleSubmit}
+                disabled={isCreatingIntent || !canSubmitBooking}
+              >
+                <FaWhatsapp />
+                {isCreatingIntent ? 'Preparing WhatsApp...' : 'Continue to WhatsApp'}
+              </button>
+            )}
           </div>
         </div>
       </DialogContent>

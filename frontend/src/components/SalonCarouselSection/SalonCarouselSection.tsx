@@ -29,7 +29,7 @@ interface SalonCarouselSectionProps {
     emptyMessage?: string;
     showViewAll?: boolean;
     loading?: boolean;
-    surface?: 'default' | 'muted';
+    surface?: 'default' | 'muted' | 'rose' | 'cloud';
     onSalonsChange?: (salons: SalonWithFavorite[]) => void;
 }
 
@@ -150,7 +150,7 @@ function SalonCarouselSection({
     // Loading state
     if (loading) {
         return (
-            <section className={`${styles.section} ${surface === 'muted' ? styles.sectionMuted : ''}`}>
+            <section className={`${styles.section} ${surface === 'muted' ? styles.sectionMuted : ''} ${surface === 'rose' ? styles.sectionRose : ''} ${surface === 'cloud' ? styles.sectionCloud : ''}`}>
                 <div className={styles.header}>
                     <div className={styles.headerCopy}>
                         <Skeleton variant="text" width="8rem" height={12} />
@@ -171,7 +171,7 @@ function SalonCarouselSection({
     }
 
     return (
-        <section className={`${styles.section} ${surface === 'muted' ? styles.sectionMuted : ''}`}>
+        <section className={`${styles.section} ${surface === 'muted' ? styles.sectionMuted : ''} ${surface === 'rose' ? styles.sectionRose : ''} ${surface === 'cloud' ? styles.sectionCloud : ''}`}>
             <div className={styles.header}>
                 <div className={styles.headerCopy}>
                     {eyebrow && <span className={styles.eyebrow}>{eyebrow}</span>}

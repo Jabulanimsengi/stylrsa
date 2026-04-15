@@ -28,7 +28,7 @@ const PLAN_FALLBACKS: Record<
   PlanCode,
   { visibilityWeight: number; maxListings: number; priceCents: number }
 > = {
-  PREMIUM: { visibilityWeight: 5, maxListings: 9999, priceCents: 39900 },
+  PREMIUM: { visibilityWeight: 5, maxListings: 9999, priceCents: 29900 },
 };
 
 @Injectable()
@@ -190,7 +190,7 @@ export class SalonsService {
         : 'PREMIUM';
     if (requestedPlan !== 'PREMIUM') {
       throw new ForbiddenException(
-        'Only the R399 premium salon listing plan is available.',
+        'Only the R299 premium salon listing plan is available.',
       );
     }
 

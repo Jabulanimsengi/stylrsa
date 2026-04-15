@@ -4,7 +4,6 @@
 // Upgraded to Radix UI while maintaining backward compatibility
 import React from 'react';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
-import { FaChevronDown } from 'react-icons/fa';
 import styles from './Accordion.module.css';
 
 interface AccordionProps {
@@ -25,7 +24,7 @@ const Accordion: React.FC<AccordionProps> = ({ title, children, initialOpen = fa
         <AccordionPrimitive.Header className={styles.accordionHeaderWrapper}>
           <AccordionPrimitive.Trigger className={styles.accordionHeader}>
             <span>{title}</span>
-            <FaChevronDown className={styles.icon} aria-hidden />
+            <span className={styles.icon} aria-hidden />
           </AccordionPrimitive.Trigger>
         </AccordionPrimitive.Header>
         <AccordionPrimitive.Content className={styles.accordionContentWrapper}>

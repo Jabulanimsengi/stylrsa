@@ -147,7 +147,6 @@ export default function Navbar() {
   const renderNavLink = (link: AppNavLink) => {
     const active = isLinkActive(link);
     const cls = `${styles.navItem} ${active ? styles.navItemActive : ''}`.trim();
-    const Icon = link.icon;
 
     return (
       <Link
@@ -158,9 +157,6 @@ export default function Navbar() {
           showPageLoader();
         }}
       >
-        <span className={styles.navIcon} aria-hidden>
-          <Icon />
-        </span>
         <span className={styles.navLabel}>{link.label}</span>
       </Link>
     );
@@ -237,8 +233,8 @@ export default function Navbar() {
   );
 
   const mobileMenuSections = [
-    { title: 'Explore', links: PRIMARY_NAV_LINKS, delay: 40 },
-    ...(COMPANY_NAV_LINKS.length > 0 ? [{ title: 'Company', links: COMPANY_NAV_LINKS, delay: 180 }] : []),
+    { title: 'Explore', links: PRIMARY_NAV_LINKS, delay: 0 },
+    ...(COMPANY_NAV_LINKS.length > 0 ? [{ title: 'Company', links: COMPANY_NAV_LINKS, delay: 40 }] : []),
   ];
   const quickAccessLinks = accountNav.menuLinks.filter((link) => link.href !== accountNav.primaryLink.href);
 
@@ -349,7 +345,7 @@ export default function Navbar() {
                   <p className={styles.sectionLabel}>{section.title}</p>
                   <ul className={styles.navList}>
                     {section.links.map((link, index) => (
-                      <li key={link.href} style={{ ['--nav-delay' as string]: `${section.delay + (index * 55)}ms` }}>
+                      <li key={link.href} style={{ ['--nav-delay' as string]: `${section.delay + (index * 28)}ms` }}>
                         {renderNavLink(link)}
                       </li>
                     ))}
@@ -358,7 +354,7 @@ export default function Navbar() {
               ))}
 
               {authStatus === 'authenticated' && (
-                <div className={styles.menuSection} style={{ ['--section-delay' as string]: '300ms' }}>
+                <div className={styles.menuSection} style={{ ['--section-delay' as string]: '80ms' }}>
                   <div className={styles.accountCard}>
                     <div className={styles.accountAvatar} aria-hidden>
                       {user?.firstName?.[0] || <FaUser />}
@@ -388,11 +384,11 @@ export default function Navbar() {
               )}
 
               {authStatus === 'authenticated' && quickAccessLinks.length > 0 && (
-                <nav className={styles.menuSection} style={{ ['--section-delay' as string]: '420ms' }}>
+                <nav className={styles.menuSection} style={{ ['--section-delay' as string]: '120ms' }}>
                   <p className={styles.sectionLabel}>Quick access</p>
                   <ul className={styles.navList}>
                     {quickAccessLinks.map((link, index) => (
-                      <li key={link.href} style={{ ['--nav-delay' as string]: `${420 + (index * 55)}ms` }}>
+                      <li key={link.href} style={{ ['--nav-delay' as string]: `${120 + (index * 28)}ms` }}>
                         {renderNavLink(link)}
                       </li>
                     ))}
@@ -401,7 +397,7 @@ export default function Navbar() {
               )}
 
               {authStatus !== 'authenticated' && (
-                <div className={styles.menuSection} style={{ ['--section-delay' as string]: '300ms' }}>
+                <div className={styles.menuSection} style={{ ['--section-delay' as string]: '80ms' }}>
                   <p className={styles.sectionLabel}>Account</p>
                   <div className={styles.guestActions}>
                     <button
@@ -422,7 +418,7 @@ export default function Navbar() {
                         setIsMobileOpen(false);
                       }}
                     >
-                      Register
+                      List your salon
                     </button>
                     <button
                       type="button"

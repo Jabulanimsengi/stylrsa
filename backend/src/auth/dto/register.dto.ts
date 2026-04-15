@@ -27,9 +27,9 @@ export class RegisterDto {
 
   @IsString()
   @IsOptional()
-  @IsIn(['CLIENT', 'SALON_OWNER'], {
-    message: 'Role must be CLIENT or SALON_OWNER',
+  @IsIn(['SALON_OWNER'], {
+    message: 'Role must be SALON_OWNER',
   })
-  // Deprecated: role is now chosen after authentication during onboarding.
+  // Legacy field kept for compatibility with older clients. Signups are owner-only.
   role?: string;
 }

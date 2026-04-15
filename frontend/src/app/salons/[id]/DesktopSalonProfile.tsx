@@ -169,6 +169,9 @@ export default function DesktopSalonProfile({
                       );
                     })}
                   </div>
+                  <p className={styles.profileBookingNote}>
+                    Fast handoff: send your request on Stylr SA, then confirm the final details directly with the salon on WhatsApp.
+                  </p>
                 </div>
               </div>
 

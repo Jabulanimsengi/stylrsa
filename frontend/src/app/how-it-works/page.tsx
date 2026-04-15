@@ -44,7 +44,7 @@ const clientSteps = [
   {
     step: "03",
     title: "Book through WhatsApp",
-    description: "Send your booking request directly to the salon and confirm the final details with them.",
+    description: "Send a quick structured booking request and continue the final confirmation directly with the salon on WhatsApp.",
   },
 ];
 
@@ -78,7 +78,7 @@ const howToBookSchema = {
     {
       "@type": "HowToStep",
       name: "Book through WhatsApp",
-      text: "Send your booking details directly to the salon using WhatsApp handoff.",
+      text: "Send a quick booking request with your details, then continue the final confirmation with the salon on WhatsApp.",
       position: 3,
     },
   ],
@@ -93,7 +93,7 @@ const howToListSalonSchema = {
   estimatedCost: {
     "@type": "MonetaryAmount",
     currency: "ZAR",
-    value: "399",
+    value: "299",
   },
   step: providerSteps.map((item, index) => ({
     "@type": "HowToStep",
@@ -159,7 +159,7 @@ export default function HowItWorksPage() {
             <h2 className={styles.heroAsideTitle}>One plan. One approval step. Direct client contact.</h2>
             <p className={styles.heroAsideText}>
               Salon owners complete their profile, pay {SALON_LISTING_MONTHLY_PRICE},
-              wait for admin approval, and then start receiving WhatsApp booking requests.
+              wait for admin approval, and then start receiving direct WhatsApp booking requests.
             </p>
 
             <ul className={styles.heroList}>
@@ -195,7 +195,7 @@ export default function HowItWorksPage() {
             <span className={styles.sectionEyebrow}>For Clients</span>
             <h2 className={styles.sectionTitle}>How clients book.</h2>
             <p className={styles.sectionText}>
-              Clients discover salons, compare details, and continue the booking conversation directly with the salon.
+              Clients discover salons, compare details, and move into a quick WhatsApp handoff without a heavy booking process.
             </p>
           </div>
 

@@ -8,7 +8,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 const customerFAQs = [
   {
     question: 'How do I make a booking?',
-    answer: "It's easy! Find the salon and service you want, click \"Book Now,\" select an available date and time from the calendar, and confirm your details. You'll receive a confirmation in your \"My Bookings\" section."
+    answer: "Find the salon and service you want, click \"Book on WhatsApp,\" choose your date and time, then submit your contact details. Stylr SA collects the booking details and continues the conversation with the salon on WhatsApp."
   },
   {
     question: 'How do I pay for my service?',
@@ -16,7 +16,7 @@ const customerFAQs = [
   },
   {
     question: 'How can I cancel or reschedule a booking?',
-    answer: "Go to your \"My Bookings\" page. You'll see an option to cancel or modify your booking up to 24 hours before your appointment. If it's an emergency within 24 hours, please contact the salon directly using the details on their profile."
+    answer: 'Please contact the salon directly on WhatsApp or by phone using the details on their profile so they can help you reschedule or cancel.'
   },
   {
     question: 'How do I leave a review?',
@@ -28,14 +28,14 @@ const customerFAQs = [
   },
   {
     question: 'How does the Chat feature work?',
-    answer: 'You can use the chat feature to communicate directly with a salon after you have an active or upcoming booking with them. This is perfect for confirming details or asking specific questions about your service.'
+    answer: 'Stylr SA uses a quick WhatsApp booking flow, so you can continue directly with the salon after you send your booking details.'
   }
 ];
 
 const salonOwnerFAQs = [
   {
     question: 'How do I get my salon listed on Stylr SA?',
-    answer: 'Simply click "Register" and choose the "Service Provider" role. Follow the steps to build your profile, and our team will review and approve your listing.'
+    answer: 'Use the salon owner signup flow, complete your salon setup, and submit your listing for review. Our team will review and approve your profile before it goes live.'
   },
   {
     question: 'Why are my gallery photos "Pending"?',
@@ -125,7 +125,7 @@ export default function FaqPage() {
         <p className={styles.paragraph}>Here are answers to our most common questions.</p>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>For Customers</h2>
+          <h2 className={styles.sectionTitle}>For Clients</h2>
 
           {customerFAQs.map((faq, index) => (
             <div key={index} className={styles.faqItem}>

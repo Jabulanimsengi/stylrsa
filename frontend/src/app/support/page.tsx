@@ -39,22 +39,22 @@ export default function SupportPage() {
           </ul>
         </div>
 
-        <h2 className={styles.sectionTitle}>For Customers</h2>
+        <h2 className={styles.sectionTitle}>For Clients</h2>
         
         <h3 className={styles.blockTitle}>Account & Profile</h3>
         <ul className={styles.list}>
-          <li><strong>Creating an account:</strong> Click "Register" in the top menu and follow the steps</li>
-          <li><strong>Updating your profile:</strong> Go to "My Profile" to edit your information</li>
-          <li><strong>Password reset:</strong> Click "Forgot Password" on the login page</li>
-          <li><strong>Account security:</strong> Enable two-factor authentication in your settings</li>
+          <li><strong>No client signup required:</strong> Stylr SA collects your contact details during booking instead of requiring a customer account</li>
+          <li><strong>Your booking details:</strong> Add your name, phone number, and any notes during checkout so the salon can continue with you directly</li>
+          <li><strong>Saved information:</strong> Your recent booking details can be reused on the same device to make future bookings faster</li>
+          <li><strong>Salon owner accounts:</strong> Signup is reserved for salon owners who want to create and manage listings</li>
         </ul>
 
         <h3 className={styles.blockTitle}>Bookings</h3>
         <ul className={styles.list}>
-          <li><strong>How to book:</strong> Browse salons, select a service, choose date/time, and confirm</li>
-          <li><strong>Cancelling a booking:</strong> Go to "My Bookings" and select "Cancel"</li>
-          <li><strong>Rescheduling:</strong> Contact the service provider directly through messaging</li>
-          <li><strong>Booking confirmation:</strong> You'll receive a confirmation email and notification</li>
+          <li><strong>How to book:</strong> Browse salons, select a service, choose date and time, then send your booking details</li>
+          <li><strong>Book on WhatsApp:</strong> Stylr SA sends a quick structured booking request, then the conversation continues directly with the salon on WhatsApp</li>
+          <li><strong>Cancelling or rescheduling:</strong> Contact the salon directly using the WhatsApp or phone details on their profile</li>
+          <li><strong>Booking confirmation:</strong> Final confirmation is handled directly with the salon during the WhatsApp conversation</li>
         </ul>
 
         <h3 className={styles.blockTitle}>Payments & Refunds</h3>
@@ -77,7 +77,7 @@ export default function SupportPage() {
         
         <h3 className={styles.blockTitle}>Getting Started</h3>
         <ul className={styles.list}>
-          <li><strong>Register as a partner:</strong> Visit the <Link href={providerSignupHref}>Create Salon</Link> page</li>
+          <li><strong>Create your owner account:</strong> Start from the <Link href={providerSignupHref}>Create Salon</Link> page</li>
           <li><strong>Profile setup:</strong> Complete all sections for better visibility</li>
           <li><strong>Verification:</strong> Upload required documents for account verification</li>
           <li><strong>Partner guidelines:</strong> Read our <Link href="/partner-guidelines">Partner Guidelines</Link></li>
@@ -93,7 +93,7 @@ export default function SupportPage() {
 
         <h3 className={styles.blockTitle}>Payments & Fees</h3>
         <ul className={styles.list}>
-          <li><strong>Commission:</strong> 15% platform fee on completed bookings</li>
+          <li><strong>Commission:</strong> 0% commission on bookings received through Stylr SA</li>
           <li><strong>Payouts:</strong> Processed within 5-7 business days</li>
           <li><strong>Banking details:</strong> Update in your account settings</li>
           <li><strong>Payment support:</strong> Email partners@stylrsa.co.za</li>

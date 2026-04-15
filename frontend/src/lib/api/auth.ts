@@ -8,7 +8,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'user' | 'salon_owner' | 'admin';
+  role: 'salon_owner' | 'admin';
   avatar?: string;
   phone?: string;
   isVerified?: boolean;
@@ -24,7 +24,7 @@ export interface RegisterData {
   email: string;
   password: string;
   name: string;
-  role?: 'user' | 'salon_owner';
+  role?: 'salon_owner';
 }
 
 export interface AuthResponse {

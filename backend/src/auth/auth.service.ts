@@ -132,8 +132,8 @@ export class AuthService {
           password: hash,
           firstName: dto.firstName,
           lastName: dto.lastName,
-          role: 'PENDING',
-          onboardingStatus: 'ROLE_REQUIRED',
+          role: 'SALON_OWNER',
+          onboardingStatus: 'PROVIDER_SETUP_REQUIRED',
           verificationToken: verificationCode,
           verificationExpires,
           emailVerified: false,
@@ -468,8 +468,8 @@ export class AuthService {
           password: passwordHash,
           firstName,
           lastName,
-          role: 'PENDING',
-          onboardingStatus: 'ROLE_REQUIRED',
+          role: 'SALON_OWNER',
+          onboardingStatus: 'PROVIDER_SETUP_REQUIRED',
           emailVerified: true, // OAuth accounts are pre-verified
           oauthAccounts: {
             create: { provider, providerAccountId },

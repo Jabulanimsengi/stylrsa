@@ -658,7 +658,7 @@ enum PlanCode {
   GROWTH     // Legacy - grandfathered
   PRO        // Legacy - grandfathered
   ELITE      // Legacy - grandfathered
-  PREMIUM    // Single paid plan R399/month
+  PREMIUM    // Single paid plan R299/month
 }
 
 enum PlanPaymentStatus {

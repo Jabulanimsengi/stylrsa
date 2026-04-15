@@ -5,8 +5,8 @@ import { buildAuthRoute } from '@/constants/routes';
 
 export const metadata: Metadata = {
   title: 'Testimonials - Stylr SA',
-  description: 'Read what our customers and partners are saying about Stylr SA. Real reviews from real users.',
-  keywords: 'testimonials, reviews, customer stories, success stories, Stylr SA reviews',
+  description: 'Read what our clients and salon partners are saying about Stylr SA. Real feedback from real users.',
+  keywords: 'testimonials, reviews, client stories, success stories, Stylr SA reviews',
   openGraph: {
     title: 'Testimonials - Stylr SA',
     description: 'See what people are saying about Stylr SA.',
@@ -54,7 +54,7 @@ export default function TestimonialsPage() {
         <div className={styles.infoBlock}>
           <h3 className={styles.blockTitle}>⭐⭐⭐⭐⭐ "Reliable and convenient"</h3>
           <p className={styles.paragraph}>
-            "As someone with a busy schedule, being able to book appointments online and get instant confirmation is a game-changer. Plus, the reviews are always accurate."
+            "As someone with a busy schedule, being able to compare salons quickly and continue the booking on WhatsApp is a game-changer. Plus, the reviews are always accurate."
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
             <em>— Sipho N., Midrand</em>
@@ -66,7 +66,7 @@ export default function TestimonialsPage() {
         <div className={styles.infoBlock}>
           <h3 className={styles.blockTitle}>⭐⭐⭐⭐⭐ "Grew my client base by 300%"</h3>
           <p className={styles.paragraph}>
-            "Since joining Stylr SA, I've tripled my bookings! The platform makes it easy to showcase my work, and I love how they handle payments automatically. Best decision for my business."
+            "Since joining Stylr SA, I've tripled my bookings! The platform makes it easy to showcase my work, and clients reach out with clearer booking details. Best decision for my business."
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
             <em>— Nomusa K., Hair Braiding Specialist, Pretoria</em>
@@ -86,7 +86,7 @@ export default function TestimonialsPage() {
         <div className={styles.infoBlock}>
           <h3 className={styles.blockTitle}>⭐⭐⭐⭐⭐ "Finally, no more no-shows!"</h3>
           <p className={styles.paragraph}>
-            "The automated reminders and deposit system have nearly eliminated no-shows at my salon. My schedule is always full, and clients appreciate the convenience of booking online."
+            "The clearer booking flow and direct client handoff have helped reduce confusion and fewer clients disappear before confirming. My schedule stays much more organized."
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
             <em>— Grace T., Salon Owner, Stellenbosch</em>
@@ -112,10 +112,10 @@ export default function TestimonialsPage() {
         
         <div className={styles.infoBlock} style={{ background: '#e3f2fd', padding: '1.5rem', borderRadius: '8px' }}>
           <p className={styles.paragraph}>
-            <strong>For Clients:</strong> <Link href="/register">Sign up</Link> and discover amazing local talent
+            <strong>For Clients:</strong> <Link href="/salons">Browse salons</Link> and book without creating an account
           </p>
           <p className={styles.paragraph} style={{ marginBottom: 0 }}>
-            <strong>For Professionals:</strong> <Link href={providerSignupHref}>Join as a Partner</Link> and grow your business
+            <strong>For Professionals:</strong> <Link href={providerSignupHref}>List your salon</Link> and grow your business
           </p>
         </div>
 

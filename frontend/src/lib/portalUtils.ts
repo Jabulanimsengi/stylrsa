@@ -29,12 +29,14 @@ export function recoverFromPortalDomError(source = 'unknown'): boolean {
     return false;
   }
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn(`[Portal recovery skipped in ${process.env.NODE_ENV}]`, source);
-    return false;
-  }
-
   try {
+    cleanupToastContainers();
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(`[Portal DOM error recovered in ${process.env.NODE_ENV}]`, source);
+      return true;
+    }
+
     const lastRecovery = Number(window.sessionStorage.getItem(PORTAL_RECOVERY_STORAGE_KEY) || '0');
     const now = Date.now();
 

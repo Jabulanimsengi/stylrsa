@@ -112,15 +112,6 @@ function getRolePrimaryLink(user: User): AppNavLink | null {
     };
   }
 
-  if (user.onboardingStatus === 'CLIENT_PROFILE_REQUIRED') {
-    return {
-      href: '/onboarding/client',
-      label: 'Complete Setup',
-      icon: FaUser,
-      match: (path) => path.startsWith('/onboarding'),
-    };
-  }
-
   if (user.onboardingStatus === 'PROVIDER_SETUP_REQUIRED') {
     return {
       href: '/create-salon',
@@ -164,11 +155,15 @@ function getRoleLabel(user: User | null): string {
     return 'Administrator';
   }
 
-  if (user.role === 'PENDING' || (user.onboardingStatus && user.onboardingStatus !== 'COMPLETE')) {
+  if (
+    user.role === 'PENDING'
+    || user.onboardingStatus === 'ROLE_REQUIRED'
+    || user.onboardingStatus === 'PROVIDER_SETUP_REQUIRED'
+  ) {
     return 'Setup required';
   }
 
-  return 'Client';
+  return 'Account';
 }
 
 export function getAccountNavConfig(user: User | null): AccountNavConfig {

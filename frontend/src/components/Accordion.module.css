@@ -2,11 +2,11 @@
 /* Upgraded for Radix UI with smooth animations */
 
 .accordionItem {
-  border: 1px solid var(--color-border);
-  border-radius: 0.375rem;
-  margin-bottom: 0.5rem;
-  background-color: var(--color-surface-elevated);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border: none;
+  border-radius: 16px;
+  margin-bottom: 1rem;
+  background-color: var(--color-surface);
+  box-shadow: 0 4px 14px rgba(17, 24, 39, 0.04);
   overflow: hidden;
 }
 
@@ -16,13 +16,13 @@
 
 .accordionHeader {
   width: 100%;
-  padding: 0.65rem 0.875rem;
-  background-color: var(--color-surface-elevated);
+  padding: 1.25rem 1.5rem;
+  background-color: transparent;
   border: none;
   text-align: left;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--primary-plum);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-strong);
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -40,14 +40,35 @@
 }
 
 .icon {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  transition: transform 0.3s cubic-bezier(0.87, 0, 0.13, 1);
+  position: relative;
+  width: 0.95rem;
+  height: 0.95rem;
+  color: var(--color-brand);
   flex-shrink: 0;
 }
 
-.accordionHeader[data-state='open'] .icon {
-  transform: rotate(180deg);
+.icon::before,
+.icon::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 2px;
+  background-color: currentColor;
+  transform: translate(-50%, -50%);
+  border-radius: 2px;
+  transition: transform 0.22s ease, opacity 0.22s ease;
+}
+
+.icon::after {
+  width: 2px;
+  height: 100%;
+}
+
+.accordionHeader[data-state='open'] .icon::after {
+  transform: translate(-50%, -50%) scaleY(0);
+  opacity: 0;
 }
 
 /* Radix Content Animation */
@@ -84,11 +105,11 @@
 }
 
 .accordionContent {
-  padding: 0.65rem 0.875rem;
-  border-top: 1px solid var(--color-border);
-  color: var(--color-text-strong);
-  line-height: 1.5;
-  font-size: 0.85rem;
+  padding: 0 1.5rem 1.5rem;
+  border-top: none;
+  color: var(--color-text-muted);
+  line-height: 1.7;
+  font-size: 0.95rem;
 }
 
 .accordionContent ul {

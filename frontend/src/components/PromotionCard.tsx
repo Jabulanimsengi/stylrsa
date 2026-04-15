@@ -235,7 +235,7 @@ export default function PromotionCard({ promotion, onImageClick, onBookNow }: Pr
               size="sm"
               disabled={isLoadingBooking}
             >
-              {isLoadingBooking ? 'Loading...' : 'Book Now'}
+              {isLoadingBooking ? 'Loading...' : 'Book on WhatsApp'}
             </Button>
           )}
         </CardContent>

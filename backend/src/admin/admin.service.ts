@@ -382,7 +382,7 @@ export class AdminService {
           planCode: 'PREMIUM',
           visibilityWeight: 5,
           maxListings: 9999,
-          planPriceCents: 39900,
+          planPriceCents: 29900,
           planPaymentStatus: 'VERIFIED',
           planVerifiedAt: new Date(),
           commissionRate: 0,
@@ -524,7 +524,7 @@ export class AdminService {
     const FALLBACK = {
       visibilityWeight: 5,
       maxListings: 9999,
-      priceCents: 39900,
+      priceCents: 29900,
     };
 
     let plan: {

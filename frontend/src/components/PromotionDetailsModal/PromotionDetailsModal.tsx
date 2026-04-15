@@ -139,7 +139,7 @@ export default function PromotionDetailsModal({
         </div>
 
         <Button onClick={handleBookNow} className={styles.bookButton}>
-          Book now
+          Book on WhatsApp
         </Button>
       </div>
     </ModalShell>

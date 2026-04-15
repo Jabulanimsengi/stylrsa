@@ -63,7 +63,7 @@
 
 .featuredCard {
   background: linear-gradient(135deg, var(--background-light) 0%, var(--background-lighter) 100%);
-  border-radius: 16px;
+  border-radius: 0;
   overflow: hidden;
   border: 1px solid var(--border-primary);
   transition: all 0.3s ease;
@@ -89,7 +89,7 @@
 
 .articleCard {
   background: var(--background-white);
-  border-radius: 12px;
+  border-radius: 0;
   overflow: hidden;
   border: 1px solid var(--border-primary);
   transition: all 0.3s ease;
@@ -183,7 +183,7 @@
 
 .categoryCard {
   background: linear-gradient(135deg, var(--primary-pink-light) 0%, var(--primary-purple-light) 100%);
-  border-radius: 12px;
+  border-radius: 0;
   padding: 1.5rem;
   text-align: center;
   text-decoration: none;
@@ -211,7 +211,7 @@
 
 .cta {
   background: linear-gradient(135deg, var(--background-dark) 0%, var(--background-darker) 100%);
-  border-radius: 20px;
+  border-radius: 0;
   padding: 3rem 2rem;
   text-align: center;
   margin: 4rem 0;
@@ -244,7 +244,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   padding: 1rem 2rem;
-  border-radius: 50px;
+  border-radius: 0;
   text-decoration: none;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);

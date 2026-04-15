@@ -1,8 +1,10 @@
+import path from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Output mode for better caching and reduced function calls
   output: 'standalone', // Reduces bundle size by 30-40%
+  outputFileTracingRoot: path.resolve(__dirname, '..'),
 
   poweredByHeader: false, // Remove X-Powered-By header for security
   env: {

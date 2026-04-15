@@ -230,7 +230,7 @@ export default function ServiceCard({
               }}
               className={`btn btn-primary ${styles.salonProfileBookButton}`}
             >
-              Book Now
+              Book on WhatsApp
             </button>
           </div>
         )}

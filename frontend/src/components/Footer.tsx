@@ -1,23 +1,22 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import {
-  FiBriefcase,
-  FiCheckCircle,
-  FiClock,
-  FiCompass,
-  FiMail,
-  FiMapPin,
-  FiScissors,
-  FiShield,
-  FiStar,
-} from 'react-icons/fi';
+import { FiClock, FiMail, FiMapPin } from 'react-icons/fi';
+import { FaEnvelope, FaFacebookF, FaInstagram, FaLinkedinIn, FaWhatsapp } from 'react-icons/fa';
 import styles from './Footer.module.css';
+import { EXTERNAL_LINKS } from '@/constants/routes';
 
-const featuredLocations = [
+const featuredAreas = [
   { href: '/salons/location/gauteng', label: 'Gauteng' },
   { href: '/salons/location/western-cape', label: 'Western Cape' },
   { href: '/salons/location/kwazulu-natal', label: 'KwaZulu-Natal' },
   { href: '/salons/location/eastern-cape', label: 'Eastern Cape' },
+];
+
+const socialLinks = [
+  { href: EXTERNAL_LINKS.FACEBOOK, label: 'Facebook', icon: FaFacebookF },
+  { href: EXTERNAL_LINKS.INSTAGRAM, label: 'Instagram', icon: FaInstagram },
+  { href: EXTERNAL_LINKS.LINKEDIN, label: 'LinkedIn', icon: FaLinkedinIn },
+  { href: 'mailto:support@stylrsa.co.za', label: 'Email', icon: FaEnvelope },
 ];
 
 export default function Footer() {
@@ -25,12 +24,12 @@ export default function Footer() {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: 'Stylr SA',
-    description: 'Your go-to platform for verified salons, barbers, and beauty experts across South Africa',
+    description: 'Verified salon discovery and direct WhatsApp booking requests for beauty clients and salon owners across South Africa.',
     url: 'https://www.stylrsa.co.za',
-    logo: 'https://www.stylrsa.co.za/logo-white.png',
-    image: 'https://www.stylrsa.co.za/logo-white.png',
-    telephone: '+27-11-123-4567',
-    email: 'info@stylrsa.co.za',
+    logo: 'https://www.stylrsa.co.za/logo-transparent.png',
+    image: 'https://www.stylrsa.co.za/logo-transparent.png',
+    telephone: '+27-73-802-1196',
+    email: 'support@stylrsa.co.za',
     address: {
       '@type': 'PostalAddress',
       streetAddress: '111 Commissioner Street',
@@ -38,11 +37,6 @@ export default function Footer() {
       addressRegion: 'Gauteng',
       postalCode: '2001',
       addressCountry: 'ZA',
-    },
-    geo: {
-      '@type': 'GeoCoordinates',
-      latitude: -26.2041,
-      longitude: 28.0473,
     },
     openingHoursSpecification: [
       {
@@ -53,18 +47,7 @@ export default function Footer() {
       },
     ],
     priceRange: 'R',
-    areaServed: [
-      { '@type': 'State', name: 'Gauteng', containedInPlace: { '@type': 'Country', name: 'South Africa' } },
-      { '@type': 'State', name: 'Western Cape', containedInPlace: { '@type': 'Country', name: 'South Africa' } },
-      { '@type': 'State', name: 'KwaZulu-Natal', containedInPlace: { '@type': 'Country', name: 'South Africa' } },
-      { '@type': 'State', name: 'Eastern Cape', containedInPlace: { '@type': 'Country', name: 'South Africa' } },
-      { '@type': 'State', name: 'Free State', containedInPlace: { '@type': 'Country', name: 'South Africa' } },
-      { '@type': 'State', name: 'Mpumalanga', containedInPlace: { '@type': 'Country', name: 'South Africa' } },
-      { '@type': 'State', name: 'Limpopo', containedInPlace: { '@type': 'Country', name: 'South Africa' } },
-      { '@type': 'State', name: 'North West', containedInPlace: { '@type': 'Country', name: 'South Africa' } },
-      { '@type': 'State', name: 'Northern Cape', containedInPlace: { '@type': 'Country', name: 'South Africa' } },
-    ],
-    sameAs: [],
+    sameAs: [EXTERNAL_LINKS.FACEBOOK, EXTERNAL_LINKS.INSTAGRAM, EXTERNAL_LINKS.LINKEDIN],
   };
 
   return (
@@ -74,122 +57,97 @@ export default function Footer() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
 
-      <div className={styles.footerContent}>
-        <div className={styles.brandSection}>
-          <Link href="/" className={styles.logoLink}>
-            <Image
-              src="/logo-white.png"
-              alt="Stylr SA Logo"
-              width={160}
-              height={40}
-              className={styles.logo}
-            />
-          </Link>
-          <p className={styles.tagline}>
-            South Africa&apos;s premier beauty and wellness platform for verified salons, direct booking, and trusted discovery.
-          </p>
-          <div className={styles.trustBadges}>
-            <span className={styles.trustBadge}>
-              <FiShield aria-hidden="true" />
-              Verified Salons
-            </span>
-            <span className={styles.trustBadge}>
-              <FiCheckCircle aria-hidden="true" />
-              Free to Use
-            </span>
-            <span className={styles.trustBadge}>
-              <FiStar aria-hidden="true" />
-              Trusted Reviews
-            </span>
-          </div>
-        </div>
-
-        <div className={styles.linksGrid}>
-          <div className={styles.linkColumn}>
-            <h3 className={styles.columnTitle}>
-              <span className={styles.columnIcon}><FiScissors aria-hidden="true" /></span>
-              <span>Services</span>
-            </h3>
-            <ul className={styles.linkList}>
-              <li><Link href="/services?category=braiding-weaving">Hair Braiding</Link></li>
-              <li><Link href="/services?category=haircuts-styling">Haircuts and Styling</Link></li>
-              <li><Link href="/services?category=nail-care">Nail Services</Link></li>
-              <li><Link href="/services?category=makeup-beauty">Makeup</Link></li>
-              <li><Link href="/services?category=massage-body-treatments">Massage</Link></li>
-              <li><Link href="/services?category=mens-grooming">Men&apos;s Grooming</Link></li>
-            </ul>
+      <div className={styles.inner}>
+        <div className={styles.topGrid}>
+          <div className={styles.brandColumn}>
+            <Link href="/" className={styles.logoLink}>
+              <Image
+                src="/logo-transparent.png"
+                alt="Stylr SA"
+                width={168}
+                height={48}
+                className={styles.logo}
+              />
+            </Link>
+            <p className={styles.brandText}>
+              A clearer South African salon directory for clients who want trusted discovery and salon owners who want direct booking conversations.
+            </p>
           </div>
 
-          <div className={styles.linkColumn}>
-            <h3 className={styles.columnTitle}>
-              <span className={styles.columnIcon}><FiMapPin aria-hidden="true" /></span>
-              <span>Locations</span>
-            </h3>
-            <ul className={styles.linkList}>
-              {featuredLocations.map((location) => (
-                <li key={location.href}><Link href={location.href}>{location.label}</Link></li>
-              ))}
-              <li><Link href="/salons">See all locations</Link></li>
-            </ul>
-            <p className={styles.columnNote}>Start with the busiest beauty regions, then expand your search from there.</p>
-          </div>
-
-          <div className={styles.linkColumn}>
-            <h3 className={styles.columnTitle}>
-              <span className={styles.columnIcon}><FiCompass aria-hidden="true" /></span>
-              <span>Explore</span>
-            </h3>
-            <ul className={styles.linkList}>
-              <li><Link href="/salons?map=1">Salon Map</Link></li>
-              <li><Link href="/promotions">View Deals</Link></li>
-              <li><Link href="/how-it-works">How It Works</Link></li>
-              <li><Link href="/blog">Beauty Blog</Link></li>
-            </ul>
-          </div>
-
-          <div className={styles.linkColumn}>
-            <h3 className={styles.columnTitle}>
-              <span className={styles.columnIcon}><FiBriefcase aria-hidden="true" /></span>
-              <span>Company</span>
-            </h3>
-            <ul className={styles.linkList}>
-              <li><Link href="/about">About Us</Link></li>
-              <li><Link href="/how-it-works">How It Works</Link></li>
-              <li><Link href="/prices">Pricing</Link></li>
-              <li><Link href="/contact">Contact</Link></li>
-              <li><Link href="/faq">Help and Support</Link></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className={styles.contactSection}>
-          <h3 className={styles.columnTitle}>Get in Touch</h3>
-          <div className={styles.contactItems}>
-            <a href="mailto:info@stylrsa.co.za" className={styles.contactItem}>
+          <div className={styles.infoColumn}>
+            <h3 className={styles.columnTitle}>Visit us</h3>
+            <div className={styles.infoStack}>
+              <p>111 Commissioner Street</p>
+              <p>Johannesburg, Gauteng</p>
+              <p>South Africa</p>
+            </div>
+            <a href="mailto:support@stylrsa.co.za" className={styles.contactLink}>
               <FiMail aria-hidden="true" />
-              info@stylrsa.co.za
+              <span>support@stylrsa.co.za</span>
             </a>
-            <div className={styles.contactItem}>
-              <FiMapPin aria-hidden="true" />
-              Johannesburg, South Africa
+            <a href="https://wa.me/27738021196" className={styles.contactLink} target="_blank" rel="noreferrer">
+              <FaWhatsapp aria-hidden="true" />
+              <span>0738021196</span>
+            </a>
+          </div>
+
+          <div className={styles.infoColumn}>
+            <h3 className={styles.columnTitle}>Working hours</h3>
+            <div className={styles.infoStack}>
+              <p>Mon - Fri: 08:00 - 17:00</p>
+              <p>Saturday: 09:00 - 15:00</p>
+              <p>Sunday: Online enquiries only</p>
             </div>
-            <div className={styles.contactItem}>
-              <FiClock aria-hidden="true" />
-              Mon - Sun: 08:00 - 17:00
+          </div>
+
+          <div className={styles.infoColumn}>
+            <h3 className={styles.columnTitle}>Areas we serve</h3>
+            <ul className={styles.areaList}>
+              {featuredAreas.map((area) => (
+                <li key={area.href}>
+                  <Link href={area.href}>{area.label}</Link>
+                </li>
+              ))}
+            </ul>
+            <Link href="/salons" className={styles.outlineAction}>
+              View all salons
+            </Link>
+          </div>
+
+          <div className={styles.infoColumn}>
+            <h3 className={styles.columnTitle}>Follow us</h3>
+            <div className={styles.socialGrid}>
+              {socialLinks.map((social) => {
+                const Icon = social.icon;
+                return (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    className={styles.socialLink}
+                    target={social.href.startsWith('http') ? '_blank' : undefined}
+                    rel={social.href.startsWith('http') ? 'noreferrer' : undefined}
+                    aria-label={social.label}
+                  >
+                    <Icon aria-hidden="true" />
+                  </a>
+                );
+              })}
             </div>
           </div>
         </div>
-      </div>
 
-      <div className={styles.bottomBar}>
-        <p className={styles.copyright}>
-          (c) {new Date().getFullYear()} Stylr SA. All rights reserved.
-        </p>
-        <div className={styles.legalLinks}>
-          <Link href="/terms">Terms</Link>
-          <Link href="/privacy">Privacy</Link>
-          <Link href="/cookie-policy">Cookies</Link>
-          <Link href="/accessibility">Accessibility</Link>
+        <div className={styles.bottomBar}>
+          <div className={styles.bottomMeta}>
+            <span><FiMapPin aria-hidden="true" /> Johannesburg, South Africa</span>
+            <span><FiClock aria-hidden="true" /> Support available daily</span>
+          </div>
+          <div className={styles.legalLinks}>
+            <Link href="/about">About</Link>
+            <Link href="/how-it-works">How it works</Link>
+            <Link href="/prices">Pricing</Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+          </div>
         </div>
       </div>
     </footer>
