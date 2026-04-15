@@ -39,8 +39,9 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy built application
+# Next standalone output is nested under `frontend/` in this workspace layout.
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/standalone/frontend ./
 COPY --from=builder /app/.next/static ./.next/static
 
 # Set correct permissions
