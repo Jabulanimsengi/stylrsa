@@ -137,7 +137,7 @@ export default function MapboxMap({
             >
                 <div className={styles.mapFallbackContent}>
                     <strong>Map unavailable</strong>
-                    <span>Add `NEXT_PUBLIC_MAPBOX_TOKEN` to enable interactive maps locally.</span>
+                    <span>Add `NEXT_PUBLIC_MAPBOX_TOKEN` to your environment to enable interactive maps.</span>
                 </div>
             </div>
         );

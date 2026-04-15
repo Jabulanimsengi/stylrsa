@@ -42,6 +42,11 @@ const handler = NextAuth({
     Google({
       clientId: process.env.GOOGLE_ID!,
       clientSecret: process.env.GOOGLE_SECRET!,
+      authorization: {
+        params: {
+          prompt: "select_account",
+        },
+      },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
