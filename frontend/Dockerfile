@@ -10,7 +10,7 @@ COPY package*.json ./
 RUN npm ci --maxsockets 1 --legacy-peer-deps
 
 # Install sharp for Alpine/musl (cross-platform image optimization fix)
-RUN npm install --os=linux --libc=musl --cpu=x64 sharp
+RUN npm install --os=linux --libc=musl --cpu=x64 --legacy-peer-deps sharp
 
 # Copy source code
 COPY . .
