@@ -2380,7 +2380,7 @@
   text-align: center;
   background: var(--color-surface-subtle, #f8fafc);
   border: 1px dashed var(--color-border, #cbd5e1);
-  border-radius: 12px;
+  border-radius: 0;
   color: var(--color-text-muted, #64748b);
   margin-top: 1rem;
 }
@@ -5252,7 +5252,7 @@
   max-width: 1320px;
   --dashboard-shell-gap: 1.5rem;
   --dashboard-card-padding: 1.35rem;
-  --dashboard-card-radius: 24px;
+  --dashboard-card-radius: 0px;
   --dashboard-card-shadow: 0 18px 44px rgba(17, 24, 39, 0.06);
   --dashboard-section-min-height: 320px;
   padding-inline: clamp(1rem, 3vw, 2rem);
@@ -5274,7 +5274,7 @@
 .overviewLead {
   gap: 1rem;
   padding: 1.5rem;
-  border-radius: 28px;
+  border-radius: 0;
   border: 1px solid var(--color-border);
   background:
     radial-gradient(circle at top right, rgba(17, 24, 39, 0.06), transparent 30%),
@@ -5288,6 +5288,7 @@
   border: 1px solid var(--color-border);
   color: var(--color-text-muted);
   letter-spacing: 0.12em;
+  border-radius: 0;
 }
 
 .overviewTitleRow {
@@ -5324,6 +5325,7 @@
   padding: 0.52rem 0.92rem;
   border: 1px solid transparent;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  border-radius: 0;
 }
 
 .overviewDescription {
@@ -5340,7 +5342,7 @@
 .overviewMetaPill {
   min-height: 2.2rem;
   padding: 0.5rem 0.86rem;
-  border-radius: 999px;
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid var(--color-border);
   color: #344054;
@@ -5365,7 +5367,7 @@
 .headerActionBtn {
   min-height: 50px;
   padding: 0.85rem 1.2rem;
-  border-radius: 16px;
+  border-radius: 0;
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.9);
   color: #1f2430;
@@ -5399,7 +5401,7 @@
 .sidebar {
   width: auto;
   padding: calc(var(--dashboard-card-padding) - 0.15rem);
-  border-radius: var(--dashboard-card-radius);
+  border-radius: 0;
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: var(--dashboard-card-shadow);
@@ -5432,7 +5434,7 @@
 .navItem {
   gap: 0.7rem;
   padding: 0.78rem 0.85rem;
-  border-radius: 16px;
+  border-radius: 0;
   color: #475467;
   font-size: 0.92rem;
   font-weight: 600;
@@ -5460,7 +5462,7 @@
 .contentCard {
   margin-bottom: 1.25rem;
   padding: var(--dashboard-card-padding);
-  border-radius: var(--dashboard-card-radius);
+  border-radius: 0;
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--dashboard-card-shadow);
@@ -5522,7 +5524,7 @@
 
   .overviewLead {
     padding: 1.15rem;
-    border-radius: 22px;
+    border-radius: 0;
   }
 
   .overviewTitle {
