@@ -116,7 +116,7 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - ./certbot/conf:/etc/letsencrypt
+      - /etc/letsencrypt:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot
     depends_on:
       - frontend
@@ -124,4 +124,8 @@ services:
 
 volumes:
   postgres_data:
+    external: true
+    name: app_postgres_data
   redis_data:
+    external: true
+    name: app_redis_data
