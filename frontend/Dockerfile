@@ -39,9 +39,8 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy built application
-# Next standalone output is nested under `frontend/` in this workspace layout.
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone/frontend ./
+COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
 # Set correct permissions
@@ -58,4 +57,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/ || exit 1
 
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "if [ -f /app/server.js ]; then exec node /app/server.js; elif [ -f /app/frontend/server.js ]; then exec node /app/frontend/server.js; else echo 'Standalone server.js not found'; find /app -maxdepth 3 -name server.js; exit 1; fi"]
