@@ -52,7 +52,6 @@ export default function PricingPage() {
       <main className={styles.container}>
         <section className={styles.hero}>
           <div className={styles.heroContent}>
-            <span className={styles.eyebrow}>Pricing</span>
             <h1 className={styles.title}>One simple plan for salon listings.</h1>
             <p className={styles.subtitle}>
               No confusing tiers. Just one monthly plan that gives your salon a
@@ -109,7 +108,6 @@ export default function PricingPage() {
 
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionEyebrow}>What&apos;s Included</span>
             <h2 className={styles.sectionTitle}>Everything important, clearly listed.</h2>
             <p className={styles.sectionText}>
               This page should answer the practical question quickly: what do I get for the monthly fee?
@@ -134,7 +132,6 @@ export default function PricingPage() {
 
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionEyebrow}>Getting Started</span>
             <h2 className={styles.sectionTitle}>Three straightforward steps.</h2>
             <p className={styles.sectionText}>
               The process is simple: sign up, complete your listing, pay, then wait for approval.
@@ -153,7 +150,6 @@ export default function PricingPage() {
         </section>
 
         <section className={styles.ctaSection}>
-          <span className={styles.sectionEyebrow}>Ready To Start?</span>
           <h2 className={styles.ctaTitle}>List your salon with one clear monthly fee.</h2>
           <p className={styles.ctaText}>
             Create your account, complete your profile, and start moving toward approval.

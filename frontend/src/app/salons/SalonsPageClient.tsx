@@ -496,7 +496,6 @@ export default function SalonsPageClient() {
             <section className={styles.secondaryBrowse}>
               <div className={styles.secondaryBrowseHeader}>
                 <div>
-                  <p className={styles.resultsEyebrow}>Browse wider</p>
                   <h2 className={styles.resultsSummary}>Explore by province</h2>
                   <p className={styles.resultsCopy}>
                     If you want to window-shop beyond your current results, these regional collections are still here.

@@ -275,7 +275,6 @@ export default async function SalonServiceSeoPage({
 
       <section className={styles.hero}>
         <article className={styles.card}>
-          <span className={styles.eyebrow}>Service detail</span>
           <h1 className={styles.title}>{serviceName}</h1>
           <p className={styles.description}>
             {service.description || `Book ${serviceName.toLowerCase()} at ${salon.name} and explore a cleaner service page built for search, discovery, and direct booking.`}

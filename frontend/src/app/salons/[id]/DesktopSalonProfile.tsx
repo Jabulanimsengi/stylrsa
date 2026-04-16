@@ -122,7 +122,6 @@ export default function DesktopSalonProfile({
                 )}
 
                 <div className={styles.profileCopy}>
-                  <span className={styles.profileEyebrow}>Salon profile</span>
                   <h1 className={styles.profileTitle}>
                     {salon.name}
                     {salon.isVerified && <VerificationBadge size="small" />}

@@ -514,7 +514,6 @@ export default function MobileSalonProfile({
 
                 {/* Salon Header */}
                 <div className={styles.salonHeader}>
-                    <span className={styles.salonEyebrow}>Salon profile</span>
                     <h1 className={styles.salonName}>
                         {salon.name}
                         {salon.isVerified && <VerificationBadge size="small" />}

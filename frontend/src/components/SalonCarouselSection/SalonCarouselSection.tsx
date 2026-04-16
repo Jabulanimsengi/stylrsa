@@ -35,7 +35,7 @@ interface SalonCarouselSectionProps {
 
 function SalonCarouselSection({
     title,
-    eyebrow,
+    eyebrow: _eyebrow,
     description,
     salons,
     viewAllLink = '/salons',
@@ -174,7 +174,6 @@ function SalonCarouselSection({
         <section className={`${styles.section} ${surface === 'muted' ? styles.sectionMuted : ''} ${surface === 'rose' ? styles.sectionRose : ''} ${surface === 'cloud' ? styles.sectionCloud : ''}`}>
             <div className={styles.header}>
                 <div className={styles.headerCopy}>
-                    {eyebrow && <span className={styles.eyebrow}>{eyebrow}</span>}
                     <Link href={viewAllLink} onClick={handleHeadingClick} className={styles.title}>
                         <h2>{title}</h2>
                     </Link>

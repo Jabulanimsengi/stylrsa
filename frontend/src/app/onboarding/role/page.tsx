@@ -85,7 +85,6 @@ function RoleOnboardingPageContent() {
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
-        <span className={styles.eyebrow}>Account setup</span>
         <h1 className={styles.title}>Continue your salon owner setup.</h1>
         <p className={styles.intro}>
           Stylr SA now uses signup for salon owners only. We&apos;ll take you straight into creating your listing.

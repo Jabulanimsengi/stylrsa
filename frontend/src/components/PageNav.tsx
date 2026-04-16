@@ -185,7 +185,6 @@ export default function PageNav() {
   return (
     <nav className={styles.pageNav} aria-label="Page context">
       <div className={styles.contextBlock}>
-        <p className={styles.eyebrow}>{context.section}</p>
         <div className={styles.trail}>
           <Link href="/" className={styles.trailLink} onClick={() => showPageLoader()}>
             Home

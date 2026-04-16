@@ -138,7 +138,6 @@ export default function HowItWorksPage() {
       <main className={styles.container}>
         <section className={styles.hero}>
           <div className={styles.heroContent}>
-            <span className={styles.eyebrow}>How It Works</span>
             <h1 className={styles.title}>A simple flow for salon owners and clients.</h1>
             <p className={styles.subtitle}>
               This page is meant to answer one question clearly: how does the platform work from signup to booking?
@@ -172,7 +171,6 @@ export default function HowItWorksPage() {
 
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionEyebrow}>For Providers</span>
             <h2 className={styles.sectionTitle}>How salon owners get listed.</h2>
             <p className={styles.sectionText}>
               The process is short and direct so there is less confusion during onboarding.
@@ -192,7 +190,6 @@ export default function HowItWorksPage() {
 
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionEyebrow}>For Clients</span>
             <h2 className={styles.sectionTitle}>How clients book.</h2>
             <p className={styles.sectionText}>
               Clients discover salons, compare details, and move into a quick WhatsApp handoff without a heavy booking process.
@@ -212,7 +209,6 @@ export default function HowItWorksPage() {
 
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionEyebrow}>Before You Start</span>
             <h2 className={styles.sectionTitle}>What a salon owner should have ready.</h2>
             <p className={styles.sectionText}>
               Preparing these items first makes the setup process much smoother.
@@ -231,7 +227,6 @@ export default function HowItWorksPage() {
         </section>
 
         <section className={styles.ctaSection}>
-          <span className={styles.sectionEyebrow}>Next Step</span>
           <h2 className={styles.ctaTitle}>Ready to create your salon profile?</h2>
           <p className={styles.ctaText}>
             Start with the account setup, then follow the same simple process shown above.

@@ -44,7 +44,6 @@ export default function AboutPage() {
     <div className={styles.pageShell}>
       <main className={styles.container}>
         <section className={styles.heroPanel}>
-          <span className={styles.eyebrow}>About Stylr SA</span>
           <h1 className={styles.heroTitle}>Built to make salon discovery clearer, faster, and more trusted.</h1>
           <p className={styles.heroSubtitle}>
             Stylr SA helps clients find the right salon with confidence and helps salon owners present their businesses properly online.
@@ -62,7 +61,6 @@ export default function AboutPage() {
 
         <section className={styles.sectionCard}>
           <div className={styles.sectionHeading}>
-            <span className={styles.sectionEyebrow}>Our Mission</span>
             <h2 className={styles.sectionTitle}>Make beauty discovery feel professional instead of scattered.</h2>
           </div>
           <p className={styles.paragraph}>
@@ -76,7 +74,6 @@ export default function AboutPage() {
 
         <section className={styles.sectionCard}>
           <div className={styles.sectionHeading}>
-            <span className={styles.sectionEyebrow}>Our Story</span>
             <h2 className={styles.sectionTitle}>We built the platform around a real local problem.</h2>
           </div>
           <p className={styles.paragraph}>
@@ -90,7 +87,6 @@ export default function AboutPage() {
 
         <section className={styles.sectionCard}>
           <div className={styles.sectionHeading}>
-            <span className={styles.sectionEyebrow}>What We Do</span>
             <h2 className={styles.sectionTitle}>Support both sides of the booking journey.</h2>
           </div>
           <div className={styles.audienceStack}>
@@ -111,7 +107,6 @@ export default function AboutPage() {
 
         <section className={styles.sectionCard}>
           <div className={styles.sectionHeading}>
-            <span className={styles.sectionEyebrow}>Our Vision</span>
             <h2 className={styles.sectionTitle}>Raise the standard for beauty discovery in South Africa.</h2>
           </div>
           <p className={styles.paragraph}>

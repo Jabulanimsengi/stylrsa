@@ -495,7 +495,6 @@ export default function HomePageClient({
 
       <section className={`${styles.editorialBand} ${styles.categoryBand}`}>
         <div className={styles.categoryIntro}>
-          <span className={styles.categoryEyebrow}>Browse by category</span>
           <div className={styles.categoryIntroRow}>
             <div>
               <h2 className={styles.categoryHeading}>Start with the service you want</h2>
@@ -513,7 +512,6 @@ export default function HomePageClient({
 
       <SalonCarouselSection
         title="Featured Salons"
-        eyebrow="Curated discovery"
         description="A rotating selection of standout salons and beauty professionals worth exploring first."
         salons={featuredSalons}
         viewAllLink="/salons"
@@ -524,7 +522,6 @@ export default function HomePageClient({
 
       <SalonCarouselSection
         title="Available Now"
-        eyebrow="Book sooner"
         description="Profiles currently showing as open and ready for new booking conversations."
         salons={availableNowSalons}
         viewAllLink="/salons?openNow=true"
@@ -535,7 +532,6 @@ export default function HomePageClient({
 
       <section className={styles.journeySection}>
         <div className={styles.sectionIntro}>
-          <span className={styles.sectionEyebrow}>How booking works</span>
           <h2 className={styles.sectionHeading}>A lighter booking flow for clients and salons</h2>
           <p className={styles.sectionDescription}>
             Stylr SA keeps the request fast and structured, then hands the conversation to WhatsApp where salons can confirm details quickly.
@@ -556,7 +552,6 @@ export default function HomePageClient({
       <section className={styles.pricingSection}>
         <div className={styles.pricingSectionInner}>
           <div className={styles.pricingHeader}>
-            <span className={styles.sectionEyebrow}>For salon owners</span>
             <h2 className={styles.sectionHeading}>Why list your services on Stylr SA</h2>
             <p className={styles.sectionDescription}>
               Build visibility, show your real services and pricing, and receive booking requests directly on WhatsApp without paying commission on each booking.
@@ -590,7 +585,6 @@ export default function HomePageClient({
       <section className={styles.faqSection}>
         <div className={styles.faqSectionInner}>
           <div className={styles.faqHeader}>
-            <span className={styles.sectionEyebrow}>FAQ</span>
             <h2 className={styles.sectionHeading}>Questions clients and salon owners ask most</h2>
             <p className={styles.sectionDescription}>
               A quick guide to how discovery, bookings, pricing, and salon listings work on Stylr SA.

@@ -34,7 +34,6 @@ export default function DashboardOverviewHero({
   return (
     <section className={styles.overviewHero}>
       <div className={styles.overviewLead}>
-        <span className={styles.overviewEyebrow}>Salon operator overview</span>
         <div className={styles.overviewTitleRow}>
           <div className={styles.overviewTitleBlock}>
             <h2 className={styles.overviewTitle}>{salonName}</h2>
