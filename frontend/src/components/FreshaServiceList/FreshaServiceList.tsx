@@ -476,7 +476,6 @@ export default function FreshaServiceList({
                         <div className={styles.cartSidebar}>
                             <div className={styles.cartPanelTop}>
                                 <div className={styles.cartPanelCopy}>
-                                    <span className={styles.cartEyebrow}>Booking journey</span>
                                     <h3 className={styles.cartPanelTitle}>Review your service</h3>
                                     <p className={styles.cartPanelHint}>
                                         Confirm this treatment, then continue to choose your date and details.

@@ -54,7 +54,6 @@ export default function NotificationsPanel({
     <div className={`${styles.panel} ${className ?? ''}`.trim()}>
       <div className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Inbox</p>
           <h3 className={styles.title}>Notifications</h3>
         </div>
         {notifications.length > 0 && (

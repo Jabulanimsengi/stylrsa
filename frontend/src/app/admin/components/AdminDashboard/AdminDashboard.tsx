@@ -60,7 +60,6 @@ export default function AdminDashboard({ metrics, onNavigate }: AdminDashboardPr
         <div className={styles.dashboard}>
             <div className={styles.hero}>
                 <div className={styles.heroCopy}>
-                    <span className={styles.kicker}>Admin Control Room</span>
                     <h1 className={styles.title}>Review what needs action first.</h1>
                     <p className={styles.subtitle}>
                         Prioritize salon approvals, service approvals, and payment proofs before moving into deeper moderation work.

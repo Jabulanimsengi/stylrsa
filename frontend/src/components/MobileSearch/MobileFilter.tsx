@@ -109,7 +109,6 @@ export default function MobileFilter({ onSearch, onClose, initialFilters = {} }:
       <div className={styles.container} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <div className={styles.headerCopy}>
-            <p className={styles.eyebrow}>Refine Results</p>
             <h2 className={styles.title}>Filter salons</h2>
           </div>
           <MobileCloseButton onClick={onClose} className={styles.closeButton} label="Close filters" />

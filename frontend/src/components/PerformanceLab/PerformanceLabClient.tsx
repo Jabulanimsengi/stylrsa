@@ -86,7 +86,6 @@ export default function PerformanceLabClient() {
     <div className={styles.page}>
       <div className={styles.hero}>
         <div>
-          <p className={styles.eyebrow}>Performance Lab</p>
           <h1 className={styles.title}>Live page metrics from this browser session</h1>
           <p className={styles.subtitle}>
             Use this page after visiting the homepage, salon listings, and salon detail views. Metrics are stored locally in the browser and update as new samples are captured.
@@ -106,10 +105,9 @@ export default function PerformanceLabClient() {
         <div className={styles.summaryGrid}>
           {summaries.map((summary) => (
             <article key={summary.pageName} className={styles.summaryCard}>
-              <p className={styles.cardEyebrow}>{summary.pageName}</p>
-              <h2 className={styles.cardTitle}>{summary.latestPath}</h2>
+              <h2 className={styles.cardTitle}>{summary.pageName}</h2>
               <p className={styles.cardMeta}>
-                {summary.sampleCount} sample{summary.sampleCount === 1 ? '' : 's'} • last seen {formatRecordedAt(summary.latestRecordedAt)}
+                {summary.latestPath} ? {summary.sampleCount} sample{summary.sampleCount === 1 ? '' : 's'} ? last seen {formatRecordedAt(summary.latestRecordedAt)}
               </p>
               <dl className={styles.metrics}>
                 <div>

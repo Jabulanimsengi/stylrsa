@@ -525,7 +525,6 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                   )}
                 </div>
               </div>
-              <h3 className={styles.subheading}>Location</h3>
               <div className={styles.grid}>
                 <div className={styles.fullWidth}>
                   <label htmlFor="addrQuery" className={styles.label}>Find on Map</label>
@@ -651,7 +650,6 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                   </div>
                 )}
               </div>
-              <h3 className={styles.subheading}>Contact Information</h3>
               <div className={styles.grid}>
                 <div>
                   <label htmlFor="phoneNumber" className={styles.label}>Phone Number</label>
@@ -695,7 +693,6 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                 </div>
               </div>
 
-              <h3 className={styles.subheading}>Branding</h3>
               {isProcessingFile && (
                 <div style={{ padding: '12px', background: 'var(--color-surface-elevated)', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '16px', height: '16px', border: '2px solid var(--color-primary)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
@@ -836,7 +833,6 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                   </div>
                 </div>
               </div>
-              <h3 className={styles.subheading}>Service Type</h3>
               <div className={styles.grid}>
                 <div>
                   <label className={styles.label}>Service Type</label>
@@ -862,7 +858,6 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                 )}
               </div>
 
-              <h3 className={styles.subheading}>Operating Hours</h3>
               <div className={styles.grid}>
                 <div className={styles.fullWidth}>
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: 8 }}>
