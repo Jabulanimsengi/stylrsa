@@ -87,10 +87,10 @@ export const LEGACY_PLANS: AppPlan[] = [
     name: 'Starter (Legacy)',
     price: 'R99/month',
     priceCents: 9900,
-    maxListings: 10,
+    maxListings: 'Unlimited',
     visibilityWeight: 2,
     description: 'Legacy starter plan - grandfathered',
-    features: ['10 service listings', 'Gallery up to 20 images', 'Email support'],
+    features: ['Unlimited service listings', 'Gallery up to 20 images', 'Email support'],
     isLegacy: true,
   },
   {

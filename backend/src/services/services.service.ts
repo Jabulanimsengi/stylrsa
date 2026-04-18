@@ -71,17 +71,6 @@ export class ServicesService {
       );
     }
 
-    // Enforce plan-based listing cap
-    const currentCount = await this.prisma.service.count({
-      where: { salonId: salon.id },
-    });
-    const maxListings = salon.maxListings ?? 2;
-    if (currentCount >= maxListings) {
-      throw new ForbiddenException(
-        `Listing limit reached for your current package (max ${maxListings} services). Please contact support if you need help increasing this limit.`,
-      );
-    }
-
     // Handle empty string categoryId by converting to undefined
     const createData = {
       ...dto,
