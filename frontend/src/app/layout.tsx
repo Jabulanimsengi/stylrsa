@@ -1,6 +1,6 @@
 // frontend/src/app/layout.tsx
 import type { Metadata } from 'next';
-import { Outfit } from 'next/font/google';
+import { Outfit, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -30,6 +30,14 @@ const outfit = Outfit({
   display: 'swap', // Prevents FOUT layout shift
   preload: true,
   variable: '--font-base',
+  fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  variable: '--font-hero-heading',
   fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
 });
 
@@ -162,7 +170,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
       </head>
-      <body className={`${outfit.className} ${outfit.variable}`} suppressHydrationWarning>
+      <body className={`${outfit.className} ${outfit.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
         <Suspense fallback={null}>
           <ClientInit />
         </Suspense>

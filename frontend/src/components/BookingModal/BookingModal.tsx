@@ -1057,8 +1057,8 @@ export default function BookingModal({
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        overlayClassName="bg-black/70 lg:bg-transparent lg:pointer-events-none"
-        className={`w-screen max-w-none h-[100dvh] overflow-hidden rounded-none p-0 gap-0 flex flex-col sm:w-full sm:max-w-[500px] sm:h-[90vh] sm:rounded-3xl lg:left-auto lg:right-0 lg:top-0 lg:h-[100dvh] lg:max-h-[100dvh] lg:w-[min(560px,40vw)] lg:max-w-none lg:translate-x-0 lg:translate-y-0 lg:rounded-none lg:rounded-l-[28px] lg:border-l lg:border-neutral-200 lg:shadow-[-24px_0_60px_rgba(15,23,42,0.18)] ${styles.desktopPanel}`}
+        overlayClassName="bg-black/78 backdrop-blur-sm"
+        className={`w-screen max-w-none h-[100dvh] overflow-hidden rounded-none border-0 p-0 gap-0 flex flex-col sm:w-full sm:max-w-[500px] sm:h-[90vh] sm:rounded-none lg:left-auto lg:right-0 lg:top-0 lg:h-[100dvh] lg:max-h-[100dvh] lg:w-[min(560px,40vw)] lg:max-w-none lg:translate-x-0 lg:translate-y-0 lg:rounded-none lg:border-l lg:border-neutral-200 lg:shadow-[-24px_0_60px_rgba(15,23,42,0.18)] ${styles.desktopPanel}`}
       >
         <DialogTitle className="sr-only">Book Appointment at {salon.name}</DialogTitle>
 

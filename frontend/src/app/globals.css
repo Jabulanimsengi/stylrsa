@@ -504,6 +504,7 @@
     /* Typography */
     --font-family-base: var(--font-base), -apple-system, system-ui, sans-serif;
     --font-family-display: var(--font-base), -apple-system, system-ui, sans-serif;
+    --font-family-hero: var(--font-hero-heading), var(--font-base), -apple-system, system-ui, sans-serif;
     /* Typography Scale - Modern, clean, airy system */
     --font-size-xs: 0.75rem;    /* 12px */
     --font-size-sm: 0.875rem;   /* 14px */

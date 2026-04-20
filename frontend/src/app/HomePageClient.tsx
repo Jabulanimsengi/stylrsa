@@ -347,10 +347,10 @@ export default function HomePageClient({
 
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle} id="hero-title">
-            Find salons worth booking
+            Find salons & spas worth booking
           </h1>
           <p className={styles.heroDescription}>
-            Search by treatment, salon, or area, then send a quick booking request on WhatsApp.
+            Search by treatment, salon, spa, or area, then send a quick booking request on WhatsApp.
           </p>
 
           <div className={styles.heroSearchContainer}>
