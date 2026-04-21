@@ -22,6 +22,7 @@ import EmptyState from '@/components/EmptyState/EmptyState';
 import { notify } from '@/lib/notify';
 import RelatedLocations from '@/components/RelatedLocations/RelatedLocations';
 import { getAffluentLocationLinks } from '@/lib/prioritySeoLocations';
+import { getSalonCardImage } from '@/lib/salonCardImage';
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
 
@@ -151,7 +152,7 @@ function SalonsLocationContent({ initialSalons = [], provinceInfo }: LocationPag
                 <div className={styles.imageWrapper}>
                   <ReviewBadge reviewCount={salon.reviewCount || 0} avgRating={salon.avgRating || 0} />
                   <Image
-                    src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), { width: 600, quality: 'auto', format: 'auto', crop: 'fill' })}
+                    src={transformCloudinary(getImageWithFallback(getSalonCardImage(salon), 'wide'), { width: 600, quality: 'auto', format: 'auto', crop: 'fill' })}
                     alt={`${salon.name} - Salon in ${locationInfo.name}`}
                     className={styles.cardImage}
                     fill

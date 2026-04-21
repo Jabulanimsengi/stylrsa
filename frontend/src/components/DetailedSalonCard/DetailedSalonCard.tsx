@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { FaHeart, FaMapMarkerAlt, FaCar } from 'react-icons/fa';
 import { transformCloudinary } from '@/utils/cloudinary';
 import { getImageWithFallback } from '@/lib/placeholders';
+import { getSalonCardImage } from '@/lib/salonCardImage';
 import { Salon, Service } from '@/types';
 import { getSalonUrl } from '@/utils/salonUrl';
 import styles from './DetailedSalonCard.module.css';
@@ -27,6 +28,7 @@ export default function DetailedSalonCard({ salon, onToggleFavorite, onBook }: D
   const router = useRouter();
   const { authStatus } = useAuth();
   const { openModal } = useAuthModal();
+  const cardImage = getSalonCardImage(salon);
 
   // Fetch salon services
   useEffect(() => {
@@ -91,7 +93,7 @@ export default function DetailedSalonCard({ salon, onToggleFavorite, onBook }: D
           </div>
         )}
         <Image
-          src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), {
+          src={transformCloudinary(getImageWithFallback(cardImage, 'wide'), {
             width: 800,
             quality: 'auto',
             format: 'auto',

@@ -84,7 +84,9 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
   });
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
   const [backgroundImagePreview, setBackgroundImagePreview] = useState<string | null>(null);
+  const [heroImageFiles, setHeroImageFiles] = useState<File[]>([]);
   const [heroImagesPreview, setHeroImagesPreview] = useState<string[]>([]);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [originalHeroImages, setOriginalHeroImages] = useState<string[]>([]);
@@ -259,28 +261,57 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
     setError('');
 
     try {
-      if (name !== 'logo' || !files[0]) {
-        return;
-      }
-
-      const file = files[0];
       const MAX_SIZE = 10 * 1024 * 1024;
-      if (file.size > MAX_SIZE) {
-        throw new Error(`File too large. Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
-      }
 
-      if (!file.type.startsWith('image/')) {
-        throw new Error('Please select a valid image file.');
-      }
+      if (name === 'logo') {
+        const file = files[0];
+        if (file.size > MAX_SIZE) throw new Error(`File too large. Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
+        if (!file.type.startsWith('image/')) throw new Error('Please select a valid image file.');
+        await validateImageDimensions(file, 150, 150, { width: 512, height: 512 });
 
-      await validateImageDimensions(file, 150, 150, { width: 512, height: 512 });
+        setLogoFile(file);
+        if (logoPreview && logoPreview.startsWith('blob:')) URL.revokeObjectURL(logoPreview);
+        setLogoPreview(URL.createObjectURL(file));
+        toast.success('Logo image selected. Square logos preview best.');
+      } else if (name === 'backgroundImage') {
+        const file = files[0];
+        if (file.size > MAX_SIZE) throw new Error(`File too large. Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
+        if (!file.type.startsWith('image/')) throw new Error('Please select a valid image file.');
+        await validateImageDimensions(file, 600, 300, { width: 1200, height: 600 });
 
-      setLogoFile(file);
-      if (logoPreview && logoPreview.startsWith('blob:')) {
-        URL.revokeObjectURL(logoPreview);
+        setBackgroundImageFile(file);
+        if (backgroundImagePreview && backgroundImagePreview.startsWith('blob:')) URL.revokeObjectURL(backgroundImagePreview);
+        setBackgroundImagePreview(URL.createObjectURL(file));
+        toast.success('Background image selected.');
+      } else if (name === 'heroImages') {
+        const newFiles = Array.from(files);
+        const validFiles: File[] = [];
+        const newPreviews: string[] = [];
+
+        for (const file of newFiles) {
+          if (file.size > MAX_SIZE) {
+            toast.error(`File ${file.name} is too large. Maximum size is 10MB.`);
+            continue;
+          }
+          if (!file.type.startsWith('image/')) {
+            toast.error(`File ${file.name} is not a valid image file.`);
+            continue;
+          }
+          try {
+            await validateImageDimensions(file, 450, 300, { width: 1200, height: 800 });
+            validFiles.push(file);
+            newPreviews.push(URL.createObjectURL(file));
+          } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : `Failed to load ${file.name}`);
+          }
+        }
+
+        if (validFiles.length > 0) {
+          setHeroImageFiles(prev => [...prev, ...validFiles]);
+          setHeroImagesPreview(prev => [...prev, ...newPreviews]);
+          toast.success(`${validFiles.length} hero image(s) selected.`);
+        }
       }
-      setLogoPreview(URL.createObjectURL(file));
-      toast.success('Logo image selected. Square logos preview best.');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to process file';
       setError(errorMessage);
@@ -300,9 +331,29 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
     setLogoPreview(null);
   };
 
-  const handleDeleteImage = (_imageUrlToDelete: string, imageType: 'background' | 'logo' | 'hero') => {
+  const handleDeleteImage = (imageUrlToDelete: string, imageType: 'background' | 'logo' | 'hero') => {
     if (imageType === 'logo') {
       handleDeleteLogo();
+    } else if (imageType === 'background') {
+      if (backgroundImagePreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(backgroundImagePreview);
+      }
+      setBackgroundImageFile(null);
+      setBackgroundImagePreview(null);
+    } else if (imageType === 'hero') {
+      const index = heroImagesPreview.indexOf(imageUrlToDelete);
+      if (index === -1) return;
+
+      if (imageUrlToDelete.startsWith('blob:')) {
+        URL.revokeObjectURL(imageUrlToDelete);
+        const blobIndex = heroImagesPreview.filter(url => url.startsWith('blob:')).indexOf(imageUrlToDelete);
+        if (blobIndex !== -1) {
+          setHeroImageFiles(prev => prev.filter((_, i) => i !== blobIndex));
+        }
+      } else {
+        setOriginalHeroImages(prev => prev.filter(img => transformCloudinary(img, { width: 400, quality: 'auto', format: 'auto' }) !== imageUrlToDelete));
+      }
+      setHeroImagesPreview(prev => prev.filter((_, i) => i !== index));
     }
   };
 
@@ -312,9 +363,39 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
     setError('');
 
     try {
-      const finalBackgroundImageUrl: string | null = salon.backgroundImage || null;
-      const finalHeroImageUrls = originalHeroImages;
+      let finalBackgroundImageUrl: string | null = salon.backgroundImage || null;
       let finalLogoUrl: string | null = null;
+      const finalHeroImageUrls = [...originalHeroImages];
+
+      if (backgroundImageFile && backgroundImagePreview?.startsWith('blob:')) {
+        toast.info('Uploading background image...');
+        const uploaded = await uploadToCloudinary(backgroundImageFile, {
+          publicId: `${salon.name.replace(/[^a-zA-Z0-9]/g, '_')}_bg_${Date.now()}`,
+          onProgress: (progress) => {
+            setUploadProgress(prev => ({ ...prev, background: progress }));
+          }
+        });
+        finalBackgroundImageUrl = uploaded.secure_url;
+        setUploadProgress(prev => ({ ...prev, background: 100 }));
+        toast.success('Background image uploaded!');
+      } else if (!backgroundImagePreview) {
+        finalBackgroundImageUrl = null;
+      }
+
+      for (let i = 0; i < heroImageFiles.length; i++) {
+        const file = heroImageFiles[i];
+        toast.info(`Uploading hero image ${i + 1}...`);
+        const uploaded = await uploadToCloudinary(file, {
+          publicId: `${salon.name.replace(/[^a-zA-Z0-9]/g, '_')}_hero_${Date.now()}_${i}`,
+          onProgress: (progress) => {
+            setUploadProgress(prev => ({ ...prev, [`hero_${i}`]: progress }));
+          }
+        });
+        finalHeroImageUrls.push(uploaded.secure_url);
+        setUploadProgress(prev => ({ ...prev, [`hero_${i}`]: 100 }));
+      }
+      if (heroImageFiles.length > 0) toast.success('Hero images uploaded!');
+
       if (logoFile && logoPreview?.startsWith('blob:')) {
         toast.info('Uploading logo...');
         const uploaded = await uploadToCloudinary(logoFile, {
@@ -371,6 +452,8 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
         freshaReviewsUrl: freshaReviewsValue ? (isValidUrl(freshaReviewsValue) ? freshaReviewsValue : undefined) : null,
         booksyReviewsUrl: booksyReviewsValue ? (isValidUrl(booksyReviewsValue) ? booksyReviewsValue : undefined) : null,
         logo: finalLogoUrl,
+        backgroundImage: finalBackgroundImageUrl,
+        heroImages: finalHeroImageUrls,
         latitude: formData.latitude !== '' ? Number(formData.latitude) : undefined,
         longitude: formData.longitude !== '' ? Number(formData.longitude) : undefined,
         operatingHours: hoursArray,
@@ -746,7 +829,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                 </div>
               )}
               <div className={styles.grid}>
-                <div className={styles.imageUploadSection} hidden>
+                <div className={styles.imageUploadSection}>
                   <label className={styles.label}>
                     Background Image
                     <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)', marginTop: '4px' }}>
@@ -801,7 +884,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
                     )}
                   </div>
                 </div>
-                <div className={styles.imageUploadSection} hidden>
+                <div className={styles.imageUploadSection}>
                   <label className={styles.label}>
                     Hero Images
                     <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)', marginTop: '4px' }}>

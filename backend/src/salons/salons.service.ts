@@ -266,7 +266,11 @@ export class SalonsService {
       latitude: (dto as any).latitude,
       longitude: (dto as any).longitude,
       heroImages: (dto as any).heroImages ?? [],
-      backgroundImage: (dto as any).backgroundImage,
+      backgroundImage:
+        (dto as any).backgroundImage ??
+        (Array.isArray((dto as any).heroImages) && (dto as any).heroImages.length > 0
+          ? (dto as any).heroImages[0]
+          : undefined),
       contactEmail: (dto as any).email ?? (dto as any).contactEmail,
       phoneNumber: (dto as any).phone ?? (dto as any).phoneNumber,
       whatsapp: (dto as any).whatsapp ?? null,

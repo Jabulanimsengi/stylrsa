@@ -26,6 +26,7 @@ import RelatedLocations from '@/components/RelatedLocations/RelatedLocations';
 import Breadcrumbs from '@/components/Breadcrumbs/Breadcrumbs';
 import { pageview } from '@/lib/analytics';
 import { getSalonUrl } from '@/utils/salonUrl';
+import { getSalonCardImage } from '@/lib/salonCardImage';
 
 type SalonWithFavorite = Salon & { isFavorited?: boolean };
 
@@ -238,7 +239,7 @@ export default function SalonCityNearYouClient({ provinceSlug, citySlug }: Props
                     avgRating={salon.avgRating || 0}
                   />
                   <Image
-                    src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), { width: 600, quality: 'auto', format: 'auto', crop: 'fill' })}
+                    src={transformCloudinary(getImageWithFallback(getSalonCardImage(salon), 'wide'), { width: 600, quality: 'auto', format: 'auto', crop: 'fill' })}
                     alt={`${salon.name} - Salon in ${cityName}`}
                     className={styles.cardImage}
                     fill

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FaHeart, FaStar } from 'react-icons/fa';
 import { transformCloudinary } from '@/utils/cloudinary';
 import { getImageWithFallback } from '@/lib/placeholders';
+import { getSalonCardImage } from '@/lib/salonCardImage';
 import ImageLightbox from '@/components/ImageLightbox';
 import { useNavigationLoading } from '@/context/NavigationLoadingContext';
 import { Salon } from '@/types';
@@ -144,6 +145,7 @@ function SalonCard({
   };
 
   const shouldShowFooter = (showPrice && startingPrice !== null) || salon.distance != null;
+  const cardImage = getSalonCardImage(salon);
 
   return (
     <>
@@ -193,7 +195,7 @@ function SalonCard({
           </div>
 
           <OptimizedImage
-            src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), {
+            src={transformCloudinary(getImageWithFallback(cardImage, 'wide'), {
               width: 600,
               quality: 'auto',
               format: 'auto',

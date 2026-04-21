@@ -12,6 +12,7 @@ import { toFriendlyMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { getImageWithFallback } from '@/lib/placeholders';
 import { transformCloudinary } from '@/utils/cloudinary';
+import { getSalonCardImage } from '@/lib/salonCardImage';
 import ReviewBadge from '@/components/ReviewBadge/ReviewBadge';
 import { getSalonUrl } from '@/utils/salonUrl';
 import { notify } from '@/lib/notify';
@@ -102,7 +103,7 @@ export default function MyFavoritesPage() {
                   avgRating={salon.avgRating || 0}
                 />
                 <Image
-                  src={transformCloudinary(getImageWithFallback(salon.backgroundImage, 'wide'), { width: 600, quality: 'auto', format: 'auto', crop: 'fill' })}
+                  src={transformCloudinary(getImageWithFallback(getSalonCardImage(salon), 'wide'), { width: 600, quality: 'auto', format: 'auto', crop: 'fill' })}
                   alt={`A photo of ${salon.name}`}
                   className={styles.cardImage}
                   fill

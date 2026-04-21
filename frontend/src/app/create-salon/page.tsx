@@ -227,6 +227,7 @@ function CreateSalonPageContent() {
             bookingType === 'ONSITE' || mobileFee.trim() === ''
               ? undefined
               : Number.parseFloat(mobileFee),
+          backgroundImage: heroImages[0] || undefined,
           heroImages,
           depositRequired,
           depositPercentage: depositRequired
@@ -706,8 +707,8 @@ function CreateSalonPageContent() {
                   {isUploadingImages
                     ? 'Uploading images...'
                     : uploadedImageCount > 0
-                      ? `${uploadedImageCount} image${uploadedImageCount > 1 ? 's' : ''} ready for your profile`
-                      : 'Optional: upload work examples for your gallery'}
+                      ? `${uploadedImageCount} image${uploadedImageCount > 1 ? 's' : ''} ready for your profile. The first image is used on salon cards.`
+                      : 'Optional: upload work examples for your gallery. The first image is used on salon cards.'}
                 </span>
               </div>
             </div>

@@ -10,6 +10,7 @@ import { getSalonUrl } from '@/utils/salonUrl';
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import { logger } from '@/lib/logger';
 import styles from './SimilarSalons.module.css';
+import { getSalonCardImage } from '@/lib/salonCardImage';
 
 const DISPLAY_LIMIT = 6;
 const FETCH_LIMIT = 18;
@@ -386,7 +387,7 @@ export default function SimilarSalons({
               )}
               <OptimizedImage
                 src={transformCloudinary(
-                  getImageWithFallback(salon.backgroundImage, 'wide'),
+                  getImageWithFallback(getSalonCardImage(salon), 'wide'),
                   { width: 400, quality: 'auto', format: 'auto', crop: 'fill' }
                 )}
                 alt={salon.name}
