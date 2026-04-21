@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 
 interface NavigationLoadingContextType {
@@ -15,13 +15,53 @@ const NavigationLoadingContext = createContext<NavigationLoadingContextType | un
 export function NavigationLoadingProvider({ children }: { children: ReactNode }) {
   const [isNavigating, setIsNavigating] = useState(false);
   const pathname = usePathname();
-  const showPageLoader = () => setIsNavigating(true);
-  const hidePageLoader = () => setIsNavigating(false);
+  const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const visibleSinceRef = useRef<number | null>(null);
+
+  const clearShowTimeout = useCallback(() => {
+    if (showTimeoutRef.current) {
+      clearTimeout(showTimeoutRef.current);
+      showTimeoutRef.current = null;
+    }
+  }, []);
+
+  const showPageLoader = useCallback(() => {
+    clearShowTimeout();
+    showTimeoutRef.current = setTimeout(() => {
+      visibleSinceRef.current = Date.now();
+      setIsNavigating(true);
+      showTimeoutRef.current = null;
+    }, 140);
+  }, [clearShowTimeout]);
+
+  const hidePageLoader = useCallback(() => {
+    clearShowTimeout();
+
+    if (!isNavigating) {
+      setIsNavigating(false);
+      visibleSinceRef.current = null;
+      return;
+    }
+
+    const visibleFor = visibleSinceRef.current ? Date.now() - visibleSinceRef.current : 0;
+    const remaining = Math.max(0, 180 - visibleFor);
+
+    setTimeout(() => {
+      setIsNavigating(false);
+      visibleSinceRef.current = null;
+    }, remaining);
+  }, [clearShowTimeout, isNavigating]);
 
   // Reset loading state when route changes (navigation complete)
   useEffect(() => {
     hidePageLoader();
-  }, [pathname]);
+  }, [hidePageLoader, pathname]);
+
+  useEffect(() => {
+    return () => {
+      clearShowTimeout();
+    };
+  }, [clearShowTimeout]);
 
   useEffect(() => {
     const handleDocumentClick = (event: MouseEvent) => {
@@ -56,7 +96,7 @@ export function NavigationLoadingProvider({ children }: { children: ReactNode })
 
     document.addEventListener('click', handleDocumentClick, true);
     return () => document.removeEventListener('click', handleDocumentClick, true);
-  }, []);
+  }, [showPageLoader]);
 
   return (
     <NavigationLoadingContext.Provider

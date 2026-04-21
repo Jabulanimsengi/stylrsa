@@ -66,7 +66,9 @@ export default function VerifyEmailCode({ email, onVerified, onCancel }: VerifyE
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const verificationCode = code.join('');
+    const verificationCode = inputRefs.current
+      .map((input) => input?.value ?? '')
+      .join('');
 
     if (verificationCode.length !== 6) {
       setError('Please enter all 6 digits');
@@ -82,6 +84,15 @@ export default function VerifyEmailCode({ email, onVerified, onCancel }: VerifyE
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: verificationCode }),
       });
+
+      if (!res.ok) {
+        const errorPayload = await res.json().catch(() => null);
+        const errorMessage =
+          errorPayload?.userMessage ||
+          errorPayload?.message ||
+          'Invalid or expired verification code. Please try again.';
+        throw new Error(errorMessage);
+      }
 
       const response = await res.json();
       toast.success(response.message || 'Email verified successfully!');

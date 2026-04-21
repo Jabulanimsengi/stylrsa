@@ -27,7 +27,7 @@ function AttachBackendCookie() {
 
 export default function AuthSessionProvider({ children }: { children: ReactNode }) {
   return (
-    <SessionProvider refetchOnWindowFocus={false}>
+    <SessionProvider refetchOnWindowFocus={false} refetchInterval={0}>
       <AttachBackendCookie />
       {children}
     </SessionProvider>

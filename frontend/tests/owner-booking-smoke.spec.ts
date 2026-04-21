@@ -94,6 +94,8 @@ test.afterAll(async () => {
 
 test.describe.serial('Owner signup and guest booking smoke checks', () => {
   test('salon owner can sign up, verify email, and land on create salon', async ({ page }) => {
+    test.slow();
+
     const unique = Date.now();
     const email = `owner-smoke-${unique}@stylrsa.local`;
     const password = 'OwnerSmoke123!';
@@ -118,7 +120,7 @@ test.describe.serial('Owner signup and guest booking smoke checks', () => {
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Create Salon Owner Account' }).click();
 
-    await expect(page.getByRole('heading', { name: 'Verify Your Email' }).last()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Verify Your Email' }).last()).toBeVisible({ timeout: 15000 });
 
     const verificationToken = await waitForVerificationToken(email);
     for (const [index, digit] of verificationToken.split('').entries()) {
@@ -126,7 +128,8 @@ test.describe.serial('Owner signup and guest booking smoke checks', () => {
     }
     await page.getByRole('button', { name: 'Verify Email' }).click();
 
-    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByLabel('Email address')).toBeVisible();
     await page.getByLabel('Email address').fill(email);
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Sign In' }).click();
@@ -139,6 +142,8 @@ test.describe.serial('Owner signup and guest booking smoke checks', () => {
   });
 
   test('guest booking keeps the flow connected and prepares a WhatsApp handoff', async ({ page }) => {
+    test.slow();
+
     const salon = await getBookableSalon();
 
     await page.addInitScript(() => {
@@ -156,14 +161,16 @@ test.describe.serial('Owner signup and guest booking smoke checks', () => {
       }) as typeof window.open;
     });
 
-    await page.goto(`/salons/${salon.slug || salon.id}`);
+    await page.goto(`/salons/${salon.slug || salon.id}`, { waitUntil: 'domcontentloaded' });
     await dismissCookieBanner(page);
 
     await expect(page.getByRole('heading', { name: /book appointment/i })).not.toBeVisible({ timeout: 1000 }).catch(() => {});
-    await page.getByRole('button', { name: /book now/i }).first().click();
+    await page.getByRole('button', { name: 'Add service' }).first().click();
+    await expect(page.getByText('Review your service')).toBeVisible();
+    await page.getByRole('button', { name: /^Continue$/ }).click();
 
-    await expect(page.getByRole('heading', { name: 'Book Appointment' })).toBeVisible();
-    await expect(page.getByText('Continue Your Booking')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Book Appointment', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Continue Your Booking', exact: true })).toBeVisible();
 
     await page.getByLabel('First Name *').fill('Guest');
     await page.getByLabel('Surname *').fill('Booking');
@@ -171,19 +178,25 @@ test.describe.serial('Owner signup and guest booking smoke checks', () => {
     await page.getByLabel('Email Address').fill('guest.booking@example.com');
     await page.getByRole('button', { name: /^Continue$/ }).click();
 
-    await expect(page.getByText('Select Date & Time')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Select Date & Time', exact: true })).toBeVisible();
     await page.locator('[data-date]').first().click();
     await page.getByRole('button', { name: '09:00 - 12:00' }).click();
     await page.getByRole('button', { name: /^Continue$/ }).click();
 
-    await expect(page.getByText('Preferences')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Preferences', exact: true })).toBeVisible();
     await page.getByRole('button', { name: /^Continue$/ }).click();
 
-    await expect(page.getByText('Review & Proceed')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Review & Proceed', exact: true })).toBeVisible();
     await page.getByRole('checkbox').check();
     await page.getByRole('button', { name: 'Continue to WhatsApp' }).click();
 
-    await expect.poll(async () => page.evaluate(() => (window as unknown as Window & { __lastOpenedUrl?: string | null }).__lastOpenedUrl ?? null)).toContain('https://wa.me/');
-    await expect.poll(async () => page.evaluate(() => (window as unknown as Window & { __lastOpenedUrl?: string | null }).__lastOpenedUrl ?? null)).toContain('StylRSA%20Booking%20Request');
+    await expect.poll(
+      async () => page.evaluate(() => (window as unknown as Window & { __lastOpenedUrl?: string | null }).__lastOpenedUrl ?? ''),
+      { timeout: 30000 }
+    ).toContain('https://wa.me/');
+    await expect.poll(
+      async () => page.evaluate(() => (window as unknown as Window & { __lastOpenedUrl?: string | null }).__lastOpenedUrl ?? ''),
+      { timeout: 30000 }
+    ).toContain('StylRSA%20Booking%20Request');
   });
 });

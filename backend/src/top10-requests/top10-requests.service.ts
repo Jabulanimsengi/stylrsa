@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTop10RequestDto } from './dto/create-top10-request.dto';
 import { NotificationsService } from '../notifications/notifications.service';
-import sgMail from '@sendgrid/mail';
+import { resendMailAdapter } from '../mail/resend-adapter';
 
 @Injectable()
 export class Top10RequestsService {
@@ -17,13 +17,13 @@ export class Top10RequestsService {
     private config: ConfigService,
     private notificationsService: NotificationsService,
   ) {
-    const apiKey = this.config.get<string>('SENDGRID_API_KEY');
+    const apiKey = this.config.get<string>('RESEND_API_KEY');
     if (apiKey) {
-      sgMail.setApiKey(apiKey);
+      resendMailAdapter.setApiKey(apiKey);
       this.isEmailConfigured = true;
-      this.logger.log('[URGENT REQUEST] SendGrid configured successfully');
+      this.logger.log('[URGENT REQUEST] Resend configured successfully');
     } else {
-      this.logger.warn('[URGENT REQUEST] SENDGRID_API_KEY not configured. Email notifications disabled.');
+      this.logger.warn('[URGENT REQUEST] RESEND_API_KEY not configured. Email notifications disabled.');
     }
     this.fromEmail = this.config.get<string>('FROM_EMAIL') || 'noreply@stylrsa.co.za';
     this.adminEmail = this.config.get<string>('ADMIN_EMAIL') || 'jbmsengi@gmail.com';
@@ -173,7 +173,7 @@ export class Top10RequestsService {
     `;
 
     try {
-      await sgMail.send({
+      await resendMailAdapter.send({
         from: this.fromEmail,
         to: this.adminEmail,
         subject,

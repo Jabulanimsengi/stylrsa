@@ -33,7 +33,7 @@ function Skeleton({
     return (
         <div
             className={cn(
-                'bg-[#eceff3]',
+                'bg-[#d9dee5]',
                 variants[variant],
                 animations[animation],
                 className

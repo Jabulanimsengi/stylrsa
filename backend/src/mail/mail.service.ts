@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import sgMail from '@sendgrid/mail';
+import { resendMailAdapter } from './resend-adapter';
 
 @Injectable()
 export class MailService {
@@ -9,20 +9,29 @@ export class MailService {
   private adminEmail: string;
 
   constructor(private config: ConfigService) {
-    const apiKey = this.config.get<string>('SENDGRID_API_KEY');
-    console.log(`[MAIL] SENDGRID_API_KEY loaded: ${apiKey ? 'YES (starts with ' + apiKey.substring(0, 5) + '...)' : 'NO'}`);
+    const apiKey = this.config.get<string>('RESEND_API_KEY');
+    console.log(`[MAIL] RESEND_API_KEY loaded: ${apiKey ? 'YES (starts with ' + apiKey.substring(0, 5) + '...)' : 'NO'}`);
     if (!apiKey) {
-      console.warn('[MAIL] SENDGRID_API_KEY not configured. Email sending will be disabled.');
+      console.warn('[MAIL] RESEND_API_KEY not configured. Email sending will be disabled.');
       this.isConfigured = false;
     } else {
-      sgMail.setApiKey(apiKey);
+      resendMailAdapter.setApiKey(apiKey);
       this.isConfigured = true;
-      console.log('[MAIL] SendGrid configured successfully');
+      console.log('[MAIL] Resend configured successfully');
     }
     this.fromEmail = this.config.get<string>('FROM_EMAIL') || 'noreply@stylrsa.co.za';
     this.adminEmail = this.config.get<string>('ADMIN_EMAIL') || 'jbmsengi@gmail.com';
     console.log(`[MAIL] FROM_EMAIL: ${this.fromEmail}`);
     console.log(`[MAIL] ADMIN_EMAIL: ${this.adminEmail}`);
+  }
+
+  private async sendEmail(message: {
+    to: string | string[];
+    from: string;
+    subject: string;
+    html: string;
+  }) {
+    await resendMailAdapter.send(message);
   }
 
   async sendVerificationEmail(email: string, code: string, firstName: string) {
@@ -39,7 +48,7 @@ export class MailService {
         subject: 'Verify your email - Stylr SA',
         html: this.getVerificationEmailTemplate(firstName, code),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
       console.log(`[EMAIL] Verification email sent successfully to ${email}`);
     } catch (error) {
       console.error('[EMAIL] Failed to send verification email:', error);
@@ -61,7 +70,7 @@ export class MailService {
         subject: 'Welcome to Stylr SA!',
         html: this.getWelcomeEmailTemplate(firstName),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
     } catch (error) {
       console.error('Failed to send welcome email:', error);
     }
@@ -80,9 +89,9 @@ export class MailService {
         to: email,
         from: this.fromEmail,
         subject: 'Reset your password - Stylr SA',
-        html: this.getPasswordResetTemplate(firstName, resetUrl),
+        html: this.getEnhancedPasswordResetTemplate(firstName, resetUrl),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
     } catch (error) {
       console.error('Failed to send password reset email:', error);
       throw error;
@@ -102,7 +111,7 @@ export class MailService {
         subject: 'Account Temporarily Locked - Stylr SA',
         html: this.getAccountLockedTemplate(firstName, unlockTime),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
     } catch (error) {
       console.error('Failed to send account locked email:', error);
     }
@@ -121,7 +130,7 @@ export class MailService {
         subject: 'Two-Factor Authentication Enabled - Stylr SA',
         html: this.get2FASetupTemplate(firstName),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
     } catch (error) {
       console.error('Failed to send 2FA setup email:', error);
     }
@@ -135,26 +144,34 @@ export class MailService {
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
-            .container { max-width: 480px; margin: 40px auto; background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-            .content { padding: 40px 32px; text-align: center; }
-            .logo { font-size: 24px; font-weight: 700; color: #F51957; margin-bottom: 32px; }
-            .greeting { font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 16px; }
-            .text { font-size: 15px; color: #555; margin-bottom: 24px; }
-            .code-box { font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #F51957; background: #fff5f7; padding: 20px; border-radius: 8px; margin: 24px 0; font-family: 'Courier New', monospace; }
-            .divider { height: 1px; background: #eee; margin: 24px 0; }
-            .footer { text-align: center; font-size: 13px; color: #888; padding: 0 32px 32px; }
-            .small { font-size: 13px; color: #888; }
+            body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #18181b; margin: 0; padding: 24px 16px; background: #f3f4f6; }
+            .container { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 24px; box-shadow: 0 24px 60px rgba(15,23,42,0.08); overflow: hidden; border: 1px solid rgba(148,163,184,0.16); }
+            .content { padding: 32px; }
+            .logo { font-size: 28px; font-weight: 800; color: #111827; margin: 18px 0 10px; letter-spacing: -0.03em; }
+            .greeting { font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 12px; }
+            .text { font-size: 15px; color: #4b5563; margin-bottom: 18px; }
+            .code-box { font-size: 38px; font-weight: 800; letter-spacing: 10px; color: #111827; background: linear-gradient(180deg, #f9fafb 0%, #eef2f7 100%); padding: 24px; border-radius: 20px; margin: 28px 0 20px; font-family: 'Courier New', monospace; border: 1px solid #d7dde6; }
+            .divider { display: none; }
+            .footer { text-align: center; font-size: 13px; color: #6b7280; padding: 20px 32px 32px; }
+            .small { font-size: 13px; color: #6b7280; }
           </style>
         </head>
         <body>
           <div class="container">
+            <div style="padding: 32px; background: linear-gradient(135deg, #111827 0%, #1f2937 52%, #374151 100%); color: #ffffff;">
+              <span style="display: inline-block; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.12); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">Account Security</span>
+              <div class="logo" style="color: #ffffff;">Stylr SA</div>
+              <p style="margin: 0; font-size: 15px; color: rgba(255,255,255,0.82);">Confirm your email address to finish setting up your account and continue into the platform.</p>
+            </div>
             <div class="content">
-              <div class="logo">Stylr SA</div>
               <p class="greeting">Hi ${firstName},</p>
-              <p class="text">Enter this code to verify your email:</p>
+              <p class="text">Use the verification code below to confirm your email and finish signing in securely.</p>
+              <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6b7280;">Your verification code</p>
               <div class="code-box">${verificationCode}</div>
-              <p class="small">This code expires in 15 minutes.</p>
+              <div style="display: grid; gap: 12px; margin-top: 20px;">
+                <div style="padding: 14px 16px; border-radius: 16px; background: #f9fafb; border: 1px solid #e5e7eb; font-size: 14px; color: #4b5563;"><strong style="color: #111827;">Expires in:</strong> 15 minutes</div>
+                <div style="padding: 14px 16px; border-radius: 16px; background: #f9fafb; border: 1px solid #e5e7eb; font-size: 14px; color: #4b5563;"><strong style="color: #111827;">Heads up:</strong> If you did not request this code, you can safely ignore this email.</div>
+              </div>
             </div>
             <div class="divider"></div>
             <div class="footer">
@@ -243,6 +260,58 @@ export class MailService {
               <p class="small">This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>
             </div>
             <div class="divider"></div>
+            <div class="footer">
+              <p>© ${new Date().getFullYear()} Stylr SA</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  private getEnhancedPasswordResetTemplate(firstName: string, resetUrl: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #18181b; margin: 0; padding: 24px 16px; background: #f3f4f6; }
+            .container { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 24px; box-shadow: 0 24px 60px rgba(15,23,42,0.08); overflow: hidden; border: 1px solid rgba(148,163,184,0.16); }
+            .hero { padding: 32px; background: linear-gradient(135deg, #111827 0%, #1f2937 52%, #374151 100%); color: #ffffff; }
+            .badge { display: inline-block; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.12); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+            .logo { font-size: 28px; font-weight: 800; color: #ffffff; margin: 18px 0 10px; letter-spacing: -0.03em; }
+            .heroCopy { margin: 0; font-size: 15px; color: rgba(255,255,255,0.82); }
+            .content { padding: 32px; }
+            .greeting { font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 12px; }
+            .text { font-size: 15px; color: #4b5563; margin-bottom: 18px; }
+            .button { display: inline-block; margin: 8px 0 18px; padding: 14px 28px; background: #111827; color: #ffffff !important; text-decoration: none; border-radius: 16px; font-weight: 700; font-size: 15px; text-align: center; }
+            .infoCard { padding: 14px 16px; border-radius: 16px; background: #f9fafb; border: 1px solid #e5e7eb; font-size: 14px; color: #4b5563; margin-top: 16px; }
+            .linkBox { margin-top: 18px; padding: 16px; border-radius: 16px; background: #f9fafb; border: 1px dashed #d1d5db; }
+            .linkLabel { margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6b7280; }
+            .linkValue { margin: 0; font-size: 13px; color: #111827; word-break: break-all; }
+            .footer { text-align: center; font-size: 13px; color: #6b7280; padding: 0 32px 32px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="hero">
+              <span class="badge">Password reset</span>
+              <div class="logo">Stylr SA</div>
+              <p class="heroCopy">Use the secure link below to choose a new password and get back into your account.</p>
+            </div>
+            <div class="content">
+              <p class="greeting">Hi ${firstName},</p>
+              <p class="text">We received a request to reset your password. Tap the button below to create a new one.</p>
+              <a href="${resetUrl}" class="button">Reset Password</a>
+              <div class="infoCard"><strong style="color: #111827;">Expires in:</strong> 1 hour</div>
+              <div class="infoCard"><strong style="color: #111827;">Didn&apos;t request this?</strong> You can safely ignore this email and your current password will stay the same.</div>
+              <div class="linkBox">
+                <p class="linkLabel">Having trouble with the button?</p>
+                <p class="linkValue">${resetUrl}</p>
+              </div>
+            </div>
             <div class="footer">
               <p>© ${new Date().getFullYear()} Stylr SA</p>
             </div>
@@ -453,7 +522,7 @@ export class MailService {
           `Please use this reference together with your salon name whenever you contact admin about your application.`,
         ),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
       console.log(`[EMAIL] Salon application received email sent to ${email}`);
     } catch (error) {
       console.error(
@@ -533,7 +602,7 @@ export class MailService {
           </html>
         `,
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
       console.log(`[EMAIL] Admin notification sent: ${subject}`);
     } catch (error) {
       console.error('[EMAIL] Failed to send admin notification:', error);
@@ -572,7 +641,7 @@ export class MailService {
           `You'll receive an email once the salon confirms your appointment.`,
         ),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
       console.log(`[EMAIL] Booking confirmation sent to ${userEmail}`);
     } catch (error) {
       console.error('[EMAIL] Failed to send booking confirmation:', error);
@@ -614,7 +683,7 @@ export class MailService {
           'https://stylrsa.co.za/dashboard/bookings',
         ),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
       console.log(`[EMAIL] Salon booking notification sent to ${salonOwnerEmail}`);
     } catch (error) {
       console.error('[EMAIL] Failed to send salon booking notification:', error);
@@ -659,7 +728,7 @@ export class MailService {
           'https://stylrsa.co.za/admin?tab=bookings',
         ),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
       console.log(`[EMAIL] Admin booking notification sent to ${adminEmail}`);
     } catch (error) {
       console.error('[EMAIL] Failed to send admin booking notification:', error);
@@ -702,7 +771,7 @@ export class MailService {
           `Please arrive 5-10 minutes before your appointment time.`,
         ),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
       console.log(`[EMAIL] Booking approved email sent to ${userEmail}`);
     } catch (error) {
       console.error('[EMAIL] Failed to send booking approved email:', error);
@@ -735,7 +804,7 @@ export class MailService {
           `https://stylrsa.co.za/salons`,
         ),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
       console.log(`[EMAIL] Booking rejected email sent to ${userEmail}`);
     } catch (error) {
       console.error('[EMAIL] Failed to send booking rejected email:', error);
@@ -787,7 +856,7 @@ export class MailService {
           'https://stylrsa.co.za/my-bookings',
         ),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
       console.log(`[EMAIL] Appointment reminder sent to ${userEmail}`);
     } catch (error) {
       console.error('[EMAIL] Failed to send appointment reminder:', error);
@@ -831,7 +900,7 @@ export class MailService {
           reviewUrl,
         ),
       };
-      await sgMail.send(msg);
+      await this.sendEmail(msg);
       console.log(`[EMAIL] Review request sent to ${userEmail}`);
     } catch (error) {
       console.error('[EMAIL] Failed to send review request:', error);

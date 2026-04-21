@@ -27,6 +27,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const verifyingRef = useRef<boolean>(false);
   const justLoggedInRef = useRef<boolean>(false); // Track if user just logged in to prevent immediate re-verification
 
+  const hydrateFromSession = useCallback(() => {
+    if (sessionStatus !== 'authenticated') return false;
+
+    const sessionUser = session?.user;
+    if (!sessionUser?.id || !sessionUser.email) return false;
+    const sessionUserId = sessionUser.id;
+    const sessionUserEmail = sessionUser.email;
+
+    setUser((currentUser) => currentUser ?? {
+      id: sessionUserId,
+      email: sessionUserEmail,
+      firstName: sessionUser.firstName ?? '',
+      lastName: sessionUser.lastName ?? '',
+      role: (sessionUser.role as User['role']) ?? 'PENDING',
+      onboardingStatus: sessionUser.onboardingStatus as User['onboardingStatus'],
+      createdAt: '',
+      updatedAt: '',
+      emailVerified: sessionUser.emailVerified,
+      phoneNumber: sessionUser.phoneNumber ?? null,
+      salonId: sessionUser.salonId ?? null,
+    });
+    setAuthStatus('authenticated');
+    return true;
+  }, [session, sessionStatus]);
+
   const verifyUser = useCallback(async () => {
     if (verifyingRef.current) return;
 
@@ -42,6 +67,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       attachedRef.current = null;
       return;
     }
+
+    hydrateFromSession();
 
     verifyingRef.current = true;
 
@@ -121,7 +148,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       verifyingRef.current = false;
     }
-  }, [sessionStatus, session]);
+  }, [hydrateFromSession, sessionStatus, session]);
+
+  useEffect(() => {
+    if (sessionStatus === 'authenticated') {
+      hydrateFromSession();
+    }
+  }, [hydrateFromSession, sessionStatus]);
 
   useEffect(() => {
     // Wait until NextAuth finishes determining session to avoid race

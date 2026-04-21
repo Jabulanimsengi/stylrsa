@@ -46,10 +46,13 @@ export default function ForgotPasswordPage() {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Forgot Password</h1>
-        <p style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#666', fontSize: '0.9rem' }}>
-          Enter your email address and we'll send you a link to reset your password.
-        </p>
+        <div className={styles.stepHeader}>
+          <span className={styles.stepEyebrow}>Password help</span>
+          <h1 className={styles.title}>Reset your password</h1>
+          <p className={styles.stepMeta}>
+            Enter the email linked to your account and we&apos;ll send you a secure reset link.
+          </p>
+        </div>
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.inputGroup}>
             <label htmlFor="email" className={styles.label}>
@@ -66,7 +69,7 @@ export default function ForgotPasswordPage() {
           {error && <p className={styles.errorMessage}>{error}</p>}
           {success && <p className={styles.successMessage}>{success}</p>}
 
-          <div>
+          <div className={styles.stepActions}>
             <button
               type="submit"
               disabled={isLoading}

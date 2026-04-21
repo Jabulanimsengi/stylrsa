@@ -27,6 +27,10 @@ function ResetPasswordContent() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
@@ -62,16 +66,23 @@ function ResetPasswordContent() {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Reset Password</h1>
+        <div className={styles.stepHeader}>
+          <span className={styles.stepEyebrow}>Account recovery</span>
+          <h1 className={styles.title}>Create a new password</h1>
+          <p className={styles.stepMeta}>
+            Choose a strong password with at least 8 characters, then sign in again with the new one.
+          </p>
+        </div>
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.inputGroup}>
             <label htmlFor="password" className={styles.label}>
               New Password
             </label>
             <input
-              id="password" type="password" required value={password}
+              id="password" type="password" required minLength={8} value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={styles.input}
+              placeholder="At least 8 characters"
             />
           </div>
           <div className={styles.inputGroup}>
@@ -79,20 +90,22 @@ function ResetPasswordContent() {
               Confirm New Password
             </label>
             <input
-              id="confirmPassword" type="password" required value={confirmPassword}
+              id="confirmPassword" type="password" required minLength={8} value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className={styles.input}
+              placeholder="Re-enter your new password"
             />
           </div>
           
           {error && <p className={styles.errorMessage}>{error}</p>}
           {success && <p className={styles.successMessage}>{success}</p>}
 
-          <div>
+          <div className={styles.stepActions}>
             <button
               type="submit"
               disabled={isLoading || !token}
               className="btn btn-primary"
+              style={{ width: '100%' }}
             >
               {isLoading ? 'Resetting...' : 'Reset Password'}
             </button>

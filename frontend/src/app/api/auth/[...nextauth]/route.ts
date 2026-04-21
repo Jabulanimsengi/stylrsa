@@ -12,8 +12,14 @@ type GoogleProfile = {
 
 type BackendAuthUser = {
   id?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
   role?: string;
   onboardingStatus?: string;
+  phoneNumber?: string | null;
+  salonId?: string | null;
+  emailVerified?: boolean;
 };
 
 type BackendSsoResponse = {
@@ -26,6 +32,17 @@ type AppToken = JWT & {
   userId?: string;
   role?: string;
   onboardingStatus?: string;
+  backendUser?: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    onboardingStatus?: string;
+    phoneNumber?: string | null;
+    salonId?: string | null;
+    emailVerified?: boolean;
+  };
 };
 
 type AppSession = Session & {
@@ -34,6 +51,11 @@ type AppSession = Session & {
     id?: string;
     role?: string;
     onboardingStatus?: string;
+    firstName?: string;
+    lastName?: string;
+    emailVerified?: boolean;
+    phoneNumber?: string | null;
+    salonId?: string | null;
   };
 };
 
@@ -86,6 +108,21 @@ const handler = NextAuth({
             appToken.userId = data.user?.id;
             appToken.role = data.user?.role;
             appToken.onboardingStatus = data.user?.onboardingStatus;
+            if (data.user?.id) {
+              const backendUser = data.user;
+              const backendUserId = backendUser.id!;
+              appToken.backendUser = {
+                id: backendUserId,
+                email: backendUser.email ?? (profile as GoogleProfile | null)?.email ?? '',
+                firstName: backendUser.firstName ?? '',
+                lastName: backendUser.lastName ?? '',
+                role: backendUser.role ?? 'PENDING',
+                onboardingStatus: backendUser.onboardingStatus,
+                phoneNumber: backendUser.phoneNumber ?? null,
+                salonId: backendUser.salonId ?? null,
+                emailVerified: backendUser.emailVerified,
+              };
+            }
             
             // Try to set cookie directly (may not work in all contexts)
             try {
@@ -119,6 +156,15 @@ const handler = NextAuth({
         appSession.user.id = appToken.userId;
         appSession.user.role = appToken.role;
         appSession.user.onboardingStatus = appToken.onboardingStatus;
+        if (appToken.backendUser) {
+          appSession.user.email = appToken.backendUser.email;
+          appSession.user.name = [appToken.backendUser.firstName, appToken.backendUser.lastName].filter(Boolean).join(' ');
+          appSession.user.firstName = appToken.backendUser.firstName;
+          appSession.user.lastName = appToken.backendUser.lastName;
+          appSession.user.emailVerified = appToken.backendUser.emailVerified;
+          appSession.user.phoneNumber = appToken.backendUser.phoneNumber;
+          appSession.user.salonId = appToken.backendUser.salonId;
+        }
       }
       return appSession;
     },

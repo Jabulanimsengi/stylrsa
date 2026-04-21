@@ -1,5 +1,6 @@
 import {
   ForbiddenException,
+  InternalServerErrorException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -311,6 +312,8 @@ export class AuthService {
         password: hashedPassword,
         resetPasswordToken: null,
         resetPasswordExpires: null,
+        failedLoginAttempts: 0,
+        accountLockedUntil: null,
       },
     });
 
@@ -340,8 +343,9 @@ export class AuthService {
       },
     });
 
-    // Send welcome email
-    await this.mailService.sendWelcomeEmail(user.email, user.firstName);
+    // Let the verification response complete immediately even if the
+    // follow-up welcome email takes a little longer to deliver.
+    void this.mailService.sendWelcomeEmail(user.email, user.firstName);
 
     return { message: 'Email verified successfully! You can now log in.' };
   }
@@ -379,9 +383,12 @@ export class AuthService {
         user.firstName,
       );
       return { message: 'A new 6-digit verification code has been sent to your email.' };
-    } catch (error) {
-      console.log('[AUTH] Email sending failed (domain not configured):', error.message);
-      return { message: 'Email verification is currently unavailable. You can log in without verification.' };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown email delivery error';
+      console.error('[AUTH] Email sending failed:', message);
+      throw new InternalServerErrorException(
+        'We could not send the verification email right now. Please try again in a moment.',
+      );
     }
   }
 

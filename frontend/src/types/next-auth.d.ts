@@ -10,6 +10,12 @@ declare module 'next-auth' {
       email?: string;
       name?: string;
       role?: string;
+      firstName?: string;
+      lastName?: string;
+      onboardingStatus?: string;
+      emailVerified?: boolean;
+      phoneNumber?: string | null;
+      salonId?: string | null;
     };
   }
 }

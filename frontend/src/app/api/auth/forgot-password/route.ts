@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { getInternalBackendOrigin } from '@/lib/server/backend-origin';
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const backendOrigin = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_ORIGIN || 'http://localhost:5000';
+        const backendOrigin = getInternalBackendOrigin();
 
         const backendRes = await fetch(`${backendOrigin}/api/auth/forgot-password`, {
             method: 'POST',
