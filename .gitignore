@@ -99,3 +99,8 @@ test-build-offline.js
 test-logo-display.js
 test-seo-implementation.sh
 test-seo.js
+diag.sh
+diag2.sh
+diag3.sh
+stylrsa-live.dump
+frontend/public/art_one_desktop copy.webp

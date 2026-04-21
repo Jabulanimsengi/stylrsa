@@ -469,7 +469,7 @@ export default function EditSalonModal({ salon, onClose, onSalonUpdate }: EditSa
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="w-[min(92vw,760px)] max-h-[90vh] overflow-hidden p-0 gap-0">
         <DialogTitle className="sr-only">Edit Salon Profile</DialogTitle>
-        <div className={styles.modalContent} style={{ position: 'relative', backgroundColor: 'transparent', boxShadow: 'none' }}>
+        <div className={styles.modalContent}>
           <h2 className={styles.title}>Edit Salon Profile</h2>
 
           <form onSubmit={handleSubmit} className={styles.form}>
