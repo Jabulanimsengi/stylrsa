@@ -94,13 +94,6 @@
   pointer-events: auto !important;
 }
 
-/* Desktop: Position prev button to the right of the sidebar */
-@media (min-width: 1025px) {
-  .prevButton {
-    left: calc(260px + 1rem) !important; /* Sidebar width (260px) + margin (1rem) */
-  }
-}
-
 .nextButton {
   position: fixed !important;
   right: 1rem !important;

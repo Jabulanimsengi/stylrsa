@@ -21,6 +21,7 @@ import VerificationBadge from '@/components/VerificationBadge/VerificationBadge'
 import MapboxMap from '@/components/MapboxMap';
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import { getSalonOpenStatus } from './salonOpenStatus';
+import { getSalonGalleryImages } from '@/lib/salonGalleryImages';
 
 // Sticky Tab Navigation Component
 export function StickyTabNavigation({
@@ -154,30 +155,7 @@ export function HeroGallery({
     onShowAllPhotos: () => void;
     onOpenLightbox: (images: string[], index: number) => void;
 }) {
-    // Get all available images
-    const allImages: string[] = [];
-
-    // Add hero images first
-    if (salon.heroImages && salon.heroImages.length > 0) {
-        allImages.push(...salon.heroImages);
-    }
-
-    // Add background image if available
-    if (salon.backgroundImage && !allImages.includes(salon.backgroundImage)) {
-        allImages.push(salon.backgroundImage);
-    }
-
-    // Add gallery images
-    galleryImages.forEach(g => {
-        if (!allImages.includes(g.imageUrl)) {
-            allImages.push(g.imageUrl);
-        }
-    });
-
-    // Fallback to logo if no images
-    if (allImages.length === 0 && salon.logo) {
-        allImages.push(salon.logo);
-    }
+    const allImages = getSalonGalleryImages(salon, galleryImages);
 
     if (allImages.length === 0) {
         return null;

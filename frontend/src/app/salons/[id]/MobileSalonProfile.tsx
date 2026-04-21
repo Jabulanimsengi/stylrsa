@@ -51,6 +51,7 @@ import MaterialsShowcase from '@/components/MaterialsShowcase/MaterialsShowcase'
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import { notify } from '@/lib/notify';
 import { getSalonOpenStatus } from './salonOpenStatus';
+import { getSalonGalleryImages, getSalonShowcaseImages } from '@/lib/salonGalleryImages';
 import {
     formatServiceDiscountLabel,
     getServiceDiscountedPrice,
@@ -191,19 +192,14 @@ export default function MobileSalonProfile({
     // Get open status
     const { isOpen, statusText } = getSalonOpenStatus(hoursRecord, todayLabel);
 
-    // Get all gallery images
-    const allImages = useMemo(() => {
-        const images: string[] = [];
-        if (salon.heroImages?.length) images.push(...salon.heroImages);
-        if (salon.backgroundImage && !images.includes(salon.backgroundImage)) {
-            images.push(salon.backgroundImage);
-        }
-        galleryImages.forEach(g => {
-            if (!images.includes(g.imageUrl)) images.push(g.imageUrl);
-        });
-        if (images.length === 0 && salon.logo) images.push(salon.logo);
-        return images;
-    }, [salon, galleryImages]);
+    const showcaseImages = useMemo(
+        () => getSalonShowcaseImages(salon, galleryImages),
+        [salon, galleryImages]
+    );
+    const galleryOnlyImages = useMemo(
+        () => getSalonGalleryImages(salon, galleryImages),
+        [salon, galleryImages]
+    );
 
     // Group services by category (Fresha-style)
     const groupedServices = useMemo(() => {
@@ -426,7 +422,7 @@ export default function MobileSalonProfile({
             <div className={styles.mobileProfile}>
                 {/* Hero Carousel Section - Shadcn UI */}
                 <div className={styles.heroCarousel}>
-                    {allImages.length > 0 ? (
+                    {showcaseImages.length > 0 ? (
                         <>
                             <Carousel
                                 setApi={setApi}
@@ -438,7 +434,7 @@ export default function MobileSalonProfile({
                                 style={{ width: '100%', height: '100%' }}
                             >
                                 <CarouselContent style={{ marginLeft: 0, height: '320px' }}>
-                                    {allImages.map((img, idx) => (
+                                    {showcaseImages.map((img, idx) => (
                                         <CarouselItem
                                             key={idx}
                                             style={{
@@ -447,7 +443,7 @@ export default function MobileSalonProfile({
                                                 height: '320px',
                                                 position: 'relative'
                                             }}
-                                            onClick={() => onOpenLightbox(allImages, idx)}
+                                            onClick={() => onOpenLightbox(showcaseImages, idx)}
                                         >
                                             <div style={{ position: 'relative', width: '100%', height: '320px' }}>
                                                 <OptimizedImage
@@ -616,7 +612,7 @@ export default function MobileSalonProfile({
                         onClick={() => setActiveTab('photos')}
                     >
                         Photos
-                        {allImages.length > 0 && <span className={styles.tabBadge}>{allImages.length}</span>}
+                        {galleryOnlyImages.length > 0 && <span className={styles.tabBadge}>{galleryOnlyImages.length}</span>}
                     </button>
                     {externalReviewLinks.length > 0 && (
                         <button
@@ -640,11 +636,11 @@ export default function MobileSalonProfile({
                     {activeTab === 'photos' && (
                         <div className={styles.photosTab}>
                             <div className={styles.photosGrid}>
-                                {allImages.map((img, idx) => (
+                                {galleryOnlyImages.map((img, idx) => (
                                     <div
                                         key={idx}
                                         className={styles.photoItem}
-                                        onClick={() => onOpenLightbox(allImages, idx)}
+                                        onClick={() => onOpenLightbox(galleryOnlyImages, idx)}
                                     >
                                         <OptimizedImage
                                             src={transformCloudinary(img, { width: 400, quality: 'auto', format: 'auto', crop: 'fill' })}
@@ -655,7 +651,7 @@ export default function MobileSalonProfile({
                                     </div>
                                 ))}
                             </div>
-                            {allImages.length === 0 && (
+                            {galleryOnlyImages.length === 0 && (
                                 <div className={styles.emptyState}>
                                     <FaImages className={styles.emptyIcon} />
                                     <p>No photos available yet</p>
