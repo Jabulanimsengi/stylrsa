@@ -1,220 +1,229 @@
 .promptContainer {
   position: fixed;
-  bottom: 0;
   left: 0;
   right: 0;
+  bottom: 0;
   z-index: 9999;
+  display: flex;
+  justify-content: center;
   padding: 1rem;
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
+  pointer-events: none;
 }
 
 .promptCard {
-  position: relative;
-  max-width: 500px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 -3px 18px rgba(0, 0, 0, 0.12);
-  padding: 1rem;
+  width: min(100%, 520px);
+  pointer-events: auto;
+  display: grid;
+  gap: 1rem;
+  padding: 1.15rem;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(251, 251, 253, 0.98) 100%);
+  border: 1px solid rgba(29, 29, 31, 0.08);
+  box-shadow:
+    0 28px 60px rgba(17, 19, 24, 0.18),
+    0 10px 24px rgba(17, 19, 24, 0.1);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  animation: promptRise 220ms ease-out;
 }
 
-.closeButton {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  background: transparent;
-  border: none;
-  color: #666;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0.35rem;
-  display: flex;
+@keyframes promptRise {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.brandRow {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
   align-items: center;
-  justify-content: center;
-  transition: color 0.2s;
 }
 
-.closeButton:hover {
-  color: #333;
+.logoTile {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  min-width: 88px;
+  aspect-ratio: 1;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top, rgba(245, 25, 87, 0.18), transparent 62%),
+    linear-gradient(135deg, #ffffff 0%, #f7f7f9 100%);
+  border: 1px solid rgba(245, 25, 87, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 
-.content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  text-align: center;
+.logo {
+  width: 92%;
+  height: auto;
+  object-fit: contain;
 }
 
-.icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  color: white;
+.copyBlock {
+  display: grid;
+  gap: 0.35rem;
 }
 
-.text {
-  flex: 1;
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f51957;
 }
 
 .title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 0 0 0.35rem 0;
-  color: #1a1a1a;
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.15;
+  color: #111318;
 }
 
 .description {
-  font-size: 0.8rem;
-  color: #666;
   margin: 0;
-  line-height: 1.45;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #5b6472;
+}
+
+.featureRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.featurePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 34px;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(17, 19, 24, 0.04);
+  border: 1px solid rgba(17, 19, 24, 0.06);
+  color: #1d1d1f;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.featurePill svg {
+  color: #f51957;
 }
 
 .actions {
-  display: flex;
-  gap: 0.5rem;
-  width: 100%;
-  max-width: 350px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.installButton,
+.dismissButton,
+.neverButton {
+  min-height: 46px;
+  border-radius: 16px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .installButton {
-  flex: 1;
-  padding: 0.6rem 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
   border: none;
-  border-radius: 0.375rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.installButton:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.35);
-}
-
-.installButton:active {
-  transform: translateY(0);
+  background: #111318;
+  color: #fff;
+  box-shadow: 0 16px 28px rgba(17, 19, 24, 0.18);
 }
 
 .dismissButton {
-  flex: 1;
-  padding: 0.6rem 1rem;
-  background: transparent;
-  color: #666;
-  border: 1px solid #ddd;
-  border-radius: 0.375rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.dismissButton:hover {
-  background: #f5f5f5;
-  border-color: #ccc;
+  border: 1px solid rgba(17, 19, 24, 0.1);
+  background: #fff;
+  color: #1d1d1f;
 }
 
 .neverButton {
-  padding: 0.4rem 0.875rem;
-  background: transparent;
-  color: #999;
+  justify-self: start;
+  min-height: auto;
+  padding: 0;
   border: none;
-  border-radius: 0.375rem;
-  font-size: 0.7rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 0.2s;
+  background: transparent;
+  color: #5b6472;
   text-decoration: underline;
+  text-underline-offset: 0.22em;
 }
 
-.neverButton:hover {
-  color: #666;
+@media (hover: hover) {
+  .installButton:hover {
+    transform: translateY(-1px);
+    background: #1b1f28;
+  }
+
+  .dismissButton:hover {
+    background: rgba(245, 25, 87, 0.06);
+    border-color: rgba(245, 25, 87, 0.22);
+    color: #111318;
+  }
+
+  .neverButton:hover {
+    color: #f51957;
+  }
 }
 
-/* Tablet */
-@media (max-width: 768px) {
+.installButton:active,
+.dismissButton:active,
+.neverButton:active {
+  transform: scale(0.98);
+}
+
+.installButton:focus-visible,
+.dismissButton:focus-visible,
+.neverButton:focus-visible {
+  outline: 2px solid rgba(245, 25, 87, 0.28);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
   .promptContainer {
-    padding: 0.5rem;
+    padding: 0.75rem;
   }
 
   .promptCard {
-    padding: 0.875rem;
+    gap: 0.9rem;
+    padding: 1rem;
+    border-radius: 24px;
   }
 
-  .title {
-    font-size: 0.95rem;
+  .brandRow {
+    grid-template-columns: 1fr;
   }
 
-  .description {
-    font-size: 0.75rem;
+  .logoTile {
+    width: 76px;
+    min-width: 76px;
   }
 
   .actions {
-    flex-direction: column;
-  }
-
-  .installButton,
-  .dismissButton {
-    width: 100%;
+    grid-template-columns: 1fr;
   }
 
   .neverButton {
-    width: 100%;
-    margin-top: 0.25rem;
-  }
-}
-
-/* Mobile */
-@media (max-width: 480px) {
-  .promptContainer {
-    padding: 0.35rem;
-  }
-
-  .promptCard {
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-  }
-
-  .icon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.25rem;
-  }
-
-  .title {
-    font-size: 0.85rem;
-  }
-
-  .description {
-    font-size: 0.7rem;
-  }
-
-  .installButton,
-  .dismissButton {
-    padding: 0.5rem 0.875rem;
-    font-size: 0.7rem;
-  }
-
-  .neverButton {
-    font-size: 0.65rem;
-    padding: 0.35rem 0.75rem;
+    justify-self: center;
   }
 }

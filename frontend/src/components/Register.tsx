@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/api';
 import { Alert, LoadingButton, Button } from '@/components/ui';
 import { notify } from '@/lib/notify';
 import { buildGoogleAuthCallbackUrl } from '@/lib/authRedirect';
+import { markPwaPromptEligibleForCurrentLogin } from '@/lib/pwaPrompt';
 
 interface RegisterProps {
   onRegisterSuccess: (email: string) => void;
@@ -96,6 +97,7 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
 
   const handleGoogleClick = () => {
     setIsGoogleLoading(true);
+    markPwaPromptEligibleForCurrentLogin();
     const callbackUrl = buildGoogleAuthCallbackUrl({
       redirectTarget,
       preselectedRole: 'SALON_OWNER',

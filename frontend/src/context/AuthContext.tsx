@@ -191,7 +191,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         sessionStorage.clear();
 
         // Selectively clear localStorage - keep theme and cookie consent
-        const keysToKeep = [STORAGE_KEYS.theme, STORAGE_KEYS.cookieConsent, STORAGE_KEYS.guestFavorites, 'pwa-install-dismissed'];
+        const keysToKeep = [
+          STORAGE_KEYS.theme,
+          STORAGE_KEYS.cookieConsent,
+          STORAGE_KEYS.guestFavorites,
+          'pwa-install-dismissed',
+          'stylrsa-pwa-install-never-show',
+        ];
         const keepData: Record<string, string> = {};
 
         // Save data we want to keep

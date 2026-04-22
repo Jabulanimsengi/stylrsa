@@ -1,153 +1,171 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useEffect, useMemo, useState } from 'react';
+import { FaCheckCircle, FaDownload } from 'react-icons/fa';
+import { useAuth } from '@/hooks/useAuth';
 import styles from './PWAInstallPrompt.module.css';
-import { FaTimes, FaDownload } from 'react-icons/fa';
+import {
+  dismissPwaPromptForCurrentLogin,
+  getPwaDismissedLoginMarker,
+  getPwaInstallLoginMarker,
+  setPwaNeverShowAgain,
+  shouldNeverShowPwaPrompt,
+} from '@/lib/pwaPrompt';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+const PROMPT_DELAY_MS = 1400;
+
+function isStandaloneMode() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone)
+  );
+}
+
 export default function PWAInstallPrompt() {
+  const { authStatus } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (isStandaloneMode()) {
       setIsInstalled(true);
-      return;
     }
 
-    // Check if user opted to never show again
-    const neverShow = localStorage.getItem('pwa-install-never-show');
-    if (neverShow === 'true') {
-      return;
-    }
-
-    // Check if previously dismissed
-    const dismissed = localStorage.getItem('pwa-install-dismissed');
-    if (dismissed) {
-      const dismissedDate = new Date(dismissed);
-      const daysSinceDismissed = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
-
-      // Show again after 30 days (changed from 7 days)
-      if (daysSinceDismissed < 30) {
-        return;
-      }
-    }
-
-    // Listen for install prompt
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-
-      // Show prompt after user has been on site for 3 minutes (changed from 30 seconds)
-      setTimeout(() => {
-        setShowPrompt(true);
-      }, 180000);
+    const handlePromptAvailable = (event: Event) => {
+      event.preventDefault();
+      setDeferredPrompt(event as BeforeInstallPromptEvent);
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
-
-    // Listen for successful install
-    const installedHandler = () => {
+    const handleInstalled = () => {
       setIsInstalled(true);
       setShowPrompt(false);
+      setDeferredPrompt(null);
     };
 
-    window.addEventListener('appinstalled', installedHandler);
+    window.addEventListener('beforeinstallprompt', handlePromptAvailable);
+    window.addEventListener('appinstalled', handleInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-      window.removeEventListener('appinstalled', installedHandler);
+      window.removeEventListener('beforeinstallprompt', handlePromptAvailable);
+      window.removeEventListener('appinstalled', handleInstalled);
     };
   }, []);
 
+  const loginMarker = useMemo(() => getPwaInstallLoginMarker(), [authStatus]);
+  const dismissedMarker = useMemo(() => getPwaDismissedLoginMarker(), [authStatus, showPrompt]);
+
+  useEffect(() => {
+    if (
+      authStatus !== 'authenticated' ||
+      isInstalled ||
+      !deferredPrompt ||
+      shouldNeverShowPwaPrompt() ||
+      !loginMarker ||
+      dismissedMarker === loginMarker
+    ) {
+      setShowPrompt(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowPrompt(true);
+    }, PROMPT_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [authStatus, deferredPrompt, dismissedMarker, isInstalled, loginMarker]);
+
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      return;
+    }
 
-    // Show install prompt
     await deferredPrompt.prompt();
-
-    // Wait for user choice
     const { outcome } = await deferredPrompt.userChoice;
 
     if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
+      setIsInstalled(true);
     } else {
-      console.log('User dismissed the install prompt');
+      dismissPwaPromptForCurrentLogin(loginMarker);
     }
 
-    // Clear the deferred prompt
+    setShowPrompt(false);
     setDeferredPrompt(null);
+  };
+
+  const handleNotNow = () => {
+    dismissPwaPromptForCurrentLogin(loginMarker);
     setShowPrompt(false);
   };
 
-  const handleDismiss = (neverShowAgain: boolean = false) => {
+  const handleNeverShowAgain = () => {
+    setPwaNeverShowAgain();
     setShowPrompt(false);
-
-    if (neverShowAgain) {
-      // User wants to never see this again
-      localStorage.setItem('pwa-install-never-show', 'true');
-    } else {
-      // User dismissed temporarily (will show again in 30 days)
-      localStorage.setItem('pwa-install-dismissed', new Date().toISOString());
-    }
   };
 
-  // Don't show if already installed or no prompt available
   if (isInstalled || !showPrompt || !deferredPrompt) {
     return null;
   }
 
   return (
-    <div className={styles.promptContainer}>
+    <div className={styles.promptContainer} role="dialog" aria-live="polite" aria-label="Install Stylr SA">
       <div className={styles.promptCard}>
-        <button
-          className={styles.closeButton}
-          onClick={() => handleDismiss(true)}
-          aria-label="Close and don't show again"
-          title="Don't show again"
-        >
-          <FaTimes />
-        </button>
-
-        <div className={styles.content}>
-          <div className={styles.icon}>
-            <FaDownload />
+        <div className={styles.brandRow}>
+          <div className={styles.logoTile}>
+            <Image
+              src="/logo-transparent.png"
+              alt="Stylr SA"
+              width={114}
+              height={65}
+              className={styles.logo}
+              priority={false}
+            />
           </div>
-
-          <div className={styles.text}>
-            <h3 className={styles.title}>Install Stylr SA</h3>
+          <div className={styles.copyBlock}>
+            <span className={styles.eyebrow}>Install the app</span>
+            <h3 className={styles.title}>Keep Stylr SA on your home screen.</h3>
             <p className={styles.description}>
-              Get quick access to salons, bookings, and messages. Works offline!
+              Open salons faster, jump back into bookings, and keep the experience feeling app-first on mobile.
             </p>
           </div>
-
-          <div className={styles.actions}>
-            <button
-              className={styles.installButton}
-              onClick={handleInstall}
-            >
-              Install App
-            </button>
-            <button
-              className={styles.dismissButton}
-              onClick={() => handleDismiss(false)}
-            >
-              Not Now
-            </button>
-            <button
-              className={styles.neverButton}
-              onClick={() => handleDismiss(true)}
-            >
-              Don't Show Again
-            </button>
-          </div>
         </div>
+
+        <div className={styles.featureRow}>
+          <span className={styles.featurePill}>
+            <FaCheckCircle /> Faster return visits
+          </span>
+          <span className={styles.featurePill}>
+            <FaCheckCircle /> Clean mobile access
+          </span>
+          <span className={styles.featurePill}>
+            <FaCheckCircle /> Stylr SA branding
+          </span>
+        </div>
+
+        <div className={styles.actions}>
+          <button type="button" className={styles.installButton} onClick={handleInstall}>
+            <FaDownload /> Install Stylr SA
+          </button>
+          <button type="button" className={styles.dismissButton} onClick={handleNotNow}>
+            Not now
+          </button>
+        </div>
+
+        <button type="button" className={styles.neverButton} onClick={handleNeverShowAgain}>
+          Don&apos;t show this again
+        </button>
       </div>
     </div>
   );

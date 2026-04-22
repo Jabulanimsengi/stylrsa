@@ -68,7 +68,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#8B4513',
+  themeColor: '#111318',
 };
 
 export const metadata: Metadata = {
@@ -96,6 +96,13 @@ export const metadata: Metadata = {
   creator: 'Stylr SA',
   publisher: 'Stylr SA',
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/pwa-icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/pwa-icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
   alternates: {
     canonical: '/',
   },
@@ -116,7 +123,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'Stylr SA',
   },
   openGraph: {

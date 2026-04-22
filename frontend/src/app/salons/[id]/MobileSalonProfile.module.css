@@ -338,15 +338,6 @@
     margin-top: 14px;
 }
 
-.bookingAssistNote {
-    margin: 0.8rem 0 0;
-    padding-left: 0.8rem;
-    border-left: 3px solid var(--color-primary, #f51957);
-    color: #5b6472;
-    font-size: 0.82rem;
-    line-height: 1.55;
-}
-
 .primaryBookAction,
 .secondaryAction {
     min-height: 48px;
@@ -416,6 +407,8 @@
     padding: 0.85rem 0.75rem 0.1rem;
     overflow-x: auto;
     scrollbar-width: none;
+    scroll-behavior: smooth;
+    overscroll-behavior-x: contain;
 }
 
 .tabNav::-webkit-scrollbar {
@@ -435,7 +428,7 @@
     color: #667085;
     cursor: pointer;
     position: relative;
-    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+    transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -443,12 +436,26 @@
     white-space: nowrap;
     border-radius: 0;
     margin-right: 0.55rem;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    outline: none;
 }
 
 .tabButton.active {
-    color: var(--color-text-strong);
-    background: var(--color-surface-subtle);
-    border-color: rgba(17, 24, 39, 0.14);
+    color: #fff;
+    background: #111318;
+    border-color: #111318;
+}
+
+.tabButton:focus {
+    outline: none;
+}
+
+.tabButton:focus-visible {
+    outline: 2px solid rgba(17, 24, 39, 0.18);
+    outline-offset: 2px;
 }
 
 .tabBadge {
@@ -463,6 +470,48 @@
     border-radius: 0;
     font-size: 0.6875rem;
     font-weight: 700;
+}
+
+.tabButton.active .tabBadge {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+@media (hover: hover) {
+    .tabButton:hover {
+        color: #fff;
+        background: #111318;
+        border-color: #111318;
+    }
+
+    .tabButton:hover .tabBadge {
+        background: rgba(255, 255, 255, 0.18);
+        color: #fff;
+    }
+}
+
+@media (hover: none) {
+    .tabButton:hover {
+        color: #667085;
+        background: rgba(255, 255, 255, 0.9);
+        border-color: var(--color-border);
+    }
+
+    .tabButton:hover .tabBadge {
+        background: var(--color-primary, var(--color-primary));
+        color: #fff;
+    }
+
+    .tabButton.active:hover {
+        color: #fff;
+        background: #111318;
+        border-color: #111318;
+    }
+
+    .tabButton.active:hover .tabBadge {
+        background: rgba(255, 255, 255, 0.18);
+        color: #fff;
+    }
 }
 
 /* Tab Content */
@@ -620,7 +669,7 @@
 .popularBadge {
     display: inline-flex;
     padding: 2px 8px;
-    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    background: #78c58a;
     color: #fff;
     border-radius: 0;
     font-size: 0.625rem;

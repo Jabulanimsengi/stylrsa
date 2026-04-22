@@ -10,7 +10,7 @@ export default function ToasterClient() {
       position="top-right"
       theme="light"
       autoClose={5000}
-      hideProgressBar={false}
+      hideProgressBar
       newestOnTop={true}
       closeOnClick
       draggable={false}

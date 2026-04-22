@@ -12,6 +12,7 @@ import { toFriendlyMessage } from '@/lib/errors';
 import { Alert, LoadingButton } from '@/components/ui';
 import { notify } from '@/lib/notify';
 import { buildGoogleAuthCallbackUrl, hasProviderIntent } from '@/lib/authRedirect';
+import { markPwaPromptEligibleForCurrentLogin } from '@/lib/pwaPrompt';
 
 // Define the props that this component will accept
 interface LoginProps {
@@ -46,7 +47,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         body: JSON.stringify({ email, password }),
       });
 
-      notify.success('Login successful. Welcome back.');
+      markPwaPromptEligibleForCurrentLogin();
+      notify.success('Welcome back to Stylr SA.');
       // On success, call the function passed down from the parent component
       onLoginSuccess(data.user);
 
@@ -72,6 +74,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           aria-busy={isGoogleLoading}
           onClick={() => {
             setIsGoogleLoading(true);
+            markPwaPromptEligibleForCurrentLogin();
             void signIn('google', { callbackUrl: googleCallbackUrl });
           }}
         >

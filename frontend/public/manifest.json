@@ -1,78 +1,26 @@
 {
-  "name": "Stylr SA - Salon Booking Platform",
+  "id": "/",
+  "name": "Stylr SA",
   "short_name": "Stylr SA",
-  "version": "2.0.1",
-  "description": "Find and book salon appointments online. Discover the best salons, stylists, and beauty services near you.",
-  "start_url": "/?v=2.0.1",
+  "description": "Discover trusted salons, return to bookings faster, and keep Stylr SA on your home screen.",
+  "start_url": "/?source=pwa",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#8B4513",
+  "background_color": "#fbfbfd",
+  "theme_color": "#111318",
   "orientation": "portrait-primary",
   "scope": "/",
   "icons": [
     {
-      "src": "/icon-72x72.svg",
-      "sizes": "72x72",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-96x96.svg",
-      "sizes": "96x96",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-128x128.svg",
-      "sizes": "128x128",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-144x144.svg",
-      "sizes": "144x144",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-152x152.svg",
-      "sizes": "152x152",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-192x192.svg",
+      "src": "/pwa-icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-384x384.svg",
-      "sizes": "384x384",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512x512.svg",
+      "src": "/pwa-icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshot1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Browse salons and services"
-    },
-    {
-      "src": "/screenshot2.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Book appointments easily"
     }
   ],
   "shortcuts": [
@@ -83,9 +31,9 @@
       "url": "/salons",
       "icons": [
         {
-          "src": "/icon-96x96.svg",
-          "sizes": "96x96",
-          "type": "image/svg+xml"
+          "src": "/pwa-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     },
@@ -96,37 +44,13 @@
       "url": "/my-bookings",
       "icons": [
         {
-          "src": "/icon-96x96.svg",
-          "sizes": "96x96",
-          "type": "image/svg+xml"
-        }
-      ]
-    },
-    {
-      "name": "Messages",
-      "short_name": "Chat",
-      "description": "View your messages",
-      "url": "/chat",
-      "icons": [
-        {
-          "src": "/icon-96x96.svg",
-          "sizes": "96x96",
-          "type": "image/svg+xml"
+          "src": "/pwa-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     }
   ],
   "categories": ["lifestyle", "beauty", "business"],
-  "prefer_related_applications": false,
-  "related_applications": [],
-  "share_target": {
-    "action": "/share",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  }
+  "prefer_related_applications": false
 }

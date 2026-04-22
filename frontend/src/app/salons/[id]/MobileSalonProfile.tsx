@@ -51,7 +51,7 @@ import MaterialsShowcase from '@/components/MaterialsShowcase/MaterialsShowcase'
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
 import { notify } from '@/lib/notify';
 import { getSalonOpenStatus } from './salonOpenStatus';
-import { getSalonGalleryImages, getSalonShowcaseImages } from '@/lib/salonGalleryImages';
+import { getSalonGalleryImages } from '@/lib/salonGalleryImages';
 import {
     formatServiceDiscountLabel,
     getServiceDiscountedPrice,
@@ -192,10 +192,17 @@ export default function MobileSalonProfile({
     // Get open status
     const { isOpen, statusText } = getSalonOpenStatus(hoursRecord, todayLabel);
 
-    const showcaseImages = useMemo(
-        () => getSalonShowcaseImages(salon, galleryImages),
-        [salon, galleryImages]
-    );
+    const showcaseImages = useMemo(() => {
+        if (salon.backgroundImage) {
+            return [salon.backgroundImage];
+        }
+
+        if (salon.logo) {
+            return [salon.logo];
+        }
+
+        return [];
+    }, [salon.backgroundImage, salon.logo]);
     const galleryOnlyImages = useMemo(
         () => getSalonGalleryImages(salon, galleryImages),
         [salon, galleryImages]
@@ -578,7 +585,7 @@ export default function MobileSalonProfile({
                     )}
 
                     <div className={styles.quickActionRow}>
-                        <button className={styles.primaryBookAction} onClick={handleBookNowAction}>
+                        <button type="button" className={styles.primaryBookAction} onClick={handleBookNowAction}>
                             <FaBolt /> Book on WhatsApp
                         </button>
                         <a href={mapsHref} target="_blank" rel="noopener noreferrer" className={styles.secondaryAction}>
@@ -594,20 +601,19 @@ export default function MobileSalonProfile({
                             </a>
                         ) : null}
                     </div>
-                    <p className={styles.bookingAssistNote}>
-                        Quick handoff: send your request here, then confirm the final details directly with the salon on WhatsApp.
-                    </p>
                 </div>
 
                 {/* Tab Navigation - Fresha Style */}
                 <div className={styles.tabNav} ref={tabsRef}>
                     <button
+                        type="button"
                         className={`${styles.tabButton} ${activeTab === 'services' ? styles.active : ''}`}
                         onClick={() => setActiveTab('services')}
                     >
                         Services
                     </button>
                     <button
+                        type="button"
                         className={`${styles.tabButton} ${activeTab === 'photos' ? styles.active : ''}`}
                         onClick={() => setActiveTab('photos')}
                     >
@@ -616,6 +622,7 @@ export default function MobileSalonProfile({
                     </button>
                     {externalReviewLinks.length > 0 && (
                         <button
+                            type="button"
                             className={`${styles.tabButton} ${activeTab === 'reviews' ? styles.active : ''}`}
                             onClick={() => setActiveTab('reviews')}
                         >
@@ -623,6 +630,7 @@ export default function MobileSalonProfile({
                         </button>
                     )}
                     <button
+                        type="button"
                         className={`${styles.tabButton} ${activeTab === 'details' ? styles.active : ''}`}
                         onClick={() => setActiveTab('details')}
                     >
