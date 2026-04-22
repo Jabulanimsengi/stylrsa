@@ -6,6 +6,7 @@ import Script from 'next/script';
 import styles from './HomePage.module.css';
 import { type FilterValues } from '@/components/FilterBar/FilterBar';
 import { useEffect, useState, useRef } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import MobileSearch from '@/components/MobileSearch/MobileSearch';
 import ServiceCategoryCircles from '@/components/ServiceCategoryCircles/ServiceCategoryCircles';
 import SalonCarouselSection from '@/components/SalonCarouselSection';
@@ -319,6 +320,19 @@ export default function HomePageClient({
     navigateWithPageLoader(`${targetPath}${queryString ? `?${queryString}` : ''}`);
   };
 
+  const handleHeroSuggestionSelect = (
+    event: ReactPointerEvent<HTMLLIElement>,
+    href: string,
+    nextQuery?: string,
+  ) => {
+    event.preventDefault();
+    if (nextQuery) {
+      setHeroSearchQuery(nextQuery);
+    }
+    setShowHeroSuggestions(false);
+    navigateWithPageLoader(href);
+  };
+
   /* eslint-disable @typescript-eslint/no-unused-vars */
   const _unused = isHeroSearching; // Suppress unused variable warning
   /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -418,11 +432,7 @@ export default function HomePageClient({
                             className={styles.heroSuggestionItem}
                             data-testid={`hero-venue-${venue.id}`}
                             data-url={getSalonUrl(venue)}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setShowHeroSuggestions(false);
-                              navigateWithPageLoader(getSalonUrl(venue));
-                            }}
+                            onPointerDown={(event) => handleHeroSuggestionSelect(event, getSalonUrl(venue))}
                           >
                             <span className={styles.suggestionIcon}>🏠</span>
                             <div className={styles.suggestionTextWrapper}>
@@ -444,12 +454,12 @@ export default function HomePageClient({
                           <li
                             key={service.id}
                             className={styles.heroSuggestionItem}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setHeroSearchQuery(service.title);
-                              setShowHeroSuggestions(false);
-                              navigateWithPageLoader(`/salons?service=${encodeURIComponent(service.title)}`);
-                            }}
+                            onPointerDown={(event) =>
+                              handleHeroSuggestionSelect(
+                                event,
+                                `/salons?service=${encodeURIComponent(service.title)}`,
+                                service.title,
+                              )}
                           >
                             <span className={styles.suggestionIcon}>✨</span>
                             <span className={styles.heroSuggestionTitle}>{service.title}</span>
@@ -468,12 +478,12 @@ export default function HomePageClient({
                           <li
                             key={category.id}
                             className={`${styles.heroSuggestionItem} ${styles.categorySuggestion}`}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setHeroSearchQuery(category.title);
-                              setShowHeroSuggestions(false);
-                              navigateWithPageLoader(`/salons?category=${category.slug}`);
-                            }}
+                            onPointerDown={(event) =>
+                              handleHeroSuggestionSelect(
+                                event,
+                                `/salons?category=${category.slug}`,
+                                category.title,
+                              )}
                           >
                             <span className={styles.suggestionIcon}>🔍</span>
                             <span className={styles.heroSuggestionTitle}>{category.title}</span>

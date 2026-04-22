@@ -26,8 +26,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const attachedRef = useRef<string | null>(null);
   const verifyingRef = useRef<boolean>(false);
   const justLoggedInRef = useRef<boolean>(false); // Track if user just logged in to prevent immediate re-verification
+  const justLoggedOutRef = useRef<boolean>(false);
 
   const hydrateFromSession = useCallback(() => {
+    if (justLoggedOutRef.current) return false;
     if (sessionStatus !== 'authenticated') return false;
 
     const sessionUser = session?.user;
@@ -58,6 +60,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Skip verification if user just logged in - trust the login response
     // Check BEFORE setting verifyingRef to avoid clearing the flag prematurely
     if (justLoggedInRef.current) {
+      return;
+    }
+
+    if (justLoggedOutRef.current) {
+      setAuthStatus('unauthenticated');
+      setUser(null);
+      attachedRef.current = null;
       return;
     }
 
@@ -170,6 +179,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Mark that we just logged in so verifyUser doesn't run
     // This flag persists until logout or page refresh
     justLoggedInRef.current = true;
+    justLoggedOutRef.current = false;
 
     // Clear the flag after a short delay to allow normal verification on next page load
     // But keep it long enough to prevent immediate re-verification from sessionStatus changes
@@ -183,6 +193,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAuthStatus('unauthenticated');
     attachedRef.current = null;
     justLoggedInRef.current = false;
+    justLoggedOutRef.current = true;
 
     // Clear user-specific data from storage
     try {

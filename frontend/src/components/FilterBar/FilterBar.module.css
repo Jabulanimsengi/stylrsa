@@ -46,6 +46,8 @@
   gap: 1rem;
   border: 1px solid rgba(20, 32, 51, 0.08);
   position: relative;
+  isolation: isolate;
+  z-index: 2;
 }
 
 .homeFilterBar {
@@ -126,7 +128,7 @@
 
 .suggestionsList {
   position: absolute;
-  z-index: 1000;
+  z-index: 1100;
   top: calc(100% + 0.35rem);
   left: 0;
   right: 0;

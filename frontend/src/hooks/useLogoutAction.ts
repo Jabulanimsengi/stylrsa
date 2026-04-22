@@ -36,16 +36,25 @@ export function useLogoutAction(options: UseLogoutActionOptions = {}) {
         // Ignore NextAuth signout issues and continue with app logout.
       }
 
-      await fetch('/api/auth/logout', {
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
       });
+
+      if (!response.ok) {
+        throw new Error('Logout request failed');
+      }
 
       logout();
       onAfterLogout?.();
       toast.success('You have been logged out successfully.');
       showPageLoader();
-      router.push('/');
+      router.replace('/');
+      router.refresh();
     } catch (error) {
       logger.error('Logout failed:', error);
       toast.error(toFriendlyMessage(error, 'Logout failed. Please try again.'));

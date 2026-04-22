@@ -472,7 +472,7 @@ export default function FilterBar({
                         type="button"
                         role="option"
                         className={styles.suggestionItem}
-                        onMouseDown={(event) => {
+                        onPointerDown={(event) => {
                           event.preventDefault();
                           const next = { ...buildFilters(), service: suggestion.title };
                           setServiceSearch(suggestion.title);
