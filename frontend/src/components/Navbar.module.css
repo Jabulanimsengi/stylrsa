@@ -24,6 +24,18 @@
   }
 }
 
+@keyframes hamburgerPulseIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* ====================================
    SIDEBAR (Mobile Slide-out Menu)
    ==================================== */
@@ -250,6 +262,7 @@
   transition: all 0.25s ease;
   position: relative;
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .navItem:visited {
@@ -273,17 +286,14 @@
 }
 
 .navItem:hover,
-.navItem:focus-visible {
+.navItem:focus-visible,
+.navItem:active,
+.navItem:hover:visited,
+.navItem:focus-visible:visited,
+.navItem:active:visited {
   background: var(--color-brand);
   color: #ffffff;
   transform: translateX(2px);
-}
-
-/* Active Navigation Item */
-.navItemActive {
-  background: var(--color-brand);
-  color: #ffffff;
-  font-weight: 700;
 }
 
 /* Navigation Icon - Enhanced */
@@ -301,15 +311,11 @@
 }
 
 .navItem:hover .navIcon,
-.navItem:focus-visible .navIcon {
+.navItem:focus-visible .navIcon,
+.navItem:active .navIcon {
   transform: scale(1.08);
-  background: rgba(29, 29, 31, 0.15);
-  color: var(--color-primary, var(--color-primary));
-}
-
-.navItemActive .navIcon {
-  background: rgba(29, 29, 31, 0.18);
-  color: var(--color-primary, var(--color-primary));
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
 }
 
 .navLabel {
@@ -810,19 +816,61 @@
   flex-shrink: 0;
 }
 
-/* Hamburger Button - Bigger and Black */
+/* Hamburger Button - Bigger, lighter, and smoother */
 .hamburgerButton {
-  width: 58px;
-  height: 58px;
-  font-size: 2rem;
+  width: 64px;
+  height: 64px;
   color: #1a1a1a;
   background: transparent;
   border-radius: 0;
+  animation: hamburgerPulseIn 180ms ease-out;
 }
 
-.hamburgerButton svg {
-  width: 1.8rem;
-  height: 1.8rem;
+.hamburgerIcon {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.36rem;
+  width: 2rem;
+  height: 1.5rem;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hamburgerLine {
+  display: block;
+  width: 100%;
+  height: 1.75px;
+  background: currentColor;
+  border-radius: 999px;
+  transform-origin: center;
+  transition:
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease,
+    width 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms ease;
+}
+
+.hamburgerLine:nth-child(2) {
+  width: 70%;
+}
+
+.hamburgerIconOpen {
+  gap: 0;
+}
+
+.hamburgerIconOpen .hamburgerLine:nth-child(1) {
+  transform: translateY(0.53rem) rotate(45deg);
+}
+
+.hamburgerIconOpen .hamburgerLine:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0.25);
+}
+
+.hamburgerIconOpen .hamburgerLine:nth-child(3) {
+  width: 100%;
+  transform: translateY(-0.53rem) rotate(-45deg);
 }
 
 .hamburgerButton:hover {
@@ -913,16 +961,6 @@
 [data-theme='dark'] .navItem:hover {
   background: var(--color-brand);
   color: #ffffff;
-}
-
-[data-theme='dark'] .navItemActive {
-  background: var(--color-brand);
-  color: #ffffff;
-}
-
-[data-theme='dark'] .navItemActive .navIcon {
-  background: var(--color-border);
-  color: #4dd0e1;
 }
 
 [data-theme='dark'] .navIcon {
@@ -1145,13 +1183,13 @@
   }
 
   .hamburgerButton {
-    width: 54px;
-    height: 54px;
+    width: 58px;
+    height: 58px;
   }
 
-  .hamburgerButton svg {
-    width: 1.65rem;
-    height: 1.65rem;
+  .hamburgerIcon {
+    width: 1.82rem;
+    height: 1.38rem;
   }
 
   .mapFeatureCard {
@@ -1218,14 +1256,14 @@
   }
 
   .hamburgerButton {
-    width: 50px;
-    height: 50px;
+    width: 54px;
+    height: 54px;
     border-radius: 14px;
   }
 
-  .hamburgerButton svg {
-    width: 1.5rem;
-    height: 1.5rem;
+  .hamburgerIcon {
+    width: 1.7rem;
+    height: 1.24rem;
   }
 
   .mobileBadge {

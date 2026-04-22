@@ -182,20 +182,6 @@
   width: min(620px, 100%);
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
-}
-
-.heroAssistNote {
-  width: fit-content;
-  max-width: 32rem;
-  margin: 0.2rem 0 0;
-  padding: 0.65rem 0.85rem;
-  border-left: 3px solid var(--color-brand, #f51957);
-  background: rgba(255, 255, 255, 0.8);
-  color: #4b5563;
-  font-size: 0.86rem;
-  line-height: 1.55;
-  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
 }
 
 .heroSearchBox {
@@ -849,11 +835,6 @@
   .heroSearchContainer {
     width: 100%;
     margin-top: 0.5rem;
-  }
-
-  .heroAssistNote {
-    max-width: 100%;
-    font-size: 0.82rem;
   }
 
   .heroSearchBox {

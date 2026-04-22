@@ -6,7 +6,7 @@
     z-index: 9998;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
-    animation: overlayShow 200ms ease-out;
+    will-change: opacity;
 }
 
 @keyframes overlayShow {
@@ -16,6 +16,16 @@
 
     to {
         opacity: 1;
+    }
+}
+
+@keyframes overlayHide {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
     }
 }
 
@@ -29,6 +39,7 @@
     flex-direction: column;
     outline: none;
     overflow: hidden;
+    will-change: transform, opacity;
 }
 
 /* Side variants */
@@ -36,9 +47,8 @@
     top: 0;
     left: 0;
     bottom: 0;
-    width: min(85vw, 320px);
+    width: min(92vw, 380px);
     border-right: 1px solid var(--color-border, #eee);
-    animation: slideInFromLeft 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .right {
@@ -47,7 +57,6 @@
     bottom: 0;
     width: min(88vw, 360px);
     border-left: 1px solid var(--color-border, #eee);
-    animation: slideInFromRight 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .top {
@@ -56,7 +65,6 @@
     right: 0;
     max-height: 85vh;
     border-bottom: 1px solid var(--color-border, #eee);
-    animation: slideInFromTop 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .bottom {
@@ -66,46 +74,141 @@
     max-height: 85vh;
     border-top: 1px solid var(--color-border, #eee);
     border-radius: 16px 16px 0 0;
-    animation: slideInFromBottom 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.overlay[data-state='open'] {
+    animation: overlayShow 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.overlay[data-state='closed'] {
+    animation: overlayHide 200ms ease-in;
+}
+
+.content[data-state='open'].left {
+    animation: slideInFromLeft 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.content[data-state='closed'].left {
+    animation: slideOutToLeft 220ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.content[data-state='open'].right {
+    animation: slideInFromRight 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.content[data-state='closed'].right {
+    animation: slideOutToRight 220ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.content[data-state='open'].top {
+    animation: slideInFromTop 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.content[data-state='closed'].top {
+    animation: slideOutToTop 220ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.content[data-state='open'].bottom {
+    animation: slideInFromBottom 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.content[data-state='closed'].bottom {
+    animation: slideOutToBottom 220ms cubic-bezier(0.4, 0, 1, 1);
 }
 
 @keyframes slideInFromLeft {
     from {
-        transform: translateX(-100%);
+        opacity: 0.98;
+        transform: translate3d(-100%, 0, 0);
     }
 
     to {
-        transform: translateX(0);
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
     }
 }
 
 @keyframes slideInFromRight {
     from {
-        transform: translateX(100%);
+        opacity: 0.98;
+        transform: translate3d(100%, 0, 0);
     }
 
     to {
-        transform: translateX(0);
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
     }
 }
 
 @keyframes slideInFromTop {
     from {
-        transform: translateY(-100%);
+        opacity: 0.98;
+        transform: translate3d(0, -100%, 0);
     }
 
     to {
-        transform: translateY(0);
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
     }
 }
 
 @keyframes slideInFromBottom {
     from {
-        transform: translateY(100%);
+        opacity: 0.98;
+        transform: translate3d(0, 100%, 0);
     }
 
     to {
-        transform: translateY(0);
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes slideOutToLeft {
+    from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+
+    to {
+        opacity: 0.98;
+        transform: translate3d(-100%, 0, 0);
+    }
+}
+
+@keyframes slideOutToRight {
+    from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+
+    to {
+        opacity: 0.98;
+        transform: translate3d(100%, 0, 0);
+    }
+}
+
+@keyframes slideOutToTop {
+    from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+
+    to {
+        opacity: 0.98;
+        transform: translate3d(0, -100%, 0);
+    }
+}
+
+@keyframes slideOutToBottom {
+    from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+
+    to {
+        opacity: 0.98;
+        transform: translate3d(0, 100%, 0);
     }
 }
 
@@ -168,5 +271,11 @@
 [data-theme='dark'] .header {
     background: rgba(26, 26, 36, 0.82);
     border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 768px) {
+    .left {
+        width: min(94vw, 360px);
+    }
 }
 

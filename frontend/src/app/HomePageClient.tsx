@@ -486,9 +486,6 @@ export default function HomePageClient({
                 </div>
               )}
             </div>
-            <p className={styles.heroAssistNote}>
-              Quick booking flow: send your request here, then confirm the final details directly on WhatsApp.
-            </p>
           </div>
         </div>
       </section>

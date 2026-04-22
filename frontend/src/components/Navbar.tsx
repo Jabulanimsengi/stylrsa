@@ -8,8 +8,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
 import {
-  FaBars,
-  FaTimes,
   FaBell,
   FaUser,
   FaSignOutAlt,
@@ -128,30 +126,11 @@ export default function Navbar() {
     setHasPrefetchedRoutes(true);
   }, [accountNav.menuLinks, isMobileOpen, isNotificationsOpen, authStatus, hasPrefetchedRoutes, router]);
 
-  const isLinkActive = (link: AppNavLink) => {
-    if (link.match) {
-      return link.match(pathname ?? '');
-    }
-
-    if (!pathname) {
-      return false;
-    }
-
-    if (link.href === '/') {
-      return pathname === '/';
-    }
-
-    return pathname.startsWith(link.href);
-  };
-
   const renderNavLink = (link: AppNavLink) => {
-    const active = isLinkActive(link);
-    const cls = `${styles.navItem} ${active ? styles.navItemActive : ''}`.trim();
-
     return (
       <Link
         href={link.href}
-        className={cls}
+        className={styles.navItem}
         onClick={() => {
           setIsMobileOpen(false);
           showPageLoader();
@@ -246,8 +225,13 @@ export default function Navbar() {
             type="button"
             className={`iconOnlyButton ${styles.iconOnlyButton} ${styles.hamburgerButton}`}
             aria-label="Toggle navigation"
+            aria-expanded="false"
           >
-            <FaBars />
+            <span className={styles.hamburgerIcon} aria-hidden="true">
+              <span className={styles.hamburgerLine} />
+              <span className={styles.hamburgerLine} />
+              <span className={styles.hamburgerLine} />
+            </span>
           </button>
         </div>
 
@@ -273,8 +257,16 @@ export default function Navbar() {
             className={`iconOnlyButton ${styles.iconOnlyButton} ${styles.hamburgerButton}`}
             onClick={() => setIsMobileOpen((prev) => !prev)}
             aria-label="Toggle navigation"
+            aria-expanded={isMobileOpen}
           >
-            {isMobileOpen ? <FaTimes /> : <FaBars />}
+            <span
+              className={`${styles.hamburgerIcon} ${isMobileOpen ? styles.hamburgerIconOpen : ''}`.trim()}
+              aria-hidden="true"
+            >
+              <span className={styles.hamburgerLine} />
+              <span className={styles.hamburgerLine} />
+              <span className={styles.hamburgerLine} />
+            </span>
           </button>
         </div>
 

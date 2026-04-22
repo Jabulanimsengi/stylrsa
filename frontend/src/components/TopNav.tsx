@@ -165,7 +165,14 @@ export default function TopNav() {
             <nav className={`${styles.topNav} ${isScrolled ? styles.topNavScrolled : ''}`} aria-label="Primary">
                 <div className={styles.leftSection}>
                     <Link href="/" className={styles.brand}>
-                        <Image src="/logo-transparent.png" alt="Stylr SA" width={130} height={34} priority />
+                        <Image
+                            src="/logo-transparent.png"
+                            alt="Stylr SA"
+                            width={176}
+                            height={48}
+                            priority
+                            className={styles.brandLogo}
+                        />
                     </Link>
 
                     <ul className={styles.navLinks}>
