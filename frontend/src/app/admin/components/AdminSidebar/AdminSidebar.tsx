@@ -40,6 +40,7 @@ interface AdminSidebarProps {
     };
     isOpen: boolean;
     onClose: () => void;
+    onExitAdmin: () => void;
 }
 
 export default function AdminSidebar({
@@ -48,6 +49,7 @@ export default function AdminSidebar({
     pendingCounts,
     isOpen,
     onClose,
+    onExitAdmin,
 }: AdminSidebarProps) {
     const [expandedSections, setExpandedSections] = React.useState<Set<string>>(
         new Set(['pending', 'management'])
@@ -128,6 +130,14 @@ export default function AdminSidebar({
 
                 <div className={styles.logo}>
                     <h2>Admin Panel</h2>
+                    <button
+                        type="button"
+                        className={styles.exitAdminButton}
+                        onClick={onExitAdmin}
+                        aria-label="Close admin panel"
+                    >
+                        <FaTimes />
+                    </button>
                 </div>
 
                 <nav className={styles.nav}>

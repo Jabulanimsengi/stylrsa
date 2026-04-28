@@ -8,6 +8,7 @@ import { buildSeoLandingRobots } from '@/lib/seoIndexability';
 import { buildKeywordLandingMetadata } from '@/lib/seoMetadataHelpers';
 import { hasBlockedSeoSegment } from '@/lib/seoRouteGuard';
 import CachedSeoLandingPage from '@/components/SEOLandingPage/CachedSeoLandingPage';
+import { toErrorMessage } from '@/lib/server/build-runtime';
 
 interface PageProps {
   params: Promise<{
@@ -77,7 +78,7 @@ export async function generateMetadata({
       },
     };
   } catch (error) {
-    console.warn('Failed to generate metadata for:', url, error);
+    console.warn(`Failed to generate metadata for ${url}:`, toErrorMessage(error));
     return {
       title: 'Service | Stylr SA',
       description: 'Browse services and book your appointment online.',
@@ -113,7 +114,7 @@ export default async function KeywordProvinceCitySuburbPage({
       try {
         parentCity = await getLocationById(cachedPage.location.parentLocationId);
       } catch (error) {
-        console.warn('Failed to fetch parent city:', error);
+        console.warn('Failed to fetch parent city:', toErrorMessage(error));
       }
     }
 
@@ -132,7 +133,7 @@ export default async function KeywordProvinceCitySuburbPage({
       />
     );
   } catch (error) {
-    console.warn('Error rendering SEO page for:', url, error);
+    console.warn(`Error rendering SEO page for ${url}:`, toErrorMessage(error));
     notFound();
   }
 }

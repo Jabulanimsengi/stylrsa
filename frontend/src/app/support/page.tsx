@@ -52,9 +52,9 @@ export default function SupportPage() {
         <h3 className={styles.blockTitle}>Bookings</h3>
         <ul className={styles.list}>
           <li><strong>How to book:</strong> Browse salons, select a service, choose date and time, then send your booking details</li>
-          <li><strong>Book on WhatsApp:</strong> Stylr SA sends a quick structured booking request, then the conversation continues directly with the salon on WhatsApp</li>
+          <li><strong>Book on WhatsApp:</strong> Stylr SA sends a quick structured booking request, then the handoff continues directly with the salon on WhatsApp</li>
           <li><strong>Cancelling or rescheduling:</strong> Contact the salon directly using the WhatsApp or phone details on their profile</li>
-          <li><strong>Booking confirmation:</strong> Final confirmation is handled directly with the salon during the WhatsApp conversation</li>
+          <li><strong>Booking confirmation:</strong> Final confirmation is handled directly with the salon on WhatsApp</li>
         </ul>
 
         <h3 className={styles.blockTitle}>Payments & Refunds</h3>

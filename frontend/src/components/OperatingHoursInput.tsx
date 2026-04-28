@@ -9,6 +9,14 @@ export type DayHours = {
 
 export type OperatingHours = Record<string, DayHours>;
 
+interface RawOperatingHoursEntry {
+  day?: string;
+  open?: string;
+  close?: string;
+}
+
+type RawOperatingHoursMap = Record<string, string>;
+
 interface OperatingHoursInputProps {
   hours: OperatingHours;
   onChange: (hours: OperatingHours) => void;
@@ -139,25 +147,30 @@ export function initializeOperatingHours(): OperatingHours {
 }
 
 // Helper function to parse operating hours from API response
-export function parseOperatingHours(rawHours: any): OperatingHours {
+export function parseOperatingHours(rawHours: unknown): OperatingHours {
   const initialized = initializeOperatingHours();
   
   if (Array.isArray(rawHours)) {
-    rawHours.forEach((entry: any) => {
-      if (entry?.day && initialized[entry.day]) {
-        const hasHours = entry.open && entry.close;
-        initialized[entry.day] = {
-          open: entry.open || '09:00',
-          close: entry.close || '17:00',
-          isOpen: hasHours,
+    rawHours.forEach((entry) => {
+      if (!entry || typeof entry !== 'object') {
+        return;
+      }
+
+      const normalizedEntry = entry as RawOperatingHoursEntry;
+      const day = normalizedEntry.day;
+      if (day && initialized[day]) {
+        const hasHours = normalizedEntry.open && normalizedEntry.close;
+        initialized[day] = {
+          open: normalizedEntry.open || '09:00',
+          close: normalizedEntry.close || '17:00',
+          isOpen: Boolean(hasHours),
         };
       }
     });
   } else if (rawHours && typeof rawHours === 'object') {
-    Object.entries(rawHours).forEach(([day, hours]) => {
+    Object.entries(rawHours as RawOperatingHoursMap).forEach(([day, hours]) => {
       if (initialized[day]) {
-        const hoursStr = hours as string;
-        const match = hoursStr.match(/(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/);
+        const match = hours.match(/(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/);
         if (match) {
           initialized[day] = {
             open: match[1],

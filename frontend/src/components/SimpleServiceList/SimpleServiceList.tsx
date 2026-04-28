@@ -3,8 +3,12 @@ import { Service } from '@/types';
 import styles from './SimpleServiceList.module.css';
 import { FaClock } from 'react-icons/fa';
 
+type ServiceWithCategoryDetails = Omit<Service, 'category'> & {
+    category?: string | { name?: string } | null;
+};
+
 interface SimpleServiceListProps {
-    services: Service[];
+    services: ServiceWithCategoryDetails[];
     onBook: (service: Service) => void;
 }
 
@@ -18,13 +22,20 @@ export default function SimpleServiceList({ services, onBook }: SimpleServiceLis
 
     // Group by category if available, otherwise 'Other'
     const groupedServices = simpleServices.reduce((acc, service) => {
-        const categoryName = (service as any).category?.name || 'Other Services';
+        const categoryName = typeof service.category === 'string'
+            ? service.category
+            : service.category?.name || 'Other Services';
         if (!acc[categoryName]) {
             acc[categoryName] = [];
         }
         acc[categoryName].push(service);
         return acc;
-    }, {} as Record<string, Service[]>);
+    }, {} as Record<string, ServiceWithCategoryDetails[]>);
+
+    const toBookableService = (service: ServiceWithCategoryDetails): Service => ({
+        ...service,
+        category: typeof service.category === 'string' ? service.category : undefined,
+    });
 
     return (
         <div className={styles.container}>
@@ -53,7 +64,7 @@ export default function SimpleServiceList({ services, onBook }: SimpleServiceLis
                                     <span className={styles.price}>R{service.price.toFixed(0)}</span>
                                     <button
                                         className={styles.bookButton}
-                                        onClick={() => onBook(service)}
+                                        onClick={() => onBook(toBookableService(service))}
                                     >
                                         Book
                                     </button>

@@ -4,6 +4,10 @@ import {
     getSeoSitemapSegmentCount,
     getSeoSitemapSegmentUrls,
 } from '@/lib/sitemap-generator';
+import {
+    shouldSkipBackendFetchDuringBuild,
+    toErrorMessage,
+} from '@/lib/server/build-runtime';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN ||
     process.env.BACKEND_URL ||
@@ -58,6 +62,17 @@ export async function GET(
             });
         }
 
+        if (shouldSkipBackendFetchDuringBuild(BACKEND_URL)) {
+            return new NextResponse(buildMinimalSitemapXml(), {
+                status: 200,
+                headers: {
+                    'Content-Type': 'application/xml; charset=utf-8',
+                    'Cache-Control': 'public, max-age=300, s-maxage=300',
+                    'X-Source': 'build-fallback',
+                },
+            });
+        }
+
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -92,7 +107,7 @@ export async function GET(
                 );
             }
         } catch (error) {
-            console.warn('Backend SEO sitemap unavailable, using fallback:', error);
+            console.warn('Backend SEO sitemap unavailable, using fallback:', toErrorMessage(error));
         }
 
         const totalSegments = getSeoSitemapSegmentCount();
@@ -122,7 +137,7 @@ export async function GET(
             },
         });
     } catch (error) {
-        console.error('Sitemap generation error:', error);
+        console.warn('SEO sitemap generation failed, using minimal fallback:', toErrorMessage(error));
 
         return new NextResponse(buildMinimalSitemapXml(), {
             status: 200,

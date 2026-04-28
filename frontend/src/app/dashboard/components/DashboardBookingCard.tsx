@@ -1,18 +1,20 @@
 'use client';
 
-import { Button } from '@/components/ui';
+import { LoadingButton } from '@/components/ui';
 import styles from '../Dashboard.module.css';
 import type { DashboardBooking } from '../types';
 
 interface DashboardBookingCardProps {
   booking: DashboardBooking;
-  onConfirmBooking: (bookingId: string) => void;
-  onDeclineBooking: (bookingId: string) => void;
+  updatingAction?: 'confirm' | 'decline' | 'complete' | null;
+  onConfirmBooking: (bookingId: string) => void | Promise<void>;
+  onDeclineBooking: (bookingId: string) => void | Promise<void>;
   onCompleteBooking: (bookingId: string) => void;
 }
 
 export default function DashboardBookingCard({
   booking,
+  updatingAction,
   onConfirmBooking,
   onDeclineBooking,
   onCompleteBooking,
@@ -21,6 +23,7 @@ export default function DashboardBookingCard({
   const dateStr = bookingDate.toLocaleDateString('en-ZA', { weekday: 'short', month: 'short', day: 'numeric' });
   const timeStr = bookingDate.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
   const statusClass = styles[`status${booking.status.charAt(0) + booking.status.slice(1).toLowerCase()}`];
+  const isUpdating = Boolean(updatingAction);
 
   return (
     <div className={styles.bookingCard} data-status={booking.status}>
@@ -49,23 +52,40 @@ export default function DashboardBookingCard({
       <div className={styles.bookingActions}>
         {booking.status === 'PENDING' && (
           <>
-            <Button size="sm" variant="default" onClick={() => onConfirmBooking(booking.id)}>
+            <LoadingButton
+              size="sm"
+              variant="default"
+              loading={updatingAction === 'confirm'}
+              disabled={isUpdating}
+              loadingText="Accepting..."
+              onClick={() => onConfirmBooking(booking.id)}
+            >
               Accept
-            </Button>
-            <Button
+            </LoadingButton>
+            <LoadingButton
               size="sm"
               variant="ghost"
+              loading={updatingAction === 'decline'}
+              disabled={isUpdating}
+              loadingText="Declining..."
               onClick={() => onDeclineBooking(booking.id)}
               style={{ color: 'var(--color-error-text)', borderColor: 'var(--color-error-text)' }}
             >
               Decline
-            </Button>
+            </LoadingButton>
           </>
         )}
         {booking.status === 'CONFIRMED' && (
-          <Button size="sm" variant="secondary" onClick={() => onCompleteBooking(booking.id)}>
+          <LoadingButton
+            size="sm"
+            variant="secondary"
+            loading={updatingAction === 'complete'}
+            disabled={isUpdating}
+            loadingText="Completing..."
+            onClick={() => onCompleteBooking(booking.id)}
+          >
             Complete
-          </Button>
+          </LoadingButton>
         )}
         {['COMPLETED', 'DECLINED', 'CANCELLED'].includes(booking.status) && (
           <span className={styles.bookingStatusText}>

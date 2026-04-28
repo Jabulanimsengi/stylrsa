@@ -22,6 +22,15 @@ interface UpsellPopupProps {
     onProductSelect?: (product: UpsellProduct) => void;
 }
 
+interface SalonMaterialResponse {
+    id: string;
+    name: string;
+    description?: string;
+    price?: number | null;
+    imageUrl?: string;
+    isSold?: boolean;
+}
+
 export default function UpsellPopup({
     isOpen,
     onClose,
@@ -41,17 +50,19 @@ export default function UpsellPopup({
                 // Fetch products related to the service (e.g., braiding materials, extensions)
                 const response = await fetch(`/api/salon-materials/salon/${salonId}?isSold=true&limit=4`);
                 if (response.ok) {
-                    const data = await response.json();
+                    const data = (await response.json()) as SalonMaterialResponse[];
                     // Transform to UpsellProduct format
                     const upsellProducts: UpsellProduct[] = data
-                        .filter((m: any) => m.isSold && m.price)
+                        .filter((material): material is SalonMaterialResponse & { price: number } => (
+                            material.isSold === true && typeof material.price === 'number'
+                        ))
                         .slice(0, 4)
-                        .map((m: any) => ({
-                            id: m.id,
-                            name: m.name,
-                            description: m.description,
-                            price: m.price,
-                            imageUrl: m.imageUrl,
+                        .map((material) => ({
+                            id: material.id,
+                            name: material.name,
+                            description: material.description,
+                            price: material.price,
+                            imageUrl: material.imageUrl,
                             category: 'Hair Materials',
                         }));
                     setProducts(upsellProducts);

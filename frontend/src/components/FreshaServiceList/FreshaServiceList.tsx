@@ -11,6 +11,7 @@ import { SERVICE_CATEGORIES } from '@/constants/categories';
 import { EmptyState } from '@/components/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 import { buildSalonServicePath } from '@/lib/salonSeoHelpers';
+import BookingModal from '@/components/BookingModal/BookingModal';
 import {
     formatServiceDiscountLabel,
     getServiceDiscountedPrice,
@@ -20,7 +21,7 @@ import {
 interface FreshaServiceListProps {
     services: Service[];
     salon: Salon;
-    onBook: (services: Service[]) => void;
+    onBookingSuccess?: () => void;
     onImageClick: (images: string[], index: number) => void;
     isBookingJourneyActive?: boolean;
 }
@@ -139,7 +140,7 @@ const CATEGORY_ALIASES: Record<string, string> = {
 export default function FreshaServiceList({
     services,
     salon,
-    onBook,
+    onBookingSuccess,
     onImageClick,
     isBookingJourneyActive = false,
 }: FreshaServiceListProps) {
@@ -147,6 +148,7 @@ export default function FreshaServiceList({
     const [activeCategory, setActiveCategory] = useState<string>('all');
     const containerRef = useRef<HTMLDivElement>(null);
     const [isFooterVisible, setIsFooterVisible] = useState(false);
+    const [isCheckoutActive, setIsCheckoutActive] = useState(false);
 
     // Detect when user scrolls near the footer to hide the cart
     useEffect(() => {
@@ -264,6 +266,12 @@ export default function FreshaServiceList({
         ));
     };
 
+    useEffect(() => {
+        if (selectedServices.length === 0) {
+            setIsCheckoutActive(false);
+        }
+    }, [selectedServices.length]);
+
     // Check if service is selected
     const isServiceSelected = (serviceId: string) => {
         return selectedServices.some((service) => service.id === serviceId);
@@ -316,8 +324,18 @@ export default function FreshaServiceList({
     // Handle continue to booking
     const handleContinue = () => {
         if (selectedServices.length > 0) {
-            onBook(selectedServices);
+            setIsCheckoutActive(true);
         }
+    };
+
+    const closeCheckout = () => {
+        setIsCheckoutActive(false);
+        setSelectedServices([]);
+    };
+
+    const handleBookingSuccess = () => {
+        closeCheckout();
+        onBookingSuccess?.();
     };
 
     // Scroll to selected services indicator
@@ -473,7 +491,19 @@ export default function FreshaServiceList({
                 {/* Desktop booking panel should appear immediately after selection, even near the footer. */}
                 {selectedServices.length > 0 && !isBookingJourneyActive && (
                     <div className={styles.cartColumn}>
-                        <div className={styles.cartSidebar}>
+                        <div className={`${styles.cartSidebar} ${isCheckoutActive ? styles.checkoutSidebar : ''}`}>
+                            {isCheckoutActive ? (
+                                <BookingModal
+                                    embedded
+                                    salon={salon}
+                                    service={selectedServices[0]}
+                                    selectedServices={selectedServices}
+                                    services={services}
+                                    onClose={() => setIsCheckoutActive(false)}
+                                    onBookingSuccess={handleBookingSuccess}
+                                />
+                            ) : (
+                                <>
                             <div className={styles.cartPanelTop}>
                                 <div className={styles.cartPanelCopy}>
                                     <h3 className={styles.cartPanelTitle}>Review your service</h3>
@@ -556,12 +586,28 @@ export default function FreshaServiceList({
                                     Continue
                                 </button>
                             </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
 
                 {/* Keep the mobile footer cart out of the way when users reach the page footer. */}
-                {selectedServices.length > 0 && !isFooterVisible && !isBookingJourneyActive && (
+                {selectedServices.length > 0 && isCheckoutActive && !isBookingJourneyActive && (
+                    <div className={styles.mobileCheckoutOverlay}>
+                        <BookingModal
+                            embedded
+                            salon={salon}
+                            service={selectedServices[0]}
+                            selectedServices={selectedServices}
+                            services={services}
+                            onClose={() => setIsCheckoutActive(false)}
+                            onBookingSuccess={handleBookingSuccess}
+                        />
+                    </div>
+                )}
+
+                {selectedServices.length > 0 && !isCheckoutActive && !isFooterVisible && !isBookingJourneyActive && (
                     <div className={styles.mobileCartFooter}>
                         <div className={styles.mobileCartContent}>
                             <div className={styles.mobileCartInfo}>

@@ -4,6 +4,10 @@ import {
   getSeoSitemapSegmentCount,
   getSeoSitemapSegmentUrls,
 } from '@/lib/sitemap-generator';
+import {
+  shouldSkipBackendFetchDuringBuild,
+  toErrorMessage,
+} from '@/lib/server/build-runtime';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN ||
   process.env.BACKEND_URL ||
@@ -51,6 +55,17 @@ export async function GET(
     });
   }
 
+  if (shouldSkipBackendFetchDuringBuild(BACKEND_URL)) {
+    return new NextResponse(buildMinimalSitemapXml(), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, s-maxage=300',
+        'X-Source': 'build-fallback',
+      },
+    });
+  }
+
   // Try backend first with timeout
   try {
     const controller = new AbortController();
@@ -90,8 +105,7 @@ export async function GET(
       console.error(`Backend error for segment ${segment}: ${response.status}`);
     }
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.warn(`Backend sitemap-seo-${segment} unavailable:`, errorMessage);
+    console.warn(`Backend sitemap-seo-${segment} unavailable:`, toErrorMessage(error));
   }
 
   // Fallback to local generation
@@ -115,7 +129,7 @@ export async function GET(
       });
     }
   } catch (error) {
-    console.error('Local sitemap generation failed:', error);
+    console.warn('Local SEO sitemap generation failed, using minimal fallback:', toErrorMessage(error));
   }
 
   return new NextResponse(buildMinimalSitemapXml(), {

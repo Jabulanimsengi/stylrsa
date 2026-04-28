@@ -9,9 +9,13 @@ interface DashboardBookingsSectionProps {
   confirmedBookings: DashboardBooking[];
   pastBookings: DashboardBooking[];
   activeBookingTab: 'pending' | 'confirmed' | 'past';
+  updatingBookingAction?: {
+    bookingId: string;
+    action: 'confirm' | 'decline' | 'complete';
+  } | null;
   onBookingTabChange: (tab: 'pending' | 'confirmed' | 'past') => void;
-  onConfirmBooking: (bookingId: string) => void;
-  onDeclineBooking: (bookingId: string) => void;
+  onConfirmBooking: (bookingId: string) => void | Promise<void>;
+  onDeclineBooking: (bookingId: string) => void | Promise<void>;
   onCompleteBooking: (bookingId: string) => void;
 }
 
@@ -21,6 +25,7 @@ export default function DashboardBookingsSection({
   confirmedBookings,
   pastBookings,
   activeBookingTab,
+  updatingBookingAction,
   onBookingTabChange,
   onConfirmBooking,
   onDeclineBooking,
@@ -64,6 +69,7 @@ export default function DashboardBookingsSection({
                   <DashboardBookingCard
                     key={booking.id}
                     booking={booking}
+                    updatingAction={updatingBookingAction?.bookingId === booking.id ? updatingBookingAction.action : null}
                     onConfirmBooking={onConfirmBooking}
                     onDeclineBooking={onDeclineBooking}
                     onCompleteBooking={onCompleteBooking}
@@ -82,6 +88,7 @@ export default function DashboardBookingsSection({
                   <DashboardBookingCard
                     key={booking.id}
                     booking={booking}
+                    updatingAction={updatingBookingAction?.bookingId === booking.id ? updatingBookingAction.action : null}
                     onConfirmBooking={onConfirmBooking}
                     onDeclineBooking={onDeclineBooking}
                     onCompleteBooking={onCompleteBooking}
@@ -100,6 +107,7 @@ export default function DashboardBookingsSection({
                   <DashboardBookingCard
                     key={booking.id}
                     booking={booking}
+                    updatingAction={updatingBookingAction?.bookingId === booking.id ? updatingBookingAction.action : null}
                     onConfirmBooking={onConfirmBooking}
                     onDeclineBooking={onDeclineBooking}
                     onCompleteBooking={onCompleteBooking}

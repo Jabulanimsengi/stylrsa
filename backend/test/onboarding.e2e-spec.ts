@@ -10,12 +10,14 @@ const request = require('supertest');
 
 jest.setTimeout(30000);
 
-describe('Onboarding flows (e2e)', () => {
+const describeDatabaseE2E =
+  process.env.RUN_DB_E2E === 'true' ? describe : describe.skip;
+
+describeDatabaseE2E('Onboarding flows (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
 
   const createdSalonIds: string[] = [];
-  const createdProductIds: string[] = [];
   const createdServiceIds: string[] = [];
   const createdUserEmails: string[] = [];
 
@@ -33,23 +35,11 @@ describe('Onboarding flows (e2e)', () => {
   });
 
   afterAll(async () => {
-    for (const productId of createdProductIds) {
-      try {
-        await prisma.product.delete({ where: { id: productId } });
-      } catch (err) {
-        if ((err as { code?: string }).code !== 'P2025') {
-          // eslint-disable-next-line no-console
-          console.warn('Cleanup product failed', productId, err);
-        }
-      }
-    }
-
     for (const serviceId of createdServiceIds) {
       try {
         await prisma.service.delete({ where: { id: serviceId } });
       } catch (err) {
         if ((err as { code?: string }).code !== 'P2025') {
-          // eslint-disable-next-line no-console
           console.warn('Cleanup service failed', serviceId, err);
         }
       }
@@ -60,7 +50,6 @@ describe('Onboarding flows (e2e)', () => {
         await prisma.salon.delete({ where: { id: salonId } });
       } catch (err) {
         if ((err as { code?: string }).code !== 'P2025') {
-          // eslint-disable-next-line no-console
           console.warn('Cleanup salon failed', salonId, err);
         }
       }
@@ -71,7 +60,6 @@ describe('Onboarding flows (e2e)', () => {
         await prisma.user.delete({ where: { email } });
       } catch (err) {
         if ((err as { code?: string }).code !== 'P2025') {
-          // eslint-disable-next-line no-console
           console.warn('Cleanup user failed', email, err);
         }
       }
@@ -81,7 +69,7 @@ describe('Onboarding flows (e2e)', () => {
     await app.close();
   });
 
-  it('allows a salon owner to create a salon and manage plan proof status', async () => {
+  it('allows a verified salon owner to create a salon and manage plan proof status', async () => {
     const httpServer = app.getHttpServer();
     const agent = request.agent(httpServer);
     const timestamp = Date.now();
@@ -93,11 +81,29 @@ describe('Onboarding flows (e2e)', () => {
       role: 'SALON_OWNER',
     };
 
-    await request(httpServer)
+    const registerResponse = await request(httpServer)
       .post('/api/auth/register')
       .send(ownerCredentials)
       .expect(201);
+
+    expect(registerResponse.body).toEqual(
+      expect.objectContaining({
+        requiresVerification: true,
+      }),
+    );
     createdUserEmails.push(ownerCredentials.email);
+
+    const registeredUser = await prisma.user.findUnique({
+      where: { email: ownerCredentials.email },
+      select: { verificationToken: true },
+    });
+
+    expect(registeredUser?.verificationToken).toBeTruthy();
+
+    await request(httpServer)
+      .post('/api/auth/verify-email')
+      .send({ token: registeredUser?.verificationToken })
+      .expect(200);
 
     await agent
       .post('/api/auth/login')
@@ -146,7 +152,6 @@ describe('Onboarding flows (e2e)', () => {
       .expect(201);
 
     const createdSalon = createSalonResponse.body;
-    expect(createdSalon).toBeDefined();
     expect(createdSalon.planPaymentStatus).toBe('PROOF_SUBMITTED');
     createdSalonIds.push(createdSalon.id);
 
@@ -174,87 +179,10 @@ describe('Onboarding flows (e2e)', () => {
 
     expect(planUpdateResponse.body.planPaymentStatus).toBe('AWAITING_PROOF');
 
-    if (createServiceResponse.body?.id) {
-      await agent
-        .delete(`/api/services/${createServiceResponse.body.id}`)
-        .expect(200);
-      const serviceIndex = createdServiceIds.indexOf(
-        createServiceResponse.body.id,
-      );
-      if (serviceIndex >= 0) {
-        createdServiceIds.splice(serviceIndex, 1);
-      }
-    }
+    await agent.delete(`/api/services/${createServiceResponse.body.id}`).expect(200);
+    createdServiceIds.splice(createdServiceIds.indexOf(createServiceResponse.body.id), 1);
 
     await agent.delete(`/api/salons/${createdSalon.id}`).expect(200);
-    const salonIndex = createdSalonIds.indexOf(createdSalon.id);
-    if (salonIndex >= 0) {
-      createdSalonIds.splice(salonIndex, 1);
-    }
-  });
-
-  it('allows a product seller to select a plan and create a product', async () => {
-    const httpServer = app.getHttpServer();
-    const agent = request.agent(httpServer);
-    const timestamp = Date.now();
-    const sellerCredentials = {
-      email: `seller-e2e-${timestamp}@test.com`,
-      password: 'Password123!',
-      firstName: 'Product',
-      lastName: 'Seller',
-      role: 'PRODUCT_SELLER',
-    };
-
-    await request(httpServer)
-      .post('/api/auth/register')
-      .send(sellerCredentials)
-      .expect(201);
-    createdUserEmails.push(sellerCredentials.email);
-
-    await agent
-      .post('/api/auth/login')
-      .send({
-        email: sellerCredentials.email,
-        password: sellerCredentials.password,
-      })
-      .expect(200);
-
-    const sellerPlanResponse = await agent
-      .patch('/api/users/me/seller-plan')
-      .send({
-        planCode: 'STARTER',
-        hasSentProof: true,
-        paymentReference: 'E2E-SELLER-REF',
-      })
-      .expect(200);
-
-    expect(sellerPlanResponse.body.sellerPlanPaymentStatus).toBe(
-      'PROOF_SUBMITTED',
-    );
-    expect(sellerPlanResponse.body.sellerPlanCode).toBe('STARTER');
-
-    const productPayload = {
-      name: 'E2E Product',
-      description: 'Automated test product',
-      price: 199.99,
-      images: ['https://example.com/e2e-product.jpg'],
-      stock: 5,
-    };
-
-    const createProductResponse = await agent
-      .post('/api/products')
-      .send(productPayload)
-      .expect(201);
-
-    const createdProduct = createProductResponse.body;
-    expect(createdProduct).toBeDefined();
-    expect(createdProduct.name).toBe(productPayload.name);
-    createdProductIds.push(createdProduct.id);
-
-    await agent.delete(`/api/products/${createdProduct.id}`).expect(204);
-    const productIndex = createdProductIds.indexOf(createdProduct.id);
-    if (productIndex >= 0) {
-      createdProductIds.splice(productIndex, 1);
-    }
+    createdSalonIds.splice(createdSalonIds.indexOf(createdSalon.id), 1);
   });
 });

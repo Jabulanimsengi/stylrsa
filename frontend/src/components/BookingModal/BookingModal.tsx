@@ -45,6 +45,7 @@ interface BookingModalProps {
   services: Service[];
   onClose: () => void;
   onBookingSuccess: () => void;
+  embedded?: boolean;
 }
 
 interface BookingWhatsAppIntentResponse {
@@ -135,6 +136,7 @@ export default function BookingModal({
   services,
   onClose,
   onBookingSuccess,
+  embedded = false,
 }: BookingModalProps) {
   const { authStatus, user } = useAuth();
   const [isCreatingIntent, setIsCreatingIntent] = useState(false);
@@ -1028,7 +1030,7 @@ export default function BookingModal({
             <div className={styles.platformPolicyNote}>
               <FaInfoCircle />
               <p>
-                Stylr SA stores this request for booking purposes and hands the conversation to the salon on WhatsApp.
+                Stylr SA stores this request for booking purposes and hands it to the salon on WhatsApp.
                 Payments, refunds, and final confirmation are handled directly with the salon.
               </p>
             </div>
@@ -1054,99 +1056,117 @@ export default function BookingModal({
     }
   };
 
+  const panelContent = (
+    <>
+      {embedded ? (
+        <h2 className="sr-only">Book Appointment at {salon.name}</h2>
+      ) : (
+        <DialogTitle className="sr-only">Book Appointment at {salon.name}</DialogTitle>
+      )}
+
+      <div className={styles.header}>
+        <button className={styles.backButton} onClick={booking.goBack} aria-label="Go back">
+          <FaChevronLeft />
+        </button>
+        <div className={styles.headerContent}>
+          <h2>Book Appointment</h2>
+          <span className={styles.salonName}>{salon.name}</span>
+        </div>
+      </div>
+
+      {bookedServices.length > 0 && (
+        <div className={styles.bookingSummary}>
+          <div className={styles.bookingSummaryItem}>
+            <span className={styles.bookingSummaryLabel}>Treatments</span>
+            <span className={styles.bookingSummaryValue}>{bookedServices.length} selected</span>
+          </div>
+          <div className={styles.bookingSummaryItem}>
+            <span className={styles.bookingSummaryLabel}>Total</span>
+            <span className={styles.bookingSummaryValue}>R{totalCost.toFixed(2)}</span>
+          </div>
+        </div>
+      )}
+
+      <div className={styles.progress}>
+        <div className={styles.progressBar}>
+          <div
+            className={styles.progressFill}
+            style={{ width: `${((booking.currentStepIndex + 1) / booking.totalSteps) * 100}%` }}
+          />
+        </div>
+        <span className={styles.progressText}>
+          Step {booking.currentStepIndex + 1} of {booking.totalSteps}: {STEP_LABELS[booking.state.step]}
+        </span>
+      </div>
+
+      {booking.error && (
+        <div className={styles.errorBanner}>
+          <FaExclamationTriangle className={styles.errorIcon} />
+          <span className={styles.errorMessage}>{booking.error}</span>
+          <button
+            className={styles.errorClose}
+            onClick={booking.clearError}
+            aria-label="Dismiss error"
+          >
+            <FaTimes />
+          </button>
+        </div>
+      )}
+
+      <div className={styles.content} key={booking.state.step}>
+        {renderStepContent()}
+      </div>
+
+      <div className={styles.footer}>
+        {booking.currentStepIndex > 0 && (
+          <button
+            className={styles.secondaryButton}
+            onClick={booking.goBack}
+          >
+            <FaChevronLeft /> Back
+          </button>
+        )}
+
+        <div className={styles.footerActions}>
+          {booking.state.step !== 'review' && (
+            <button
+              className={styles.primaryButton}
+              onClick={booking.goNext}
+              disabled={!booking.canProceed}
+            >
+              Continue <FaChevronRight />
+            </button>
+          )}
+          {booking.state.step === 'review' && (
+            <button
+              className={`${styles.primaryButton} ${styles.whatsappButton}`}
+              onClick={handleSubmit}
+              disabled={isCreatingIntent || !canSubmitBooking}
+            >
+              <FaWhatsapp />
+              {isCreatingIntent ? 'Preparing WhatsApp...' : 'Continue to WhatsApp'}
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className={styles.embeddedPanel}>
+        {panelContent}
+      </div>
+    );
+  }
+
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         overlayClassName="bg-black/78 backdrop-blur-sm"
         className={`w-screen max-w-none h-[100dvh] overflow-hidden rounded-none border-0 p-0 gap-0 flex flex-col sm:w-full sm:max-w-[500px] sm:h-[90vh] sm:rounded-none lg:left-auto lg:right-0 lg:top-0 lg:h-[100dvh] lg:max-h-[100dvh] lg:w-[min(560px,40vw)] lg:max-w-none lg:translate-x-0 lg:translate-y-0 lg:rounded-none lg:border-l lg:border-neutral-200 lg:shadow-[-24px_0_60px_rgba(15,23,42,0.18)] ${styles.desktopPanel}`}
       >
-        <DialogTitle className="sr-only">Book Appointment at {salon.name}</DialogTitle>
-
-        <div className={styles.header}>
-          <button className={styles.backButton} onClick={booking.goBack} aria-label="Go back">
-            <FaChevronLeft />
-          </button>
-          <div className={styles.headerContent}>
-            <h2>Book Appointment</h2>
-            <span className={styles.salonName}>{salon.name}</span>
-          </div>
-        </div>
-
-        {bookedServices.length > 0 && (
-          <div className={styles.bookingSummary}>
-            <div className={styles.bookingSummaryItem}>
-              <span className={styles.bookingSummaryLabel}>Treatments</span>
-              <span className={styles.bookingSummaryValue}>{bookedServices.length} selected</span>
-            </div>
-            <div className={styles.bookingSummaryItem}>
-              <span className={styles.bookingSummaryLabel}>Total</span>
-              <span className={styles.bookingSummaryValue}>R{totalCost.toFixed(2)}</span>
-            </div>
-          </div>
-        )}
-
-        <div className={styles.progress}>
-          <div className={styles.progressBar}>
-            <div
-              className={styles.progressFill}
-              style={{ width: `${((booking.currentStepIndex + 1) / booking.totalSteps) * 100}%` }}
-            />
-          </div>
-          <span className={styles.progressText}>
-            Step {booking.currentStepIndex + 1} of {booking.totalSteps}: {STEP_LABELS[booking.state.step]}
-          </span>
-        </div>
-
-        {booking.error && (
-          <div className={styles.errorBanner}>
-            <FaExclamationTriangle className={styles.errorIcon} />
-            <span className={styles.errorMessage}>{booking.error}</span>
-            <button
-              className={styles.errorClose}
-              onClick={booking.clearError}
-              aria-label="Dismiss error"
-            >
-              <FaTimes />
-            </button>
-          </div>
-        )}
-
-        <div className={styles.content} key={booking.state.step}>
-          {renderStepContent()}
-        </div>
-
-        <div className={styles.footer}>
-          {booking.currentStepIndex > 0 && (
-            <button
-              className={styles.secondaryButton}
-              onClick={booking.goBack}
-            >
-              <FaChevronLeft /> Back
-            </button>
-          )}
-
-          <div className={styles.footerActions}>
-            {booking.state.step !== 'review' && (
-              <button
-                className={styles.primaryButton}
-                onClick={booking.goNext}
-                disabled={!booking.canProceed}
-              >
-                Continue <FaChevronRight />
-              </button>
-            )}
-            {booking.state.step === 'review' && (
-              <button
-                className={`${styles.primaryButton} ${styles.whatsappButton}`}
-                onClick={handleSubmit}
-                disabled={isCreatingIntent || !canSubmitBooking}
-              >
-                <FaWhatsapp />
-                {isCreatingIntent ? 'Preparing WhatsApp...' : 'Continue to WhatsApp'}
-              </button>
-            )}
-          </div>
-        </div>
+        {panelContent}
       </DialogContent>
     </Dialog>
   );

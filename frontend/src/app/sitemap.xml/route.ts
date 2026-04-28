@@ -5,11 +5,26 @@ import {
   hasUnsafeXmlPayload,
   isValidSitemapIndexXml,
 } from '@/lib/sitemap-response';
+import {
+  shouldSkipBackendFetchDuringBuild,
+  toErrorMessage,
+} from '@/lib/server/build-runtime';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN || process.env.BACKEND_URL || 'http://localhost:5000';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 
 export async function GET() {
+  if (shouldSkipBackendFetchDuringBuild(BACKEND_URL)) {
+    return new NextResponse(buildMinimalSitemapIndexXml(), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, s-maxage=300',
+        'X-Source': 'build-fallback',
+      },
+    });
+  }
+
   // Try backend first with timeout
   try {
     const controller = new AbortController();
@@ -36,8 +51,8 @@ export async function GET() {
       }
       console.error('Backend returned invalid sitemap XML');
     }
-  } catch (error: any) {
-    console.warn('Backend sitemap unavailable:', error.message);
+  } catch (error: unknown) {
+    console.warn('Backend sitemap unavailable:', toErrorMessage(error));
   }
 
   // Fallback to local sitemap index

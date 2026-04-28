@@ -91,7 +91,7 @@ export function validateFileSecurely(
   }
 
   // 2. MIME type validation
-  if (!allowedTypes.includes(file.type as any)) {
+  if (!allowedTypes.includes(file.type)) {
     return {
       isValid: false,
       error: `File type not allowed. Allowed types: ${allowedTypes.join(', ')}`

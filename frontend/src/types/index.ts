@@ -231,7 +231,7 @@ export interface Notification {
   createdAt: string;
   link?: string;
   bookingId?: string;
-  type?: 'BOOKING_CONFIRMED' | 'BOOKING_CANCELLED' | 'NEW_MESSAGE' | 'PROMOTION' | 'REVIEW_REMINDER';
+  type?: 'BOOKING_CONFIRMED' | 'BOOKING_CANCELLED' | 'PROMOTION' | 'REVIEW_REMINDER';
 }
 
 export interface PaginatedNotifications {

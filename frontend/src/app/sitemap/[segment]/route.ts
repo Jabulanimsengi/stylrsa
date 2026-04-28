@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+import {
+    shouldSkipBackendFetchDuringBuild,
+    toErrorMessage,
+} from '@/lib/server/build-runtime';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN ||
     process.env.BACKEND_URL ||
@@ -45,6 +49,17 @@ export async function GET(
             });
         }
 
+        if (shouldSkipBackendFetchDuringBuild(BACKEND_URL)) {
+            return new NextResponse(buildMinimalSitemapXml(), {
+                status: 200,
+                headers: {
+                    'Content-Type': 'application/xml; charset=utf-8',
+                    'Cache-Control': 'public, max-age=300',
+                    'X-Source': 'build-fallback',
+                },
+            });
+        }
+
         // Fetch from backend (reusing the same backend endpoint structure if applicable, 
         // or assuming this maps to the same SEO sitemaps if that was the intent.
         // Based on user request, this seems to mirror the SEO sitemap logic)
@@ -80,7 +95,7 @@ export async function GET(
             },
         });
     } catch (error) {
-        console.error(`Sitemap error:`, error);
+        console.warn('Segment sitemap backend unavailable, using minimal fallback:', toErrorMessage(error));
 
         return new NextResponse(buildMinimalSitemapXml(), {
             status: 200,

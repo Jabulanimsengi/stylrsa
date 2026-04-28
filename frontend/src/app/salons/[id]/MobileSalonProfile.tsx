@@ -49,6 +49,7 @@ import MapboxMap from '@/components/MapboxMap';
 import styles from './MobileSalonProfile.module.css';
 import MaterialsShowcase from '@/components/MaterialsShowcase/MaterialsShowcase';
 import OptimizedImage from '@/components/OptimizedImage/OptimizedImage';
+import BookingModal from '@/components/BookingModal/BookingModal';
 import { notify } from '@/lib/notify';
 import { getSalonOpenStatus } from './salonOpenStatus';
 import { getSalonGalleryImages } from '@/lib/salonGalleryImages';
@@ -81,7 +82,6 @@ interface MobileSalonProfileProps {
     mapsHref: string;
     onOpenLightbox: (images: string[], index: number) => void;
     onToggleFavorite: () => void | Promise<void>;
-    onBookService: (service: Service) => void;
 }
 
 // Map category slugs to names for lookup
@@ -159,13 +159,13 @@ export default function MobileSalonProfile({
     mapsHref,
     onOpenLightbox,
     onToggleFavorite,
-    onBookService,
 }: MobileSalonProfileProps) {
     const [activeTab, setActiveTab] = useState<TabType>('services');
     const [selectedService, setSelectedService] = useState<Service | null>(null);
     const [isFavorited, setIsFavorited] = useState(Boolean(salon.isFavorited));
     const [showCopied, setShowCopied] = useState(false);
     const [activeCategory, setActiveCategory] = useState<string>('all');
+    const [isCheckoutActive, setIsCheckoutActive] = useState(false);
     const tabsRef = useRef<HTMLDivElement>(null);
 
     // Carousel API state for tracking current slide
@@ -306,7 +306,7 @@ export default function MobileSalonProfile({
     // Handle continue booking
     const handleContinue = () => {
         if (selectedService) {
-            onBookService(selectedService);
+            setIsCheckoutActive(true);
             return;
         }
 
@@ -317,7 +317,7 @@ export default function MobileSalonProfile({
 
     const handleBookNowAction = () => {
         if (selectedService) {
-            onBookService(selectedService);
+            setIsCheckoutActive(true);
             return;
         }
 
@@ -352,6 +352,16 @@ export default function MobileSalonProfile({
             setShowCopied(true);
             setTimeout(() => setShowCopied(false), 2000);
         }
+    };
+
+    const closeCheckout = () => {
+        setIsCheckoutActive(false);
+        setSelectedService(null);
+    };
+
+    const handleBookingSuccess = () => {
+        closeCheckout();
+        notify.success('Booking request sent! The salon will confirm shortly.');
     };
 
     const addressText = salon.address || [salon.town, salon.city, salon.province].filter(Boolean).join(', ');
@@ -1003,6 +1013,20 @@ export default function MobileSalonProfile({
                     >
                         <FaTimes />
                     </button>
+                </div>
+            )}
+
+            {selectedService && isCheckoutActive && (
+                <div className={styles.mobileBookingOverlay}>
+                    <BookingModal
+                        embedded
+                        salon={salon}
+                        service={selectedService}
+                        selectedServices={[selectedService]}
+                        services={services}
+                        onClose={() => setIsCheckoutActive(false)}
+                        onBookingSuccess={handleBookingSuccess}
+                    />
                 </div>
             )}
         </>

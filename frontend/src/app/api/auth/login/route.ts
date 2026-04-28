@@ -7,8 +7,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const backendOrigin = getInternalBackendOrigin();
     
-    console.log('[Login API] Forwarding login request to backend');
-    
     // Forward the login request to the backend
     const backendRes = await fetch(`${backendOrigin}/api/auth/login`, {
       method: 'POST',
@@ -21,11 +19,8 @@ export async function POST(req: Request) {
     const data = await backendRes.json();
     
     if (!backendRes.ok) {
-      console.log('[Login API] Backend returned error:', backendRes.status);
       return NextResponse.json(data, { status: backendRes.status });
     }
-
-    console.log('[Login API] Login successful, setting cookie');
     
     // Extract the access_token from the backend's Set-Cookie header
     const setCookieHeader = backendRes.headers.get('set-cookie');
@@ -51,8 +46,6 @@ export async function POST(req: Request) {
         path: '/',
         maxAge: 60 * 60 * 24, // 1 day
       });
-      
-      console.log('[Login API] Cookie set successfully');
     } else {
       console.warn('[Login API] No access_token found in backend response');
     }

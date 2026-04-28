@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import { useAuth } from '@/hooks/useAuth';
 
 const SocketContext = createContext<Socket | null>(null);
-const SocketStatusContext = createContext({ isConnected: false, isRegistered: false });
+const SocketStatusContext = createContext({ isConnected: false });
 
 export const useSocket = () => {
   return useContext(SocketContext);
@@ -19,7 +19,7 @@ export const useSocketStatus = () => {
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [status, setStatus] = useState({ isConnected: false, isRegistered: false });
+  const [status, setStatus] = useState({ isConnected: false });
   const { authStatus, user } = useAuth();
   const userId = user?.id;
   const reconnectAttempts = useRef(0);
@@ -37,7 +37,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         socketRef.current = null;
       }
       setSocket(null);
-      setStatus({ isConnected: false, isRegistered: false });
+      setStatus({ isConnected: false });
       return;
     }
 
@@ -49,7 +49,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       
       const socketOptions: Parameters<typeof io>[1] = { 
         withCredentials: true,
-        query: authStatus === 'authenticated' && userId ? { userId } : {},
         reconnection: true,
         reconnectionAttempts: maxReconnectAttempts,
         reconnectionDelay: 2000,
@@ -64,18 +63,17 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.on('connect', () => {
         console.log('Socket connected:', newSocket.id);
         reconnectAttempts.current = 0;
-        setStatus({ isConnected: true, isRegistered: Boolean(userId) });
-        if (userId) newSocket.emit('register', userId);
+        setStatus({ isConnected: true });
       });
 
       newSocket.on('disconnect', (reason: string) => {
         console.log('Socket disconnected:', reason);
-        setStatus({ isConnected: false, isRegistered: false });
+        setStatus({ isConnected: false });
       });
 
       newSocket.on('connect_error', () => {
         reconnectAttempts.current++;
-        setStatus({ isConnected: false, isRegistered: false });
+        setStatus({ isConnected: false });
       });
 
       newSocket.io.on('reconnect_attempt', (attempt: number) => {
@@ -110,7 +108,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         socketRef.current = null;
       }
       setSocket(null);
-      setStatus({ isConnected: false, isRegistered: false });
+      setStatus({ isConnected: false });
     };
   }, [authStatus, userId]);
 

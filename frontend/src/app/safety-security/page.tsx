@@ -145,7 +145,7 @@ export default function SafetySecurityPage() {
         <ul className={styles.list}>
           <li><strong>Personal information:</strong> Your contact details are only shared with providers you book with</li>
           <li><strong>Payment information:</strong> Never shared with service providers</li>
-          <li><strong>Communication:</strong> All messages are private and secure</li>
+          <li><strong>Communication:</strong> Booking details are shared only as needed to complete your request</li>
           <li><strong>Data control:</strong> You control what information appears on your public profile</li>
           <li><strong>Data rights:</strong> You can request, edit, or delete your data at any time</li>
         </ul>
@@ -161,7 +161,7 @@ export default function SafetySecurityPage() {
           <li>✓ Verify provider credentials and certifications</li>
           <li>✓ Communicate clearly about your expectations</li>
           <li>✓ Meet in professional settings (salons, studios)</li>
-          <li>✓ Keep communication within the platform</li>
+          <li>✓ Use the salon's listed WhatsApp or phone details for booking follow-up</li>
           <li>✓ Report any suspicious behavior immediately</li>
           <li>✗ Never share your password or payment details directly</li>
           <li>✗ Avoid making payments outside the platform</li>
@@ -200,7 +200,7 @@ export default function SafetySecurityPage() {
         <div className={styles.infoBlock} style={{ background: '#fff3e0', padding: '1.5rem', borderRadius: '8px' }}>
           <h3 className={styles.blockTitle}>🚨 Report Immediately</h3>
           <ul className={styles.list}>
-            <li><strong>In-app reporting:</strong> Use the "Report" button on profiles or messages</li>
+            <li><strong>Profile reporting:</strong> Use the "Report" option on salon or provider profiles where available</li>
             <li><strong>Email:</strong> safety@stylrsa.co.za</li>
             <li><strong>Emergency support:</strong> Available 24/7 through your account dashboard</li>
             <li><strong>What to include:</strong> Screenshots, dates, user IDs, detailed description of the issue</li>
@@ -218,7 +218,7 @@ export default function SafetySecurityPage() {
           <li>🔍 <strong>Do your research:</strong> Check reviews, ratings, and portfolios</li>
           <li>💬 <strong>Communicate clearly:</strong> Set expectations upfront</li>
           <li>📍 <strong>Choose public, professional locations:</strong> Meet at established salons or studios</li>
-          <li>📱 <strong>Keep communication on-platform:</strong> Use our messaging system</li>
+          <li>📱 <strong>Use trusted contact details:</strong> Follow up through the salon's listed WhatsApp or phone number</li>
           <li>🚫 <strong>Never share sensitive information:</strong> Don't share passwords, banking details, or personal addresses</li>
           <li>⚠️ <strong>Report issues:</strong> Help us maintain a safe community by reporting problems</li>
         </ul>

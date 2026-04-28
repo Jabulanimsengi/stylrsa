@@ -70,7 +70,7 @@ export default function Footer() {
               />
             </Link>
             <p className={styles.brandText}>
-              A clearer South African salon directory for clients who want trusted discovery and salon owners who want direct booking conversations.
+              A clearer South African salon directory for clients who want trusted discovery and salon owners who want direct booking requests.
             </p>
           </div>
 

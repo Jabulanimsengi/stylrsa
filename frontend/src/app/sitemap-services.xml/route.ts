@@ -4,10 +4,25 @@ import {
   hasUnsafeXmlPayload,
   isValidUrlsetXml,
 } from '@/lib/sitemap-response';
+import {
+  shouldSkipBackendFetchDuringBuild,
+  toErrorMessage,
+} from '@/lib/server/build-runtime';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN || process.env.BACKEND_URL || 'http://localhost:5000';
 
 export async function GET() {
+  if (shouldSkipBackendFetchDuringBuild(BACKEND_URL)) {
+    return new NextResponse(buildMinimalUrlsetXml(), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, s-maxage=300',
+        'X-Source': 'build-fallback',
+      },
+    });
+  }
+
   try {
     const response = await fetch(`${BACKEND_URL}/seo/sitemap-services`, {
       next: { revalidate: 86400 }, // Cache for 1 hour
@@ -30,7 +45,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Error generating services sitemap:', error);
+    console.warn('Services sitemap backend unavailable, using minimal fallback:', toErrorMessage(error));
     return new NextResponse(buildMinimalUrlsetXml(), {
       status: 200,
       headers: {

@@ -5,6 +5,10 @@ import {
   hasUnsafeXmlPayload,
   isValidSitemapIndexXml,
 } from '@/lib/sitemap-response';
+import {
+  shouldSkipBackendFetchDuringBuild,
+  toErrorMessage,
+} from '@/lib/server/build-runtime';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN || process.env.BACKEND_URL || 'http://localhost:5000';
@@ -14,6 +18,17 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN || process.env.BACKEND_UR
  * PRIORITY: Backend first (1.2M+ URLs), local fallback (~25K URLs)
  */
 export async function GET() {
+  if (shouldSkipBackendFetchDuringBuild(BACKEND_URL)) {
+    return new NextResponse(buildMinimalSitemapIndexXml(), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, s-maxage=300',
+        'X-Source': 'build-fallback',
+      },
+    });
+  }
+
   // Try backend first - it has 1.2M+ URLs from the database
   try {
     const controller = new AbortController();
@@ -40,8 +55,8 @@ export async function GET() {
       }
       console.error('Backend returned invalid sitemap index XML');
     }
-  } catch (error: any) {
-    console.warn('Backend sitemap unavailable, using local fallback:', error.message);
+  } catch (error: unknown) {
+    console.warn('Backend sitemap unavailable, using local fallback:', toErrorMessage(error));
   }
 
   // Fallback to local generation (~25K URLs from locationData.ts)

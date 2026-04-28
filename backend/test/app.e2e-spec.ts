@@ -7,7 +7,10 @@ const cookieParser = require('cookie-parser');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const request = require('supertest');
 
-describe('AppController (e2e)', () => {
+const describeDatabaseE2E =
+  process.env.RUN_DB_E2E === 'true' ? describe : describe.skip;
+
+describeDatabaseE2E('AppController (e2e)', () => {
   let app: INestApplication;
 
   beforeEach(async () => {
@@ -30,6 +33,11 @@ describe('AppController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/api/health')
       .expect(200)
-      .expect({ status: 'Backend is running! 🚀' });
+      .expect((response: { body: { status: string; database: string; timestamp: string; uptime: number } }) => {
+        expect(response.body.status).toBe('ok');
+        expect(['ok', 'error']).toContain(response.body.database);
+        expect(typeof response.body.timestamp).toBe('string');
+        expect(typeof response.body.uptime).toBe('number');
+      });
   });
 });

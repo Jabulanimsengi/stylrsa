@@ -36,6 +36,16 @@ interface Category {
     name: string;
 }
 
+interface ServicePayload {
+    title: string;
+    description: string;
+    price: number;
+    duration: number;
+    images: string[];
+    salonId: string;
+    categoryId?: string;
+}
+
 const SimpleServiceFormModal: React.FC<SimpleServiceFormModalProps> = ({
     onClose,
     salonId,
@@ -91,11 +101,11 @@ const SimpleServiceFormModal: React.FC<SimpleServiceFormModalProps> = ({
     useEffect(() => {
         if (serviceToEdit) {
             reset({
-                name: (serviceToEdit as any).name ?? (serviceToEdit as any).title ?? '',
+                name: serviceToEdit.name ?? serviceToEdit.title ?? '',
                 description: serviceToEdit.description,
                 price: serviceToEdit.price,
                 duration: serviceToEdit.duration,
-                categoryId: (serviceToEdit as any).categoryId ?? '',
+                categoryId: serviceToEdit.categoryId ?? '',
             });
         } else {
             reset({
@@ -111,7 +121,7 @@ const SimpleServiceFormModal: React.FC<SimpleServiceFormModalProps> = ({
     const onSubmit: SubmitHandler<ServiceFormInputs> = async (data) => {
         setErrorMessage(null);
         try {
-            const serviceData: any = {
+            const serviceData: ServicePayload = {
                 title: data.name,
                 description: data.description,
                 price: Number(data.price),
@@ -140,7 +150,7 @@ const SimpleServiceFormModal: React.FC<SimpleServiceFormModalProps> = ({
 
             onServiceAddedOrUpdated?.(savedService);
             onClose();
-        } catch (error: any) {
+        } catch (error: unknown) {
             const msg = toFriendlyMessage(error, 'Failed to save service.');
             setErrorMessage(msg);
             toast.error(msg);

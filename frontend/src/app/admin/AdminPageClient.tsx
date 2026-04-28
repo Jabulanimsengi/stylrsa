@@ -28,6 +28,7 @@ import type {
   SalonApplicationStatus,
 } from '@/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { LoadingButton } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { notify } from '@/lib/notify';
 import { toFriendlyMessage } from '@/lib/errors';
@@ -62,6 +63,8 @@ export default function AdminPageClient({
   const [selServices, setSelServices] = useState<Set<string>>(new Set());
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [updatingSalonPlanId, setUpdatingSalonPlanId] = useState<string | null>(null);
+  const [updatingSalonPlanStatus, setUpdatingSalonPlanStatus] = useState<PlanPaymentStatus | null>(null);
+  const [adminActionKey, setAdminActionKey] = useState<string | null>(null);
 
   useEffect(() => {
     setView(initialView);
@@ -240,28 +243,34 @@ export default function AdminPageClient({
 
   const handleUpdateStatus = useCallback(
     async (type: 'salon' | 'service', id: string, approvalStatus: ApprovalStatus) => {
+      const actionKey = `${type}:${id}:${approvalStatus}`;
+      setAdminActionKey(actionKey);
       const url =
         type === 'salon'
           ? `/api/admin/salons/${id}/status`
           : `/api/admin/services/${id}/status`;
 
-      const response = await fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        credentials: 'include',
-        body: JSON.stringify({ approvalStatus }),
-      });
+      try {
+        const response = await fetch(url, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          credentials: 'include',
+          body: JSON.stringify({ approvalStatus }),
+        });
 
-      if (!response.ok) {
-        const msg = await response.text().catch(() => '');
-        notify.error(`Failed to update status (${response.status}). ${msg}`);
-        return;
-      }
+        if (!response.ok) {
+          const msg = await response.text().catch(() => '');
+          notify.error(`Failed to update status (${response.status}). ${msg}`);
+          return;
+        }
 
-      if (type === 'salon') {
-        setPendingSalons((prev) => prev.filter((salon) => salon.id !== id));
-      } else {
-        setPendingServices((prev) => prev.filter((service) => service.id !== id));
+        if (type === 'salon') {
+          setPendingSalons((prev) => prev.filter((salon) => salon.id !== id));
+        } else {
+          setPendingServices((prev) => prev.filter((service) => service.id !== id));
+        }
+      } finally {
+        setAdminActionKey(null);
       }
     },
     [authHeaders],
@@ -275,62 +284,74 @@ export default function AdminPageClient({
         'UNDER_REVIEW' | 'CHANGES_REQUESTED' | 'REJECTED'
       >,
     ) => {
-      const response = await fetch(
-        `/api/admin/salon-applications/${applicationId}/status`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', ...authHeaders },
-          credentials: 'include',
-          body: JSON.stringify({ status }),
-        },
-      );
+      const actionKey = `application:${applicationId}:${status}`;
+      setAdminActionKey(actionKey);
+      try {
+        const response = await fetch(
+          `/api/admin/salon-applications/${applicationId}/status`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', ...authHeaders },
+            credentials: 'include',
+            body: JSON.stringify({ status }),
+          },
+        );
 
-      if (!response.ok) {
-        const msg = await response.text().catch(() => '');
-        notify.error(`Failed to update application (${response.status}). ${msg}`);
-        return;
+        if (!response.ok) {
+          const msg = await response.text().catch(() => '');
+          notify.error(`Failed to update application (${response.status}). ${msg}`);
+          return;
+        }
+
+        const updated = await response.json();
+        setSalonApplications((prev) =>
+          prev.map((application) =>
+            application.id === applicationId
+              ? {
+                  ...application,
+                  status: updated.status ?? status,
+                  adminNotes: updated.adminNotes ?? application.adminNotes,
+                  reviewedAt: updated.reviewedAt ?? application.reviewedAt,
+                }
+              : application,
+          ),
+        );
+        notify.success('Application updated');
+      } finally {
+        setAdminActionKey(null);
       }
-
-      const updated = await response.json();
-      setSalonApplications((prev) =>
-        prev.map((application) =>
-          application.id === applicationId
-            ? {
-                ...application,
-                status: updated.status ?? status,
-                adminNotes: updated.adminNotes ?? application.adminNotes,
-                reviewedAt: updated.reviewedAt ?? application.reviewedAt,
-              }
-            : application,
-        ),
-      );
-      notify.success('Application updated');
     },
     [authHeaders],
   );
 
   const publishSalonApplication = useCallback(
     async (applicationId: string) => {
-      const response = await fetch(
-        `/api/admin/salon-applications/${applicationId}/publish`,
-        {
-          method: 'POST',
-          headers: authHeaders,
-          credentials: 'include',
-        },
-      );
+      const actionKey = `application:${applicationId}:publish`;
+      setAdminActionKey(actionKey);
+      try {
+        const response = await fetch(
+          `/api/admin/salon-applications/${applicationId}/publish`,
+          {
+            method: 'POST',
+            headers: authHeaders,
+            credentials: 'include',
+          },
+        );
 
-      if (!response.ok) {
-        const msg = await response.text().catch(() => '');
-        notify.error(`Failed to publish application (${response.status}). ${msg}`);
-        return;
+        if (!response.ok) {
+          const msg = await response.text().catch(() => '');
+          notify.error(`Failed to publish application (${response.status}). ${msg}`);
+          return;
+        }
+
+        setSalonApplications((prev) =>
+          prev.filter((application) => application.id !== applicationId),
+        );
+        notify.success('Salon published');
+        void fetchData();
+      } finally {
+        setAdminActionKey(null);
       }
-
-      setSalonApplications((prev) =>
-        prev.filter((application) => application.id !== applicationId),
-      );
-      notify.success('Salon published');
-      void fetchData();
     },
     [authHeaders, fetchData],
   );
@@ -338,32 +359,38 @@ export default function AdminPageClient({
   const bulkUpdate = useCallback(
     async (type: 'salon' | 'service', ids: string[], status: ApprovalStatus) => {
       if (ids.length === 0) return;
+      const actionKey = `bulk:${type}:${status}`;
+      setAdminActionKey(actionKey);
 
-      await Promise.all(
-        ids.map((id) =>
-          fetch(
-            type === 'salon'
-              ? `/api/admin/salons/${id}/status`
-              : `/api/admin/services/${id}/status`,
-            {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json', ...authHeaders },
-              credentials: 'include',
-              body: JSON.stringify({ approvalStatus: status }),
-            },
+      try {
+        await Promise.all(
+          ids.map((id) =>
+            fetch(
+              type === 'salon'
+                ? `/api/admin/salons/${id}/status`
+                : `/api/admin/services/${id}/status`,
+              {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', ...authHeaders },
+                credentials: 'include',
+                body: JSON.stringify({ approvalStatus: status }),
+              },
+            ),
           ),
-        ),
-      );
+        );
 
-      if (type === 'salon') {
-        setPendingSalons((prev) => prev.filter((salon) => !ids.includes(salon.id)));
-        setSelSalons(new Set());
-      } else {
-        setPendingServices((prev) => prev.filter((service) => !ids.includes(service.id)));
-        setSelServices(new Set());
+        if (type === 'salon') {
+          setPendingSalons((prev) => prev.filter((salon) => !ids.includes(salon.id)));
+          setSelSalons(new Set());
+        } else {
+          setPendingServices((prev) => prev.filter((service) => !ids.includes(service.id)));
+          setSelServices(new Set());
+        }
+
+        notify.success(`Updated ${ids.length} ${type}${ids.length > 1 ? 's' : ''}`);
+      } finally {
+        setAdminActionKey(null);
       }
-
-      notify.success(`Updated ${ids.length} ${type}${ids.length > 1 ? 's' : ''}`);
     },
     [authHeaders],
   );
@@ -371,6 +398,7 @@ export default function AdminPageClient({
   const updateSalonPaymentStatus = useCallback(
     async (salonId: string, status: PlanPaymentStatus) => {
       setUpdatingSalonPlanId(salonId);
+      setUpdatingSalonPlanStatus(status);
       try {
         const response = await fetch(`/api/admin/salons/${salonId}/plan/payment`, {
           method: 'PATCH',
@@ -410,6 +438,7 @@ export default function AdminPageClient({
         notify.error('Failed to update payment status');
       } finally {
         setUpdatingSalonPlanId(null);
+        setUpdatingSalonPlanStatus(null);
       }
     },
     [authHeaders],
@@ -447,20 +476,26 @@ export default function AdminPageClient({
 
   const restoreDeletedSalon = useCallback(
     async (archiveId: string) => {
-      const response = await fetch(`/api/admin/salons/deleted/${archiveId}/restore`, {
-        method: 'POST',
-        headers: authHeaders,
-        credentials: 'include',
-      });
+      const actionKey = `restore:${archiveId}`;
+      setAdminActionKey(actionKey);
+      try {
+        const response = await fetch(`/api/admin/salons/deleted/${archiveId}/restore`, {
+          method: 'POST',
+          headers: authHeaders,
+          credentials: 'include',
+        });
 
-      if (!response.ok) {
-        const msg = await response.text().catch(() => '');
-        notify.error(`Failed to restore (${response.status}). ${msg}`);
-        return;
+        if (!response.ok) {
+          const msg = await response.text().catch(() => '');
+          notify.error(`Failed to restore (${response.status}). ${msg}`);
+          return;
+        }
+
+        notify.success('Profile restored');
+        void fetchData();
+      } finally {
+        setAdminActionKey(null);
       }
-
-      notify.success('Profile restored');
-      void fetchData();
     },
     [authHeaders, fetchData],
   );
@@ -545,16 +580,22 @@ export default function AdminPageClient({
                     </p>
                   </div>
                   <div className={styles.actions}>
-                    <button
+                    <LoadingButton
                       className={styles.approveButton}
+                      loading={adminActionKey === `application:${application.id}:publish`}
+                      disabled={Boolean(adminActionKey)}
+                      loadingText="Publishing..."
                       onClick={() => {
                         void publishSalonApplication(application.id);
                       }}
                     >
                       Publish
-                    </button>
-                    <button
+                    </LoadingButton>
+                    <LoadingButton
                       className="btn btn-secondary"
+                      loading={adminActionKey === `application:${application.id}:UNDER_REVIEW`}
+                      disabled={Boolean(adminActionKey)}
+                      loadingText="Reviewing..."
                       onClick={() => {
                         void updateSalonApplicationStatus(
                           application.id,
@@ -563,9 +604,12 @@ export default function AdminPageClient({
                       }}
                     >
                       Review
-                    </button>
-                    <button
+                    </LoadingButton>
+                    <LoadingButton
                       className={styles.rejectButton}
+                      loading={adminActionKey === `application:${application.id}:REJECTED`}
+                      disabled={Boolean(adminActionKey)}
+                      loadingText="Rejecting..."
                       onClick={() => {
                         void updateSalonApplicationStatus(
                           application.id,
@@ -574,7 +618,7 @@ export default function AdminPageClient({
                       }}
                     >
                       Reject
-                    </button>
+                    </LoadingButton>
                   </div>
                 </div>
               ))
@@ -615,20 +659,24 @@ export default function AdminPageClient({
                     }
                   />
                   <span>Select all ({filteredPendingSalons.length})</span>
-                  <button
+                  <LoadingButton
                     className={styles.approveButton}
-                    disabled={selSalons.size === 0}
+                    disabled={selSalons.size === 0 || Boolean(adminActionKey)}
+                    loading={adminActionKey === 'bulk:salon:APPROVED'}
+                    loadingText="Approving..."
                     onClick={() => bulkUpdate('salon', Array.from(selSalons), 'APPROVED')}
                   >
                     Approve selected
-                  </button>
-                  <button
+                  </LoadingButton>
+                  <LoadingButton
                     className={styles.rejectButton}
-                    disabled={selSalons.size === 0}
+                    disabled={selSalons.size === 0 || Boolean(adminActionKey)}
+                    loading={adminActionKey === 'bulk:salon:REJECTED'}
+                    loadingText="Rejecting..."
                     onClick={() => bulkUpdate('salon', Array.from(selSalons), 'REJECTED')}
                   >
                     Reject selected
-                  </button>
+                  </LoadingButton>
                 </>
               )}
             </div>
@@ -661,18 +709,24 @@ export default function AdminPageClient({
                         });
                       }}
                     />
-                    <button
+                    <LoadingButton
                       className={styles.approveButton}
+                      loading={adminActionKey === `salon:${salon.id}:APPROVED`}
+                      disabled={Boolean(adminActionKey)}
+                      loadingText="Approving..."
                       onClick={() => void handleUpdateStatus('salon', salon.id, 'APPROVED')}
                     >
                       Approve
-                    </button>
-                    <button
+                    </LoadingButton>
+                    <LoadingButton
                       className={styles.rejectButton}
+                      loading={adminActionKey === `salon:${salon.id}:REJECTED`}
+                      disabled={Boolean(adminActionKey)}
+                      loadingText="Rejecting..."
                       onClick={() => void handleUpdateStatus('salon', salon.id, 'REJECTED')}
                     >
                       Reject
-                    </button>
+                    </LoadingButton>
                   </div>
                 </div>
               ))
@@ -713,20 +767,24 @@ export default function AdminPageClient({
                     }
                   />
                   <span>Select all ({filteredPendingServices.length})</span>
-                  <button
+                  <LoadingButton
                     className={styles.approveButton}
-                    disabled={selServices.size === 0}
+                    disabled={selServices.size === 0 || Boolean(adminActionKey)}
+                    loading={adminActionKey === 'bulk:service:APPROVED'}
+                    loadingText="Approving..."
                     onClick={() => bulkUpdate('service', Array.from(selServices), 'APPROVED')}
                   >
                     Approve selected
-                  </button>
-                  <button
+                  </LoadingButton>
+                  <LoadingButton
                     className={styles.rejectButton}
-                    disabled={selServices.size === 0}
+                    disabled={selServices.size === 0 || Boolean(adminActionKey)}
+                    loading={adminActionKey === 'bulk:service:REJECTED'}
+                    loadingText="Rejecting..."
                     onClick={() => bulkUpdate('service', Array.from(selServices), 'REJECTED')}
                   >
                     Reject selected
-                  </button>
+                  </LoadingButton>
                 </>
               )}
             </div>
@@ -755,18 +813,24 @@ export default function AdminPageClient({
                         });
                       }}
                     />
-                    <button
+                    <LoadingButton
                       className={styles.approveButton}
+                      loading={adminActionKey === `service:${service.id}:APPROVED`}
+                      disabled={Boolean(adminActionKey)}
+                      loadingText="Approving..."
                       onClick={() => void handleUpdateStatus('service', service.id, 'APPROVED')}
                     >
                       Approve
-                    </button>
-                    <button
+                    </LoadingButton>
+                    <LoadingButton
                       className={styles.rejectButton}
+                      loading={adminActionKey === `service:${service.id}:REJECTED`}
+                      disabled={Boolean(adminActionKey)}
+                      loadingText="Rejecting..."
                       onClick={() => void handleUpdateStatus('service', service.id, 'REJECTED')}
                     >
                       Reject
-                    </button>
+                    </LoadingButton>
                   </div>
                 </div>
               ))
@@ -841,6 +905,7 @@ export default function AdminPageClient({
           <AdminPendingPaymentsSection
             pendingPaymentSalons={pendingPaymentSalons}
             updatingSalonPlanId={updatingSalonPlanId}
+            updatingSalonPlanStatus={updatingSalonPlanStatus}
             onCopyReference={copyToClipboard}
             onUpdateSalonPaymentStatus={(salonId, status) => {
               void updateSalonPaymentStatus(salonId, status);
@@ -851,6 +916,7 @@ export default function AdminPageClient({
         {view === 'deleted-salons' && (
           <AdminDeletedSalonsSection
             deletedSalons={deletedSalons}
+            restoringArchiveId={adminActionKey?.startsWith('restore:') ? adminActionKey.slice('restore:'.length) : null}
             onRestoreDeletedSalon={(archiveId) => {
               void restoreDeletedSalon(archiveId);
             }}

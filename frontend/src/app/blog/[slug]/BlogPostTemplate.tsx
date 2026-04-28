@@ -32,6 +32,10 @@ interface BlogPostProps {
   }>;
 }
 
+type BlogTrackingWindow = Window & {
+  gtag?: (command: 'event', action: string, params?: Record<string, unknown>) => void;
+};
+
 /**
  * SEO-optimized blog post template with:
  * - Article schema markup
@@ -61,8 +65,9 @@ export default function BlogPostTemplate({
       const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
       if (scrollPercent > 75) {
         // Track 75% read completion
-        if (typeof window !== 'undefined' && (window as any).gtag) {
-          (window as any).gtag('event', 'blog_read_75', {
+        const gtag = (window as BlogTrackingWindow).gtag;
+        if (gtag) {
+          gtag('event', 'blog_read_75', {
             article_title: title,
           });
         }

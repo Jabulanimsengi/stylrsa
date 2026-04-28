@@ -86,7 +86,7 @@ export default function CookiePolicyPage() {
         <ul className={styles.list}>
           <li><strong>Preference cookies:</strong> Remember your language, region, and display settings</li>
           <li><strong>User interface:</strong> Remember your chosen layout, font size, and accessibility settings</li>
-          <li><strong>Chat widgets:</strong> Enable customer support chat functionality</li>
+          <li><strong>Support tools:</strong> Help us keep contact forms, help flows, and support preferences consistent</li>
         </ul>
 
         <h3 className={styles.blockTitle}>4.4 Marketing and Advertising Cookies</h3>
@@ -121,7 +121,7 @@ export default function CookiePolicyPage() {
           <li><strong>Google Ads:</strong> Advertising and remarketing</li>
           <li><strong>Facebook/Meta:</strong> Social media integration and advertising</li>
           <li><strong>Payment processors:</strong> Secure payment processing (e.g., Stripe, PayFast)</li>
-          <li><strong>Customer support tools:</strong> Live chat and support widgets</li>
+          <li><strong>Customer support tools:</strong> Contact and support infrastructure</li>
         </ul>
         <p className={styles.paragraph}>
           These third parties have their own privacy policies and cookie policies. We do not control their cookies and recommend reviewing their policies.
@@ -178,7 +178,7 @@ export default function CookiePolicyPage() {
           <li>Your preferences and settings may not be saved</li>
           <li>Some pages may not load correctly</li>
           <li>You may see less relevant content and advertisements</li>
-          <li>Interactive features like chat may not function</li>
+          <li>Interactive features like saved preferences may not function correctly</li>
         </ul>
         <p className={styles.paragraph}>
           Essential cookies are necessary for core functionality and cannot be disabled without affecting the Platform's operation.

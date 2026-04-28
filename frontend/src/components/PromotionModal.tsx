@@ -58,7 +58,7 @@ export default function PromotionModal({
       toast.success('Promotion created!');
       onPromotionAdded(data);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(toFriendlyMessage(error, 'Could not create promotion.'));
     } finally {
       setIsLoading(false);

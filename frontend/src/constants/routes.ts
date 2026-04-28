@@ -24,7 +24,6 @@ export const ROUTES = {
   PROFILE: '/profile',
   FAVORITES: '/favorites',
   BOOKINGS: '/bookings',
-  MESSAGES: '/messages',
 
   // Salon owner routes
   MY_SALON: '/my-salon',

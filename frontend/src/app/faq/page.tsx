@@ -8,7 +8,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 const customerFAQs = [
   {
     question: 'How do I make a booking?',
-    answer: "Find the salon and service you want, click \"Book on WhatsApp,\" choose your date and time, then submit your contact details. Stylr SA collects the booking details and continues the conversation with the salon on WhatsApp."
+    answer: "Find the salon and service you want, click \"Book on WhatsApp,\" choose your date and time, then submit your contact details. Stylr SA collects the booking details and hands the request to the salon on WhatsApp."
   },
   {
     question: 'How do I pay for my service?',
@@ -27,7 +27,7 @@ const customerFAQs = [
     answer: 'To maintain trust and authenticity, all reviews are verified by our admin team before they are published. This ensures all reviews are from real customers and are constructive.'
   },
   {
-    question: 'How does the Chat feature work?',
+    question: 'How does the WhatsApp booking flow work?',
     answer: 'Stylr SA uses a quick WhatsApp booking flow, so you can continue directly with the salon after you send your booking details.'
   }
 ];

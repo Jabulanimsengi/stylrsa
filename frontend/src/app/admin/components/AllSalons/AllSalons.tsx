@@ -6,6 +6,7 @@ import styles from '../../AdminPage.module.css';
 import { PendingSalon, ensureArray } from '../../types';
 import { APP_PLANS } from '@/constants/plans';
 import { notify } from '@/lib/notify';
+import { LoadingButton } from '@/components/ui';
 
 interface AllSalonsProps {
     salons: PendingSalon[];
@@ -26,6 +27,8 @@ export default function AllSalons({
     const [draftPlan, setDraftPlan] = useState('PREMIUM');
     const [draftWeight, setDraftWeight] = useState('');
     const [draftMax, setDraftMax] = useState('');
+    const [savingSalonId, setSavingSalonId] = useState<string | null>(null);
+    const [verifyingSalonId, setVerifyingSalonId] = useState<string | null>(null);
 
     const filteredSalons = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -75,6 +78,7 @@ export default function AllSalons({
     };
 
     const handleSave = async (salonId: string) => {
+        setSavingSalonId(salonId);
         const allowedPlans = APP_PLANS.map(p => p.code);
         const normalizedPlan = (draftPlan ?? '').toUpperCase();
         const visibilityWeight = Number(draftWeight);
@@ -87,35 +91,40 @@ export default function AllSalons({
         if (!Number.isNaN(visibilityWeight) && draftWeight !== '') body.visibilityWeight = visibilityWeight;
         if (!Number.isNaN(maxListings) && draftMax !== '') body.maxListings = maxListings;
 
-        const r = await fetch(`/api/admin/salons/${salonId}/plan`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', ...authHeaders },
-            credentials: 'include',
-            body: JSON.stringify(body)
-        });
+        try {
+            const r = await fetch(`/api/admin/salons/${salonId}/plan`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', ...authHeaders },
+                credentials: 'include',
+                body: JSON.stringify(body)
+            });
 
-        if (r.ok) {
-            notify.success('Visibility updated');
-            setEditingSalonId(null);
-            // Re-fetch from server
-            try {
-                const allRes = await fetch(`/api/admin/salons/all?ts=${Date.now()}`, {
-                    credentials: 'include',
-                    cache: 'no-store' as RequestCache,
-                    headers: authHeaders
-                });
-                if (allRes.ok) {
-                    const fresh = ensureArray<PendingSalon>(await allRes.json());
-                    onSalonsUpdate(fresh);
-                }
-            } catch { }
-        } else {
-            const errText = await r.text().catch(() => '');
-            notify.error(`Failed to update (${r.status}). ${errText}`);
+            if (r.ok) {
+                notify.success('Visibility updated');
+                setEditingSalonId(null);
+                // Re-fetch from server
+                try {
+                    const allRes = await fetch(`/api/admin/salons/all?ts=${Date.now()}`, {
+                        credentials: 'include',
+                        cache: 'no-store' as RequestCache,
+                        headers: authHeaders
+                    });
+                    if (allRes.ok) {
+                        const fresh = ensureArray<PendingSalon>(await allRes.json());
+                        onSalonsUpdate(fresh);
+                    }
+                } catch { }
+            } else {
+                const errText = await r.text().catch(() => '');
+                notify.error(`Failed to update (${r.status}). ${errText}`);
+            }
+        } finally {
+            setSavingSalonId(null);
         }
     };
 
     const toggleVerification = async (salon: PendingSalon) => {
+        setVerifyingSalonId(salon.id);
         try {
             const r = await fetch(`/api/admin/salons/${salon.id}/verification`, {
                 method: 'PATCH',
@@ -143,6 +152,8 @@ export default function AllSalons({
             }
         } catch {
             notify.error('Error updating verification');
+        } finally {
+            setVerifyingSalonId(null);
         }
     };
 
@@ -191,21 +202,32 @@ export default function AllSalons({
                                     <input value={draftWeight} onChange={e => setDraftWeight(e.target.value)} type="number" min={0} placeholder="0" style={{ width: 90, padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
                                     <label>Max listings</label>
                                     <input value={draftMax} onChange={e => setDraftMax(e.target.value)} type="number" min={1} placeholder="max" style={{ width: 90, padding: '0.35rem', border: '1px solid var(--color-border)', borderRadius: 8 }} />
-                                    <button className={styles.approveButton} onClick={() => handleSave(salon.id)}>Save</button>
-                                    <button className={styles.rejectButton} onClick={() => setEditingSalonId(null)}>Cancel</button>
+                                    <LoadingButton
+                                        className={styles.approveButton}
+                                        loading={savingSalonId === salon.id}
+                                        disabled={Boolean(savingSalonId)}
+                                        loadingText="Saving..."
+                                        onClick={() => handleSave(salon.id)}
+                                    >
+                                        Save
+                                    </LoadingButton>
+                                    <button className={styles.rejectButton} onClick={() => setEditingSalonId(null)} disabled={Boolean(savingSalonId)}>Cancel</button>
                                 </div>
                             )}
                         </div>
                     </div>
                     <div className={styles.actions}>
                         <Link href={`/dashboard?ownerId=${salon.owner.id}`} className="btn btn-secondary">View Dashboard</Link>
-                        <button
+                        <LoadingButton
                             className={salon.isVerified ? styles.approveButton : styles.rejectButton}
+                            loading={verifyingSalonId === salon.id}
+                            disabled={Boolean(verifyingSalonId)}
+                            loadingText={salon.isVerified ? 'Unverifying...' : 'Verifying...'}
                             onClick={() => toggleVerification(salon)}
                             title={salon.isVerified ? 'Remove verification' : 'Verify service provider'}
                         >
                             {salon.isVerified ? 'Verified' : 'Verify'}
-                        </button>
+                        </LoadingButton>
                         <button
                             className={styles.rejectButton}
                             onClick={() => onOpenDeleteModal(salon)}

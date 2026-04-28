@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FaCheckCircle, FaDownload } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import styles from './PWAInstallPrompt.module.css';
@@ -62,8 +62,8 @@ export default function PWAInstallPrompt() {
     };
   }, []);
 
-  const loginMarker = useMemo(() => getPwaInstallLoginMarker(), [authStatus]);
-  const dismissedMarker = useMemo(() => getPwaDismissedLoginMarker(), [authStatus, showPrompt]);
+  const loginMarker = getPwaInstallLoginMarker();
+  const dismissedMarker = getPwaDismissedLoginMarker();
 
   useEffect(() => {
     if (

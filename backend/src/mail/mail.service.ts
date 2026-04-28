@@ -10,19 +10,15 @@ export class MailService {
 
   constructor(private config: ConfigService) {
     const apiKey = this.config.get<string>('RESEND_API_KEY');
-    console.log(`[MAIL] RESEND_API_KEY loaded: ${apiKey ? 'YES (starts with ' + apiKey.substring(0, 5) + '...)' : 'NO'}`);
     if (!apiKey) {
       console.warn('[MAIL] RESEND_API_KEY not configured. Email sending will be disabled.');
       this.isConfigured = false;
     } else {
       resendMailAdapter.setApiKey(apiKey);
       this.isConfigured = true;
-      console.log('[MAIL] Resend configured successfully');
     }
     this.fromEmail = this.config.get<string>('FROM_EMAIL') || 'noreply@stylrsa.co.za';
     this.adminEmail = this.config.get<string>('ADMIN_EMAIL') || 'jbmsengi@gmail.com';
-    console.log(`[MAIL] FROM_EMAIL: ${this.fromEmail}`);
-    console.log(`[MAIL] ADMIN_EMAIL: ${this.adminEmail}`);
   }
 
   private async sendEmail(message: {
@@ -36,12 +32,11 @@ export class MailService {
 
   async sendVerificationEmail(email: string, code: string, firstName: string) {
     if (!this.isConfigured) {
-      console.log(`[DEV] Verification email for ${email}: ${code}`);
+      console.warn('[MAIL] Verification email skipped because email delivery is not configured.');
       return;
     }
 
     try {
-      console.log(`[EMAIL] Attempting to send verification email to ${email} from ${this.fromEmail}`);
       const msg = {
         to: email,
         from: this.fromEmail,
@@ -49,10 +44,8 @@ export class MailService {
         html: this.getVerificationEmailTemplate(firstName, code),
       };
       await this.sendEmail(msg);
-      console.log(`[EMAIL] Verification email sent successfully to ${email}`);
     } catch (error) {
       console.error('[EMAIL] Failed to send verification email:', error);
-      console.error('[EMAIL] Error details:', JSON.stringify(error, null, 2));
       throw error;
     }
   }
@@ -78,7 +71,7 @@ export class MailService {
 
   async sendPasswordResetEmail(email: string, token: string, firstName: string) {
     if (!this.isConfigured) {
-      console.log(`[DEV] Password reset for ${email}: ${token}`);
+      console.warn('[MAIL] Password reset email skipped because email delivery is not configured.');
       return;
     }
 

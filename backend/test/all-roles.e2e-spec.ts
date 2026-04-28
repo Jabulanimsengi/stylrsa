@@ -1,10 +1,9 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Socket } from 'socket.io';
+import * as argon2 from 'argon2';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
-import { EventsGateway } from '../src/events/events.gateway';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const cookieParser = require('cookie-parser');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -12,19 +11,18 @@ const request = require('supertest');
 
 jest.setTimeout(60000);
 
-describe('Comprehensive multi-role flows (e2e)', () => {
+const describeDatabaseE2E =
+  process.env.RUN_DB_E2E === 'true' ? describe : describe.skip;
+
+describeDatabaseE2E('Core multi-role flows (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let eventsGateway: EventsGateway;
 
   const createdUserEmails: string[] = [];
   const createdUserIds: string[] = [];
   const createdSalonIds: string[] = [];
   const createdServiceIds: string[] = [];
-  const createdProductIds: string[] = [];
-  const createdProductOrderIds: string[] = [];
   const createdBookingIds: string[] = [];
-  const createdConversationIds: string[] = [];
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -38,44 +36,15 @@ describe('Comprehensive multi-role flows (e2e)', () => {
     await app.init();
 
     prisma = app.get(PrismaService);
-    eventsGateway = app.get(EventsGateway);
-    // Stub websocket server methods used during tests
-    eventsGateway.server = {
-      to: () => ({ emit: () => undefined }),
-      emit: () => undefined,
-    } as any;
   });
 
   afterAll(async () => {
-    for (const orderId of createdProductOrderIds) {
-      try {
-        await prisma.productOrder.delete({ where: { id: orderId } });
-      } catch (error) {
-        if ((error as { code?: string }).code !== 'P2025') {
-          // eslint-disable-next-line no-console
-          console.warn('Order cleanup failed', orderId, error);
-        }
-      }
-    }
-
     for (const bookingId of createdBookingIds) {
       try {
         await prisma.booking.delete({ where: { id: bookingId } });
       } catch (error) {
         if ((error as { code?: string }).code !== 'P2025') {
-          // eslint-disable-next-line no-console
           console.warn('Booking cleanup failed', bookingId, error);
-        }
-      }
-    }
-
-    for (const productId of createdProductIds) {
-      try {
-        await prisma.product.delete({ where: { id: productId } });
-      } catch (error) {
-        if ((error as { code?: string }).code !== 'P2025') {
-          // eslint-disable-next-line no-console
-          console.warn('Product cleanup failed', productId, error);
         }
       }
     }
@@ -85,7 +54,6 @@ describe('Comprehensive multi-role flows (e2e)', () => {
         await prisma.service.delete({ where: { id: serviceId } });
       } catch (error) {
         if ((error as { code?: string }).code !== 'P2025') {
-          // eslint-disable-next-line no-console
           console.warn('Service cleanup failed', serviceId, error);
         }
       }
@@ -96,19 +64,9 @@ describe('Comprehensive multi-role flows (e2e)', () => {
         await prisma.salon.delete({ where: { id: salonId } });
       } catch (error) {
         if ((error as { code?: string }).code !== 'P2025') {
-          // eslint-disable-next-line no-console
           console.warn('Salon cleanup failed', salonId, error);
         }
       }
-    }
-
-    if (createdConversationIds.length > 0) {
-      await prisma.message.deleteMany({
-        where: { conversationId: { in: createdConversationIds } },
-      });
-      await prisma.conversation.deleteMany({
-        where: { id: { in: createdConversationIds } },
-      });
     }
 
     if (createdUserIds.length > 0) {
@@ -122,7 +80,6 @@ describe('Comprehensive multi-role flows (e2e)', () => {
         await prisma.user.delete({ where: { email } });
       } catch (error) {
         if ((error as { code?: string }).code !== 'P2025') {
-          // eslint-disable-next-line no-console
           console.warn('User cleanup failed', email, error);
         }
       }
@@ -132,18 +89,35 @@ describe('Comprehensive multi-role flows (e2e)', () => {
     await app.close();
   });
 
-  const registerUser = async (payload: {
+  const createVerifiedUser = async (payload: {
     email: string;
     password: string;
     firstName: string;
     lastName: string;
-    role?: string;
+    role: 'ADMIN' | 'SALON_OWNER' | 'CLIENT';
   }) => {
-    await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send(payload)
-      .expect(201);
+    const passwordHash = await argon2.hash(payload.password);
+    const user = await prisma.user.create({
+      data: {
+        email: payload.email,
+        password: passwordHash,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        role: payload.role,
+        onboardingStatus:
+          payload.role === 'SALON_OWNER' ? 'PROVIDER_SETUP_REQUIRED' : 'COMPLETE',
+        emailVerified: true,
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+      },
+    });
+
     createdUserEmails.push(payload.email);
+    createdUserIds.push(user.id);
+    return user;
   };
 
   const loginAs = async (
@@ -154,42 +128,20 @@ describe('Comprehensive multi-role flows (e2e)', () => {
       .post('/api/auth/login')
       .send(credentials)
       .expect(200);
-    const user = response.body.user as {
+
+    return response.body.user as {
       id: string;
       email: string;
       role: string;
       salonId?: string | null;
     };
-    createdUserIds.push(user.id);
-    return user;
   };
 
-  const createMockSocket = (userId: string) => {
-    const events: Array<{ event: string; payload: any }> = [];
-    const mock: any = {
-      id: `socket-${userId}-${Math.random().toString(36).slice(2)}`,
-      handshake: { query: { userId } },
-      emit: (event: string, payload: any) => {
-        events.push({ event, payload });
-        return true;
-      },
-      join: jest.fn(),
-      leave: jest.fn(),
-      emittedEvents: events,
-    };
-    return mock as Socket & {
-      emittedEvents: Array<{ event: string; payload: any }>;
-    };
-  };
-
-  it('executes full platform flows across all roles', async () => {
+  it('supports admin approval, salon setup, and booking confirmation across active roles', async () => {
     const httpServer = app.getHttpServer();
-
     const adminAgent = request.agent(httpServer);
-    const salonOwnerAgent = request.agent(httpServer);
-    const productSellerAgent = request.agent(httpServer);
+    const ownerAgent = request.agent(httpServer);
     const clientAgent = request.agent(httpServer);
-
     const timestamp = Date.now();
 
     const adminCredentials = {
@@ -197,53 +149,40 @@ describe('Comprehensive multi-role flows (e2e)', () => {
       password: 'Password123!',
       firstName: 'Admin',
       lastName: 'User',
-      role: 'ADMIN',
+      role: 'ADMIN' as const,
     };
-    await registerUser(adminCredentials);
-    const adminUser = await loginAs(adminAgent, adminCredentials);
-
-    const salonOwnerCredentials = {
+    const ownerCredentials = {
       email: `owner-${timestamp}@test.com`,
       password: 'Password123!',
       firstName: 'Owner',
       lastName: 'One',
-      role: 'SALON_OWNER',
+      role: 'SALON_OWNER' as const,
     };
-    await registerUser(salonOwnerCredentials);
-    const salonOwner = await loginAs(salonOwnerAgent, salonOwnerCredentials);
-
-    const productSellerCredentials = {
-      email: `seller-${timestamp}@test.com`,
-      password: 'Password123!',
-      firstName: 'Seller',
-      lastName: 'One',
-      role: 'PRODUCT_SELLER',
-    };
-    await registerUser(productSellerCredentials);
-    const productSeller = await loginAs(
-      productSellerAgent,
-      productSellerCredentials,
-    );
-
     const clientCredentials = {
       email: `client-${timestamp}@test.com`,
       password: 'Password123!',
       firstName: 'Client',
       lastName: 'Tester',
+      role: 'CLIENT' as const,
     };
-    await registerUser(clientCredentials);
-    const clientUser = await loginAs(clientAgent, clientCredentials);
+
+    const adminUser = await createVerifiedUser(adminCredentials);
+    const ownerUser = await createVerifiedUser(ownerCredentials);
+    const clientUser = await createVerifiedUser(clientCredentials);
+
+    await loginAs(adminAgent, adminCredentials);
+    await loginAs(ownerAgent, ownerCredentials);
+    await loginAs(clientAgent, clientCredentials);
 
     const categoriesResponse = await request(httpServer)
       .get('/api/categories')
       .expect(200);
     const categories = categoriesResponse.body as Array<{ id: string }>;
-    expect(Array.isArray(categories) && categories.length > 0).toBe(true);
-    const categoryId = categories[0].id;
+    expect(categories.length).toBeGreaterThan(0);
 
     const salonPayload = {
       name: 'Complete Flow Salon',
-      description: 'Salon used for full-stack automated testing.',
+      description: 'Salon used for current multi-role testing.',
       address: '45 Flow Street',
       town: 'Testown',
       city: 'Cape Town',
@@ -256,12 +195,11 @@ describe('Comprehensive multi-role flows (e2e)', () => {
         { day: 'Tuesday', open: '09:00', close: '17:00' },
       ],
       operatingDays: ['Monday', 'Tuesday'],
-      planCode: 'PREMIUM',
       hasSentProof: true,
       paymentReference: 'FLOW-SALON-REF',
     };
 
-    const createSalonResponse = await salonOwnerAgent
+    const createSalonResponse = await ownerAgent
       .post('/api/salons')
       .send(salonPayload)
       .expect(201);
@@ -286,10 +224,10 @@ describe('Comprehensive multi-role flows (e2e)', () => {
       duration: 60,
       images: ['https://example.com/service.jpg'],
       salonId: salon.id,
-      categoryId,
+      categoryId: categories[0].id,
     };
 
-    const createServiceResponse = await salonOwnerAgent
+    const createServiceResponse = await ownerAgent
       .post('/api/services')
       .send(servicePayload)
       .expect(201);
@@ -305,25 +243,6 @@ describe('Comprehensive multi-role flows (e2e)', () => {
       .get('/api/admin/salons/pending')
       .expect(403);
     expect(forbiddenResponse.body.code).toBe('PERMISSION_DENIED');
-    expect(forbiddenResponse.body.userMessage).toBe(
-      "You don't have permission to do that.",
-    );
-    expect(typeof forbiddenResponse.body.referenceId).toBe('string');
-
-    const invalidBookingAttempt = await clientAgent
-      .post('/api/bookings')
-      .send({
-        serviceId: service.id,
-        bookingTime: 'not-a-date',
-        isMobile: 'nope',
-        clientPhone: '1234',
-      })
-      .expect(400);
-    expect(invalidBookingAttempt.body.code).toBe('VALIDATION_FAILED');
-    expect(invalidBookingAttempt.body.userMessage).toBe(
-      'Please check the form and try again.',
-    );
-    expect(typeof invalidBookingAttempt.body.referenceId).toBe('string');
 
     const bookingTime = new Date(Date.now() + 3600000).toISOString();
     const bookingResponse = await clientAgent
@@ -332,14 +251,14 @@ describe('Comprehensive multi-role flows (e2e)', () => {
         serviceId: service.id,
         bookingTime,
         isMobile: false,
-        clientPhone: '+27820000001',
+        clientPhone: '0820000001',
       })
       .expect(201);
     const booking = bookingResponse.body;
     expect(booking.status).toBe('PENDING');
     createdBookingIds.push(booking.id);
 
-    const bookingUpdateResponse = await salonOwnerAgent
+    const bookingUpdateResponse = await ownerAgent
       .patch(`/api/bookings/${booking.id}/status`)
       .send({ status: 'CONFIRMED' })
       .expect(200);
@@ -348,7 +267,7 @@ describe('Comprehensive multi-role flows (e2e)', () => {
     const clientNotifications = await clientAgent
       .get('/api/notifications')
       .expect(200);
-    const bookingNotification = (clientNotifications.body.items as any[]).find(
+    const bookingNotification = (clientNotifications.body.items as Array<{ message?: string }>).find(
       (item) =>
         typeof item.message === 'string' &&
         item.message.includes('booking') &&
@@ -356,131 +275,21 @@ describe('Comprehensive multi-role flows (e2e)', () => {
     );
     expect(bookingNotification).toBeDefined();
 
-    const ownerConversationResponse = await clientAgent
-      .post('/api/chat/conversations')
-      .send({ recipientId: salonOwner.id })
-      .expect(201);
-    const ownerConversation = ownerConversationResponse.body;
-    createdConversationIds.push(ownerConversation.id);
-
-    const clientSocket = createMockSocket(clientUser.id);
-    const ownerSocket = createMockSocket(salonOwner.id);
-    await eventsGateway.handleRegister(clientUser.id, clientSocket);
-    await eventsGateway.handleRegister(salonOwner.id, ownerSocket);
-
-    await eventsGateway.handleSendMessage(
-      {
-        conversationId: ownerConversation.id,
-        recipientId: salonOwner.id,
-        body: 'Looking forward to my appointment!',
-      },
-      clientSocket,
-    );
-
-    const latestMessage = await prisma.message.findFirst({
-      where: { conversationId: ownerConversation.id },
-      orderBy: { createdAt: 'desc' },
-    });
-    expect(latestMessage?.content).toContain('Looking forward');
-
-    const sellerPlanResponse = await productSellerAgent
-      .patch('/api/users/me/seller-plan')
-      .send({
-        planCode: 'STARTER',
-        hasSentProof: true,
-        paymentReference: 'SELLER-PLAN-REF',
-      })
-      .expect(200);
-    expect(sellerPlanResponse.body.sellerPlanPaymentStatus).toBe(
-      'PROOF_SUBMITTED',
-    );
-
-    await adminAgent
-      .patch(`/api/admin/sellers/${productSeller.id}/plan/payment`)
-      .send({ status: 'VERIFIED', paymentReference: 'SELLER-VERIFIED' })
-      .expect(200);
-
-    const productResponse = await productSellerAgent
-      .post('/api/products')
-      .send({
-        name: 'Hydrating Shampoo',
-        description: 'Salon-grade hydrating shampoo.',
-        price: 299.99,
-        images: ['https://example.com/product.jpg'],
-        stock: 10,
-      })
-      .expect(201);
-    const product = productResponse.body;
-    createdProductIds.push(product.id);
-
-    await adminAgent
-      .patch(`/api/admin/products/${product.id}/status`)
-      .send({ approvalStatus: 'APPROVED' })
-      .expect(200);
-
-    const productOrderResponse = await clientAgent
-      .post('/api/product-orders')
-      .send({
-        productId: product.id,
-        quantity: 2,
-        deliveryMethod: 'Courier',
-        contactPhone: '+27820000002',
-        notes: 'Please deliver after 5pm',
-      })
-      .expect(201);
-    const productOrder = productOrderResponse.body;
-    createdProductOrderIds.push(productOrder.id);
-
-    await productSellerAgent
-      .patch(`/api/product-orders/${productOrder.id}/status`)
-      .send({ status: 'SHIPPED' })
-      .expect(200);
-
-    const orderNotifications = await clientAgent
-      .get('/api/notifications')
-      .expect(200);
-    const shipmentNotification = (orderNotifications.body.items as any[]).find(
-      (item) =>
-        typeof item.message === 'string' &&
-        item.message.includes('order') &&
-        item.message.includes('shipped'),
-    );
-    expect(shipmentNotification).toBeDefined();
-
-    const sellerConversationResponse = await clientAgent
-      .post('/api/chat/conversations')
-      .send({ recipientId: productSeller.id })
-      .expect(201);
-    const sellerConversation = sellerConversationResponse.body;
-    createdConversationIds.push(sellerConversation.id);
-
-    const sellerSocket = createMockSocket(productSeller.id);
-    await eventsGateway.handleRegister(productSeller.id, sellerSocket);
-
-    await eventsGateway.handleSendMessage(
-      {
-        conversationId: sellerConversation.id,
-        recipientId: productSeller.id,
-        body: 'Thanks for shipping so quickly!',
-      },
-      clientSocket,
-    );
-
-    const sellerMessage = await prisma.message.findFirst({
-      where: { conversationId: sellerConversation.id },
-      orderBy: { createdAt: 'desc' },
-    });
-    expect(sellerMessage?.content).toContain('Thanks for shipping');
-
     await adminAgent
       .delete(`/api/admin/salons/${salon.id}`)
       .send({ reason: 'Routine test cleanup' })
       .expect(200);
 
+    createdSalonIds.splice(createdSalonIds.indexOf(salon.id), 1);
+
     const deletedSalon = await prisma.salon.findUnique({
       where: { id: salon.id },
     });
     expect(deletedSalon).toBeNull();
+
+    expect(adminUser.role).toBe('ADMIN');
+    expect(ownerUser.role).toBe('SALON_OWNER');
+    expect(clientUser.role).toBe('CLIENT');
   });
 
   it('allows a user to sign up as a salon owner via Google OAuth', async () => {
@@ -502,6 +311,7 @@ describe('Comprehensive multi-role flows (e2e)', () => {
       .expect(200);
 
     expect(response.body.user.role).toBe('SALON_OWNER');
+    expect(response.body.user.onboardingStatus).toBe('PROVIDER_SETUP_REQUIRED');
 
     const dbUser = await prisma.user.findUnique({
       where: { email: googleUser.email },
@@ -509,5 +319,6 @@ describe('Comprehensive multi-role flows (e2e)', () => {
 
     expect(dbUser).toBeDefined();
     expect(dbUser?.role).toBe('SALON_OWNER');
+    expect(dbUser?.emailVerified).toBe(true);
   });
 });

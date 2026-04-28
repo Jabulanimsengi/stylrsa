@@ -8,6 +8,7 @@
     flex: 1;
     margin-left: 260px;
     min-width: 0;
+    position: relative;
 }
 
 @media (max-width: 1023px) {
@@ -52,6 +53,46 @@
     background: var(--color-surface-subtle);
 }
 
+.exitButton {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 120;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 40px;
+    padding: 0 0.875rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text-strong);
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.exitButton:hover,
+.mobileExitButton:hover {
+    background: var(--color-surface-subtle);
+}
+
+.mobileExitButton {
+    margin-left: auto;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text-strong);
+    cursor: pointer;
+}
+
 .mobileTitle {
     font-size: 1.125rem;
     font-weight: 600;
@@ -67,5 +108,15 @@
 @media (max-width: 768px) {
     .content {
         padding: 1rem;
+    }
+}
+
+@media (max-width: 1023px) {
+    .exitButton {
+        display: none;
+    }
+
+    .mobileExitButton {
+        display: flex;
     }
 }

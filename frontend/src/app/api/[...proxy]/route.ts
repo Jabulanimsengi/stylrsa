@@ -61,11 +61,6 @@ async function proxyToBackend(request: NextRequest) {
 
   const backendUrl = `${apiOrigin}${pathname}${url.search}`;
 
-  console.log('[PROXY DEBUG] original URL:', request.url);
-  console.log('[PROXY DEBUG] NEXT_PUBLIC_API_ORIGIN:', process.env.NEXT_PUBLIC_API_ORIGIN);
-  console.log('[PROXY DEBUG] apiOrigin selected:', apiOrigin);
-  console.log('[PROXY DEBUG] Proxying to backendUrl:', backendUrl);
-
   try {
     // Get the content type to determine how to handle the body
     const contentType = request.headers.get('content-type') || '';

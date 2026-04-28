@@ -3,7 +3,7 @@
 'use client';
 
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
   Salon,
   Service,
@@ -56,6 +56,10 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
   const socket = useSocket();
   const { authStatus, user, logout } = useAuth();
   const { showPageLoader } = useNavigationLoading();
+  const [updatingBookingAction, setUpdatingBookingAction] = useState<{
+    bookingId: string;
+    action: 'confirm' | 'decline' | 'complete';
+  } | null>(null);
   const handleSessionExpired = useCallback(() => {
     showPageLoader();
     router.push('/');
@@ -240,9 +244,32 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
 
   const handleConfirmBookingComplete = useCallback(async () => {
     if (!bookingToComplete) return;
-    await handleBookingStatusUpdate(bookingToComplete, 'COMPLETED');
-    setBookingToComplete(null);
+    setUpdatingBookingAction({ bookingId: bookingToComplete, action: 'complete' });
+    try {
+      await handleBookingStatusUpdate(bookingToComplete, 'COMPLETED');
+      setBookingToComplete(null);
+    } finally {
+      setUpdatingBookingAction(null);
+    }
   }, [bookingToComplete, handleBookingStatusUpdate, setBookingToComplete]);
+
+  const handleConfirmBooking = useCallback(async (bookingId: string) => {
+    setUpdatingBookingAction({ bookingId, action: 'confirm' });
+    try {
+      await handleBookingStatusUpdate(bookingId, 'CONFIRMED');
+    } finally {
+      setUpdatingBookingAction(null);
+    }
+  }, [handleBookingStatusUpdate]);
+
+  const handleDeclineBooking = useCallback(async (bookingId: string) => {
+    setUpdatingBookingAction({ bookingId, action: 'decline' });
+    try {
+      await handleBookingStatusUpdate(bookingId, 'DECLINED');
+    } finally {
+      setUpdatingBookingAction(null);
+    }
+  }, [handleBookingStatusUpdate]);
 
   // Loading state
   if (isLoading || authStatus === 'loading') {
@@ -365,6 +392,7 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
                 confirmedBookings={confirmedBookings}
                 pastBookings={pastBookings}
                 activeBookingTab={activeBookingTab}
+                updatingBookingAction={updatingBookingAction}
                 promotions={promotions}
                 galleryImages={galleryImages}
                 bookingMessage={bookingMessage}
@@ -388,8 +416,8 @@ function DashboardPageClient({ initialTab = DEFAULT_DASHBOARD_TAB }: DashboardPa
                 isPlanUpdating={isPlanUpdating}
                 isSubmittingPlanChange={isSubmittingPlanChange}
                 onBookingTabChange={setActiveBookingTab}
-                onConfirmBooking={(bookingId) => handleBookingStatusUpdate(bookingId, 'CONFIRMED')}
-                onDeclineBooking={(bookingId) => handleBookingStatusUpdate(bookingId, 'DECLINED')}
+                onConfirmBooking={handleConfirmBooking}
+                onDeclineBooking={handleDeclineBooking}
                 onCompleteBooking={setBookingToComplete}
                 onAddService={openServiceModalToAdd}
                 onEditService={openServiceModalToEdit}

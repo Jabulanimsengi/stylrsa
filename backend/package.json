@@ -22,6 +22,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:e2e:db": "node ./scripts/run-e2e-with-db.cjs",
     "prisma:seed": "ts-node prisma/seed.ts",
     "auth:cleanup-owner-signups": "ts-node prisma/cleanup-owner-only-auth.ts",
     "auth:cleanup-owner-signups:apply": "ts-node prisma/cleanup-owner-only-auth.ts --apply",

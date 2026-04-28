@@ -22,7 +22,7 @@ interface Salon {
     slug?: string;
     latitude?: number | null;
     longitude?: number | null;
-    operatingHours?: any;
+    operatingHours?: SalonOperatingHours;
     address?: string;
     city?: string;
     town?: string;
@@ -36,13 +36,24 @@ interface Salon {
     }>;
 }
 
+interface SalonHoursEntry {
+    day?: string;
+    open?: string;
+    close?: string;
+    openTime?: string;
+    closeTime?: string;
+    closed?: boolean;
+}
+
+type SalonOperatingHours = SalonHoursEntry[] | Record<string, SalonHoursEntry | undefined> | null | undefined;
+
 interface SalonMapModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
 // Helper to check if salon is currently open
-function isOpenNow(operatingHours: any): { isOpen: boolean; hours: string } {
+function isOpenNow(operatingHours: SalonOperatingHours): { isOpen: boolean; hours: string } {
     if (!operatingHours) return { isOpen: false, hours: 'Hours not set' };
 
     const now = new Date();
@@ -52,14 +63,14 @@ function isOpenNow(operatingHours: any): { isOpen: boolean; hours: string } {
     const currentMinute = now.getMinutes();
     const currentTime = currentHour * 60 + currentMinute;
 
-    let daySchedule: any = null;
+    let daySchedule: SalonHoursEntry | null = null;
 
     if (Array.isArray(operatingHours)) {
         daySchedule = operatingHours.find(
-            (d: any) => d.day?.toLowerCase() === dayOfWeek
-        );
+            (entry) => entry.day?.toLowerCase() === dayOfWeek
+        ) ?? null;
     } else if (typeof operatingHours === 'object') {
-        daySchedule = operatingHours[dayOfWeek];
+        daySchedule = operatingHours[dayOfWeek] ?? null;
     }
 
     if (!daySchedule || daySchedule.closed) {
@@ -73,8 +84,8 @@ function isOpenNow(operatingHours: any): { isOpen: boolean; hours: string } {
         return { isOpen: false, hours: 'Hours not set' };
     }
 
-    const openTime = parseInt(openParts[0]) * 60 + parseInt(openParts[1] || 0);
-    const closeTime = parseInt(closeParts[0]) * 60 + parseInt(closeParts[1] || 0);
+    const openTime = parseInt(openParts[0], 10) * 60 + parseInt(openParts[1] || '0', 10);
+    const closeTime = parseInt(closeParts[0], 10) * 60 + parseInt(closeParts[1] || '0', 10);
 
     const isCurrentlyOpen = currentTime >= openTime && currentTime < closeTime;
     const hoursStr = `${daySchedule.open || daySchedule.openTime} - ${daySchedule.close || daySchedule.closeTime}`;

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LoadingButton } from '@/components/ui';
 import { APP_PLANS, PLAN_BY_CODE } from '@/constants/plans';
 import type { PlanCode, PlanPaymentStatus } from '@/types';
 import { PLAN_PAYMENT_LABELS, formatRand, type PendingSalon } from '../types';
@@ -7,6 +8,7 @@ import styles from '../AdminPage.module.css';
 interface AdminPendingPaymentsSectionProps {
   pendingPaymentSalons: PendingSalon[];
   updatingSalonPlanId: string | null;
+  updatingSalonPlanStatus: PlanPaymentStatus | null;
   onCopyReference: (value: string, successMessage: string) => void;
   onUpdateSalonPaymentStatus: (salonId: string, status: PlanPaymentStatus) => void;
 }
@@ -14,6 +16,7 @@ interface AdminPendingPaymentsSectionProps {
 export default function AdminPendingPaymentsSection({
   pendingPaymentSalons,
   updatingSalonPlanId,
+  updatingSalonPlanStatus,
   onCopyReference,
   onUpdateSalonPaymentStatus,
 }: AdminPendingPaymentsSectionProps) {
@@ -88,9 +91,11 @@ export default function AdminPendingPaymentsSection({
               </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <button
+                <LoadingButton
                   type="button"
                   onClick={() => onUpdateSalonPaymentStatus(salon.id, 'VERIFIED')}
+                  loading={isUpdating && updatingSalonPlanStatus === 'VERIFIED'}
+                  loadingText="Verifying..."
                   disabled={isUpdating || paymentStatus === 'VERIFIED'}
                   style={{
                     padding: '0.75rem 1.5rem',
@@ -104,11 +109,13 @@ export default function AdminPendingPaymentsSection({
                     opacity: isUpdating ? 0.6 : 1,
                   }}
                 >
-                  {isUpdating && paymentStatus !== 'VERIFIED' ? 'Verifying...' : paymentStatus === 'VERIFIED' ? 'Verified' : 'Verify Payment'}
-                </button>
-                <button
+                  {paymentStatus === 'VERIFIED' ? 'Verified' : 'Verify Payment'}
+                </LoadingButton>
+                <LoadingButton
                   type="button"
                   onClick={() => onUpdateSalonPaymentStatus(salon.id, 'AWAITING_PROOF')}
+                  loading={isUpdating && updatingSalonPlanStatus === 'AWAITING_PROOF'}
+                  loadingText="Saving..."
                   disabled={isUpdating || paymentStatus === 'AWAITING_PROOF'}
                   style={{
                     padding: '0.75rem 1.5rem',
@@ -122,8 +129,8 @@ export default function AdminPendingPaymentsSection({
                     opacity: isUpdating ? 0.6 : 1,
                   }}
                 >
-                  {isUpdating && paymentStatus === 'AWAITING_PROOF' ? 'Saving...' : 'Reject / Request Re-submission'}
-                </button>
+                  Reject / Request Re-submission
+                </LoadingButton>
                 <Link
                   href={`/dashboard?ownerId=${salon.owner.id}`}
                   style={{

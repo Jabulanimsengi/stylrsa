@@ -36,7 +36,7 @@ interface DesktopSalonProfileProps {
   setLogoError: Dispatch<SetStateAction<boolean>>;
   openLightbox: (images: string[], index: number) => void;
   onToggleFavorite: () => void;
-  onBookServices: (selectedServices: Service[]) => void;
+  onBookingSuccess: () => void;
   isBookingJourneyActive: boolean;
 }
 
@@ -55,7 +55,7 @@ export default function DesktopSalonProfile({
   setLogoError,
   openLightbox,
   onToggleFavorite,
-  onBookServices,
+  onBookingSuccess,
   isBookingJourneyActive,
 }: DesktopSalonProfileProps) {
   const galleryImageUrls = galleryImages.map((img) => img.imageUrl);
@@ -252,7 +252,7 @@ export default function DesktopSalonProfile({
                 <FreshaServiceList
                   services={services}
                   salon={salon}
-                  onBook={onBookServices}
+                  onBookingSuccess={onBookingSuccess}
                   onImageClick={openLightbox}
                   isBookingJourneyActive={isBookingJourneyActive}
                 />

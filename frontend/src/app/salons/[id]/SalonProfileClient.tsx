@@ -6,7 +6,6 @@ import { toast } from 'react-toastify';
 import { Salon, Service, GalleryImage } from '@/types';
 import BookingModal from '@/components/BookingModal/BookingModal';
 import ImageLightbox from '@/components/ImageLightbox';
-import { useSocket } from '@/context/SocketContext';
 import { useAuth } from '@/hooks/useAuth';
 import { usePagePerformance } from '@/hooks/usePagePerformance';
 import { toFriendlyMessage } from '@/lib/errors';
@@ -24,7 +23,6 @@ type Props = {
 export default function SalonProfileClient({ initialSalon, salonId }: Props) {
   const searchParams = useSearchParams();
   const { authStatus } = useAuth();
-  const socket = useSocket();
   usePagePerformance('salon_detail');
 
   const [salon, setSalon] = useState<Salon | null>(initialSalon);
@@ -131,20 +129,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
       isActive = false;
     };
   }, [initialSalon, salonId]);
-
-  useEffect(() => {
-    if (!salon?.id || !socket) return;
-
-    socket.emit('joinSalonRoom', salon.id);
-    socket.on('availabilityUpdate', (data: { isAvailableNow: boolean }) => {
-      setSalon((prev) => (prev ? { ...prev, isAvailableNow: data.isAvailableNow } : null));
-    });
-
-    return () => {
-      socket.emit('leaveSalonRoom', salon.id);
-      socket.off('availabilityUpdate');
-    };
-  }, [socket, salon?.id]);
 
   useEffect(() => {
     let isActive = true;
@@ -257,21 +241,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
     setLightboxStartIndex(0);
   };
 
-  const handleBookClick = (service: Service) => {
-    setSelectedServices([service]);
-    setShowBookingModal(true);
-  };
-
-  const handleMultiServiceBook = (selectedSvcs: Service[]) => {
-    if (selectedSvcs.length === 0) {
-      toast.warning('Please select at least one service');
-      return;
-    }
-
-    setSelectedServices(selectedSvcs);
-    setShowBookingModal(true);
-  };
-
   const handleToggleFavorite = async () => {
     if (!salon) {
       return;
@@ -341,7 +310,6 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
         mapsHref={mapsHref}
         onOpenLightbox={openLightbox}
         onToggleFavorite={handleToggleFavorite}
-        onBookService={handleBookClick}
       />
 
       <DesktopSalonProfile
@@ -359,7 +327,9 @@ export default function SalonProfileClient({ initialSalon, salonId }: Props) {
         setLogoError={setLogoError}
         openLightbox={openLightbox}
         onToggleFavorite={handleToggleFavorite}
-        onBookServices={handleMultiServiceBook}
+        onBookingSuccess={() => {
+          toast.success('Booking request sent! The salon will confirm shortly.');
+        }}
         isBookingJourneyActive={showBookingModal}
       />
 

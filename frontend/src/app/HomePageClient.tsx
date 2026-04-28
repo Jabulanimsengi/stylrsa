@@ -61,7 +61,7 @@ const CLIENT_JOURNEY_STEPS = [
   {
     step: '04',
     title: 'Confirm on WhatsApp',
-    copy: 'The final conversation moves to WhatsApp, making it easy to confirm details and continue the booking fast.',
+    copy: 'The final confirmation moves to WhatsApp, making it easy to confirm details and complete the booking fast.',
   },
 ];
 
@@ -529,7 +529,7 @@ export default function HomePageClient({
 
       <SalonCarouselSection
         title="Available Now"
-        description="Profiles currently showing as open and ready for new booking conversations."
+        description="Profiles currently showing as open and ready for new booking requests."
         salons={availableNowSalons}
         viewAllLink="/salons?openNow=true"
         showViewAll
@@ -541,7 +541,7 @@ export default function HomePageClient({
         <div className={styles.sectionIntro}>
           <h2 className={styles.sectionHeading}>A lighter booking flow for clients and salons</h2>
           <p className={styles.sectionDescription}>
-            Stylr SA keeps the request fast and structured, then hands the conversation to WhatsApp where salons can confirm details quickly.
+            Stylr SA keeps the request fast and structured, then hands the booking over to WhatsApp where salons can confirm details quickly.
           </p>
         </div>
 

@@ -17,7 +17,7 @@ const audienceCards = [
     points: [
       'Create a profile built for discovery, trust, and direct enquiries.',
       'Show your services, pricing, location, and proof of quality clearly.',
-      'Receive direct WhatsApp booking requests and keep the final conversation in your own flow.',
+      'Receive direct WhatsApp booking requests and handle final confirmation in your own flow.',
     ],
   },
 ];

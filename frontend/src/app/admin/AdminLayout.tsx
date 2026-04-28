@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './AdminLayout.module.css';
 import AdminSidebar from './components/AdminSidebar/AdminSidebar';
 import type { AdminView } from './admin-config';
-import { FaBars } from 'react-icons/fa';
+import { FaBars, FaTimes } from 'react-icons/fa';
 
 interface AdminLayoutProps {
     children: React.ReactNode;
@@ -25,6 +26,8 @@ export default function AdminLayout({
     pendingCounts,
 }: AdminLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const router = useRouter();
+    const closeAdminPanel = () => router.push('/');
 
     return (
         <div className={styles.layout}>
@@ -34,9 +37,21 @@ export default function AdminLayout({
                 pendingCounts={pendingCounts}
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
+                onExitAdmin={closeAdminPanel}
             />
 
             <main className={styles.main}>
+                <button
+                    type="button"
+                    className={styles.exitButton}
+                    onClick={closeAdminPanel}
+                    aria-label="Close admin panel"
+                    title="Close admin panel"
+                >
+                    <FaTimes />
+                    <span>Close Admin</span>
+                </button>
+
                 {/* Mobile header */}
                 <div className={styles.mobileHeader}>
                     <button
@@ -47,6 +62,14 @@ export default function AdminLayout({
                         <FaBars />
                     </button>
                     <h1 className={styles.mobileTitle}>Admin</h1>
+                    <button
+                        type="button"
+                        className={styles.mobileExitButton}
+                        onClick={closeAdminPanel}
+                        aria-label="Close admin panel"
+                    >
+                        <FaTimes />
+                    </button>
                 </div>
 
                 <div className={styles.content}>

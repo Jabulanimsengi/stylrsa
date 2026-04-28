@@ -18,6 +18,47 @@ interface IPGeolocationState {
   error: string | null;
 }
 
+interface IpApiSuccessResponse {
+  status: 'success';
+  city?: string;
+  regionName?: string;
+  country?: string;
+  lat: number;
+  lon: number;
+}
+
+interface IpApiCoResponse {
+  latitude: number;
+  longitude: number;
+  city?: string;
+  region?: string;
+  country_name?: string;
+}
+
+function isIpApiSuccessResponse(value: unknown): value is IpApiSuccessResponse {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<IpApiSuccessResponse>;
+  return candidate.status === 'success'
+    && typeof candidate.lat === 'number'
+    && typeof candidate.lon === 'number';
+}
+
+function isIpApiCoResponse(value: unknown): value is IpApiCoResponse {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<IpApiCoResponse>;
+  return typeof candidate.latitude === 'number' && typeof candidate.longitude === 'number';
+}
+
+function toErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'IP geolocation failed, using default';
+}
+
 // South African city coordinates fallback
 // Gauteng & Western Cape city coordinates only
 const SA_CITY_COORDS: Record<string, { lat: number; lon: number }> = {
@@ -57,9 +98,9 @@ export function useIPGeolocation() {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data: unknown = await response.json();
         
-        if (data.status === 'success' && data.lat && data.lon) {
+        if (isIpApiSuccessResponse(data)) {
           const result: IPGeolocationResult = {
             latitude: data.lat,
             longitude: data.lon,
@@ -80,9 +121,9 @@ export function useIPGeolocation() {
       });
 
       if (fallbackResponse.ok) {
-        const data = await fallbackResponse.json();
+        const data: unknown = await fallbackResponse.json();
         
-        if (data.latitude && data.longitude) {
+        if (isIpApiCoResponse(data)) {
           const result: IPGeolocationResult = {
             latitude: data.latitude,
             longitude: data.longitude,
@@ -110,7 +151,7 @@ export function useIPGeolocation() {
       setState({ result: defaultResult, isLoading: false, error: 'Using default location' });
       return defaultResult;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Use default coordinates on error
       const defaultResult: IPGeolocationResult = {
         latitude: DEFAULT_COORDS.lat,
@@ -124,7 +165,7 @@ export function useIPGeolocation() {
       setState({ 
         result: defaultResult, 
         isLoading: false, 
-        error: error?.message || 'IP geolocation failed, using default' 
+        error: toErrorMessage(error), 
       });
       return defaultResult;
     }

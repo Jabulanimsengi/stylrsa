@@ -47,8 +47,6 @@ export async function POST() {
       });
     }
 
-    console.log('[Logout API] Cookie cleared');
-
     return response;
   } catch (error) {
     console.error('[Logout API] Error:', error);

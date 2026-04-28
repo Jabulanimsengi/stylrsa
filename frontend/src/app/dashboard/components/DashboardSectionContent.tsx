@@ -41,6 +41,10 @@ interface DashboardSectionContentProps {
   confirmedBookings: DashboardBooking[];
   pastBookings: DashboardBooking[];
   activeBookingTab: 'pending' | 'confirmed' | 'past';
+  updatingBookingAction?: {
+    bookingId: string;
+    action: 'confirm' | 'decline' | 'complete';
+  } | null;
   promotions: DashboardPromotionsState;
   galleryImages: GalleryImage[];
   bookingMessage: string;
@@ -64,8 +68,8 @@ interface DashboardSectionContentProps {
   isPlanUpdating: boolean;
   isSubmittingPlanChange: boolean;
   onBookingTabChange: (tab: 'pending' | 'confirmed' | 'past') => void;
-  onConfirmBooking: (bookingId: string) => void;
-  onDeclineBooking: (bookingId: string) => void;
+  onConfirmBooking: (bookingId: string) => void | Promise<void>;
+  onDeclineBooking: (bookingId: string) => void | Promise<void>;
   onCompleteBooking: (bookingId: string) => void;
   onAddService: () => void;
   onEditService: (service: Service) => void;
@@ -106,6 +110,7 @@ export default function DashboardSectionContent({
   confirmedBookings,
   pastBookings,
   activeBookingTab,
+  updatingBookingAction,
   galleryImages,
   bookingMessage,
   isEditingMessage,
@@ -153,6 +158,7 @@ export default function DashboardSectionContent({
           confirmedBookings={confirmedBookings}
           pastBookings={pastBookings}
           activeBookingTab={activeBookingTab}
+          updatingBookingAction={updatingBookingAction}
           onBookingTabChange={onBookingTabChange}
           onConfirmBooking={onConfirmBooking}
           onDeclineBooking={onDeclineBooking}
