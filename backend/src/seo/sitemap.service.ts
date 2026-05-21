@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { slugify } from '../common/slug.util';
 
@@ -105,6 +105,11 @@ export class SitemapService {
    * @param segment - The sitemap segment number (0, 1, 2, etc.)
    */
   async generateSitemap(segment: number): Promise<string> {
+    const { totalSitemaps } = await this.getSeoSitemapCounts();
+    if (segment >= totalSitemaps) {
+      throw new NotFoundException(`Sitemap segment ${segment} does not exist`);
+    }
+
     // Check cache first
     const cached = this.sitemapCache.get(segment);
     if (cached && Date.now() - cached.timestamp < this.SITEMAP_CACHE_TTL) {
@@ -118,6 +123,10 @@ export class SitemapService {
     const urls = await this.getAllSEOUrls(skip, this.URLS_PER_SITEMAP);
 
     this.logger.log(`Retrieved ${urls.length} URLs for segment ${segment}`);
+
+    if (urls.length === 0) {
+      throw new NotFoundException(`Sitemap segment ${segment} is empty`);
+    }
 
     const xml = this.buildSitemapXml(urls);
 
@@ -470,17 +479,15 @@ export class SitemapService {
    * Get sitemap statistics
    */
   async getSitemapStats(): Promise<{
+    keywordCount: number;
     totalUrls: number;
     totalSitemaps: number;
     cachedUrls: number;
     eligibleLocations: number;
     lastGenerated: Date | null;
   }> {
-    const keywordCount = await this.prisma.seoKeyword.count();
-    const locations = this.getIndexableLocations(await this.getLocations());
-    const locationCount = locations.length;
-    const totalUrls = keywordCount * locationCount;
-    const totalSitemaps = Math.ceil(totalUrls / this.URLS_PER_SITEMAP);
+    const { keywordCount, locationCount, totalUrls, totalSitemaps } =
+      await this.getSeoSitemapCounts();
     const cachedUrls = await this.prisma.seoPageCache.count();
 
     // Get the most recent page generation date
@@ -490,6 +497,7 @@ export class SitemapService {
     });
 
     return {
+      keywordCount,
       totalUrls,
       totalSitemaps,
       cachedUrls,
@@ -540,5 +548,25 @@ export class SitemapService {
     }
 
     return false;
+  }
+
+  private async getSeoSitemapCounts(): Promise<{
+    keywordCount: number;
+    locationCount: number;
+    totalUrls: number;
+    totalSitemaps: number;
+  }> {
+    const keywordCount = await this.prisma.seoKeyword.count();
+    const locations = this.getIndexableLocations(await this.getLocations());
+    const locationCount = locations.length;
+    const totalUrls = keywordCount * locationCount;
+    const totalSitemaps = Math.ceil(totalUrls / this.URLS_PER_SITEMAP);
+
+    return {
+      keywordCount,
+      locationCount,
+      totalUrls,
+      totalSitemaps,
+    };
   }
 }

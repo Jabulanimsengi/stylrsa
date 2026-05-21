@@ -13,6 +13,9 @@ import {
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN || process.env.BACKEND_URL || 'http://localhost:5000';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   if (shouldSkipBackendFetchDuringBuild(BACKEND_URL)) {
     return new NextResponse(buildMinimalSitemapIndexXml(), {
@@ -32,7 +35,7 @@ export async function GET() {
 
     const response = await fetch(`${BACKEND_URL}/seo/sitemap-index`, {
       signal: controller.signal,
-      next: { revalidate: 86400 }, // Cache for 24 hours
+      cache: 'no-store',
     });
     clearTimeout(timeoutId);
 
@@ -44,7 +47,7 @@ export async function GET() {
           status: 200,
           headers: {
             'Content-Type': 'application/xml; charset=utf-8',
-            'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+            'Cache-Control': 'public, max-age=3600, s-maxage=3600',
             'X-Source': 'backend',
           },
         });
@@ -103,7 +106,7 @@ ${sitemaps.join('\n')}
       status: 200,
       headers: {
         'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
         'X-Source': 'local-fallback',
       },
     });

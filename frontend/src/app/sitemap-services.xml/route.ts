@@ -11,6 +11,9 @@ import {
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN || process.env.BACKEND_URL || 'http://localhost:5000';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   if (shouldSkipBackendFetchDuringBuild(BACKEND_URL)) {
     return new NextResponse(buildMinimalUrlsetXml(), {
@@ -25,7 +28,7 @@ export async function GET() {
 
   try {
     const response = await fetch(`${BACKEND_URL}/seo/sitemap-services`, {
-      next: { revalidate: 86400 }, // Cache for 1 hour
+      cache: 'no-store',
     });
 
     if (!response.ok) {

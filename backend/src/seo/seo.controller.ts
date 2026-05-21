@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Header } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, Header } from '@nestjs/common';
 import { SitemapService } from './sitemap.service';
 
 @Controller('seo')
@@ -70,7 +70,7 @@ export class SeoController {
   async getSeoSitemap(@Param('segment') segment: string): Promise<string> {
     const segmentNum = parseInt(segment, 10);
     if (isNaN(segmentNum) || segmentNum < 0) {
-      throw new Error('Invalid segment number');
+      throw new BadRequestException('Invalid segment number');
     }
     return await this.sitemapService.generateSitemap(segmentNum);
   }

@@ -9,6 +9,9 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_ORIGIN ||
     'http://localhost:5000';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stylrsa.co.za';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 function buildMinimalSitemapXml(): string {
     const now = new Date().toISOString();
     return `<?xml version="1.0" encoding="UTF-8"?>
@@ -43,8 +46,8 @@ export async function GET(
 
         // Validate segment is a number
         if (!segment || !/^\d+$/.test(segment)) {
-            return new NextResponse(buildMinimalSitemapXml(), {
-                status: 200,
+            return new NextResponse('Invalid sitemap segment', {
+                status: 404,
                 headers: { 'Content-Type': 'application/xml; charset=utf-8' },
             });
         }
@@ -65,12 +68,12 @@ export async function GET(
         // Based on user request, this seems to mirror the SEO sitemap logic)
         const response = await fetch(
             `${BACKEND_URL}/seo/sitemap-seo-${segment}`,
-            { next: { revalidate: 86400 } }
+            { cache: 'no-store' }
         );
 
         if (!response.ok) {
-            return new NextResponse(buildMinimalSitemapXml(), {
-                status: 200,
+            return new NextResponse('Sitemap segment not found', {
+                status: response.status === 404 ? 404 : 502,
                 headers: {
                     'Content-Type': 'application/xml; charset=utf-8',
                     'Cache-Control': 'public, max-age=300',
@@ -81,8 +84,8 @@ export async function GET(
         const xml = await response.text();
 
         if (!isValidSitemapXml(xml)) {
-            return new NextResponse(buildMinimalSitemapXml(), {
-                status: 200,
+            return new NextResponse('Invalid sitemap response', {
+                status: 502,
                 headers: { 'Content-Type': 'application/xml; charset=utf-8' },
             });
         }
