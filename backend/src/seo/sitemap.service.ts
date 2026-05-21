@@ -315,13 +315,6 @@ export class SitemapService {
 
     this.logger.log('Fetching locations from DB for sitemap generation');
     this.locationsCache = await this.prisma.seoLocation.findMany({
-      where: {
-        OR: [
-          { type: 'PROVINCE' },
-          { salonCount: { gt: 0 } },
-          { serviceCount: { gt: 0 } },
-        ],
-      },
       orderBy: [{ population: 'desc' }, { name: 'asc' }],
       select: {
         slug: true,
